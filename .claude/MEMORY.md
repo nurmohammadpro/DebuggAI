@@ -17,3 +17,7 @@
 
 ### Design Files
 - [Frontend Design Guide](frontend-design.md) — UI/UX patterns, components, theming, animations
+
+### Reference Files
+- [Features Specification](features.md) — Complete feature list, technical specs, dependencies
+- [Workflows Documentation](workflows.md) — Development, deployment, and operations workflows
