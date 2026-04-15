@@ -5,7 +5,7 @@
  * Used by both the web builder and debugger.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 import { extractCode } from '@/lib/extract-code';
@@ -19,8 +19,14 @@ interface UseGenerationOptions {
 interface GenerationRequest {
   prompt: string;
   history?: Array<{ role: string; content: string }>;
-  code?: string; // For debugging: existing broken code
-  errorMessage?: string; // For debugging: error message
+}
+
+interface DebugRequest {
+  code: string;
+  errorMessage: string;
+  language?: string;
+  prompt?: string;
+  history?: Array<{ role: string; content: string }>;
 }
 
 export function useGeneration(options: UseGenerationOptions = {}) {
@@ -32,9 +38,6 @@ export function useGeneration(options: UseGenerationOptions = {}) {
   const { appendAccumulated, resetAccumulated, setCurrentCode, addVersion } =
     useGenerationStore();
 
-  // Track if this is a debug request
-  const isDebugRequest = useRef(false);
-
   /**
    * Generate code from AI prompt with SSE streaming
    */
@@ -44,15 +47,8 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       setError(null);
       resetAccumulated();
 
-      // Determine if this is a debug request
-      isDebugRequest.current = !!(
-        request.code && request.errorMessage
-      );
-
       try {
-        const endpoint = isDebugRequest.current ? '/debug' : '/generate';
-
-        const response = await fetch(endpoint, {
+        const response = await fetch('/api/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -87,10 +83,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         setCurrentCode(code);
 
         // Save as new version
-        const description = isDebugRequest.current
-          ? 'Debugged fix'
-          : 'Generated';
-        addVersion(code, description);
+        addVersion(code, 'Generated');
 
         // Call onDone callback
         onDone?.(code);
@@ -114,14 +107,71 @@ export function useGeneration(options: UseGenerationOptions = {}) {
    * Convenience method for debugging
    */
   const debug = useCallback(
-    async (code: string, errorMessage: string) => {
-      return generate({
-        prompt: 'Debug this code',
-        code,
-        errorMessage,
-      });
+    async (code: string, errorMessage: string, language?: string) => {
+      setIsLoading(true);
+      setError(null);
+      resetAccumulated();
+
+      try {
+        const request: DebugRequest = {
+          code,
+          errorMessage,
+          language,
+          prompt: 'Debug this code',
+        };
+
+        const response = await fetch('/api/debug', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(request),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `HTTP ${response.status}: ${response.statusText}`
+          );
+        }
+
+        // Parse SSE stream with callback
+        const accumulated = await parseSSEResponseWithCallback(
+          response,
+          (chunk) => {
+            appendAccumulated(chunk);
+            onChunk?.(chunk);
+          }
+        );
+
+        // Extract code from markdown response
+        const fixedCode = extractCode(accumulated);
+
+        if (!fixedCode) {
+          throw new Error('No code found in debug response');
+        }
+
+        // Update current code
+        setCurrentCode(fixedCode);
+
+        // Save as new version
+        addVersion(fixedCode, 'Debugged fix');
+
+        // Call onDone callback
+        onDone?.(fixedCode);
+
+        return fixedCode;
+      } catch (err) {
+        const errorObj =
+          err instanceof Error ? err : new Error('Debug failed');
+        setError(errorObj);
+        onError?.(errorObj);
+        throw errorObj;
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [generate]
+    [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError]
   );
 
   return {

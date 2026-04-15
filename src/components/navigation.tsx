@@ -15,14 +15,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bug, Code2, Zap, Settings, User, LogOut, Menu, Gift } from 'lucide-react';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { Bug, Code2, Zap, Settings, User, LogOut, Menu, Gift, Receipt } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export function Navigation() {
   const { user, credits, isAuthenticated, setUser, setCredits, logout } =
     useSessionStore();
+
+  const channelRef = useRef<RealtimeChannel>();
 
   useEffect(() => {
     // Check current session
@@ -34,11 +37,11 @@ export function Navigation() {
           displayName: session.user.user_metadata.full_name || session.user.email || '',
           avatarUrl: session.user.user_metadata.avatar_url,
           plan: session.user.user_metadata.plan || 'free',
-          credits: 0, // Will fetch from credit_wallets
+          credits: 0,
         });
 
-        // Fetch credits
         fetchCredits(session.user.id);
+        subscribeToCredits(session.user.id);
       }
     });
 
@@ -56,12 +59,22 @@ export function Navigation() {
           credits: 0,
         });
         fetchCredits(session.user.id);
+        subscribeToCredits(session.user.id);
       } else {
         setUser(null);
+        // Unsubscribe from credits channel
+        if (channelRef.current) {
+          channelRef.current.unsubscribe();
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+      }
+    };
   }, [setUser]);
 
   const fetchCredits = async (userId: string) => {
@@ -76,7 +89,32 @@ export function Navigation() {
     }
   };
 
+  const subscribeToCredits = (userId: string) => {
+    // Subscribe to credit wallet changes
+    const channel = supabase
+      .channel(`credits:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'credit_wallets',
+          filter: `owner_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newBalance = payload.new.balance;
+          setCredits(newBalance);
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+  };
+
   const handleLogout = async () => {
+    if (channelRef.current) {
+      channelRef.current.unsubscribe();
+    }
     await supabase.auth.signOut();
     logout();
   };
@@ -124,7 +162,7 @@ export function Navigation() {
           {/* Credits Badge */}
           <Badge variant="outline" className="hidden sm:flex">
             <Zap className="mr-1 h-3 w-3" />
-            {credits} credits
+            {credits === -1 ? '∞' : credits} credits
           </Badge>
 
           {/* User Dropdown */}
@@ -135,17 +173,23 @@ export function Navigation() {
                 <span className="hidden sm:inline">{user?.displayName}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/settings">
+                <Link href="/settings" className="flex w-full items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/referrals">
+                <Link href="/settings/transactions" className="flex w-full items-center">
+                  <Receipt className="mr-2 h-4 w-4" />
+                  Transactions
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/referrals" className="flex w-full items-center">
                   <Gift className="mr-2 h-4 w-4" />
                   Referrals
                 </Link>
