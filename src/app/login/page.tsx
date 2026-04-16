@@ -42,7 +42,7 @@ export default function LoginPage() {
           </div>
 
           {/* Email/Password Form */}
-          <form action={async (formData) => { await signIn(formData); }} className="space-y-4">
+          <form action={signIn} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

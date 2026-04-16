@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={async (formData) => { await resetPassword(formData); }} className="space-y-4">
+          <form action={resetPassword} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

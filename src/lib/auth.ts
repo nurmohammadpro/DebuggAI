@@ -19,13 +19,13 @@ export interface AuthResult {
 /**
  * Sign up a new user
  */
-export async function signUp(formData: FormData): Promise<AuthResult> {
+export async function signUp(formData: FormData): Promise<void> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const fullName = formData.get('fullName') as string;
 
   if (!email || !password) {
-    return { success: false, error: 'Email and password are required' };
+    throw new Error('Email and password are required');
   }
 
   const { error } = await supabase.auth.signUp({
@@ -40,25 +40,21 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) {
-    return { success: false, error: error.message };
+    throw new Error(error.message);
   }
 
   revalidatePath('/', 'layout');
-  return {
-    success: true,
-    message: 'Check your email to confirm your account',
-  };
 }
 
 /**
  * Sign in existing user
  */
-export async function signIn(formData: FormData): Promise<AuthResult> {
+export async function signIn(formData: FormData): Promise<void> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
   if (!email || !password) {
-    return { success: false, error: 'Email and password are required' };
+    throw new Error('Email and password are required');
   }
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -67,7 +63,7 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) {
-    return { success: false, error: error.message };
+    throw new Error(error.message);
   }
 
   revalidatePath('/', 'layout');
@@ -86,11 +82,11 @@ export async function signOut(): Promise<void> {
 /**
  * Send password reset email
  */
-export async function resetPassword(formData: FormData): Promise<AuthResult> {
+export async function resetPassword(formData: FormData): Promise<void> {
   const email = formData.get('email') as string;
 
   if (!email) {
-    return { success: false, error: 'Email is required' };
+    throw new Error('Email is required');
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -98,13 +94,8 @@ export async function resetPassword(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) {
-    return { success: false, error: error.message };
+    throw new Error(error.message);
   }
-
-  return {
-    success: true,
-    message: 'Check your email for password reset instructions',
-  };
 }
 
 /**
