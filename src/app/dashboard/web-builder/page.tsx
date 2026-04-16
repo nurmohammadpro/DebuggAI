@@ -4,6 +4,8 @@
  * Professional · Minimal · Developer-focused · Dark-first
  */
 
+'use client';
+
 import { ChatPanel } from '@/components/web-builder/chat-panel';
 import { CodeEditor } from '@/components/web-builder/code-editor';
 import { PreviewPane } from '@/components/web-builder/preview-pane';
