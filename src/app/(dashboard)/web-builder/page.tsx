@@ -1,8 +1,7 @@
 /**
- * Web Builder Page
+ * Web Builder Page - DeBuggAI Design System v1.0
  *
- * Main interface for the AI-powered web builder.
- * Three-column layout: Chat | Editor | Preview
+ * Professional · Minimal · Developer-focused · Dark-first
  */
 
 import { ChatPanel } from '@/components/web-builder/chat-panel';
@@ -26,8 +25,8 @@ export default function WebBuilderPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--ds-green)' }}></div>
       </div>
     );
   }
@@ -37,13 +36,13 @@ export default function WebBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border bg-surface/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold">Web Builder</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="h2">Web Builder</h1>
+            <p className="text-xs text-text2">
               Build apps with AI - Describe what you want and watch it come to life
             </p>
           </div>
@@ -52,7 +51,7 @@ export default function WebBuilderPage() {
               href="https://supabase.com/dashboard"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="text-xs text-text2 hover:text-text transition-colors"
             >
               Need help?
             </a>

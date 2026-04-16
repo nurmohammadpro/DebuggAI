@@ -1,5 +1,7 @@
 /**
- * Navigation Component
+ * Navigation Component - DeBuggAI Design System v1.0
+ *
+ * Professional · Minimal · Developer-focused · Dark-first
  */
 
 'use client';
@@ -16,15 +18,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { Bug, Code2, Zap, Settings, User, LogOut, Menu, Gift, Receipt } from 'lucide-react';
+import { Bug, Code2, Zap, Settings, User, LogOut, Menu, Gift, Receipt, Shield, Bell, ChevronDown } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { cn } from '@/lib/utils';
 
 export function Navigation() {
   const { user, credits, isAuthenticated, setUser, setCredits, logout } =
     useSessionStore();
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true);
   const channelRef = useRef<RealtimeChannel>();
 
   useEffect(() => {
@@ -62,7 +69,6 @@ export function Navigation() {
         subscribeToCredits(session.user.id);
       } else {
         setUser(null);
-        // Unsubscribe from credits channel
         if (channelRef.current) {
           channelRef.current.unsubscribe();
         }
@@ -87,10 +93,18 @@ export function Navigation() {
     if (data) {
       setCredits(data.balance);
     }
+
+    // Fetch admin status
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+
+    setIsAdmin(profile?.is_admin ?? false);
   };
 
   const subscribeToCredits = (userId: string) => {
-    // Subscribe to credit wallet changes
     const channel = supabase
       .channel(`credits:${userId}`)
       .on(
@@ -124,90 +138,190 @@ export function Navigation() {
   }
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center space-x-2">
-          <Bug className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">DeBuggAI</span>
+    <>
+      {/* Desktop Navigation */}
+      <nav className="navbar hidden md:flex">
+        <Link href="/dashboard" className="nav-logo">
+          <div className="nav-logo-icon">
+            <Bug className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
+          </div>
+          <span>DeBuggAI</span>
         </Link>
 
-        {/* Main Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link
-            href="/debug"
-            className="flex items-center text-sm font-medium transition-colors hover:text-primary"
-          >
-            <Bug className="mr-2 h-4 w-4" />
-            Debug
+        <div className="nav-links">
+          <Link href="/debug">
+            <button className="nav-link">Debug</button>
           </Link>
-          <Link
-            href="/web-builder"
-            className="flex items-center text-sm font-medium transition-colors hover:text-primary"
-          >
-            <Code2 className="mr-2 h-4 w-4" />
-            Web Builder
+          <Link href="/web-builder">
+            <button className="nav-link">Web Builder</button>
           </Link>
-          <Link
-            href="/pricing"
-            className="flex items-center text-sm font-medium transition-colors hover:text-primary"
-          >
-            <Zap className="mr-2 h-4 w-4" />
-            Upgrade
+          <Link href="/pricing">
+            <button className="nav-link">Pricing</button>
           </Link>
         </div>
 
-        {/* User Menu */}
-        <div className="flex items-center space-x-4">
-          {/* Credits Badge */}
-          <Badge variant="outline" className="hidden sm:flex">
-            <Zap className="mr-1 h-3 w-3" />
-            {credits === -1 ? '∞' : credits} credits
-          </Badge>
+        <div className="nav-actions flex items-center gap-2">
+          {/* Credits Badge - DeBuggAI Design System */}
+          <div className="nav-credit">
+            <Zap className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
+            {credits === -1 ? '∞' : credits}
+          </div>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* Notifications */}
+          <button className="nav-notif" onClick={() => setHasNotifications(false)}>
+            <Bell className="h-4 w-4" />
+            {hasNotifications && <div className="notif-dot"></div>}
+          </button>
 
           {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <User className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">{user?.displayName}</span>
+              <Button
+                variant="ghost"
+                className="nav-avatar"
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  padding: '0',
+                  borderRadius: '50%',
+                  background: 'var(--ds-green-muted)',
+                  border: '2px solid rgba(0,200,83,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'var(--ds-green)',
+                }}
+              >
+                {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-48 animate-slide-down">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.displayName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/settings" className="flex w-full items-center">
+                <Link href="/settings" className="flex w-full items-center cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/settings/transactions" className="flex w-full items-center">
+                <Link href="/settings/transactions" className="flex w-full items-center cursor-pointer">
                   <Receipt className="mr-2 h-4 w-4" />
                   Transactions
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/referrals" className="flex w-full items-center">
+                <Link href="/referrals" className="flex w-full items-center cursor-pointer">
                   <Gift className="mr-2 h-4 w-4" />
                   Referrals
                 </Link>
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin" className="flex w-full items-center cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span className="text-purple">Admin Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Mobile Menu Button */}
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Navigation */}
+      <nav className="md:hidden">
+        <div className="navbar flex items-center px-5">
+          <Link href="/dashboard" className="nav-logo">
+            <div className="nav-logo-icon">
+              <Bug className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
+            </div>
+            <span>DeBuggAI</span>
+          </Link>
+
+          <div className="flex items-center gap-2 ml-auto">
+            {/* Credits Badge */}
+            <div className="nav-credit">
+              <Zap className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
+              {credits === -1 ? '∞' : credits}
+            </div>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* Mobile Menu Button */}
+            <div
+              className="hamburger"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <div className="hline"></div>
+              <div className="hline"></div>
+              <div className="hline"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="mobile-menu animate-slide-down">
+            <div className="mobile-menu-item">
+              <span className="mobile-menu-icon">⌂</span>
+              Dashboard
+            </div>
+            <div className="mobile-menu-item">
+              <span className="mobile-menu-icon">🐛</span>
+              Debug
+            </div>
+            <div className="mobile-menu-item">
+              <span className="mobile-menu-icon">⚡</span>
+              Web Builder
+            </div>
+            <div className="mobile-menu-item">
+              <span className="mobile-menu-icon">💳</span>
+              Pricing
+            </div>
+            <div className="mobile-menu-item">
+              <span className="mobile-menu-icon">⚙</span>
+              Settings
+            </div>
+            {isAdmin && (
+              <div className="mobile-menu-item">
+                <span className="mobile-menu-icon">🛡️</span>
+                Admin
+              </div>
+            )}
+            <div className="px-5 py-3 flex gap-2">
+              <Link href="/login" className="btn btn-ghost flex-1 justify-center" style={{ height: '36px', fontSize: '13px' }}>
+                Sign In
+              </Link>
+              <Link href="/signup" className="btn btn-primary flex-1 justify-center" style={{ height: '36px', fontSize: '13px' }}>
+                Get Started
+              </Link>
+            </div>
+          </div>
+        )}
+      </nav>
+    </>
   );
 }

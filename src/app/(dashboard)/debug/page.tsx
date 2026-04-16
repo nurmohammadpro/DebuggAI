@@ -1,8 +1,7 @@
 /**
- * Debug Screen Page
+ * Debug Screen Page - DeBuggAI Design System v1.0
  *
- * Multi-language code debugging interface.
- * Users can paste code and error messages to get AI-powered analysis.
+ * Professional · Minimal · Developer-focused · Dark-first
  */
 
 'use client';
@@ -97,13 +96,13 @@ export default function DebugScreenPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border bg-surface/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bug className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-semibold">Debug Code</h1>
+            <Bug className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
+            <h1 className="h2">Debug Code</h1>
           </div>
           <Button
             variant="ghost"
@@ -118,7 +117,7 @@ export default function DebugScreenPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-6">
           {/* Input Section */}
           <div className="space-y-6">
             <Card>
@@ -134,7 +133,7 @@ export default function DebugScreenPage() {
                       {DEBUG_LANGUAGES.map((lang) => (
                         <SelectItem key={lang.id} value={lang.id}>
                           <span className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">{lang.icon}</Badge>
+                            <Badge variant="outline" className="text-xs font-mono">{lang.icon}</Badge>
                             {lang.name}
                           </span>
                         </SelectItem>
@@ -142,8 +141,8 @@ export default function DebugScreenPage() {
                     </SelectContent>
                   </Select>
                   {detectedLanguage && (
-                    <p className="text-xs text-muted-foreground">
-                      Detected: <Badge variant="secondary">{detectedLanguage}</Badge>
+                    <p className="text-xs text-text2">
+                      Detected: <Badge variant="green" className="text-xs">{detectedLanguage}</Badge>
                     </p>
                   )}
                 </div>
@@ -223,11 +222,11 @@ export default function DebugScreenPage() {
           {/* Results Section */}
           <div>
             <Card>
-              <div className="p-6 border-b">
+              <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Analysis Results</h2>
+                  <h2 className="h3">Analysis Results</h2>
                   {detectedLanguage && (
-                    <Badge variant="secondary">{detectedLanguage}</Badge>
+                    <Badge variant="green">{detectedLanguage}</Badge>
                   )}
                 </div>
               </div>
@@ -237,9 +236,9 @@ export default function DebugScreenPage() {
                     <div className="whitespace-pre-wrap">{analysis}</div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-80 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center h-80 text-center text-text2">
                     <Code2 className="h-16 w-16 mb-4 opacity-20" />
-                    <p className="text-lg font-medium mb-2">Ready to analyze</p>
+                    <p className="text-lg font-medium mb-2 text-text">Ready to analyze</p>
                     <p className="text-sm">
                       Paste your code and optionally an error message, then click "Analyze Code" to get AI-powered debugging insights.
                     </p>

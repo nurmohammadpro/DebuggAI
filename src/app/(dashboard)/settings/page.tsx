@@ -1,7 +1,7 @@
 /**
- * Settings Page
+ * Settings Page - DeBuggAI Design System v1.0
  *
- * User settings with account management, plan display, and navigation to other settings pages.
+ * Professional · Minimal · Developer-focused · Dark-first
  */
 
 'use client';
@@ -9,7 +9,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap, User as UserIcon, CreditCard, Settings as SettingsIcon, Receipt } from 'lucide-react';
+import { Zap, User as UserIcon, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
 import Link from 'next/link';
 
@@ -52,30 +52,30 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border bg-surface/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center gap-2">
-          <SettingsIcon className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold">Settings</h1>
+          <SettingsIcon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
+          <h1 className="h2">Settings</h1>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Current Plan Card */}
-        <Card className="mb-8">
+        <Card className="mb-6">
           <div className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
+            <h2 className="h3 mb-4">Current Plan</h2>
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-2xl font-bold capitalize">{user?.plan}</h3>
-                  <Badge variant={user?.plan === 'free' ? 'secondary' : 'default'}>
+                  <h3 className="stat capitalize" style={{ color: 'var(--ds-green)' }}>{user?.plan}</h3>
+                  <Badge variant="green" pill>
                     Active
                   </Badge>
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-text2">
                   {credits === -1 ? 'Unlimited' : `${credits} credits`} remaining
                 </p>
               </div>
@@ -92,12 +92,12 @@ export default function SettingsPage() {
             <Card key={section.title}>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-muted rounded-lg">
-                    <section.icon className="h-5 w-5" />
+                  <div className="p-2 rounded-ds" style={{ background: 'var(--ds-surface3)' }}>
+                    <section.icon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{section.title}</h3>
-                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                    <h3 className="font-semibold text-text">{section.title}</h3>
+                    <p className="text-sm text-text2">{section.description}</p>
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                     <Link key={item.href} href={item.href}>
                       <Button
                         variant="ghost"
-                        className="w-full justify-start hover:bg-muted"
+                        className="w-full justify-start"
                       >
                         {item.label}
                       </Button>
@@ -118,13 +118,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <Card className="mt-8 border-destructive/50">
+        <Card className="mt-6 border-red/30" style={{ boxShadow: '0 0 0 1px rgba(255,82,82,0.15)' }}>
           <div className="p-6">
-            <h3 className="font-semibold text-destructive mb-2">Danger Zone</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <h3 className="h3 mb-2" style={{ color: 'var(--ds-red)' }}>Danger Zone</h3>
+            <p className="text-sm text-text2 mb-4">
               Irreversible actions that affect your account
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <Button variant="destructive" size="sm">
                 Delete Account
               </Button>

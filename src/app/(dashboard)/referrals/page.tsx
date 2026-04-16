@@ -1,7 +1,7 @@
 /**
- * Referral Dashboard Page
+ * Referral Dashboard Page - DeBuggAI Design System v1.0
  *
- * Shows referral stats, shareable link, and referral history.
+ * Professional · Minimal · Developer-focused · Dark-first
  */
 
 'use client';
@@ -41,11 +41,11 @@ const AMBASSADOR_ICONS: Record<string, any> = {
 };
 
 const AMBASSADOR_COLORS: Record<string, string> = {
-  bronze: 'text-orange-500',
-  silver: 'text-gray-400',
-  gold: 'text-yellow-500',
-  platinum: 'text-purple-500',
-  diamond: 'text-cyan-400',
+  bronze: 'var(--ds-amber)',
+  silver: 'var(--ds-text3)',
+  gold: 'var(--ds-amber)',
+  platinum: 'var(--ds-purple)',
+  diamond: 'var(--ds-blue)',
 };
 
 export default function ReferralsPage() {
@@ -131,8 +131,8 @@ export default function ReferralsPage() {
 
   if (loadingStats) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="animate-pulse text-text2">Loading...</div>
       </div>
     );
   }
@@ -142,28 +142,28 @@ export default function ReferralsPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border bg-surface/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center gap-2">
-          <Gift className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold">Referral Program</h1>
+          <Gift className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
+          <h1 className="h2">Referral Program</h1>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Hero Section */}
-        <Card className="mb-8 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+        <Card className="mb-6 border-green/20" style={{ background: 'var(--ds-green-muted)', boxShadow: '0 0 0 1px rgba(0,200,83,0.1)' }}>
           <div className="p-8">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-3xl font-bold mb-2">Invite Friends, Earn Credits</h2>
-                <p className="text-muted-foreground mb-4">
-                  Share your unique referral link with friends and earn <strong className="text-primary">10 credits</strong> for each signup.
-                  Your friends get <strong className="text-primary">5 bonus credits</strong> too!
+                <h2 className="display mb-2">Invite Friends, Earn Credits</h2>
+                <p className="text-text2 mb-4">
+                  Share your unique referral link with friends and earn <strong style={{ color: 'var(--ds-green)' }}>10 credits</strong> for each signup.
+                  Your friends get <strong style={{ color: 'var(--ds-green)' }}>5 bonus credits</strong> too!
                 </p>
                 {stats?.ambassadorTier && (
-                  <div className={`flex items-center gap-2 ${AMBASSADOR_COLORS[stats.ambassadorTier]}`}>
+                  <div className="flex items-center gap-2" style={{ color: AMBASSADOR_COLORS[stats.ambassadorTier] }}>
                     {AmbassadorIcon && <AmbassadorIcon className="h-5 w-5" />}
                     <span className="font-semibold capitalize">{stats.ambassadorTier} Ambassador</span>
                   </div>
@@ -175,62 +175,62 @@ export default function ReferralsPage() {
         </Card>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
           <Card>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <Users className="h-5 w-5 text-muted-foreground" />
+                <Users className="h-5 w-5 text-text3" />
               </div>
-              <div className="text-3xl font-bold">{stats?.totalReferrals || 0}</div>
-              <div className="text-sm text-muted-foreground">Total Referrals</div>
+              <div className="stat" style={{ color: 'var(--ds-blue)' }}>{stats?.totalReferrals || 0}</div>
+              <div className="text-sm text-text3">Total Referrals</div>
             </div>
           </Card>
 
           <Card>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+                <TrendingUp className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
               </div>
-              <div className="text-3xl font-bold">{stats?.completedReferrals || 0}</div>
-              <div className="text-sm text-muted-foreground">Completed</div>
+              <div className="stat" style={{ color: 'var(--ds-green)' }}>{stats?.completedReferrals || 0}</div>
+              <div className="text-sm text-text3">Completed</div>
             </div>
           </Card>
 
           <Card>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <Zap className="h-5 w-5 text-yellow-500" />
+                <Zap className="h-5 w-5" style={{ color: 'var(--ds-amber)' }} />
               </div>
-              <div className="text-3xl font-bold">{stats?.totalCreditsEarned || 0}</div>
-              <div className="text-sm text-muted-foreground">Credits Earned</div>
+              <div className="stat" style={{ color: 'var(--ds-amber)' }}>{stats?.totalCreditsEarned || 0}</div>
+              <div className="text-sm text-text3">Credits Earned</div>
             </div>
           </Card>
 
           <Card>
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <Trophy className="h-5 w-5 text-purple-500" />
+                <Trophy className="h-5 w-5" style={{ color: 'var(--ds-purple)' }} />
               </div>
-              <div className="text-3xl font-bold capitalize">
+              <div className="stat capitalize" style={{ color: 'var(--ds-purple)' }}>
                 {stats?.ambassadorTier || '-'}
               </div>
-              <div className="text-sm text-muted-foreground">Ambassador Tier</div>
+              <div className="text-sm text-text3">Ambassador Tier</div>
             </div>
           </Card>
         </div>
 
         {/* Referral Link Section */}
-        <Card className="mb-8">
+        <Card className="mb-6">
           <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Share2 className="h-5 w-5" />
+            <h3 className="h3 mb-4 flex items-center gap-2">
+              <Share2 className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
               Your Referral Link
             </h3>
 
             {referralCode ? (
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Referral URL</label>
+                  <label className="text-sm text-text2 mb-2 block">Referral URL</label>
                   <div className="flex gap-2">
                     <Input
                       value={referralUrl}
@@ -244,7 +244,7 @@ export default function ReferralsPage() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Referral Code</label>
+                  <label className="text-sm text-text2 mb-2 block">Referral Code</label>
                   <div className="flex gap-2">
                     <Input
                       value={referralCode}
@@ -277,8 +277,8 @@ export default function ReferralsPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Gift className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
+                <Gift className="h-12 w-12 mx-auto text-text3 mb-4" />
+                <p className="text-text2 mb-4">
                   Generate your unique referral code to start earning credits!
                 </p>
                 <Button onClick={handleGenerateCode} disabled={isLoading}>
@@ -291,41 +291,42 @@ export default function ReferralsPage() {
 
         {/* Milestone Progress */}
         {stats?.ambassadorTier && stats?.nextMilestone && (
-          <Card className="mb-8">
+          <Card className="mb-6">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Crown className="h-5 w-5 text-yellow-500" />
+              <h3 className="h3 mb-4 flex items-center gap-2">
+                <Crown className="h-5 w-5" style={{ color: 'var(--ds-amber)' }} />
                 Ambassador Progress
               </h3>
 
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">
+                    <span className="text-text2">
                       {stats?.nextMilestone.tier.toUpperCase()} Tier
                     </span>
-                    <span className="font-semibold">
+                    <span className="font-semibold text-text">
                       {stats?.completedReferrals} / {stats?.nextMilestone.referrals} referrals
                     </span>
                   </div>
-                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--ds-surface3)' }}>
                     <div
-                      className="h-full bg-gradient-to-r from-primary to-purple-500 transition-all"
+                      className="h-full transition-all"
                       style={{
                         width: `${(stats?.completedReferrals / stats?.nextMilestone.referrals) * 100}%`,
+                        background: 'var(--ds-green)',
                       }}
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-4 rounded-ds" style={{ background: 'var(--ds-surface2)' }}>
                   <div>
-                    <div className="font-semibold">Next Milestone Bonus</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-semibold text-text">Next Milestone Bonus</div>
+                    <div className="text-sm text-text2">
                       Reach {stats?.nextMilestone.referrals} referrals
                     </div>
                   </div>
-                  <div className="text-2xl font-bold text-primary">
+                  <div className="stat" style={{ color: 'var(--ds-green)' }}>
                     +{stats?.nextMilestone.bonus} 🪙
                   </div>
                 </div>
@@ -345,36 +346,37 @@ export default function ReferralsPage() {
             {/* Referral History */}
             <Card>
               <div className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Referral History</h3>
+                <h3 className="h3 mb-4">Referral History</h3>
 
                 {referrals.length > 0 ? (
                   <div className="space-y-2">
                     {referrals.map((referral) => (
                       <div
                         key={referral.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                        className="flex items-center justify-between p-4 border border-border rounded-ds hover:bg-surface2"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Users className="h-5 w-5 text-primary" />
+                          <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: 'var(--ds-green-muted)' }}>
+                            <Users className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
                           </div>
                           <div>
-                            <div className="font-medium">
+                            <div className="font-medium text-text">
                               {referral.referee?.email || 'Pending signup'}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm text-text2">
                               {new Date(referral.created_at).toLocaleDateString()}
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <Badge
-                            variant={referral.status === 'completed' ? 'default' : 'secondary'}
+                            variant={referral.status === 'completed' ? 'green' : 'gray'}
+                            pill
                           >
                             {referral.status}
                           </Badge>
                           {referral.status === 'completed' && (
-                            <div className="text-sm text-green-500 mt-1">
+                            <div className="text-sm mt-1" style={{ color: 'var(--ds-green)' }}>
                               +{referral.credits_earned} credits
                             </div>
                           )}
@@ -383,7 +385,7 @@ export default function ReferralsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-text2">
                     <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No referrals yet. Share your link to start earning!</p>
                   </div>

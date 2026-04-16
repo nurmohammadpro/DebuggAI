@@ -1,3 +1,9 @@
+/**
+ * Sonner Toast - DeBuggAI Design System v1.0
+ *
+ * Professional · Minimal · Developer-focused · Dark-first
+ */
+
 "use client"
 
 import { useTheme } from "next-themes"
@@ -13,27 +19,27 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       icons={{
         success: (
-          <CircleCheckIcon className="size-4" />
+          <CircleCheckIcon className="size-4" style={{ color: 'var(--ds-green)' }} />
         ),
         info: (
-          <InfoIcon className="size-4" />
+          <InfoIcon className="size-4" style={{ color: 'var(--ds-blue)' }} />
         ),
         warning: (
-          <TriangleAlertIcon className="size-4" />
+          <TriangleAlertIcon className="size-4" style={{ color: 'var(--ds-amber)' }} />
         ),
         error: (
-          <OctagonXIcon className="size-4" />
+          <OctagonXIcon className="size-4" style={{ color: 'var(--ds-red)' }} />
         ),
         loading: (
-          <Loader2Icon className="size-4 animate-spin" />
+          <Loader2Icon className="size-4 animate-spin" style={{ color: 'var(--ds-green)' }} />
         ),
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--normal-bg": "var(--ds-surface2)",
+          "--normal-text": "var(--ds-text)",
+          "--normal-border": "var(--ds-border2)",
+          "--border-radius": "8px",
         } as React.CSSProperties
       }
       toastOptions={{

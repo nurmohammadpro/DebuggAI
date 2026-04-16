@@ -1,7 +1,7 @@
 /**
- * Pricing Page
+ * Pricing Page - DeBuggAI Design System v1.0
  *
- * Display subscription plans with features and checkout buttons.
+ * Professional · Minimal · Developer-focused · Dark-first
  */
 
 'use client';
@@ -138,15 +138,15 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-bg">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b border-border bg-surface/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <h1 className="text-lg font-semibold">Pricing</h1>
+          <h1 className="h2">Pricing</h1>
           {user && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Current plan:</span>
-              <Badge variant={user.plan === 'free' ? 'secondary' : 'default'}>
+              <span className="text-sm text-text2">Current plan:</span>
+              <Badge variant={user.plan === 'free' ? 'gray' : 'green'} pill>
                 {user.plan}
               </Badge>
             </div>
@@ -155,56 +155,57 @@ export default function PricingPage() {
       </div>
 
       {/* Hero */}
-      <div className="border-b bg-gradient-to-b from-muted/50 to-background py-16">
+      <div className="border-b border-border bg-surface/50 py-12">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-          <p className="text-xl text-muted-foreground mb-8">
+          <div className="badge badge-pill bg-green mb-4" style={{ display: 'inline-flex' }}>
+            Pricing
+          </div>
+          <h2 className="h1 mb-3">Simple, transparent pricing</h2>
+          <p className="text-lg text-text2">
             Start free, upgrade when you need more power
           </p>
         </div>
       </div>
 
       {/* Plans */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {PLANS.map((plan) => (
             <Card
               key={plan.id}
               className={`relative flex flex-col ${
-                plan.badge ? 'border-primary shadow-lg scale-105' : ''
+                plan.badge ? 'border-green/30' : ''
               }`}
+              style={plan.badge ? { boxShadow: '0 0 0 1px rgba(0,200,83,0.15)' } : undefined}
             >
-              {plan.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="px-4 py-1">{plan.badge}</Badge>
-                </div>
-              )}
-
-              <div className="p-6 flex-1 flex flex-col">
+              <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-10 pb-6 px-6' : 'p-6'}`}>
+                {plan.badge && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                    <Badge variant="green" className="text-xs font-medium" style={{ padding: '4px 16px', fontSize: '11px' }}>
+                      {plan.badge}
+                    </Badge>
+                  </div>
+                )}
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-3 rounded-lg ${
-                    plan.id === 'free' ? 'bg-muted' : 'bg-primary/10'
-                  }`}>
-                    <plan.icon className={`h-6 w-6 ${
-                      plan.id === 'free' ? 'text-muted-foreground' : 'text-primary'
-                    }`} />
+                  <div className="p-2.5 rounded-ds" style={{ background: plan.id === 'free' ? 'var(--ds-surface3)' : 'var(--ds-green-muted)' }}>
+                    <plan.icon className="h-5 w-5" style={{ color: plan.id === 'free' ? 'var(--ds-text3)' : 'var(--ds-green)' }} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">{plan.name}</h3>
-                    <p className="text-sm text-muted-foreground">{plan.period}</p>
+                    <h3 className="h3">{plan.name}</h3>
+                    <p className="text-sm text-text2">{plan.period}</p>
                   </div>
                 </div>
 
                 {/* Price */}
                 <div className="mb-6">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold">
+                    <span className="stat" style={{ color: 'var(--ds-green)' }}>
                       ${plan.price === 0 ? '0' : plan.price}
                     </span>
-                    {plan.price > 0 && <span className="text-muted-foreground">/month</span>}
+                    {plan.price > 0 && <span className="text-text2">/month</span>}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-text2 mt-1">
                     {plan.credits === -1 ? 'Unlimited' : `${plan.credits}`} credits per month
                   </p>
                 </div>
@@ -212,9 +213,9 @@ export default function PricingPage() {
                 {/* Features */}
                 <ul className="space-y-3 mb-6 flex-1">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <span className="text-sm">{feature}</span>
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--ds-green)' }} />
+                      <span className="text-text2">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -243,34 +244,39 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">What are credits?</h3>
-              <p className="text-sm text-muted-foreground">
+        <div className="mt-12 max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="badge badge-pill bg-purple mb-4" style={{ display: 'inline-flex' }}>
+              FAQ
+            </div>
+            <h2 className="h2">Frequently Asked Questions</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Card className="p-5">
+              <h3 className="h3 mb-2">What are credits?</h3>
+              <p className="text-sm text-text2">
                 Credits are used for AI-powered features. Debugging uses 1 credit per analysis,
                 generating code costs 5-20 credits depending on complexity, and web builder projects
                 cost 20-100 credits.
               </p>
             </Card>
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">Do credits roll over?</h3>
-              <p className="text-sm text-muted-foreground">
+            <Card className="p-5">
+              <h3 className="h3 mb-2">Do credits roll over?</h3>
+              <p className="text-sm text-text2">
                 No, credits reset each billing cycle. However, your history and generated code
                 are preserved based on your plan's retention period.
               </p>
             </Card>
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
-              <p className="text-sm text-muted-foreground">
+            <Card className="p-5">
+              <h3 className="h3 mb-2">Can I cancel anytime?</h3>
+              <p className="text-sm text-text2">
                 Yes! You can cancel your subscription at any time. Your plan will remain active
                 until the end of your billing period.
               </p>
             </Card>
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
-              <p className="text-sm text-muted-foreground">
+            <Card className="p-5">
+              <h3 className="h3 mb-2">What payment methods do you accept?</h3>
+              <p className="text-sm text-text2">
                 We accept all major credit and debit cards through Stripe.
               </p>
             </Card>
