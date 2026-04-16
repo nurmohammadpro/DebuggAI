@@ -133,7 +133,7 @@ export default function ReferralsPage() {
 
   if (loadingStats) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-text2">Loading...</div>
       </div>
     );
@@ -144,9 +144,9 @@ export default function ReferralsPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-surface/95 backdrop-blur">
+      <div className="border-b border-border bg-card/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center gap-2">
           <Gift className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
           <h1 className="h2">Referral Program</h1>
@@ -355,7 +355,7 @@ export default function ReferralsPage() {
                     {referrals.map((referral) => (
                       <div
                         key={referral.id}
-                        className="flex items-center justify-between p-4 border border-border rounded-ds hover:bg-surface2"
+                        className="flex items-center justify-between p-4 border border-border rounded-ds hover:bg-card2"
                       >
                         <div className="flex items-center gap-4">
                           <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: 'var(--ds-green-muted)' }}>

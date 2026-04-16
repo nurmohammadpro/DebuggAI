@@ -138,9 +138,9 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-surface/95 backdrop-blur">
+      <div className="border-b border-border bg-card/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <h1 className="h2">Pricing</h1>
           {user && (
@@ -155,7 +155,7 @@ export default function PricingPage() {
       </div>
 
       {/* Hero */}
-      <div className="border-b border-border bg-surface/50 py-12">
+      <div className="border-b border-border bg-card/50 py-12">
         <div className="container mx-auto px-4 text-center">
           <div className="badge badge-pill bg-green mb-4" style={{ display: 'inline-flex' }}>
             Pricing

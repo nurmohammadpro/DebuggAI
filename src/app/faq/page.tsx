@@ -1,18 +1,11 @@
-/**
- * FAQ Page - DeBuggAI
- */
-
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
 import { PublicLayout } from '@/components/public-layout';
+import { useState } from 'react';
 
 export default function FAQPage() {
-  const [openIndex, setOpenIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
     {
@@ -25,11 +18,11 @@ export default function FAQPage() {
     },
     {
       question: 'What programming languages are supported?',
-      answer: 'We support 10+ programming languages including JavaScript, TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, Swift, Kotlin, and C++. We\'re constantly adding support for more languages.',
+      answer: 'We support 10+ programming languages including JavaScript, TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, Swift, Kotlin, and C++. We are constantly adding support for more languages.',
     },
     {
       question: 'How much does it cost?',
-      answer: 'DeBuggAI offers a free forever plan with 30 credits per month. Paid plans start at $9/month for 500 credits. We also offer enterprise plans with unlimited debugging and custom integrations.',
+      answer: 'DeBuggAI offers a free forever plan with 30 credits per month. Paid plans start at $9/month for 300 credits. We also offer enterprise plans with unlimited debugging and custom integrations.',
     },
     {
       question: 'Can I use DeBuggAI for commercial projects?',
@@ -43,54 +36,101 @@ export default function FAQPage() {
 
   return (
     <PublicLayout>
-      {/* Content */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
-            <p className="text-lg text-muted-foreground">
-              Everything you need to know about DeBuggAI
-            </p>
-          </div>
+      <main className="max-w-3xl mx-auto px-6 pt-16 pb-24">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+            FAQ
+          </p>
+          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+            Frequently Asked Questions
+          </h1>
+          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--ds-text2)' }}>
+            Everything you need to know about using DeBuggAI
+          </p>
+        </div>
 
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <Card key={index}>
-                <CardContent className="p-0">
-                  <button
-                    onClick={() => setOpenIndex(index === openIndex ? -1 : index)}
-                    className="w-full text-left p-6 flex items-center justify-between hover:bg-muted/50 transition-colors"
+        {/* Accordion List */}
+        <div className="flex flex-col gap-3">
+          {faqs.map((faq, index) => {
+            const isOpen = index === openIndex;
+
+            return (
+              <div key={index} className="collapse-item">
+                {/* Trigger */}
+                <button
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="collapse-trigger w-full flex items-center gap-3 p-4"
+                  style={{ 
+                    background: isOpen ? 'var(--ds-surface2)' : 'transparent',
+                    border: 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  {/* Using the global .collapse-icon class */}
+                  <div className="collapse-icon">
+                    {isOpen ? '−' : '+'}
+                  </div>
+                  
+                  <span className="text-body font-medium flex-1" style={{ color: 'var(--ds-text)' }}>
+                    {faq.question}
+                  </span>
+
+                  {/* Using the global .collapse-arrow class */}
+                  <div 
+                    className="collapse-arrow" 
+                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                   >
-                    <h3 className="font-semibold pr-4">{faq.question}</h3>
-                    <ChevronDown className={`h-5 w-5 transition-transform ${index === openIndex ? 'rotate-180' : ''}`} />
-                  </button>
-                  {index === openIndex && (
-                    <div className="px-6 pb-6 pt-0 text-muted-foreground">
-                      {faq.answer}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    ↓
+                  </div>
+                </button>
 
-          <div className="text-center mt-12">
-            <p className="text-muted-foreground mb-4">Still have questions?</p>
-            <div className="flex gap-4 justify-center">
-              <Link href="/signup">
-                <Button size="lg" className="bg-[#00C853] hover:bg-[#00E676] text-white">
-                  Get Started
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button size="lg" variant="outline">
-                  View Pricing
-                </Button>
-              </Link>
-            </div>
+                {/* Body with smooth height transition */}
+                <div
+                  className="collapse-body"
+                  style={{
+                    maxHeight: isOpen ? '500px' : '0px',
+                    paddingTop: isOpen ? '0px' : '0px',
+                    paddingBottom: isOpen ? '16px' : '0px',
+                    paddingLeft: '16px',
+                    paddingRight: '16px',
+                    marginLeft: '43px', // Align with text (18px icon + 16px pad + 9px gap)
+                    opacity: isOpen ? 1 : 0,
+                    transition: 'max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <p className="text-body" style={{ color: 'var(--ds-text2)', marginTop: 0 }}>
+                    {faq.answer}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom CTA Section */}
+        <div className="text-center mt-16">
+          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <p className="text-body mb-6" style={{ color: 'var(--ds-text2)' }}>
+            Still have questions?
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/signup">
+              <button className="btn btn-lg btn-primary">
+                Get Started Free
+              </button>
+            </Link>
+            <Link href="/pricing">
+              <button className="btn btn-lg btn-ghost">
+                View Pricing
+              </button>
+            </Link>
           </div>
         </div>
-      </section>
+      </main>
     </PublicLayout>
   );
 }

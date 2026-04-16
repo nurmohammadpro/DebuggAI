@@ -26,7 +26,7 @@ export default function WebBuilderPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--ds-green)' }}></div>
       </div>
     );
@@ -37,9 +37,9 @@ export default function WebBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-surface/95 backdrop-blur">
+      <div className="border-b border-border bg-card/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div>
             <h1 className="h2">Web Builder</h1>

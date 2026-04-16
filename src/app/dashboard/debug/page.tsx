@@ -95,9 +95,9 @@ export default function DebugScreenPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-surface/95 backdrop-blur">
+      <div className="border-b border-border bg-card/95 backdrop-blur">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bug className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />

@@ -1,65 +1,80 @@
-/**
- * Languages Page - DeBuggAI
- */
-
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { PublicLayout } from '@/components/public-layout';
 
-export default function LanguagesPage() {
-  const languages = [
-    { name: 'JavaScript', icon: '🟨', description: 'Node.js, React, Vue, Angular' },
-    { name: 'TypeScript', icon: '🔷', description: 'Type-safe JavaScript development' },
-    { name: 'Python', icon: '🐍', description: 'Django, Flask, FastAPI scripts' },
-    { name: 'Go', icon: '🐹', description: 'High-performance backend services' },
-    { name: 'Rust', icon: '🦀', description: 'Systems programming and WebAssembly' },
-    { name: 'Java', icon: '☕', description: 'Spring Boot, enterprise applications' },
-    { name: 'C#', icon: '💜', description: '.NET applications and services' },
-    { name: 'PHP', icon: '🐘', description: 'WordPress, Laravel, custom apps' },
-    { name: 'Ruby', icon: '💎', description: 'Rails, Sinatra web applications' },
-    { name: 'Swift', icon: '🍎', description: 'iOS and macOS development' },
-    { name: 'Kotlin', icon: '🤖', description: 'Android and backend development' },
-    { name: 'C++', icon: '⚡', description: 'Performance-critical applications' },
-  ];
+const languages = [
+  { name: 'JavaScript', color: '#F7DF1E', description: 'Node.js, React, Vue, Angular' },
+  { name: 'TypeScript', color: '#3178C6', description: 'Type-safe JavaScript development' },
+  { name: 'Python', color: '#3776AB', description: 'Django, Flask, FastAPI scripts' },
+  { name: 'Go', color: '#00ADD8', description: 'High-performance backend services' },
+  { name: 'Rust', color: '#CE422B', description: 'Systems programming and WebAssembly' },
+  { name: 'Java', color: '#ED8B00', description: 'Spring Boot, enterprise applications' },
+  { name: 'C#', color: '#68217A', description: '.NET applications and services' },
+  { name: 'PHP', color: '#777BB4', description: 'WordPress, Laravel, custom apps' },
+  { name: 'Ruby', color: '#CC342D', description: 'Rails, Sinatra web applications' },
+  { name: 'Swift', color: '#FA7343', description: 'iOS and macOS development' },
+  { name: 'Kotlin', color: '#7F52FF', description: 'Android and backend development' },
+  { name: 'C++', color: '#00599C', description: 'Performance-critical applications' },
+];
 
+export default function LanguagesPage() {
   return (
     <PublicLayout>
-      {/* Content */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Supported Languages</h1>
-            <p className="text-lg text-muted-foreground">
-              Debug code in 10+ programming languages with AI-powered analysis
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {languages.map((lang, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="text-3xl mb-3">{lang.icon}</div>
-                  <h3 className="text-lg font-semibold mb-1">{lang.name}</h3>
-                  <p className="text-sm text-muted-foreground">{lang.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <p className="text-muted-foreground mb-4">Don't see your language?</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              We're constantly adding support for more languages. Contact us if you have a specific request.
-            </p>
-            <Link href="/signup">
-              <Button size="lg" className="bg-[#00C853] hover:bg-[#00E676] text-white">
-                Start Debugging
-              </Button>
-            </Link>
-          </div>
+      <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+            Languages
+          </p>
+          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+            Supported Languages
+          </h1>
+          <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--ds-text2)' }}>
+            Debug code in 10+ programming languages with deep AI-powered context analysis.
+          </p>
         </div>
-      </section>
+
+        {/* Languages Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {languages.map((lang) => (
+            <div key={lang.name} className="card-sm card-interactive flex items-start gap-4">
+              {/* Language Dot - using exact global CSS class */}
+              <div 
+                className="lang-dot mt-1.5 shrink-0" 
+                style={{ 
+                  width: '10px', 
+                  height: '10px', 
+                  background: lang.color,
+                  boxShadow: `0 0 8px ${lang.color}40`
+                }} 
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-h3" style={{ color: 'var(--ds-text)', marginBottom: '2px' }}>
+                  {lang.name}
+                </h3>
+                <p className="text-caption" style={{ color: 'var(--ds-text3)' }}>
+                  {lang.description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom CTA Section */}
+        <div className="text-center mt-16">
+          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <p className="text-body mb-2" style={{ color: 'var(--ds-text2)' }}>
+            Don&apos;t see your language?
+          </p>
+          <p className="text-caption mb-8" style={{ color: 'var(--ds-text3)' }}>
+            We&apos;re constantly adding support for new languages and frameworks.
+          </p>
+          <Link href="/signup">
+            <button className="btn btn-lg btn-primary">
+              Start Debugging
+            </button>
+          </Link>
+        </div>
+      </main>
     </PublicLayout>
   );
 }
