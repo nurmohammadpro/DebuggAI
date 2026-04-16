@@ -123,28 +123,6 @@
   --sidebar-ring: #00C853;
 }
 
-.dark {
-  /* Same as root - dark-first design system */
-  --background: #0A0D0A;
-  --foreground: #E8F5E9;
-  --card: #111411;
-  --card-foreground: #E8F5E9;
-  --popover: #111411;
-  --popover-foreground: #E8F5E9;
-  --primary: #00C853;
-  --primary-foreground: #000000;
-  --secondary: #171C17;
-  --secondary-foreground: #E8F5E9;
-  --muted: #171C17;
-  --muted-foreground: #8BAD8B;
-  --accent: #1E261E;
-  --accent-foreground: #E8F5E9;
-  --destructive: #FF5252;
-  --border: #1F2B1F;
-  --input: #171C17;
-  --ring: #00C853;
-}
-
 @layer base {
   * {
     border-color: var(--ds-border);
@@ -1021,3 +999,4 @@
     scroll-behavior: auto;
   }
 }
+

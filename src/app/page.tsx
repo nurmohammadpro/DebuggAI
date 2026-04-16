@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Bug,
   ArrowRight,
   Check,
   Play,
@@ -19,11 +18,13 @@ import {
   Star,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Logo } from '@/components/logo';
 
 export default function LandingPage() {
   const [activeSection, setActiveSection] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [terminalReplay, setTerminalReplay] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Scroll-triggered animations
   useEffect(() => {
@@ -59,47 +60,15 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-xl">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-            <div className="nav-logo-icon">
-              <Bug style={{ fontSize: '13px', color: 'var(--ds-green)' }} />
-            </div>
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Logo className="h-5 w-auto" />
             <span className="font-semibold text-base">DeBuggAI</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-1">
-            <a
-              href="#features"
-              className={`nav-link ${activeSection === 'features' ? 'active' : ''}`}
-            >
-              Features
-            </a>
-            <a
-              href="#demo"
-              className={`nav-link ${activeSection === 'demo' ? 'active' : ''}`}
-            >
-              Live Demo
-            </a>
-            <a
-              href="#languages"
-              className={`nav-link ${activeSection === 'languages' ? 'active' : ''}`}
-            >
-              Languages
-            </a>
-            <a
-              href="#pricing"
-              className={`nav-link ${activeSection === 'pricing' ? 'active' : ''}`}
-            >
-              Pricing
-            </a>
-            <a
-              href="#faq"
-              className={`nav-link ${activeSection === 'faq' ? 'active' : ''}`}
-            >
-              FAQ
-            </a>
+          <nav className="hidden md:flex items-center gap-2">
             <Link href="/login">
               <Button variant="ghost" size="sm">
                 Sign In
@@ -111,7 +80,49 @@ export default function LandingPage() {
               </Button>
             </Link>
           </nav>
+          {/* Mobile menu button */}
+          <div className="flex items-center gap-2">
+            <button
+              className="nav-link p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-border bg-surface">
+            <div className="container mx-auto px-4 py-3 flex flex-col gap-1">
+              <Link href="/features" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                ✨ Features
+              </Link>
+              <Link href="/demo" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                🎬 Live Demo
+              </Link>
+              <Link href="/languages" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                💻 Languages
+              </Link>
+              <Link href="/pricing" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                💳 Pricing
+              </Link>
+              <Link href="/faq" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                ❓ FAQ
+              </Link>
+              <div className="border-t border-border my-2"></div>
+              <Link href="/login" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                🔑 Sign In
+              </Link>
+              <Link href="/signup" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                🚀 Get Started
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
@@ -139,13 +150,13 @@ export default function LandingPage() {
 
           {/* CTA Buttons */}
           <div className="fade-up fade-up-delay-3 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="btn-primary btn-lg">
+            <Link href="/signup" className="w-full sm:w-auto">
+              <Button size="lg" className="btn-primary btn-lg w-full">
                 Start Debugging Now
                 <ArrowRight style={{ fontSize: '16px' }} />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="btn-lg">
+            <Button size="lg" variant="outline" className="btn-lg w-auto">
               Watch Demo
               <Play style={{ fontSize: '14px' }} />
             </Button>
@@ -406,7 +417,7 @@ export default function LandingPage() {
       </section>
 
       {/* Stats */}
-      <section className="border-t border-border bg-surface py-16">
+      <section className="border-t border-border bg-card py-16">
         <div className="container mx-auto px-4">
           <div className="fade-up grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
             <Card className="card card-interactive text-center" style={{ padding: '24px' }}>
@@ -819,15 +830,12 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-surface py-12">
+      <footer className="border-t border-border bg-card py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
             <div>
               <div className="flex items-center space-x-2 mb-3">
-                <div className="nav-logo-icon" style={{ width: '24px', height: '24px' }}>
-                  <Bug style={{ fontSize: '11px', color: 'var(--ds-green)' }} />
-                </div>
-                <span className="font-semibold text-sm">DeBuggAI</span>
+                <Logo className="h-4 w-auto" />
               </div>
               <p className="text-xs text-text3 leading-relaxed max-w-xs">
                 AI-powered debugging and web building platform for developers. Ship faster, stress less.
