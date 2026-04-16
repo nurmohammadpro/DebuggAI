@@ -66,7 +66,7 @@ const initialState = {
 
 export const useGenerationStore = create<GenerationState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
 
       setCurrentCode: (code) => set({ currentCode: code }),

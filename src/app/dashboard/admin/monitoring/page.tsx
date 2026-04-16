@@ -112,15 +112,17 @@ export default function AdminMonitoringPage() {
   };
 
   const getStatusColor = () => {
-    if (!health) return 'secondary';
+    if (!health) return 'gray';
 
     switch (health.status) {
       case 'healthy':
-        return 'default';
+        return 'green';
       case 'degraded':
-        return 'secondary';
+        return 'amber';
       case 'error':
-        return 'destructive';
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 

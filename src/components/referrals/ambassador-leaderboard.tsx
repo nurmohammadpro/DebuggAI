@@ -152,7 +152,7 @@ export function AmbassadorLeaderboard() {
               <TrendingUp className="h-5 w-5" />
               Top Ambassadors
             </h3>
-            <Badge variant="secondary">{leaderboard.length} ambassadors</Badge>
+            <Badge variant="blue">{leaderboard.length} ambassadors</Badge>
           </div>
 
           {loading ? (

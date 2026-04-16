@@ -5,12 +5,12 @@
  */
 
 import { cn } from '@/lib/utils';
-import { ReactNode } from 'react';
+import { ReactNode, ElementType } from 'react';
 
 interface TextProps {
   children: ReactNode;
   className?: string;
-  as?: 'p' | 'span' | 'div';
+  as?: ElementType;
 }
 
 // Display Text - For hero sections and major headings
@@ -39,8 +39,8 @@ export function DisplayLg({ children, className }: TextProps) {
 }
 
 // Headings
-export function Heading({ children, className, as = 'h2' }: TextProps & { as?: 'h1' | 'h2' | 'h3' | 'h4' }) {
-  const Tag = as;
+export function Heading({ children, className, as = 'h2' }: Omit<TextProps, 'as'> & { as?: 'h1' | 'h2' | 'h3' | 'h4' }) {
+  const Tag = as as ElementType;
   return (
     <Tag className={cn(
       'text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight',
@@ -77,7 +77,7 @@ export function Title({ children, className }: TextProps) {
 
 // Body text
 export function Body({ children, className, as = 'p' }: TextProps) {
-  const Tag = as;
+  const Tag = as as ElementType;
   return (
     <Tag className={cn(
       'text-base sm:text-lg leading-relaxed text-foreground/80',
@@ -90,7 +90,7 @@ export function Body({ children, className, as = 'p' }: TextProps) {
 }
 
 export function BodySmall({ children, className, as = 'p' }: TextProps) {
-  const Tag = as;
+  const Tag = as as ElementType;
   return (
     <Tag className={cn(
       'text-sm sm:text-base leading-relaxed text-foreground/70',
@@ -130,7 +130,7 @@ export function Label({ children, className }: TextProps) {
 
 // Utility text
 export function Muted({ children, className, as = 'span' }: TextProps) {
-  const Tag = as;
+  const Tag = as as ElementType;
   return (
     <Tag className={cn('text-sm text-muted-foreground', className)}>
       {children}
@@ -139,7 +139,7 @@ export function Muted({ children, className, as = 'span' }: TextProps) {
 }
 
 export function Small({ children, className, as = 'small' }: TextProps) {
-  const Tag = as;
+  const Tag = as as ElementType;
   return (
     <Tag className={cn('text-sm leading-none', className)}>
       {children}

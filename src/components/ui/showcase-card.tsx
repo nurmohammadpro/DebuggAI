@@ -10,10 +10,10 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 interface ShowcaseCardProps {
-  icon: LucideIcon;
+  icon?: LucideIcon | ReactNode | ((props?: any) => ReactNode);
   title: string;
   description: string;
   gradient?: 'blue' | 'purple' | 'green' | 'orange' | 'pink';
@@ -83,7 +83,13 @@ export function ShowcaseCard({
               gradients[gradient]
             )}
           >
-            <Icon className="h-6 w-6 text-white relative z-10" />
+            {typeof Icon === 'function' ? (
+              <Icon className="h-6 w-6 text-white relative z-10" />
+            ) : Icon ? (
+              <div className="h-6 w-6 text-white relative z-10 flex items-center justify-center">
+                {Icon as ReactNode}
+              </div>
+            ) : null}
 
             {/* Shine effect */}
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/30 to-transparent" />

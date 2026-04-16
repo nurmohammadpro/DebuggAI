@@ -242,7 +242,7 @@ export default function AdminUsersPage() {
             <Select
               value={planFilter}
               onValueChange={(value) => {
-                setPlanFilter(value);
+                setPlanFilter(value ?? 'all');
                 setCurrentPage(1);
               }}
             >
@@ -297,10 +297,10 @@ export default function AdminUsersPage() {
                   <Badge
                     variant={
                       userItem.plan === 'enterprise'
-                        ? 'default'
+                        ? 'purple'
                         : userItem.plan === 'pro'
-                        ? 'secondary'
-                        : 'outline'
+                        ? 'blue'
+                        : 'gray'
                     }
                   >
                     {userItem.plan}
@@ -371,7 +371,7 @@ export default function AdminUsersPage() {
           <div className="space-y-4 py-4">
             <div>
               <label className="text-sm font-medium">Plan</label>
-              <Select value={editPlan} onValueChange={setEditPlan}>
+              <Select value={editPlan} onValueChange={(v) => setEditPlan(v ?? 'free')}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
