@@ -46,7 +46,7 @@ const initialState = {
 
 export const useSessionStore = create<SessionState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
 
       setUser: (user) =>

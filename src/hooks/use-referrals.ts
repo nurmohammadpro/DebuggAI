@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-interface Referral {
+export interface Referral {
   id: string;
   code: string;
   status: 'pending' | 'completed' | 'paid';
@@ -20,7 +20,7 @@ interface Referral {
   };
 }
 
-interface ReferralStats {
+export interface ReferralStats {
   totalReferrals: number;
   pendingReferrals: number;
   completedReferrals: number;
@@ -63,8 +63,8 @@ export function useReferrals(options: UseReferralsOptions = {}) {
       const data = await response.json();
       options.onCodeGenerated?.(data.code, data.url);
       return data;
-    } catch (error: any) {
-      options.onError?.(error);
+    } catch (error) {
+      options.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     } finally {
       setIsLoading(false);
@@ -93,8 +93,8 @@ export function useReferrals(options: UseReferralsOptions = {}) {
 
       const data = await response.json();
       return data;
-    } catch (error: any) {
-      options.onError?.(error);
+    } catch (error) {
+      options.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     } finally {
       setIsTracking(false);

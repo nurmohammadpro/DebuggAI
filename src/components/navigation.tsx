@@ -8,7 +8,6 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,21 +17,63 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { Bug, Code2, Zap, Settings, User, LogOut, Menu, Gift, Receipt, Shield, Bell, ChevronDown } from 'lucide-react';
+import { Bug, Zap, Settings, LogOut, Gift, Receipt, Shield, Bell, } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { cn } from '@/lib/utils';
 
 export function Navigation() {
-  const { user, credits, isAuthenticated, setUser, setCredits, logout } =
+  const { user, isAuthenticated, setUser, setCredits, logout } =
     useSessionStore();
+  const credits = user?.credits;
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(true);
-  const channelRef = useRef<RealtimeChannel>();
+  const channelRef = useRef<RealtimeChannel | undefined>(undefined);
+
+  const fetchCredits = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('credit_wallets')
+      .select('balance')
+      .eq('owner_id', userId)
+      .single();
+
+    if (data) {
+      setCredits(data.balance);
+    }
+
+    // Fetch admin status
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+
+    setIsAdmin(profile?.is_admin ?? false);
+  }, [setCredits]);
+
+  const subscribeToCredits = useCallback((userId: string) => {
+    const channel = supabase
+      .channel(`credits:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'credit_wallets',
+          filter: `owner_id=eq.${userId}`,
+        },
+        (payload) => {
+          const newBalance = payload.new.balance;
+          setCredits(newBalance);
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+  }, [setCredits]);
 
   useEffect(() => {
     // Check current session
@@ -75,55 +116,14 @@ export function Navigation() {
       }
     });
 
+    const channel = channelRef.current;
     return () => {
       subscription.unsubscribe();
-      if (channelRef.current) {
-        channelRef.current.unsubscribe();
+      if (channel) {
+        channel.unsubscribe();
       }
     };
-  }, [setUser]);
-
-  const fetchCredits = async (userId: string) => {
-    const { data } = await supabase
-      .from('credit_wallets')
-      .select('balance')
-      .eq('owner_id', userId)
-      .single();
-
-    if (data) {
-      setCredits(data.balance);
-    }
-
-    // Fetch admin status
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .single();
-
-    setIsAdmin(profile?.is_admin ?? false);
-  };
-
-  const subscribeToCredits = (userId: string) => {
-    const channel = supabase
-      .channel(`credits:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'credit_wallets',
-          filter: `owner_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newBalance = payload.new.balance;
-          setCredits(newBalance);
-        }
-      )
-      .subscribe();
-
-    channelRef.current = channel;
-  };
+  }, [setUser, fetchCredits, subscribeToCredits]);
 
   const handleLogout = async () => {
     if (channelRef.current) {
@@ -178,7 +178,7 @@ export function Navigation() {
 
           {/* User Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <Button
                 variant="ghost"
                 className="nav-avatar"
@@ -208,19 +208,19 @@ export function Navigation() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem>
                 <Link href="/settings" className="flex w-full items-center cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem>
                 <Link href="/settings/transactions" className="flex w-full items-center cursor-pointer">
                   <Receipt className="mr-2 h-4 w-4" />
                   Transactions
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem>
                 <Link href="/referrals" className="flex w-full items-center cursor-pointer">
                   <Gift className="mr-2 h-4 w-4" />
                   Referrals
@@ -229,7 +229,7 @@ export function Navigation() {
               {isAdmin && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/admin" className="flex w-full items-center cursor-pointer">
                       <Shield className="mr-2 h-4 w-4" />
                       <span className="text-purple">Admin Dashboard</span>

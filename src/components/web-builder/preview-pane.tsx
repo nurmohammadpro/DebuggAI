@@ -33,20 +33,6 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Debounced update function
-  const debouncedUpdate = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout;
-      return (code: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          updatePreview(code);
-        }, 500); // 500ms debounce
-      };
-    })(),
-    []
-  );
-
   const updatePreview = useCallback((code: string) => {
     if (!iframeRef.current) return;
 
@@ -63,6 +49,14 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
       URL.revokeObjectURL(url);
     };
   }, []);
+
+  // Debounced update function
+  const debouncedUpdate = useCallback((code: string) => {
+    const timeoutId = setTimeout(() => {
+      updatePreview(code);
+    }, 500); // 500ms debounce
+    return () => clearTimeout(timeoutId);
+  }, [updatePreview]);
 
   // Listen for errors from iframe
   useEffect(() => {
@@ -108,7 +102,7 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium">Live Preview</h3>
           {lastError && (
-            <Badge variant="destructive" className="text-xs">
+            <Badge variant="red" className="text-xs">
               Error
             </Badge>
           )}
@@ -117,7 +111,7 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
           {/* Version Selector */}
           {versions.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger>
                 <Button variant="ghost" size="sm" className="h-7 text-xs">
                   {currentVersion?.description || `Version ${versions.findIndex(v => v.id === currentVersionId) + 1}`}
                   <ChevronDown className="ml-1 h-3 w-3" />

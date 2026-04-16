@@ -59,7 +59,7 @@ export async function parseSSEResponse(
                            parsed.content ||
                            '';
             accumulated += content;
-          } catch (e) {
+          } catch {
             console.warn('Failed to parse SSE data:', data);
           }
         }
@@ -120,7 +120,7 @@ export async function parseSSEResponseWithCallback(
               accumulated += content;
               onChunk(content);
             }
-          } catch (e) {
+          } catch {
             console.warn('Failed to parse SSE data:', data);
           }
         }

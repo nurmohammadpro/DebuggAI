@@ -71,7 +71,7 @@ const initialState = {
 
 export const useDebugStore = create<DebugState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
 
       setCurrentLanguage: (language) => set({ currentLanguage: language }),

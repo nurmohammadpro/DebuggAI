@@ -6,13 +6,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useReferrals } from '@/hooks/use-referrals';
+import type { ReferralStats, Referral } from '@/hooks/use-referrals';
 import { useSessionStore } from '@/store/session-store';
 import { AmbassadorLeaderboard } from '@/components/referrals/ambassador-leaderboard';
 import {
@@ -32,7 +34,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const AMBASSADOR_ICONS: Record<string, any> = {
+const AMBASSADOR_ICONS: Record<string, React.ElementType> = {
   bronze: Medal,
   silver: Award,
   gold: Trophy,
@@ -63,18 +65,12 @@ export default function ReferralsPage() {
 
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralUrl, setReferralUrl] = useState<string | null>(null);
-  const [stats, setStats] = useState<any>(null);
-  const [referrals, setReferrals] = useState<any[]>([]);
+  const [stats, setStats] = useState<ReferralStats | null>(null);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   const [copied, setCopied] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadReferralData();
-    }
-  }, [isAuthenticated]);
-
-  const loadReferralData = async () => {
+  const loadReferralData = useCallback(async () => {
     try {
       setLoadingStats(true);
       const [statsData, referralsData] = await Promise.all([
@@ -91,19 +87,25 @@ export default function ReferralsPage() {
       }
 
       setReferrals(referralsData);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to load referral data:', error);
       toast.error('Failed to load referral data');
     } finally {
       setLoadingStats(false);
     }
-  };
+  }, [getStats, getReferrals]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadReferralData();
+    }
+  }, [isAuthenticated, loadReferralData]);
 
   const handleGenerateCode = async () => {
     try {
       await generateCode();
     } catch (error) {
-      // Error handled in hook
+      console.log(error)
     }
   };
 
@@ -233,7 +235,7 @@ export default function ReferralsPage() {
                   <label className="text-sm text-text2 mb-2 block">Referral URL</label>
                   <div className="flex gap-2">
                     <Input
-                      value={referralUrl}
+                      value={referralUrl ?? ''}
                       readOnly
                       className="font-mono"
                     />

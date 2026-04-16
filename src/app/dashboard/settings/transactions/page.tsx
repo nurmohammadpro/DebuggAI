@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -155,7 +155,7 @@ export default function TransactionsPage() {
               {/* Type Filter */}
               <div className="space-y-2">
                 <Label>Filter by Type</Label>
-                <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+                <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as 'all' | 'earned' | 'spent' | 'refunded')}>
                   <SelectTrigger>
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
@@ -193,7 +193,7 @@ export default function TransactionsPage() {
                 <>
                   <p className="text-lg font-medium mb-2">No matching transactions</p>
                   <p className="text-sm">
-                    Try adjusting your search or filter to find what you're looking for.
+                    Try adjusting your search or filter to find what you are looking for.
                   </p>
                 </>
               )}
@@ -208,7 +208,7 @@ export default function TransactionsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge
-                          variant={transaction.type === 'earned' ? 'default' : transaction.type === 'spent' ? 'destructive' : 'secondary'}
+                          variant={transaction.type === 'earned' ? 'green' : transaction.type === 'spent' ? 'red' : 'gray'}
                           className="text-xs"
                         >
                           {transaction.type}

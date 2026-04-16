@@ -7,8 +7,9 @@
 
 'use client';
 
-import { useEffect, useRef } from 'react';
+import {  useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import { useGenerationStore } from '@/store/generation-store';
 import { Card } from '@/components/ui/card';
 
@@ -19,7 +20,7 @@ interface CodeEditorProps {
 
 export function CodeEditor({ height = '600px', readOnly = false }: CodeEditorProps) {
   const { currentCode, setCurrentCode } = useGenerationStore();
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
@@ -27,7 +28,7 @@ export function CodeEditor({ height = '600px', readOnly = false }: CodeEditorPro
     }
   };
 
-  const handleEditorDidMount = (editor: any) => {
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
 
     // Set editor options

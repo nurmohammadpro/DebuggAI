@@ -9,12 +9,13 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap, User as UserIcon, CreditCard, Settings as SettingsIcon } from 'lucide-react';
+import {  User as UserIcon, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
 import Link from 'next/link';
 
 export default function SettingsPage() {
-  const { user, credits, isAuthenticated } = useSessionStore();
+  const { user, isAuthenticated } = useSessionStore();
+  const credits = user?.credits;
 
   if (!isAuthenticated) {
     return null; // Will redirect

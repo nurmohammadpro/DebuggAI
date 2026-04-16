@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Loader2, Sparkles, Layers } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGenerationStore } from '@/store/generation-store';
 import { StackSelector } from './stack-selector';
 
 interface ChatMessage {
@@ -34,11 +33,11 @@ export function ChatPanel({ height = '600px' }: ChatPanelProps) {
   const [accumulatedResponse, setAccumulatedResponse] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { generate, isLoading: isGenerating } = useGeneration({
+  const { generate } = useGeneration({
     onChunk: (chunk) => {
       setAccumulatedResponse((prev) => prev + chunk);
     },
-    onDone: (code) => {
+    onDone: () => {
       // Add complete response to messages
       setMessages((prev) => [
         ...prev,

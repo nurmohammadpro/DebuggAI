@@ -114,7 +114,7 @@ export async function addCredits(
   // Add credits
   const { data: wallet } = await supabase
     .from('credit_wallets')
-    .update({ balance: supabase.raw(`balance + ${amount}`) })
+    .update({ balance: supabase.rpc('increment', { x: amount }) })
     .eq('id', walletId)
     .select('balance')
     .single();
@@ -181,15 +181,21 @@ export async function getTransactions(
   userId: string,
   limit = 50
 ): Promise<Array<{ id: string; amount: number; type: string; source: string; description: string | null; created_at: string }>> {
+  const { data: wallets } = await supabase
+    .from('credit_wallets')
+    .select('id')
+    .eq('owner_id', userId);
+
+  const walletIds = (wallets || []).map((w) => w.id);
+
+  if (walletIds.length === 0) return [];
+
   const { data } = await supabase
     .from('credit_transactions')
     .select('id, amount, type, source, description, created_at')
-    .in(
-      'wallet_id',
-      supabase.from('credit_wallets').select('id').eq('owner_id', userId)
-    )
+    .in('wallet_id', walletIds)
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  return (data as any) || [];
+  return (data as Array<{ id: string; amount: number; type: string; source: string; description: string | null; created_at: string }>) || [];
 }

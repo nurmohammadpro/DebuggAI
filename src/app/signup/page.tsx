@@ -42,7 +42,7 @@ export default function SignupPage() {
           </div>
 
           {/* Email/Password Form */}
-          <form action={signUp} className="space-y-4">
+          <form action={async (formData) => { await signUp(formData); }} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input

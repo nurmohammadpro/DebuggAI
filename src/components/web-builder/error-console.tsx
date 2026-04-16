@@ -34,6 +34,7 @@ export function ErrorConsole({ className }: ErrorConsoleProps) {
     onError: (error) => {
       setDebugging(false);
       toast.error('Failed to debug code');
+      console.log(error)
     },
   });
 
@@ -72,7 +73,7 @@ export function ErrorConsole({ className }: ErrorConsoleProps) {
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
             <h3 className="font-medium">Runtime Error</h3>
-            <Badge variant="destructive">Error</Badge>
+            <Badge variant="red">Error</Badge>
           </div>
           <Button
             variant="ghost"

@@ -9,7 +9,6 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -17,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Code2, Zap } from 'lucide-react';
 import { WEB_BUILDER_STACKS } from '@/lib/constants';
 import { toast } from 'sonner';
-import { useGenerationStore } from '@/store/generation-store';
 import { useGeneration } from '@/hooks/use-generation';
 
 interface StackSelectorProps {
@@ -49,6 +47,7 @@ export function StackSelector({ children }: StackSelectorProps) {
     onError: (error) => {
       setIsGenerating(false);
       toast.error('Failed to generate project');
+      console.log(error)
     },
   });
 
@@ -85,7 +84,7 @@ export function StackSelector({ children }: StackSelectorProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -93,7 +92,7 @@ export function StackSelector({ children }: StackSelectorProps) {
             Select Your Tech Stack
           </DialogTitle>
           <DialogDescription>
-            Choose a technology stack and select the features you need. We'll generate a complete project structure for you.
+            We&apos;ll generate a complete project structure for you.
           </DialogDescription>
         </DialogHeader>
 
@@ -145,10 +144,12 @@ export function StackSelector({ children }: StackSelectorProps) {
             <div className="grid md:grid-cols-2 gap-4">
               {COMMON_FEATURES.map((feature) => (
                 <div key={feature.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                  <Checkbox
+                  <input
+                    type="checkbox"
                     id={feature.id}
                     checked={selectedFeatures.includes(feature.id)}
-                    onCheckedChange={() => toggleFeature(feature.id)}
+                    onChange={() => toggleFeature(feature.id)}
+                    className="h-4 w-4 rounded border-gray-300"
                   />
                   <div className="flex-1">
                     <Label htmlFor={feature.id} className="cursor-pointer">
@@ -168,7 +169,7 @@ export function StackSelector({ children }: StackSelectorProps) {
             <div className="text-sm text-muted-foreground">
               {selectedStack ? (
                 <>
-                  <Badge variant="secondary">{selectedStack.toUpperCase()}</Badge>
+                  <Badge variant="outline">{selectedStack.toUpperCase()}</Badge>
                   {selectedFeatures.length > 0 && (
                     <>
                       {' '}+ {selectedFeatures.length} features

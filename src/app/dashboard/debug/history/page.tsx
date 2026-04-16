@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,15 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Clock, Bug, Trash2, RefreshCw } from 'lucide-react';
+import { Search, Clock, Bug, Trash2, RefreshCw, History } from 'lucide-react';
 import { useDebugStore, Language } from '@/store/debug-store';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function DebugHistoryPage() {
-  const { sessions, addSession, clearSessions, deleteSession } = useDebugStore();
+  const { sessions, clearSessions, deleteSession } = useDebugStore();
   const [search, setSearch] = useState('');
   const [languageFilter, setLanguageFilter] = useState<'all' | Language>('all');
 
@@ -43,7 +42,7 @@ export default function DebugHistoryPage() {
     return matchesSearch && matchesLanguage;
   });
 
-  const handleReRun = (session: typeof sessions[0]) => {
+  const handleReRun = () => {
     // Populate the debug screen with this session's data
     // For now, just show a toast
     toast.success('Session loaded - navigate to Debug screen to re-run');
@@ -99,7 +98,7 @@ export default function DebugHistoryPage() {
               {/* Language Filter */}
               <div className="space-y-2">
                 <Label>Filter by Language</Label>
-                <Select value={languageFilter} onValueChange={(v) => setLanguageFilter(v as any)}>
+                <Select value={languageFilter} onValueChange={(v) => setLanguageFilter(v as Language)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All languages" />
                   </SelectTrigger>
@@ -133,7 +132,7 @@ export default function DebugHistoryPage() {
                 <>
                   <p className="text-lg font-medium mb-2">No matching sessions</p>
                   <p className="text-sm">
-                    Try adjusting your search or filter to find what you're looking for.
+                    Try adjusting your search or filter to find what you&apos;re looking for.
                   </p>
                 </>
               )}
@@ -146,7 +145,7 @@ export default function DebugHistoryPage() {
                 <div className="p-4 flex-1 space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between">
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="outline" className="text-xs">
                       {session.language}
                     </Badge>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -189,7 +188,7 @@ export default function DebugHistoryPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => handleReRun(session)}
+                      onClick={() => handleReRun()}
                     >
                       <RefreshCw className="mr-1 h-3 w-3" />
                       Re-run

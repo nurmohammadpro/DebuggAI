@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -125,7 +124,7 @@ export default function DebugScreenPage() {
                 {/* Language Selector */}
                 <div className="space-y-2">
                   <Label>Programming Language</Label>
-                  <Select value={currentLanguage} onValueChange={(v) => setCurrentLanguage(v as any)}>
+                  <Select value={currentLanguage} onValueChange={(v) => setCurrentLanguage(v as typeof currentLanguage)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select language (auto-detect if not specified)" />
                     </SelectTrigger>
@@ -240,7 +239,7 @@ export default function DebugScreenPage() {
                     <Code2 className="h-16 w-16 mb-4 opacity-20" />
                     <p className="text-lg font-medium mb-2 text-text">Ready to analyze</p>
                     <p className="text-sm">
-                      Paste your code and optionally an error message, then click "Analyze Code" to get AI-powered debugging insights.
+                      Paste your code and optionally an error message, then click &quot;Analyze Code&quot; to get AI-powered debugging insights.
                     </p>
                   </div>
                 )}

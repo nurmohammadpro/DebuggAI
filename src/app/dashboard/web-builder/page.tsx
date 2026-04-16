@@ -9,7 +9,6 @@ import { CodeEditor } from '@/components/web-builder/code-editor';
 import { PreviewPane } from '@/components/web-builder/preview-pane';
 import { useEffect } from 'react';
 import { useSessionStore } from '@/store/session-store';
-import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
 export default function WebBuilderPage() {

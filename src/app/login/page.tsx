@@ -42,7 +42,7 @@ export default function LoginPage() {
           </div>
 
           {/* Email/Password Form */}
-          <form action={signIn} className="space-y-4">
+          <form action={async (formData) => { await signIn(formData); }} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -78,7 +78,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-muted-foreground text-center">
-            Don't have an account?{' '}
+            Do not have an account?{' '}
             <Link href="/signup" className="text-primary hover:underline">
               Sign up
             </Link>

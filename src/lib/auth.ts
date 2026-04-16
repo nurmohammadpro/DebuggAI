@@ -28,7 +28,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
     return { success: false, error: 'Email and password are required' };
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
