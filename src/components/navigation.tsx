@@ -7,6 +7,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,23 +18,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { 
-  Zap, 
-  Settings, 
-  LogOut, 
-  Gift, 
-  Receipt, 
-  Shield, 
-  Bell, 
-  Menu, 
-  Globe, 
-  CreditCard, 
-  Sparkles, 
-  Play, 
-  Code, 
-  HelpCircle, 
-  LogIn, 
-  Rocket 
+import {
+  Bell,
+  Menu,
+  Zap,
 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
@@ -41,6 +29,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export function Navigation() {
+  const router = useRouter();
   const { user, isAuthenticated, setUser, setCredits, logout } =
     useSessionStore();
   const credits = user?.credits;
@@ -62,7 +51,6 @@ export function Navigation() {
       setCredits(data.balance);
     }
 
-    // Fetch admin status
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
@@ -94,7 +82,6 @@ export function Navigation() {
   }, [setCredits]);
 
   useEffect(() => {
-    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser({
@@ -111,7 +98,6 @@ export function Navigation() {
       }
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -143,7 +129,6 @@ export function Navigation() {
     };
   }, [setUser, fetchCredits, subscribeToCredits]);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -160,14 +145,10 @@ export function Navigation() {
     };
   }, [menuOpen]);
 
-  // Close menu on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setMenuOpen(false);
-      }
+      if (e.key === 'Escape') setMenuOpen(false);
     };
-
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
@@ -184,228 +165,185 @@ export function Navigation() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <nav className="navbar flex items-center">
-      {/* Logo & Brand */}
-      <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo flex items-center gap-2">
-        <Logo className="h-6 w-auto" />
-        <span className="font-semibold text-base">DeBuggAI</span>
-      </Link>
+    <nav className="navbar w-full">
+      <div className="container mx-auto px-4 flex items-center">
+        {/* Logo & Brand - JetBrains Mono font */}
+        <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo flex items-center gap-2.5">
+          <Logo className="h-6 w-auto" />
+          <span className="font-semibold text-base font-mono" style={{ color: 'var(--ds-text)' }}>
+            DeBuggAI
+          </span>
+        </Link>
 
-      {/* Right Side Actions */}
-      <div className="ml-auto flex items-center gap-2">
-        {isAuthenticated ? (
-          <>
-            {/* Credits Badge */}
-            <div className="nav-credit">
-              <Zap className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
-              {credits === -1 ? '∞' : credits}
-            </div>
+        {/* Right Side Actions */}
+        <div className="ml-auto flex items-center gap-2">
+          {isAuthenticated ? (
+            <>
+              {/* Credits Badge */}
+              <div className="nav-credit">
+                <Zap className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
+                {credits === -1 ? '∞' : credits}
+              </div>
 
-            {/* Notifications */}
-            <button className="nav-notif" onClick={() => setHasNotifications(false)}>
-              <Bell className="h-4 w-4" />
-              {hasNotifications && <div className="notif-dot"></div>}
+              {/* Notifications */}
+              <button className="nav-notif" onClick={() => setHasNotifications(false)}>
+                <Bell className="h-4 w-4" />
+                {hasNotifications && <div className="notif-dot"></div>}
+              </button>
+
+              {/* User Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="ghost"
+                    className="nav-avatar"
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      padding: '0',
+                      borderRadius: '50%',
+                      background: 'var(--ds-green-muted)',
+                      border: '2px solid rgba(0,200,83,0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'var(--ds-green)',
+                    }}
+                  >
+                    {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.displayName}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/debug')} className="cursor-pointer">
+                    Debug
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/web-builder')} className="cursor-pointer">
+                    Web Builder
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/pricing')} className="cursor-pointer">
+                    Pricing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/referrals')} className="cursor-pointer">
+                    Referrals
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/settings')} className="cursor-pointer">
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/settings/transactions')} className="cursor-pointer">
+                    Transactions
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push('/dashboard/admin')} className="cursor-pointer">
+                        Admin Panel
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <Link href="/login">
+              <Button size="sm">
+                Sign In
+              </Button>
+            </Link>
+          )}
+
+          {/* Mobile Menu Button */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="nav-link p-2"
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+            >
+              <Menu className="h-5 w-5" />
             </button>
 
-            {/* User Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button
-                  variant="ghost"
-                  className="nav-avatar"
-                  style={{
-                    width: '30px',
-                    height: '30px',
-                    padding: '0',
-                    borderRadius: '50%',
-                    background: 'var(--ds-green-muted)',
-                    border: '2px solid rgba(0,200,83,0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: 'var(--ds-green)',
-                  }}
+            {/* Mobile Menu Dropdown */}
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 w-56 animate-slide-down z-50"
+                style={{
+                  background: 'var(--ds-surface)',
+                  border: '1px solid var(--ds-border2)',
+                  borderRadius: 'var(--ds-r12)',
+                  boxShadow: 'var(--ds-shadow-card)',
+                }}
+              >
+                <Link
+                  href="/features"
+                  className="mobile-menu-item"
+                  onClick={closeMenu}
                 >
-                  {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 animate-slide-down">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/dashboard/debug" className="flex w-full items-center cursor-pointer">
-                    <Zap className="mr-2 h-4 w-4" />
-                    Debug
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/dashboard/web-builder" className="flex w-full items-center cursor-pointer">
-                    <Globe className="mr-2 h-4 w-4" />
-                    Web Builder
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/dashboard/pricing" className="flex w-full items-center cursor-pointer">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Pricing
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/dashboard/referrals" className="flex w-full items-center cursor-pointer">
-                    <Gift className="mr-2 h-4 w-4" />
-                    Referrals
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/dashboard/settings" className="flex w-full items-center cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/dashboard/settings/transactions" className="flex w-full items-center cursor-pointer">
-                    <Receipt className="mr-2 h-4 w-4" />
-                    Transactions
-                  </Link>
-                </DropdownMenuItem>
-                {isAdmin && (
+                  Features
+                </Link>
+                <Link
+                  href="/demo"
+                  className="mobile-menu-item"
+                  onClick={closeMenu}
+                >
+                  Live Demo
+                </Link>
+                <Link
+                  href="/languages"
+                  className="mobile-menu-item"
+                  onClick={closeMenu}
+                >
+                  Languages
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="mobile-menu-item"
+                  onClick={closeMenu}
+                >
+                  Pricing
+                </Link>
+                <Link
+                  href="/faq"
+                  className="mobile-menu-item"
+                  onClick={closeMenu}
+                >
+                  FAQ
+                </Link>
+                {!isAuthenticated && (
                   <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <Link href="/dashboard/admin" className="flex w-full items-center cursor-pointer">
-                        <Shield className="mr-2 h-4 w-4" />
-                        Admin Panel
-                      </Link>
-                    </DropdownMenuItem>
+                    <div className="border-t border-border2 my-2"></div>
+                    <Link
+                      href="/login"
+                      className="mobile-menu-item"
+                      onClick={closeMenu}
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="mobile-menu-item"
+                      onClick={closeMenu}
+                    >
+                      Sign Up
+                    </Link>
                   </>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        ) : (
-          <Link href="/login">
-            <Button size="sm" className="h-8 bg-[#00C853] hover:bg-[#00E676] text-white">
-              Sign In
-            </Button>
-          </Link>
-        )}
-
-        {/* Menu Button - Always visible on all screens */}
-        <div className="relative" ref={menuRef}>
-          <button
-            className="nav-link p-2"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
-          {/* Dropdown Menu */}
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border2 bg-[#0A0A0A] shadow-xl animate-slide-down z-50">
-              {isAuthenticated ? (
-                <>
-                  <div className="px-3 py-2 border-b border-border2">
-                    <p className="text-xs text-muted-foreground">Navigation</p>
-                  </div>
-                  <Link href="/dashboard/debug" className="mobile-menu-item" onClick={closeMenu}>
-                    <Zap className="mr-2 h-4 w-4" />
-                    Debug
-                  </Link>
-                  <Link href="/dashboard/web-builder" className="mobile-menu-item" onClick={closeMenu}>
-                    <Globe className="mr-2 h-4 w-4" />
-                    Web Builder
-                  </Link>
-                  <Link href="/dashboard/pricing" className="mobile-menu-item" onClick={closeMenu}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Pricing
-                  </Link>
-                  <Link href="/dashboard/referrals" className="mobile-menu-item" onClick={closeMenu}>
-                    <Gift className="mr-2 h-4 w-4" />
-                    Referrals
-                  </Link>
-                  <div className="border-t border-border2 my-1"></div>
-                  <div className="px-3 py-2 border-b border-border2">
-                    <p className="text-xs text-muted-foreground">Account</p>
-                  </div>
-                  <Link href="/dashboard/settings" className="mobile-menu-item" onClick={closeMenu}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                  <Link href="/dashboard/settings/transactions" className="mobile-menu-item" onClick={closeMenu}>
-                    <Receipt className="mr-2 h-4 w-4" />
-                    Transactions
-                  </Link>
-                  {isAdmin && (
-                    <Link href="/dashboard/admin" className="mobile-menu-item" onClick={closeMenu}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Admin Panel
-                    </Link>
-                  )}
-                  <div className="border-t border-border2 my-1"></div>
-                  <button
-                    onClick={handleLogout}
-                    className="mobile-menu-item w-full text-left"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="px-3 py-2 border-b border-border2">
-                    <p className="text-xs text-muted-foreground">Pages</p>
-                  </div>
-                  <Link href="/features" className="mobile-menu-item" onClick={closeMenu}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Features
-                  </Link>
-                  <Link href="/demo" className="mobile-menu-item" onClick={closeMenu}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Live Demo
-                  </Link>
-                  <Link href="/languages" className="mobile-menu-item" onClick={closeMenu}>
-                    <Code className="mr-2 h-4 w-4" />
-                    Languages
-                  </Link>
-                  <Link href="/pricing" className="mobile-menu-item" onClick={closeMenu}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Pricing
-                  </Link>
-                  <Link href="/faq" className="mobile-menu-item" onClick={closeMenu}>
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    FAQ
-                  </Link>
-                  <div className="border-t border-border2 my-1"></div>
-                  <Link href="/login" className="mobile-menu-item" onClick={closeMenu}>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Sign In
-                  </Link>
-                  <Link href="/signup" className="mobile-menu-item" onClick={closeMenu}>
-                    <Rocket className="mr-2 h-4 w-4" />
-                    Get Started
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

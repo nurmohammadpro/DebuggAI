@@ -1,104 +1,160 @@
-/**
- * Features Page - DeBuggAI
- */
-
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Logo } from '@/components/logo';
+import { Bug, Zap, Globe, Code2, Shield, Target } from 'lucide-react';
+import { PublicLayout } from '@/components/public-layout';
+
+const features = [
+  {
+    icon: Bug,
+    title: 'AI-Powered Debugging',
+    description: 'Instantly identify and fix errors in your code with advanced AI analysis that understands context, not just syntax.',
+  },
+  {
+    icon: Zap,
+    title: 'Lightning Fast',
+    description: 'Get results in seconds, not minutes. Our optimized AI pipelines analyze your codebase instantly.',
+  },
+  {
+    icon: Globe,
+    title: 'Web Builder',
+    description: 'Build production-ready web apps visually with our AI-powered web builder and starter templates.',
+  },
+  {
+    icon: Code2,
+    title: '10+ Languages',
+    description: 'First-class support for JavaScript, Python, TypeScript, Go, Rust, Java, and more.',
+  },
+  {
+    icon: Shield,
+    title: 'Secure & Private',
+    description: 'Your code is never stored permanently. We analyze it in real-time and forget it immediately.',
+  },
+  {
+    icon: Target,
+    title: 'Best Practices',
+    description: 'Get suggestions that follow industry standards, ensuring your codebase remains clean and maintainable.',
+  },
+];
 
 export default function FeaturesPage() {
-  const features = [
-    {
-      icon: '🐛',
-      title: 'AI-Powered Debugging',
-      description: 'Instantly identify and fix errors in your code with advanced AI analysis.',
-    },
-    {
-      icon: '⚡',
-      title: 'Lightning Fast',
-      description: 'Get results in seconds, not minutes. Our AI analyzes your code instantly.',
-    },
-    {
-      icon: '🌐',
-      title: 'Web Builder',
-      description: 'Build production-ready web apps visually with our AI-powered web builder.',
-    },
-    {
-      icon: '💻',
-      title: '10+ Languages',
-      description: 'Support for JavaScript, Python, TypeScript, Go, Rust, Java, and more.',
-    },
-    {
-      icon: '🔒',
-      title: 'Secure & Private',
-      description: 'Your code is never stored. We analyze it in real-time and forget it immediately.',
-    },
-    {
-      icon: '🎯',
-      title: 'Best Practices',
-      description: 'Get suggestions that follow industry best practices and coding standards.',
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-xl">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Logo className="h-5 w-auto" />
-            <span className="font-semibold text-base">DeBuggAI</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button size="sm" className="h-8 bg-[#00C853] hover:bg-[#00E676] text-white">
-                Sign In
-              </Button>
+    <PublicLayout>
+      <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
+        {/* Header Section */}
+        <div className="text-center mb-16">
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+            Features
+          </p>
+          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+            Everything you need to debug faster
+          </h1>
+          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--ds-text2)' }}>
+            Built for developers who value their time. DeBuggAI integrates seamlessly into your workflow to eliminate tedious troubleshooting.
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <div key={feature.title} className="card card-interactive flex flex-col">
+                {/* Card Icon matching global hover state styles */}
+                <div 
+                  className="card-icon mb-4 flex items-center justify-center"
+                  style={{ 
+                    width: '40px', 
+                    height: '40px', 
+                    borderRadius: 'var(--ds-r8)', 
+                    background: 'var(--ds-green-muted)',
+                    transition: 'transform 0.2s, background 0.2s'
+                  }}
+                >
+                  <Icon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
+                </div>
+                
+                <h3 className="card-title">{feature.title}</h3>
+                <p className="card-sub mt-1 flex-1">{feature.description}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Developer Experience / Terminal Section */}
+        <section className="mt-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Text */}
+            <div>
+              <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+                Developer Experience
+              </p>
+              <h2 className="text-h1 mb-4" style={{ color: 'var(--ds-text)' }}>
+                Fits right into your workflow
+              </h2>
+              <p className="text-body mb-6" style={{ color: 'var(--ds-text2)' }}>
+                Don't change how you work. DeBuggAI works with your existing setup, analyzing stack traces, logs, or raw code blocks directly from your terminal or IDE.
+              </p>
+              <div className="flex flex-col gap-3">
+                {['Copy-paste errors for instant fixes', 'Context-aware variable tracking', 'Zero configuration required'].map((item) => (
+                  <div key={item} className="flex items-center gap-3">
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--ds-green)', flexShrink: 0 }}></div>
+                    <span className="text-body" style={{ color: 'var(--ds-text)' }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Terminal UI */}
+            <div className="terminal">
+              <div className="terminal-header">
+                <div className="flex gap-1.5">
+                  <div className="code-dot" style={{ background: 'var(--ds-red)' }}></div>
+                  <div className="code-dot" style={{ background: 'var(--ds-amber)' }}></div>
+                  <div className="code-dot" style={{ background: 'var(--ds-green)' }}></div>
+                </div>
+                <span className="terminal-title">debuggai-cli</span>
+              </div>
+              <div className="terminal-body">
+                <div>
+                  <span className="term-prompt">$ </span>
+                  <span className="term-cmd">debuggai analyze --file app.js</span>
+                </div>
+                <div className="term-output mt-2">  Initializing analysis engine...</div>
+                <div className="term-output">  Scanning 248 lines of code...</div>
+                <div className="term-success mt-2">  ✓ Issue found: TypeError on line 142</div>
+                <div className="term-output mt-1">  → Fix: Converted string to integer before calculation.</div>
+                <div className="term-success">  ✓ Patch applied successfully.</div>
+                <div className="mt-4">
+                  <span className="term-prompt">$ </span>
+                  <span className="term-cursor"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Bottom CTA Section */}
+        <div className="text-center mt-24">
+          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <h2 className="text-h1 mb-3" style={{ color: 'var(--ds-text)' }}>
+            Ready to ship faster?
+          </h2>
+          <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--ds-text2)' }}>
+            Join thousands of developers who debug smarter, not harder.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/signup">
+              <button className="btn btn-lg btn-primary">
+                Get Started Free
+              </button>
+            </Link>
+            <Link href="/demo">
+              <button className="btn btn-lg btn-ghost">
+                Watch Demo
+              </button>
             </Link>
           </div>
         </div>
-      </header>
-
-      {/* Content */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Features</h1>
-            <p className="text-lg text-muted-foreground">
-              Everything you need to debug faster and build better
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="text-4xl mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <p className="text-muted-foreground mb-4">Ready to get started?</p>
-            <div className="flex gap-4 justify-center">
-              <Link href="/signup">
-                <Button size="lg" className="bg-[#00C853] hover:bg-[#00E676] text-white">
-                  Get Started Free
-                </Button>
-              </Link>
-              <Link href="/demo">
-                <Button size="lg" variant="outline">
-                  Watch Demo
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+      </main>
+    </PublicLayout>
   );
 }

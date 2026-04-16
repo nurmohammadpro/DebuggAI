@@ -1,8 +1,7 @@
 /**
- * Dashboard Layout
+ * Private Layout - For dashboard pages
+ * No Navigation or Footer
  */
-
-import { Navigation } from '@/components/navigation';
 
 export default function DashboardLayout({
   children,
@@ -11,7 +10,6 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen">
-      <Navigation />
       <main>{children}</main>
     </div>
   );

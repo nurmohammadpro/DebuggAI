@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Logo } from '@/components/logo';
+import { PublicLayout } from '@/components/public-layout';
 
 export default function LanguagesPage() {
   const languages = [
@@ -24,24 +24,7 @@ export default function LanguagesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-xl">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Logo className="h-5 w-auto" />
-            <span className="font-semibold text-base">DeBuggAI</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button size="sm" className="h-8 bg-[#00C853] hover:bg-[#00E676] text-white">
-                Sign In
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <PublicLayout>
       {/* Content */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
@@ -77,6 +60,6 @@ export default function LanguagesPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicLayout>
   );
 }

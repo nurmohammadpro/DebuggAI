@@ -19,12 +19,12 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/logo';
+import { PublicLayout } from '@/components/public-layout';
 
 export default function LandingPage() {
   const [activeSection, setActiveSection] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [terminalReplay, setTerminalReplay] = useState(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Scroll-triggered animations
   useEffect(() => {
@@ -60,71 +60,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-xl">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Logo className="h-5 w-auto" />
-            <span className="font-semibold text-base">DeBuggAI</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-2">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm" className="btn-sm primary">
-                Get Started
-              </Button>
-            </Link>
-          </nav>
-          {/* Mobile menu button */}
-          <div className="flex items-center gap-2">
-            <button
-              className="nav-link p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-b border-border bg-surface">
-            <div className="container mx-auto px-4 py-3 flex flex-col gap-1">
-              <Link href="/features" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                ✨ Features
-              </Link>
-              <Link href="/demo" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                🎬 Live Demo
-              </Link>
-              <Link href="/languages" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                💻 Languages
-              </Link>
-              <Link href="/pricing" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                💳 Pricing
-              </Link>
-              <Link href="/faq" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                ❓ FAQ
-              </Link>
-              <div className="border-t border-border my-2"></div>
-              <Link href="/login" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                🔑 Sign In
-              </Link>
-              <Link href="/signup" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
-                🚀 Get Started
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
-
+    <PublicLayout>
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-20 relative overflow-hidden">
         {/* Background glow */}
@@ -829,63 +765,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-            <div>
-              <div className="flex items-center space-x-2 mb-3">
-                <Logo className="h-4 w-auto" />
-              </div>
-              <p className="text-xs text-text3 leading-relaxed max-w-xs">
-                AI-powered debugging and web building platform for developers. Ship faster, stress less.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-xs text-text2 mb-3 tracking-wider">PRODUCT</h4>
-              <ul className="space-y-2 text-sm text-text2">
-                <li><a href="#features" className="footer-link">Features</a></li>
-                <li><a href="#pricing" className="footer-link">Pricing</a></li>
-                <li><a href="#" className="footer-link">Web Builder</a></li>
-                <li><a href="#" className="footer-link">Templates</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-xs text-text2 mb-3 tracking-wider">COMPANY</h4>
-              <ul className="space-y-2 text-sm text-text2">
-                <li><a href="#" className="footer-link">About</a></li>
-                <li><a href="#" className="footer-link">Blog</a></li>
-                <li><a href="#" className="footer-link">Careers</a></li>
-                <li><a href="#" className="footer-link">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-xs text-text2 mb-3 tracking-wider">LEGAL</h4>
-              <ul className="space-y-2 text-sm text-text2">
-                <li><a href="#" className="footer-link">Privacy</a></li>
-                <li><a href="#" className="footer-link">Terms</a></li>
-                <li><a href="#" className="footer-link">Security</a></li>
-                <li><a href="#" className="footer-link">Status</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border pt-5 flex items-center justify-between flex-wrap gap-3">
-            <span className="text-xs text-text3 font-mono">© 2026 DeBuggAI. All rights reserved.</span>
-            <div className="flex items-center gap-3">
-              <a href="#" className="text-text3 hover:text-green transition-colors" title="GitHub">
-                ⊞
-              </a>
-              <a href="#" className="text-text3 hover:text-green transition-colors" title="Twitter">
-                ◇
-              </a>
-              <a href="#" className="text-text3 hover:text-green transition-colors" title="Discord">
-                ◎
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
-
       {/* Floating Toast */}
       <div id="floatingToast" className="fixed bottom-6 right-6 z-50 opacity-0 translate-y-2.5 transition-all duration-300 pointer-events-none">
         <div className="toast">
@@ -893,7 +772,7 @@ export default function LandingPage() {
           <span className="text-xs">Someone just fixed a bug · 2s ago</span>
         </div>
       </div>
-    </div>
+    </PublicLayout>
   );
 }
 

@@ -8,12 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { Navigation } from '@/components/navigation';
+import { PublicLayout } from '@/components/public-layout';
 
 export default function SignupPage() {
   return (
-    <>
-      <Navigation />
+    <PublicLayout>
       <div className="min-h-[calc(100vh-52px)] flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
@@ -98,6 +97,6 @@ export default function SignupPage() {
           </CardFooter>
         </Card>
       </div>
-    </>
+    </PublicLayout>
   );
 }
