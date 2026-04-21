@@ -6,6 +6,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { isServerEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
 
 // GET /api/admin/analytics - Get analytics data
 export async function GET(request: NextRequest) {
@@ -31,14 +32,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
+    const allowlisted = isServerEmailAdminAllowlisted(user.email);
+    if (!allowlisted) {
+      const { data: profileData, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
 
-    if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      if (profileError) {
+        return NextResponse.json(
+          { error: 'Admin profile check failed. Database schema not ready.' },
+          { status: 503 }
+        );
+      }
+
+      const profile = profileData as { is_admin?: boolean } | null;
+      if (!profile?.is_admin) {
+        return NextResponse.json(
+          { error: 'Forbidden: Admin access required' },
+          { status: 403 }
+        );
+      }
     }
 
     const { searchParams } = new URL(request.url);

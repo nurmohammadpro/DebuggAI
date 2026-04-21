@@ -9,6 +9,7 @@ import type {
 } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
+import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
 
 export function SessionBootstrapper() {
   const { setUser, updateUser, setCredits, logout } = useSessionStore();
@@ -48,22 +49,28 @@ export function SessionBootstrapper() {
   );
 
   const hydrateUser = useCallback(
-    async (userId: string) => {
-      const [{ data: wallet }, { data: profile }] = await Promise.all([
-        supabase
-          .from('credit_wallets')
-          .select('balance')
-          .eq('owner_id', userId)
-          .single(),
-        supabase.from('profiles').select('is_admin').eq('id', userId).single(),
-      ]);
+    async (userId: string, email: string) => {
+      const allowlistedAdmin = isClientEmailAdminAllowlisted(email);
 
-      if (wallet?.balance !== undefined) {
+      const [{ data: wallet, error: walletError }, { data: profile, error: profileError }] =
+        await Promise.all([
+          supabase
+            .from('credit_wallets')
+            .select('balance')
+            .eq('owner_id', userId)
+            .single(),
+          supabase.from('profiles').select('is_admin').eq('id', userId).single(),
+        ]);
+
+      if (!walletError && wallet?.balance !== undefined) {
         setCredits(wallet.balance);
+        await subscribeToCredits(userId);
+      } else {
+        setCredits(0);
       }
 
-      updateUser({ isAdmin: profile?.is_admin ?? false });
-      await subscribeToCredits(userId);
+      const dbAdmin = !profileError ? profile?.is_admin ?? false : false;
+      updateUser({ isAdmin: allowlistedAdmin || dbAdmin });
     },
     [setCredits, subscribeToCredits, updateUser]
   );
@@ -79,9 +86,10 @@ export function SessionBootstrapper() {
       if (!active) return;
 
       if (session?.user) {
+        const email = session.user.email || '';
         setUser({
           id: session.user.id,
-          email: session.user.email || '',
+          email,
           displayName:
             session.user.user_metadata.full_name ||
             session.user.email ||
@@ -90,7 +98,7 @@ export function SessionBootstrapper() {
           plan: session.user.user_metadata.plan || 'free',
           credits: 0,
         });
-        await hydrateUser(session.user.id);
+        await hydrateUser(session.user.id, email);
       } else {
         await unsubscribeCredits();
         setUser(null);
@@ -105,9 +113,10 @@ export function SessionBootstrapper() {
       if (!active) return;
 
       if (session?.user) {
+        const email = session.user.email || '';
         setUser({
           id: session.user.id,
-          email: session.user.email || '',
+          email,
           displayName:
             session.user.user_metadata.full_name ||
             session.user.email ||
@@ -116,7 +125,7 @@ export function SessionBootstrapper() {
           plan: session.user.user_metadata.plan || 'free',
           credits: 0,
         });
-        await hydrateUser(session.user.id);
+        await hydrateUser(session.user.id, email);
       } else {
         await unsubscribeCredits();
         logout();

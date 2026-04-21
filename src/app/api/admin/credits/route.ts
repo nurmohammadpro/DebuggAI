@@ -7,6 +7,66 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { isServerEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
+
+async function assertAdminAccess(
+  supabaseAdmin: any,
+  request: NextRequest
+) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    };
+  }
+
+  const token = authHeader.split(' ')[1];
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseAdmin.auth.getUser(token);
+
+  if (authError || !user) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: 'Invalid token' }, { status: 401 }),
+    };
+  }
+
+  if (isServerEmailAdminAllowlisted(user.email)) {
+    return { ok: true as const, user };
+  }
+
+  const { data: profileData, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: 'Admin profile check failed. Database schema not ready.' },
+        { status: 503 }
+      ),
+    };
+  }
+
+  const profile = profileData as { is_admin?: boolean } | null;
+  if (!profile?.is_admin) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: 'Forbidden: Admin access required' },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return { ok: true as const, user };
+}
 
 // GET /api/admin/credits - List all credit transactions
 export async function GET(request: NextRequest) {
@@ -19,27 +79,9 @@ export async function GET(request: NextRequest) {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    const admin = await assertAdminAccess(supabaseAdmin, request);
+    if (!admin.ok) return admin.response;
+    const user = admin.user;
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -97,28 +139,9 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.is_admin) {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    const admin = await assertAdminAccess(supabaseAdmin, request);
+    if (!admin.ok) return admin.response;
+    const user = admin.user;
 
     const body = await request.json();
     const { userId, amount, description } = body;
