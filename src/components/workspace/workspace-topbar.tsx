@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Zap, Share2, Play } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
 
 export function WorkspaceTopbar({
   projectName,
@@ -74,14 +75,7 @@ export function WorkspaceTopbar({
           <span>Run</span>
         </button>
 
-        <div
-          className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-xs font-semibold text-primary"
-          title="Account"
-        >
-          {user?.displayName?.charAt(0)?.toUpperCase() ||
-            user?.email?.charAt(0)?.toUpperCase() ||
-            'U'}
-        </div>
+        <WorkspaceAccountMenu />
       </div>
     </header>
   );
