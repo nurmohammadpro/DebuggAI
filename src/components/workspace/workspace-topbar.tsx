@@ -17,12 +17,16 @@ export function WorkspaceTopbar({
   unsavedCount,
   mode,
   onModeChange,
+  onRun,
+  onShare,
 }: {
   projectId: string | null;
   branchName: string;
   unsavedCount: number;
   mode: WorkspaceMode;
   onModeChange: (mode: WorkspaceMode) => void;
+  onRun: () => void;
+  onShare: () => void;
 }) {
   const { user } = useSessionStore();
 
@@ -73,12 +77,18 @@ export function WorkspaceTopbar({
 
         <WorkspaceSaveVersionButton />
 
-        <button className="h-8 px-3 rounded-full border border-border/50 bg-transparent hover:bg-muted/40 transition-colors inline-flex items-center gap-2 text-xs">
+        <button
+          className="h-8 px-3 rounded-full border border-border/50 bg-transparent hover:bg-muted/40 transition-colors inline-flex items-center gap-2 text-xs"
+          onClick={onShare}
+        >
           <Share2 className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Share</span>
         </button>
 
-        <button className="h-8 px-3 rounded-full bg-primary text-primary-foreground hover:brightness-110 transition inline-flex items-center gap-2 text-xs font-semibold">
+        <button
+          className="h-8 px-3 rounded-full bg-primary text-primary-foreground hover:brightness-110 transition inline-flex items-center gap-2 text-xs font-semibold"
+          onClick={onRun}
+        >
           <Play className="h-3.5 w-3.5" />
           <span>Run</span>
         </button>

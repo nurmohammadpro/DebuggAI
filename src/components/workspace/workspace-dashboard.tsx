@@ -19,6 +19,7 @@ import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { WorkspaceRightPanel } from '@/components/workspace/workspace-right-panel';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
+import { toast } from 'sonner';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export function WorkspaceDashboard() {
   const { isAuthenticated, isLoading } = useSessionStore();
   const { mode, setMode, selectedProjectId, setSelectedProjectId, setProjectKey } =
     useWorkspaceStore();
-  const { loadFromProject } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce } = useGenerationStore();
 
   const [leftView, setLeftView] = useState<WorkspaceLeftView>('explorer');
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('chat');
@@ -123,6 +124,25 @@ export function WorkspaceDashboard() {
         unsavedCount={0}
         mode={mode}
         onModeChange={setMode}
+        onRun={() => {
+          setRightCollapsed(false);
+          setRightTab('preview');
+          bumpPreviewNonce();
+        }}
+        onShare={async () => {
+          if (!effectiveProjectId) {
+            toast.message('Select a project to share');
+            return;
+          }
+
+          const url = `${window.location.origin}/dashboard?project=${effectiveProjectId}`;
+          try {
+            await navigator.clipboard.writeText(url);
+            toast.success('Link copied');
+          } catch {
+            toast.message(url);
+          }
+        }}
       />
 
       <div className="flex-1 min-h-0 flex min-w-0">

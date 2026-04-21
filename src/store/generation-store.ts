@@ -32,6 +32,7 @@ interface GenerationState {
   currentCode: string;
   activeFilePath: string | null;
   files: VirtualProjectFiles | null;
+  previewNonce: number;
   isGenerating: boolean;
   accumulated: string; // Accumulated streaming response
 
@@ -45,6 +46,7 @@ interface GenerationState {
   // Actions
   setCurrentCode: (code: string) => void;
   setActiveFilePath: (path: string) => void;
+  bumpPreviewNonce: () => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setAccumulated: (text: string) => void;
   appendAccumulated: (chunk: string) => void;
@@ -69,6 +71,7 @@ const initialState = {
   currentCode: '',
   activeFilePath: null as string | null,
   files: null as VirtualProjectFiles | null,
+  previewNonce: 0,
   isGenerating: false,
   accumulated: '',
   versions: [],
@@ -107,6 +110,9 @@ export const useGenerationStore = create<GenerationState>()(
             currentCode: typeof nextContent === 'string' ? nextContent : state.currentCode,
           };
         }),
+
+      bumpPreviewNonce: () =>
+        set((state) => ({ previewNonce: (state.previewNonce + 1) % Number.MAX_SAFE_INTEGER })),
 
       setIsGenerating: (isGenerating) => set({ isGenerating }),
 

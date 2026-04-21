@@ -34,7 +34,15 @@ export function PreviewPane({
   chromeless = false,
 }: PreviewPaneProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { currentCode, versions, currentVersionId, setCurrentVersion, lastError, setLastError } =
+  const {
+    currentCode,
+    versions,
+    currentVersionId,
+    setCurrentVersion,
+    lastError,
+    setLastError,
+    previewNonce,
+  } =
     useGenerationStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -82,6 +90,13 @@ export function PreviewPane({
       debouncedUpdate(currentCode);
     }
   }, [currentCode, debouncedUpdate]);
+
+  // Force refresh (Run button)
+  useEffect(() => {
+    if (!currentCode) return;
+    updatePreview(currentCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewNonce]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

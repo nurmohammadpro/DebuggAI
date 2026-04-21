@@ -12,10 +12,10 @@ import { ProjectsFilters } from '@/components/dashboard/projects/projects-filter
 import { ProjectCard } from '@/components/dashboard/projects/project-card';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { supabase } from '@/lib/supabase';
-import { StackSelector } from '@/components/web-builder/stack-selector';
 import { getProjectKey } from '@/lib/project/project-key';
 import { RecentDebugSessions } from '@/components/dashboard/home/recent-debug-sessions';
 import { RecentTransactions } from '@/components/dashboard/home/recent-transactions';
+import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
 
 export function ProjectsHub() {
   const [query, setQuery] = useState('');
@@ -65,20 +65,6 @@ export function ProjectsHub() {
     }
   };
 
-  const onDelete = async (project: (typeof projects)[number]) => {
-    try {
-      const { error: deleteError } = await supabase
-        .from('generations')
-        .delete()
-        .eq('id', project.id);
-      if (deleteError) throw deleteError;
-      toast.success('Project deleted');
-      refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to delete');
-    }
-  };
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -88,12 +74,12 @@ export function ProjectsHub() {
             Open a project in the workspace, or generate a new one.
           </div>
         </div>
-        <StackSelector>
+        <CreateProjectDialog>
           <Button className="h-9">
             <Plus className="mr-2 h-4 w-4" />
             New Project
           </Button>
-        </StackSelector>
+        </CreateProjectDialog>
       </div>
 
       <ProjectsFilters
@@ -158,7 +144,8 @@ export function ProjectsHub() {
                     key={p.id}
                     project={p}
                     onDuplicate={onDuplicate}
-                    onDelete={onDelete}
+                    onDeleted={() => refetch()}
+                    onRenamed={() => refetch()}
                   />
                 ))}
               </div>

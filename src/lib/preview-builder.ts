@@ -6,6 +6,7 @@
  */
 
 export function buildPreviewHTML(code: string): string {
+  const serializedCode = JSON.stringify(code);
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -24,8 +25,8 @@ export function buildPreviewHTML(code: string): string {
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
+      background: transparent;
+      padding: 16px;
     }
     #root {
       min-height: 100vh;
@@ -35,7 +36,9 @@ export function buildPreviewHTML(code: string): string {
 <body>
   <div id="root"></div>
 
-  <script type="text/babel">
+  <script>
+    const USER_CODE = ${serializedCode};
+
     // Error capture
     window.onerror = function(message, source, lineno, colno, error) {
       window.parent.postMessage({
@@ -76,16 +79,29 @@ export function buildPreviewHTML(code: string): string {
     };
 
     try {
-      // User code
-      ${code}
+      const { code: compiled } = Babel.transform(USER_CODE, {
+        presets: [
+          ['env', { modules: 'commonjs' }],
+          'react',
+          'typescript',
+        ],
+        sourceType: 'module',
+        filename: 'App.tsx',
+      });
+
+      // Provide commonjs globals
+      const exports = {};
+      const module = { exports };
+
+      // Evaluate compiled code
+      const fn = new Function('React', 'ReactDOM', 'exports', 'module', compiled);
+      fn(React, ReactDOM, exports, module);
 
       // If code exports a component, render it
-      if (typeof module !== 'undefined' && module.exports) {
-        const Component = module.exports.default || module.exports;
-        if (Component && typeof Component === 'function') {
-          const root = ReactDOM.createRoot(document.getElementById('root'));
-          root.render(React.createElement(Component));
-        }
+      const Component = module.exports?.default || module.exports;
+      if (Component && typeof Component === 'function') {
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(Component));
       }
     } catch (error) {
       window.parent.postMessage({
