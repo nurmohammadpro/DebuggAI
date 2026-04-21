@@ -18,6 +18,20 @@
   --font-mono: 'JetBrains Mono', monospace;
   --font-heading: 'Inter', sans-serif;
 
+  /* Design-system color aliases (used by `bg-surface2`, `text-text3`, etc.) */
+  --color-surface: var(--ds-surface);
+  --color-surface2: var(--ds-surface2);
+  --color-surface3: var(--ds-surface3);
+  --color-border2: var(--ds-border2);
+  --color-text: var(--ds-text);
+  --color-text2: var(--ds-text2);
+  --color-text3: var(--ds-text3);
+  --color-green: var(--ds-green);
+  --color-red: var(--ds-red);
+  --color-amber: var(--ds-amber);
+  --color-blue: var(--ds-blue);
+  --color-purple: var(--ds-purple);
+
   /* Border Radius */
   --ds-r4: 4px;
   --ds-r6: 6px;
