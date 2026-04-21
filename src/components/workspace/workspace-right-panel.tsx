@@ -77,13 +77,13 @@ export function WorkspaceRightPanel({
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'chat' && (
           <div className="h-full">
-            <ChatPanel height="calc(100vh - 44px - 44px - 56px)" />
+            <ChatPanel height="100%" />
           </div>
         )}
 
         {activeTab === 'preview' && (
           <div className="h-full p-2">
-            <PreviewPane height="calc(100vh - 44px - 44px - 16px)" />
+            <PreviewPane height="100%" />
           </div>
         )}
 
@@ -117,4 +117,3 @@ function Placeholder({ title, description }: { title: string; description: strin
     </div>
   );
 }
-

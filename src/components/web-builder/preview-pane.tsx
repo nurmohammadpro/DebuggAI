@@ -96,7 +96,7 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
   const currentVersion = versions.find((v) => v.id === currentVersionId);
 
   return (
-    <Card className="overflow-hidden flex flex-col">
+    <Card className="overflow-hidden flex flex-col" style={{ height }}>
       {/* Header */}
       <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -167,13 +167,12 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
 
       {/* Iframe */}
       {!isCollapsed && (
-        <div className="flex-1 bg-white">
+        <div className="flex-1 min-h-0 bg-white">
           <iframe
             ref={iframeRef}
             title="Preview"
             className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"
-            style={{ height }}
           />
         </div>
       )}

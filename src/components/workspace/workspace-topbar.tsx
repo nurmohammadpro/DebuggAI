@@ -18,7 +18,7 @@ export function WorkspaceTopbar({
   const { user } = useSessionStore();
 
   return (
-    <header className="h-11 flex items-center bg-card border-b border-border">
+    <header className="h-11 flex items-center bg-card border-b border-border sticky top-0 z-50">
       <Link
         href="/dashboard"
         className="h-full px-4 flex items-center gap-2 border-r border-border hover:bg-muted/30 transition-colors"

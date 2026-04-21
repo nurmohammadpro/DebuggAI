@@ -4,14 +4,14 @@ import { CodeEditor } from '@/components/web-builder/code-editor';
 
 export function WorkspaceEditor() {
   return (
-    <section className="flex-1 min-w-0 bg-background flex flex-col">
+    <section className="flex-1 min-w-0 bg-background flex flex-col min-h-0">
       <div className="h-11 border-b border-border bg-card flex items-center overflow-x-auto px-2 gap-1">
         <EditorTab name="App.tsx" active />
         <EditorTab name="README.md" />
       </div>
 
       <div className="flex-1 min-h-0">
-        <CodeEditor height="calc(100vh - 44px - 44px)" />
+        <CodeEditor height="100%" />
       </div>
     </section>
   );
@@ -31,4 +31,3 @@ function EditorTab({ name, active = false }: { name: string; active?: boolean })
     </button>
   );
 }
-

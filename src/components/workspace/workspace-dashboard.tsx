@@ -42,10 +42,10 @@ export function WorkspaceDashboard() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-background text-foreground">
+    <div className="min-h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
       <WorkspaceTopbar projectName="workspace" branchName="main" unsavedCount={0} />
 
-      <div className="h-[calc(100vh-44px)] flex min-w-0">
+      <div className="flex-1 min-h-0 flex min-w-0">
         <WorkspaceIconSidebar
           leftView={leftView}
           onLeftViewChange={setLeftView}
@@ -69,4 +69,3 @@ export function WorkspaceDashboard() {
     </div>
   );
 }
-

@@ -100,7 +100,7 @@ export function ChatPanel({ height = '600px' }: ChatPanelProps) {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden" style={{ height }}>
       {/* Header */}
       <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export function ChatPanel({ height = '600px' }: ChatPanelProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ height }}>
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !isLoading && (
           <div className="flex items-center justify-center h-full text-center">
             <div className="max-w-sm">

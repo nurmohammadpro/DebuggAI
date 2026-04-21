@@ -41,12 +41,13 @@ export function CodeEditor({ height = '600px', readOnly = false }: CodeEditorPro
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden flex flex-col" style={{ height }}>
       <div className="border-b px-4 py-2 bg-muted/50">
         <h3 className="text-sm font-medium">Code Editor</h3>
       </div>
-      <Editor
-        height={height}
+      <div className="flex-1 min-h-0">
+        <Editor
+          height="100%"
         defaultLanguage="typescript"
         value={currentCode}
         onChange={handleEditorChange}
@@ -69,7 +70,8 @@ export function CodeEditor({ height = '600px', readOnly = false }: CodeEditorPro
           cursorSmoothCaretAnimation: 'on',
           smoothScrolling: true,
         }}
-      />
+        />
+      </div>
     </Card>
   );
 }
