@@ -3,6 +3,8 @@
  * No Navigation or Footer
  */
 
+import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
+
 export default function DashboardLayout({
   children,
 }: {
@@ -10,6 +12,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen">
+      <SessionBootstrapper />
       <main>{children}</main>
     </div>
   );

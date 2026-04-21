@@ -28,6 +28,7 @@ interface SessionState {
 
   // Actions
   setUser: (user: User | null) => void;
+  updateUser: (patch: Partial<User>) => void;
   setCredits: (credits: number) => void;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   setIsLoading: (isLoading: boolean) => void;
@@ -55,6 +56,11 @@ export const useSessionStore = create<SessionState>()(
           isAuthenticated: !!user,
           isLoading: false,
         }),
+
+      updateUser: (patch) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...patch } : state.user,
+        })),
 
       setCredits: (credits) =>
         set((state) => ({

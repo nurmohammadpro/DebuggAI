@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Check, X } from 'lucide-react';
 import { PublicLayout } from '@/components/public-layout';
+import { PricingTableCell } from '@/components/pricing/table-cell';
 
 const plans = [
   {
@@ -68,17 +69,6 @@ const comparisonFeatures = [
   { name: 'SLA Guarantee', free: false, pro: false, enterprise: true },
   { name: 'Priority Support', free: false, pro: false, enterprise: true },
 ];
-
-function TableCell({ value }: { value: boolean | string }) {
-  if (typeof value === 'boolean') {
-    return value ? (
-      <Check className="h-4 w-4 mx-auto" style={{ color: 'var(--ds-green)' }} />
-    ) : (
-      <X className="h-4 w-4 mx-auto" style={{ color: 'var(--ds-text3)' }} />
-    );
-  }
-  return <span style={{ color: 'var(--ds-text2)' }}>{value}</span>;
-}
 
 export default function PricingPage() {
   return (
@@ -263,16 +253,16 @@ export default function PricingPage() {
                       {feature.name}
                     </td>
                     <td className="p-4 text-center">
-                      <TableCell value={feature.free} />
+                      <PricingTableCell value={feature.free} />
                     </td>
                     <td 
                       className="p-4 text-center" 
                       style={{ background: 'var(--ds-green-glow)' }}
                     >
-                      <TableCell value={feature.pro} />
+                      <PricingTableCell value={feature.pro} />
                     </td>
                     <td className="p-4 text-center">
-                      <TableCell value={feature.enterprise} />
+                      <PricingTableCell value={feature.enterprise} />
                     </td>
                   </tr>
                 ))}

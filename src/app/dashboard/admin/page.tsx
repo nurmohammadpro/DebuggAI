@@ -10,7 +10,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   BarChart3,
   Users,
@@ -20,11 +19,13 @@ import {
   TrendingUp,
   Loader2,
   Shield,
-  ArrowRight,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AdminStatCard } from '@/components/admin/stat-card';
+import { PlanBar } from '@/components/admin/plan-bar';
+import { AdminQuickCard } from '@/components/admin/admin-quick-card';
 
 interface AnalyticsData {
   summary: {
@@ -148,28 +149,28 @@ export default function AdminDashboardPage() {
         <>
           {/* Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            <StatCard
+            <AdminStatCard
               title="Total Users"
               value={analytics.summary.totalUsers.toString()}
               subtitle={`+${analytics.summary.newUsers} new this period`}
               icon={Users}
               gradient="from-blue-500 to-cyan-500"
             />
-            <StatCard
+            <AdminStatCard
               title="Active Users"
               value={analytics.summary.activeUsers.toString()}
               subtitle="Users with activity"
               icon={Activity}
               gradient="from-green-500 to-emerald-500"
             />
-            <StatCard
+            <AdminStatCard
               title="Credits Spent"
               value={analytics.summary.totalCreditsSpent.toString()}
               subtitle={`${analytics.summary.totalCreditsEarned} earned`}
               icon={CreditCard}
               gradient="from-yellow-500 to-orange-500"
             />
-            <StatCard
+            <AdminStatCard
               title="Total Generations"
               value={analytics.summary.totalGenerations.toString()}
               subtitle={`${analytics.summary.totalDebugSessions} debug sessions`}
@@ -244,186 +245,35 @@ export default function AdminDashboardPage() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-8">
-        <Link href="/admin/monitoring">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Activity className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Monitoring</h3>
-                  <p className="text-sm text-muted-foreground">
-                    System health and metrics
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/users">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">User Management</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage users, plans, and permissions
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/admin/credits">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <CreditCard className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Credit Management</h3>
-                  <p className="text-sm text-muted-foreground">
-                    View transactions and adjust balances
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/settings">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Settings className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Platform Settings</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Configure platform-wide settings
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// Helper Components
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-  gradient,
-}: {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: React.ElementType;
-  gradient: string;
-}) {
-  return (
-    <Card className="group card-elevated">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-muted-foreground">{title}</span>
-          <div className={`p-2 rounded-lg bg-gradient-to-br ${gradient} group-hover:scale-110 transition-transform duration-300`}>
-            <Icon className="h-4 w-4 text-white" />
-          </div>
-        </div>
-        <div className={`text-3xl font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
-          {value}
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">{subtitle}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PlanBar({
-  label,
-  count,
-  total,
-  color,
-}: {
-  label: string;
-  count: number;
-  total: number;
-  color: string;
-}) {
-  const percentage = (count / total) * 100;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">{count}</span>
-          <span className="text-muted-foreground">
-            ({percentage.toFixed(1)}%)
-          </span>
-        </div>
-      </div>
-      <div className="h-3 bg-muted rounded-full overflow-hidden">
-        <div
-          className={`h-full ${color} transition-all duration-500 rounded-full`}
-          style={{ width: `${percentage}%` }}
+        <AdminQuickCard
+          href="/dashboard/admin/monitoring"
+          icon={Activity}
+          title="Monitoring"
+          description="System health and metrics"
+          color="orange"
+        />
+        <AdminQuickCard
+          href="/dashboard/admin/users"
+          icon={Users}
+          title="User Management"
+          description="Manage users, plans, and permissions"
+          color="blue"
+        />
+        <AdminQuickCard
+          href="/dashboard/admin/credits"
+          icon={CreditCard}
+          title="Credit Management"
+          description="View transactions and adjust balances"
+          color="green"
+        />
+        <AdminQuickCard
+          href="/settings"
+          icon={Settings}
+          title="Platform Settings"
+          description="Configure platform-wide settings"
+          color="purple"
         />
       </div>
     </div>
-  );
-}
-
-function AdminQuickCard({
-  href,
-  icon: Icon,
-  title,
-  description,
-  color,
-}: {
-  href: string;
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  color: 'blue' | 'green' | 'purple' | 'orange';
-}) {
-  const colors = {
-    blue: 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-    green: 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-    purple: 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-    orange: 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
-  };
-
-  return (
-    <Link href={href}>
-      <Card className="card-elevated cursor-pointer h-full group">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${colors[color]} group-hover:scale-110 transition-transform duration-300`}>
-              <Icon className="h-6 w-6" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold group-hover:text-primary transition-colors duration-200">
-                {title}
-              </h3>
-              <p className="text-sm text-muted-foreground truncate">{description}</p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
   );
 }

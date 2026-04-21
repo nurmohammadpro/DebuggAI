@@ -17,7 +17,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { RealtimeChannel } from '@supabase/supabase-js';
 import {
   Bell,
   Menu,
@@ -25,109 +24,17 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export function Navigation() {
   const router = useRouter();
-  const { user, isAuthenticated, setUser, setCredits, logout } =
-    useSessionStore();
+  const { user, isAuthenticated, logout } = useSessionStore();
   const credits = user?.credits;
 
-  const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(true);
-  const channelRef = useRef<RealtimeChannel | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const fetchCredits = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('credit_wallets')
-      .select('balance')
-      .eq('owner_id', userId)
-      .single();
-
-    if (data) {
-      setCredits(data.balance);
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .single();
-
-    setIsAdmin(profile?.is_admin ?? false);
-  }, [setCredits]);
-
-  const subscribeToCredits = useCallback((userId: string) => {
-    const channel = supabase
-      .channel(`credits:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'credit_wallets',
-          filter: `owner_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newBalance = payload.new.balance;
-          setCredits(newBalance);
-        }
-      )
-      .subscribe();
-
-    channelRef.current = channel;
-  }, [setCredits]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          displayName: session.user.user_metadata.full_name || session.user.email || '',
-          avatarUrl: session.user.user_metadata.avatar_url,
-          plan: session.user.user_metadata.plan || 'free',
-          credits: 0,
-        });
-
-        fetchCredits(session.user.id);
-        subscribeToCredits(session.user.id);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          displayName: session.user.user_metadata.full_name || session.user.email || '',
-          avatarUrl: session.user.user_metadata.avatar_url,
-          plan: session.user.user_metadata.plan || 'free',
-          credits: 0,
-        });
-        fetchCredits(session.user.id);
-        subscribeToCredits(session.user.id);
-      } else {
-        setUser(null);
-        if (channelRef.current) {
-          channelRef.current.unsubscribe();
-        }
-      }
-    });
-
-    const channel = channelRef.current;
-    return () => {
-      subscription.unsubscribe();
-      if (channel) {
-        channel.unsubscribe();
-      }
-    };
-  }, [setUser, fetchCredits, subscribeToCredits]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -154,9 +61,6 @@ export function Navigation() {
   }, []);
 
   const handleLogout = async () => {
-    if (channelRef.current) {
-      channelRef.current.unsubscribe();
-    }
     setMenuOpen(false);
     await supabase.auth.signOut();
     logout();
@@ -242,7 +146,7 @@ export function Navigation() {
                   <DropdownMenuItem onClick={() => router.push('/dashboard/settings/transactions')} className="cursor-pointer">
                     Transactions
                   </DropdownMenuItem>
-                  {isAdmin && (
+                  {user?.isAdmin && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => router.push('/dashboard/admin')} className="cursor-pointer">
