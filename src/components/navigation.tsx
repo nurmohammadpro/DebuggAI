@@ -100,7 +100,7 @@ export function Navigation() {
 
               {/* User Dropdown */}
               <DropdownMenu>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     className="nav-avatar"
