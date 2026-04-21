@@ -12,30 +12,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #0A0D0A;
-  --color-foreground: #E8F5E9;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-heading: 'Inter', sans-serif;
-
-  /* Design System Colors */
-  --ds-bg: #0A0D0A;
-  --ds-surface: #111411;
-  --ds-surface2: #171C17;
-  --ds-surface3: #1E261E;
-  --ds-border: #1F2B1F;
-  --ds-border2: #283228;
-  --ds-green: #00C853;
-  --ds-green-bright: #00E676;
-  --ds-green-muted: rgba(0,200,83,0.12);
-  --ds-green-glow: rgba(0,200,83,0.08);
-  --ds-text: #E8F5E9;
-  --ds-text2: #8BAD8B;
-  --ds-text3: #4D6B4D;
-  --ds-red: #FF5252;
-  --ds-amber: #FFAB00;
-  --ds-blue: #40C4FF;
-  --ds-purple: #CE93D8;
 
   /* Border Radius */
   --ds-r4: 4px;
@@ -89,6 +70,80 @@
 }
 
 :root {
+  /* Light mode (derived from existing tokens) */
+  --ds-bg: #F6FAF6;
+  --ds-surface: #FFFFFF;
+  --ds-surface2: #F0F6F0;
+  --ds-surface3: #E6F0E6;
+  --ds-border: #D6E3D6;
+  --ds-border2: #C3D5C3;
+  --ds-green: #00A344;
+  --ds-green-bright: #00C853;
+  --ds-green-muted: rgba(0, 163, 68, 0.14);
+  --ds-green-glow: rgba(0, 163, 68, 0.08);
+  --ds-text: #0B1A0B;
+  --ds-text2: #2F4B2F;
+  --ds-text3: #5C745C;
+  --ds-red: #E11D48;
+  --ds-amber: #D97706;
+  --ds-blue: #2563EB;
+  --ds-purple: #7C3AED;
+
+  /* shadcn/ui variables */
+  --background: var(--ds-bg);
+  --foreground: var(--ds-text);
+  --card: var(--ds-surface);
+  --card-foreground: var(--ds-text);
+  --popover: var(--ds-surface);
+  --popover-foreground: var(--ds-text);
+  --primary: var(--ds-green);
+  --primary-foreground: #ffffff;
+  --secondary: var(--ds-surface2);
+  --secondary-foreground: var(--ds-text);
+  --muted: var(--ds-surface2);
+  --muted-foreground: var(--ds-text3);
+  --accent: var(--ds-surface3);
+  --accent-foreground: var(--ds-text);
+  --destructive: var(--ds-red);
+  --border: var(--ds-border);
+  --input: var(--ds-surface2);
+  --ring: var(--ds-green);
+  --chart-1: #2F4B2F;
+  --chart-2: #5C745C;
+  --chart-3: #86A086;
+  --chart-4: #C3D5C3;
+  --chart-5: #E6F0E6;
+  --radius: 0.5rem;
+  --sidebar: var(--ds-surface);
+  --sidebar-foreground: var(--ds-text);
+  --sidebar-primary: var(--ds-green);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--ds-surface2);
+  --sidebar-accent-foreground: var(--ds-text);
+  --sidebar-border: var(--ds-border);
+  --sidebar-ring: var(--ds-green);
+}
+
+.dark {
+  /* Dark mode (existing palette) */
+  --ds-bg: #0A0D0A;
+  --ds-surface: #111411;
+  --ds-surface2: #171C17;
+  --ds-surface3: #1E261E;
+  --ds-border: #1F2B1F;
+  --ds-border2: #283228;
+  --ds-green: #00C853;
+  --ds-green-bright: #00E676;
+  --ds-green-muted: rgba(0,200,83,0.12);
+  --ds-green-glow: rgba(0,200,83,0.08);
+  --ds-text: #E8F5E9;
+  --ds-text2: #8BAD8B;
+  --ds-text3: #4D6B4D;
+  --ds-red: #FF5252;
+  --ds-amber: #FFAB00;
+  --ds-blue: #40C4FF;
+  --ds-purple: #CE93D8;
+
   --background: #0A0D0A;
   --foreground: #E8F5E9;
   --card: #111411;
@@ -112,7 +167,6 @@
   --chart-3: #2E3E2E;
   --chart-4: #283228;
   --chart-5: #1F2B1F;
-  --radius: 0.5rem;
   --sidebar: #111411;
   --sidebar-foreground: #E8F5E9;
   --sidebar-primary: #00C853;
@@ -140,7 +194,7 @@
     -moz-osx-font-smoothing: grayscale;
     font-size: 13px;
     line-height: 1.5;
-    color: #E8F5E9;
+    color: var(--foreground);
   }
 
   /* Typography Scale - DeBuggAI Design System */
@@ -1017,4 +1071,3 @@
     scroll-behavior: auto;
   }
 }
-

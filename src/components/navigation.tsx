@@ -26,6 +26,7 @@ import { Logo } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Navigation() {
   const router = useRouter();
@@ -94,6 +95,8 @@ export function Navigation() {
                 <Bell className="h-4 w-4" />
                 {hasNotifications && <div className="notif-dot"></div>}
               </button>
+
+              <ThemeToggle className="nav-notif" />
 
               {/* User Dropdown */}
               <DropdownMenu>

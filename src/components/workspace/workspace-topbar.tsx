@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Zap, Share2, Play } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function WorkspaceTopbar({
   projectName,
@@ -53,6 +54,8 @@ export function WorkspaceTopbar({
       <div className="flex-1" />
 
       <div className="flex items-center gap-2 pr-3">
+        <ThemeToggle className="h-8 w-8" />
+
         <div className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full bg-muted/40 border border-border">
           <Zap className="h-3.5 w-3.5 text-primary" />
           <span className="font-semibold">
@@ -83,4 +86,3 @@ export function WorkspaceTopbar({
     </header>
   );
 }
-
