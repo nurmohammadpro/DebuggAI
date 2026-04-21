@@ -18,9 +18,17 @@ interface CodeEditorProps {
   height?: string;
   readOnly?: boolean;
   className?: string;
+  showHeader?: boolean;
+  language?: string;
 }
 
-export function CodeEditor({ height = '600px', readOnly = false, className }: CodeEditorProps) {
+export function CodeEditor({
+  height = '600px',
+  readOnly = false,
+  className,
+  showHeader = true,
+  language = 'typescript',
+}: CodeEditorProps) {
   const { currentCode, setCurrentCode } = useGenerationStore();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { resolvedTheme } = useTheme();
@@ -46,13 +54,15 @@ export function CodeEditor({ height = '600px', readOnly = false, className }: Co
 
   return (
     <Card className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
-      <div className="border-b px-4 py-2 bg-muted/50">
-        <h3 className="text-sm font-medium">Code Editor</h3>
-      </div>
+      {showHeader && (
+        <div className="border-b px-4 py-2 bg-muted/50">
+          <h3 className="text-sm font-medium">Code Editor</h3>
+        </div>
+      )}
       <div className="flex-1 min-h-0">
         <Editor
           height="100%"
-          defaultLanguage="typescript"
+          language={language}
           value={currentCode}
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}

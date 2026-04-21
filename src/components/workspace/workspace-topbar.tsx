@@ -5,33 +5,42 @@ import { Zap, Share2, Play } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
+import { WorkspaceModeToggle } from '@/components/workspace/workspace-mode-toggle';
+import type { WorkspaceMode } from '@/store/workspace-store';
+import { WorkspaceProjectSwitcher } from '@/components/workspace/workspace-project-switcher';
+import { Logo } from '@/components/logo';
+import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 
 export function WorkspaceTopbar({
-  projectName,
+  projectId,
   branchName,
   unsavedCount,
+  mode,
+  onModeChange,
 }: {
-  projectName: string;
+  projectId: string | null;
   branchName: string;
   unsavedCount: number;
+  mode: WorkspaceMode;
+  onModeChange: (mode: WorkspaceMode) => void;
 }) {
   const { user } = useSessionStore();
 
   return (
-    <header className="h-11 flex items-center bg-card border-b border-border sticky top-0 z-50">
+    <header className="h-11 flex items-center bg-card border-b border-border/40 sticky top-0 z-50">
       <Link
         href="/dashboard"
-        className="h-full px-4 flex items-center gap-2 border-r border-border hover:bg-muted/30 transition-colors"
+        className="h-full px-4 flex items-center gap-2 border-r border-border/40 hover:bg-muted/30 transition-colors"
       >
-        <div className="h-6 w-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <span className="text-xs font-semibold text-primary">D</span>
-        </div>
-        <span className="text-[13.5px] font-semibold tracking-tight">
-          DeBuggAI
-        </span>
+        <Logo className="h-5 w-auto" />
       </Link>
 
-      <div className="px-3 flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+      <div className="px-3 flex items-center gap-2 min-w-0">
+        <WorkspaceProjectSwitcher selectedProjectId={projectId} />
+        <WorkspaceModeToggle mode={mode} onModeChange={onModeChange} />
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
         <Link
           href="/dashboard/home"
           className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
@@ -39,9 +48,6 @@ export function WorkspaceTopbar({
           Projects
         </Link>
         <span className="text-muted-foreground/60">/</span>
-        <span className="text-foreground font-medium truncate max-w-[220px]">
-          {projectName}
-        </span>
         <span className="ml-2 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-muted/50 border border-border">
           {branchName}
         </span>
@@ -65,7 +71,9 @@ export function WorkspaceTopbar({
           <span className="text-muted-foreground">credits</span>
         </div>
 
-        <button className="h-8 px-3 rounded-full border border-border bg-transparent hover:bg-muted/40 transition-colors inline-flex items-center gap-2 text-xs">
+        <WorkspaceSaveVersionButton />
+
+        <button className="h-8 px-3 rounded-full border border-border/50 bg-transparent hover:bg-muted/40 transition-colors inline-flex items-center gap-2 text-xs">
           <Share2 className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Share</span>
         </button>

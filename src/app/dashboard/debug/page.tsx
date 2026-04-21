@@ -24,6 +24,7 @@ import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore } from '@/store/debug-store';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export default function DebugScreenPage() {
   const router = useRouter();
@@ -46,10 +47,18 @@ export default function DebugScreenPage() {
     setDetectedLanguage('');
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Please sign in again');
+        return;
+      }
       const response = await fetch('/api/debug-analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           code,
@@ -66,6 +75,21 @@ export default function DebugScreenPage() {
       const data = await response.json();
       setAnalysis(data.analysis);
       setDetectedLanguage(data.language);
+
+      // Persist to Supabase (debug_sessions)
+      try {
+        await supabase.from('debug_sessions').insert({
+          user_id: session.user.id,
+          language: data.language || currentLanguage || 'unknown',
+          code,
+          error_message: errorMessage || null,
+          fix: data.analysis,
+          explanation: data.analysis,
+          tags: [data.language, errorMessage ? 'error' : 'review'].filter(Boolean),
+        });
+      } catch {
+        // ignore - UI still works without persistence
+      }
 
       // Save to store
       addSession({

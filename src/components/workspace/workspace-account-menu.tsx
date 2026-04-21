@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings, LayoutDashboard, Bug, Code2, CreditCard } from 'lucide-react';
+import { LogOut, Settings, LayoutDashboard, CreditCard, Gift } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
@@ -63,25 +63,18 @@ export function WorkspaceAccountMenu() {
           Dashboard Home
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => router.push('/dashboard/debug')}
-          className="cursor-pointer"
-        >
-          <Bug className="mr-2 h-4 w-4" />
-          Debug
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => router.push('/dashboard/web-builder')}
-          className="cursor-pointer"
-        >
-          <Code2 className="mr-2 h-4 w-4" />
-          Web Builder
-        </DropdownMenuItem>
-        <DropdownMenuItem
           onClick={() => router.push('/dashboard/pricing')}
           className="cursor-pointer"
         >
           <CreditCard className="mr-2 h-4 w-4" />
-          Pricing
+          Billing & Pricing
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => router.push('/dashboard/referrals')}
+          className="cursor-pointer"
+        >
+          <Gift className="mr-2 h-4 w-4" />
+          Referrals
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

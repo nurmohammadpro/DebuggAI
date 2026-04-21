@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import { useSessionStore } from '@/store/session-store';
+import { useWorkspaceStore } from '@/store/workspace-store';
+import { useProject } from '@/hooks/queries/use-project';
+import { useGenerationStore } from '@/store/generation-store';
+import { getProjectKey } from '@/lib/project/project-key';
 import { WorkspaceTopbar } from '@/components/workspace/workspace-topbar';
 import {
   WorkspaceIconSidebar,
@@ -17,13 +22,49 @@ import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
+  const { mode, setMode, selectedProjectId, setSelectedProjectId, setProjectKey } =
+    useWorkspaceStore();
+  const { loadFromProject } = useGenerationStore();
 
   const [leftView, setLeftView] = useState<WorkspaceLeftView>('explorer');
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('chat');
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [explorerWidth, setExplorerWidth] = useState(288);
   const [rightWidth, setRightWidth] = useState(420);
+
+  const urlProjectId = searchParams.get('project');
+  const effectiveProjectId = urlProjectId || selectedProjectId;
+  const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
+
+  useEffect(() => {
+    if (urlProjectId && urlProjectId !== selectedProjectId) {
+      setSelectedProjectId(urlProjectId);
+    }
+  }, [selectedProjectId, setSelectedProjectId, urlProjectId]);
+
+  useEffect(() => {
+    if (project?.code) {
+      loadFromProject(project.code, project.description || 'Loaded project');
+    }
+  }, [loadFromProject, project?.code, project?.description]);
+
+  useEffect(() => {
+    if (!project) return;
+    setProjectKey(getProjectKey(project));
+  }, [project, setProjectKey]);
+
+  useEffect(() => {
+    // Default panel emphasis per mode
+    if (mode === 'debug') {
+      setRightCollapsed(false);
+      setRightTab('console');
+    } else {
+      setRightCollapsed(false);
+      setRightTab('preview');
+    }
+  }, [mode]);
 
   useEffect(() => {
     try {
@@ -76,10 +117,16 @@ export function WorkspaceDashboard() {
 
   return (
     <div className="min-h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
-      <WorkspaceTopbar projectName="workspace" branchName="main" unsavedCount={0} />
+      <WorkspaceTopbar
+        projectId={effectiveProjectId}
+        branchName="main"
+        unsavedCount={0}
+        mode={mode}
+        onModeChange={setMode}
+      />
 
       <div className="flex-1 min-h-0 flex min-w-0">
-        <div className="w-12 shrink-0 border-r border-border/70">
+        <div className="w-12 shrink-0 border-r border-border/40">
           <WorkspaceIconSidebar
             leftView={leftView}
             onLeftViewChange={setLeftView}
@@ -92,7 +139,6 @@ export function WorkspaceDashboard() {
 
         <WorkspaceFileTree
           view={leftView}
-          onSelectFile={() => {}}
           width={clamp(explorerWidth, 220, 520)}
         />
 

@@ -5,31 +5,29 @@
  */
 
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getBearerToken } from '@/lib/api/bearer';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Get the session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+    const token = getBearerToken(req);
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // 2. Get request body
+    // 1. Get request body
     const body = await req.json();
 
-    // 3. Call Supabase edge function
+    // 2. Call Supabase edge function
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/debug-ai-analyze`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

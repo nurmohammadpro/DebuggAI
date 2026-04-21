@@ -5,31 +5,29 @@
  */
 
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getBearerToken } from '@/lib/api/bearer';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Get the session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+    const token = getBearerToken(req);
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // 2. Get request body
+    // 1. Get request body
     const body = await req.json();
 
-    // 3. Call Supabase edge function with streaming
+    // 2. Call Supabase edge function with streaming
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/debug`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -43,7 +41,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Stream the response back to client
+    // 3. Stream the response back to client
     return new Response(response.body, {
       headers: {
         'Content-Type': 'text/event-stream',

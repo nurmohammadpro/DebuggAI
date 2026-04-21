@@ -13,15 +13,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, X, Bug, Loader2 } from 'lucide-react';
 import { useDebugStore } from '@/store/debug-store';
-import { useState } from 'react';
+import { useState, type ElementType } from 'react';
 import { toast } from 'sonner';
 import { useGeneration } from '@/hooks/use-generation';
 
 interface ErrorConsoleProps {
   className?: string;
+  chromeless?: boolean;
 }
 
-export function ErrorConsole({ className }: ErrorConsoleProps) {
+export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProps) {
   const { lastError, setLastError, currentCode } = useGenerationStore();
   const { isDebugging } = useDebugStore();
   const [debugging, setDebugging] = useState(false);
@@ -54,19 +55,21 @@ export function ErrorConsole({ className }: ErrorConsoleProps) {
     setLastError(null);
   };
 
+  const Container: ElementType = chromeless ? 'div' : Card;
+
   if (!lastError) {
     return (
-      <Card className={className}>
+      <Container className={className}>
         <div className="p-6 text-center text-muted-foreground">
           <Bug className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No errors detected</p>
         </div>
-      </Card>
+      </Container>
     );
   }
 
   return (
-    <Card className={className}>
+    <Container className={className}>
       <div className="p-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -143,6 +146,6 @@ export function ErrorConsole({ className }: ErrorConsoleProps) {
           </p>
         </div>
       </div>
-    </Card>
+    </Container>
   );
 }

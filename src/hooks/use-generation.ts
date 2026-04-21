@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 import { extractCode } from '@/lib/extract-code';
+import { supabase } from '@/lib/supabase';
 
 interface UseGenerationOptions {
   onChunk?: (chunk: string) => void;
@@ -38,6 +39,14 @@ export function useGeneration(options: UseGenerationOptions = {}) {
   const { appendAccumulated, resetAccumulated, setCurrentCode, addVersion } =
     useGenerationStore();
 
+  const getAuthHeaders = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) return null;
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
+
   /**
    * Generate code from AI prompt with SSE streaming
    */
@@ -48,10 +57,15 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       resetAccumulated();
 
       try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders) {
+          throw new Error('Unauthorized: please sign in again');
+        }
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...authHeaders,
           },
           body: JSON.stringify(request),
         });
@@ -113,6 +127,10 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       resetAccumulated();
 
       try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders) {
+          throw new Error('Unauthorized: please sign in again');
+        }
         const request: DebugRequest = {
           code,
           errorMessage,
@@ -124,6 +142,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...authHeaders,
           },
           body: JSON.stringify(request),
         });

@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, type ElementType } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 import { buildPreviewTSX } from '@/lib/preview-builder';
 import { Card } from '@/components/ui/card';
@@ -25,9 +25,14 @@ import {
 interface PreviewPaneProps {
   height?: string;
   className?: string;
+  chromeless?: boolean;
 }
 
-export function PreviewPane({ height = '600px', className }: PreviewPaneProps) {
+export function PreviewPane({
+  height = '600px',
+  className,
+  chromeless = false,
+}: PreviewPaneProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { currentCode, versions, currentVersionId, setCurrentVersion, lastError, setLastError } =
     useGenerationStore();
@@ -95,11 +100,16 @@ export function PreviewPane({ height = '600px', className }: PreviewPaneProps) {
   };
 
   const currentVersion = versions.find((v) => v.id === currentVersionId);
+  const Container: ElementType = chromeless ? 'div' : Card;
 
   return (
-    <Card className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
+    <Container className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
       {/* Header */}
-      <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
+      <div
+        className={`border-b flex items-center justify-between ${
+          chromeless ? 'border-border/40 px-3 h-11 bg-card' : 'px-4 py-2 bg-muted/50'
+        }`}
+      >
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium">Live Preview</h3>
           {lastError && (
@@ -112,9 +122,12 @@ export function PreviewPane({ height = '600px', className }: PreviewPaneProps) {
           {/* Version Selector */}
           {versions.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-7 text-xs">
-                  {currentVersion?.description || `Version ${versions.findIndex(v => v.id === currentVersionId) + 1}`}
+                  {currentVersion?.description ||
+                    `Version ${
+                      versions.findIndex((v) => v.id === currentVersionId) + 1
+                    }`}
                   <ChevronDown className="ml-1 h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -168,7 +181,7 @@ export function PreviewPane({ height = '600px', className }: PreviewPaneProps) {
 
       {/* Iframe */}
       {!isCollapsed && (
-        <div className="flex-1 min-h-0 bg-white">
+        <div className="flex-1 min-h-0 bg-background">
           <iframe
             ref={iframeRef}
             title="Preview"
@@ -203,6 +216,6 @@ export function PreviewPane({ height = '600px', className }: PreviewPaneProps) {
           </div>
         </div>
       )}
-    </Card>
+    </Container>
   );
 }

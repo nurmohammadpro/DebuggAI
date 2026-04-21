@@ -23,31 +23,13 @@ export default function SettingsPage() {
 
   const settingsSections = [
     {
-      title: 'Account',
-      description: 'Manage your account settings',
-      icon: UserIcon,
-      items: [
-        { label: 'Profile Information', href: '/settings/profile' },
-        { label: 'Change Password', href: '/settings/password' },
-      ],
-    },
-    {
       title: 'Billing',
       description: 'Manage your subscription and credits',
       icon: CreditCard,
       items: [
-        { label: 'Subscription', href: '/pricing' },
-        { label: 'Transaction History', href: '/settings/transactions' },
-        { label: 'Referral Program', href: '/referrals' },
-      ],
-    },
-    {
-      title: 'Developer',
-      description: 'Developer tools and integrations',
-      icon: SettingsIcon,
-      items: [
-        { label: 'API Keys', href: '/settings/api-keys' },
-        { label: 'Webhooks', href: '/settings/webhooks' },
+        { label: 'Subscription', href: '/dashboard/pricing' },
+        { label: 'Transaction History', href: '/dashboard/settings/transactions' },
+        { label: 'Referral Program', href: '/dashboard/referrals' },
       ],
     },
   ];

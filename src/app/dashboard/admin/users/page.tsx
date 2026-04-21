@@ -210,7 +210,7 @@ export default function AdminUsersPage() {
     <div className="container mx-auto py-8 px-4 animate-fade-in">
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
-        <Link href="/admin">
+        <Link href="/dashboard/admin">
           <Button variant="ghost" size="icon" className="hover:bg-accent/50">
             <ArrowLeft className="h-5 w-5" />
           </Button>

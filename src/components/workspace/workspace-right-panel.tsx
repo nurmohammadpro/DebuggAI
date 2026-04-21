@@ -5,6 +5,7 @@ import { ChevronRight, MessageSquare, Eye, Terminal, GitBranch, Plug, SlidersHor
 import { ChatPanel } from '@/components/web-builder/chat-panel';
 import { PreviewPane } from '@/components/web-builder/preview-pane';
 import { ErrorConsole } from '@/components/web-builder/error-console';
+import { WorkspacePanelPlaceholder } from '@/components/workspace/workspace-panel-placeholder';
 
 import type { WorkspaceRightTab } from './workspace-icon-sidebar';
 
@@ -35,7 +36,7 @@ export function WorkspaceRightPanel({
 
   if (collapsed) {
     return (
-      <aside className="w-10 bg-card border-l border-border flex items-center justify-center">
+      <aside className="w-10 bg-card flex items-center justify-center">
         <button
           className="h-8 w-8 rounded-md hover:bg-muted/40 flex items-center justify-center"
           title="Expand panel"
@@ -52,7 +53,7 @@ export function WorkspaceRightPanel({
       className="bg-card flex flex-col min-w-[320px]"
       style={{ width }}
     >
-      <div className="h-11 border-b border-border flex items-center gap-1 px-2 overflow-x-auto">
+      <div className="h-11 border-b border-border/40 flex items-center gap-1 px-2 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -82,43 +83,34 @@ export function WorkspaceRightPanel({
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'chat' && (
           <div className="h-full">
-            <ChatPanel height="100%" className="rounded-none border-0 shadow-none bg-transparent" />
+            <ChatPanel height="100%" chromeless className="h-full bg-transparent" />
           </div>
         )}
 
         {activeTab === 'preview' && (
-          <div className="h-full p-2">
-            <PreviewPane height="100%" className="rounded-none border-0 shadow-none bg-transparent" />
+          <div className="h-full">
+            <PreviewPane height="100%" chromeless className="h-full bg-transparent" />
           </div>
         )}
 
         {activeTab === 'console' && (
-          <div className="h-full p-2">
-            <ErrorConsole className="h-full" />
+          <div className="h-full">
+            <ErrorConsole chromeless className="h-full" />
           </div>
         )}
 
         {activeTab === 'git' && (
-          <Placeholder title="Source Control" description="Git changes panel (mock UI)." />
+          <WorkspacePanelPlaceholder title="Source Control" description="Git changes panel (mock UI)." />
         )}
 
         {activeTab === 'env' && (
-          <Placeholder title="Environment" description="Environment variables panel (mock UI)." />
+          <WorkspacePanelPlaceholder title="Environment" description="Environment variables panel (mock UI)." />
         )}
 
         {activeTab === 'connections' && (
-          <Placeholder title="Connections" description="Integrations / connections panel (mock UI)." />
+          <WorkspacePanelPlaceholder title="Connections" description="Integrations / connections panel (mock UI)." />
         )}
       </div>
     </aside>
-  );
-}
-
-function Placeholder({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-6">
-      <div className="text-sm font-semibold text-foreground mb-2">{title}</div>
-      <div className="text-xs max-w-[260px] leading-relaxed">{description}</div>
-    </div>
   );
 }

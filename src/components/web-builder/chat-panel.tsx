@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ElementType } from 'react';
 import { useGeneration } from '@/hooks/use-generation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,9 +25,14 @@ interface ChatMessage {
 interface ChatPanelProps {
   height?: string;
   className?: string;
+  chromeless?: boolean;
 }
 
-export function ChatPanel({ height = '600px', className }: ChatPanelProps) {
+export function ChatPanel({
+  height = '600px',
+  className,
+  chromeless = false,
+}: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -100,10 +105,16 @@ export function ChatPanel({ height = '600px', className }: ChatPanelProps) {
     }
   };
 
+  const Container: ElementType = chromeless ? 'div' : Card;
+
   return (
-    <Card className={`flex flex-col overflow-hidden ${className || ''}`} style={{ height }}>
+    <Container
+      className={`flex flex-col overflow-hidden ${className || ''} ${chromeless ? '' : ''}`}
+      style={{ height }}
+    >
       {/* Header */}
-      <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
+      {!chromeless && (
+        <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-medium">AI Assistant</h3>
@@ -114,7 +125,8 @@ export function ChatPanel({ height = '600px', className }: ChatPanelProps) {
             New Project
           </Button>
         </StackSelector>
-      </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
@@ -208,7 +220,7 @@ export function ChatPanel({ height = '600px', className }: ChatPanelProps) {
       </div>
 
       {/* Input */}
-      <div className="border-t p-4">
+      <div className={`${chromeless ? 'border-t border-border/40' : 'border-t'} p-4`}>
         <div className="flex gap-2">
           <Textarea
             value={input}
@@ -235,6 +247,6 @@ export function ChatPanel({ height = '600px', className }: ChatPanelProps) {
           Press Enter to send, Shift + Enter for new line
         </p>
       </div>
-    </Card>
+    </Container>
   );
 }

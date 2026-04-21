@@ -1,33 +1,24 @@
 'use client';
 
 import { CodeEditor } from '@/components/web-builder/code-editor';
+import { WorkspaceEditorTabs } from '@/components/workspace/workspace-editor-tabs';
+import { useGenerationStore } from '@/store/generation-store';
 
 export function WorkspaceEditor() {
+  const { activeFilePath, files } = useGenerationStore();
+  const language = activeFilePath ? files?.files[activeFilePath]?.language : undefined;
   return (
     <section className="flex-1 min-w-0 bg-background flex flex-col min-h-0">
-      <div className="h-11 border-b border-border bg-card flex items-center overflow-x-auto px-2 gap-1">
-        <EditorTab name="App.tsx" active />
-        <EditorTab name="README.md" />
-      </div>
+      <WorkspaceEditorTabs />
 
       <div className="flex-1 min-h-0">
-        <CodeEditor height="100%" className="rounded-none border-0 shadow-none bg-transparent" />
+        <CodeEditor
+          height="100%"
+          showHeader={false}
+          language={language}
+          className="rounded-none border-0 shadow-none bg-transparent"
+        />
       </div>
     </section>
-  );
-}
-
-function EditorTab({ name, active = false }: { name: string; active?: boolean }) {
-  return (
-    <button
-      className={`h-8 px-3 rounded-full text-xs border transition-colors ${
-        active
-          ? 'bg-muted/50 border-border text-foreground'
-          : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted/30 hover:border-border'
-      }`}
-      title={name}
-    >
-      {name}
-    </button>
   );
 }

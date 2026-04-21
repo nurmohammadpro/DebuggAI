@@ -191,11 +191,11 @@ export default function AdminCreditsPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+        <Link href="/dashboard/admin">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
           <div>
             <h1 className="text-3xl font-bold">Credit Management</h1>
             <p className="text-muted-foreground mt-1">
