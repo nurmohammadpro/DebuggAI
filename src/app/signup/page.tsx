@@ -2,13 +2,11 @@
  * Signup Page
  */
 
-import { signUp } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { PublicLayout } from '@/components/public-layout';
+import { SignupForm } from '@/components/auth/signup-form';
 
 export default function SignupPage() {
   return (
@@ -44,45 +42,7 @@ export default function SignupPage() {
             </div>
 
             {/* Email/Password Form */}
-            <form action={signUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Create a password"
-                  minLength={8}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Must be at least 8 characters
-                </p>
-              </div>
-              <Button type="submit" className="w-full">
-                Create Account
-              </Button>
-            </form>
+            <SignupForm />
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-muted-foreground text-center">

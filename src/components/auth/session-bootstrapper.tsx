@@ -1,7 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import type {
+  AuthChangeEvent,
+  RealtimeChannel,
+  RealtimePostgresUpdatePayload,
+  Session,
+} from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
 
@@ -30,7 +35,7 @@ export function SessionBootstrapper() {
             table: 'credit_wallets',
             filter: `owner_id=eq.${userId}`,
           },
-          (payload) => {
+          (payload: RealtimePostgresUpdatePayload<{ balance: number }>) => {
             const newBalance = payload.new.balance;
             setCredits(newBalance);
           }
@@ -96,7 +101,7 @@ export function SessionBootstrapper() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       if (!active) return;
 
       if (session?.user) {
@@ -127,4 +132,3 @@ export function SessionBootstrapper() {
 
   return null;
 }
-

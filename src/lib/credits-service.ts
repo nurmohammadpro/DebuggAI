@@ -186,7 +186,7 @@ export async function getTransactions(
     .select('id')
     .eq('owner_id', userId);
 
-  const walletIds = (wallets || []).map((w) => w.id);
+  const walletIds = ((wallets || []) as Array<{ id: string }>).map((w) => w.id);
 
   if (walletIds.length === 0) return [];
 

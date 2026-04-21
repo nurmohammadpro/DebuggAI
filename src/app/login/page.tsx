@@ -2,13 +2,11 @@
  * Login Page
  */
 
-import { signIn } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { PublicLayout } from '@/components/public-layout';
+import { LoginForm } from '@/components/auth/login-form';
 
 export default function LoginPage() {
   return (
@@ -44,39 +42,7 @@ export default function LoginPage() {
             </div>
 
             {/* Email/Password Form */}
-            <form action={signIn} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/reset-password"
-                    className="text-sm text-muted-foreground hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Sign In
-              </Button>
-            </form>
+            <LoginForm />
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-muted-foreground text-center">
