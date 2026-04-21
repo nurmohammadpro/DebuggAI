@@ -32,7 +32,7 @@ export function WorkspaceIconSidebar({
   const itemActive = 'bg-muted/50 text-foreground border border-border';
 
   return (
-    <nav className="w-12 bg-card border-r border-border flex flex-col items-center py-2 gap-1">
+    <nav className="w-12 bg-card flex flex-col items-center py-2 gap-1">
       <button
         className={`${itemBase} ${leftView === 'explorer' ? itemActive : ''}`}
         title="Explorer"
@@ -84,4 +84,3 @@ export function WorkspaceIconSidebar({
     </nav>
   );
 }
-

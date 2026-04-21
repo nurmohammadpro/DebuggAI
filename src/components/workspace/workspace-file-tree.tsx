@@ -12,9 +12,11 @@ type TreeItem =
 export function WorkspaceFileTree({
   view,
   onSelectFile,
+  width,
 }: {
   view: WorkspaceLeftView;
   onSelectFile: (fileName: string) => void;
+  width: number;
 }) {
   const [query, setQuery] = useState('');
 
@@ -34,7 +36,10 @@ export function WorkspaceFileTree({
   );
 
   return (
-    <aside className="w-72 bg-card border-r border-border flex flex-col min-w-[220px]">
+    <aside
+      className="bg-card flex flex-col min-w-[220px]"
+      style={{ width }}
+    >
       <div className="h-11 px-3 border-b border-border flex items-center gap-2">
         <span className="text-xs font-semibold tracking-wide text-muted-foreground">
           {view === 'explorer' ? 'Explorer' : 'Search'}

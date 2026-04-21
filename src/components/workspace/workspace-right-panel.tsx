@@ -13,11 +13,13 @@ export function WorkspaceRightPanel({
   onTabChange,
   collapsed,
   onToggleCollapsed,
+  width,
 }: {
   activeTab: WorkspaceRightTab;
   onTabChange: (tab: WorkspaceRightTab) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  width: number;
 }) {
   const tabs = useMemo(
     () => [
@@ -46,7 +48,10 @@ export function WorkspaceRightPanel({
   }
 
   return (
-    <aside className="w-[420px] max-w-[45vw] bg-card border-l border-border flex flex-col min-w-[320px]">
+    <aside
+      className="bg-card flex flex-col min-w-[320px]"
+      style={{ width }}
+    >
       <div className="h-11 border-b border-border flex items-center gap-1 px-2 overflow-x-auto">
         {tabs.map((t) => (
           <button
@@ -77,13 +82,13 @@ export function WorkspaceRightPanel({
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'chat' && (
           <div className="h-full">
-            <ChatPanel height="100%" />
+            <ChatPanel height="100%" className="rounded-none border-0 shadow-none bg-transparent" />
           </div>
         )}
 
         {activeTab === 'preview' && (
           <div className="h-full p-2">
-            <PreviewPane height="100%" />
+            <PreviewPane height="100%" className="rounded-none border-0 shadow-none bg-transparent" />
           </div>
         )}
 

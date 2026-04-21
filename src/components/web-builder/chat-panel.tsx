@@ -24,9 +24,10 @@ interface ChatMessage {
 
 interface ChatPanelProps {
   height?: string;
+  className?: string;
 }
 
-export function ChatPanel({ height = '600px' }: ChatPanelProps) {
+export function ChatPanel({ height = '600px', className }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -100,7 +101,7 @@ export function ChatPanel({ height = '600px' }: ChatPanelProps) {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden" style={{ height }}>
+    <Card className={`flex flex-col overflow-hidden ${className || ''}`} style={{ height }}>
       {/* Header */}
       <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -11,7 +11,7 @@ export function WorkspaceEditor() {
       </div>
 
       <div className="flex-1 min-h-0">
-        <CodeEditor height="100%" />
+        <CodeEditor height="100%" className="rounded-none border-0 shadow-none bg-transparent" />
       </div>
     </section>
   );

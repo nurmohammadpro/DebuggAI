@@ -24,9 +24,10 @@ import {
 
 interface PreviewPaneProps {
   height?: string;
+  className?: string;
 }
 
-export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
+export function PreviewPane({ height = '600px', className }: PreviewPaneProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { currentCode, versions, currentVersionId, setCurrentVersion, lastError, setLastError } =
     useGenerationStore();
@@ -96,7 +97,7 @@ export function PreviewPane({ height = '600px' }: PreviewPaneProps) {
   const currentVersion = versions.find((v) => v.id === currentVersionId);
 
   return (
-    <Card className="overflow-hidden flex flex-col" style={{ height }}>
+    <Card className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
       {/* Header */}
       <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
