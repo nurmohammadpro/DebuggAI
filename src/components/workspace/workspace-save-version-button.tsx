@@ -14,7 +14,7 @@ import { queryKeys } from '@/hooks/queries/query-keys';
 export function WorkspaceSaveVersionButton() {
   const queryClient = useQueryClient();
   const { projectKey, selectedProjectId } = useWorkspaceStore();
-  const { getProjectCode } = useGenerationStore();
+  const { getProjectCode, markSaved } = useGenerationStore();
   const [saving, setSaving] = useState(false);
 
   const disabled = !projectKey || !selectedProjectId || saving;
@@ -45,6 +45,7 @@ export function WorkspaceSaveVersionButton() {
       if (error) throw error;
 
       toast.success('Version saved');
+      markSaved(code);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.projectVersions(projectKey),
       });
@@ -72,4 +73,3 @@ export function WorkspaceSaveVersionButton() {
     </Button>
   );
 }
-

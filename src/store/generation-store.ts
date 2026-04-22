@@ -33,6 +33,7 @@ interface GenerationState {
   activeFilePath: string | null;
   files: VirtualProjectFiles | null;
   previewNonce: number;
+  savedSnapshot: string;
   isGenerating: boolean;
   accumulated: string; // Accumulated streaming response
 
@@ -47,6 +48,7 @@ interface GenerationState {
   setCurrentCode: (code: string) => void;
   setActiveFilePath: (path: string) => void;
   bumpPreviewNonce: () => void;
+  markSaved: (snapshot?: string) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setAccumulated: (text: string) => void;
   appendAccumulated: (chunk: string) => void;
@@ -72,6 +74,7 @@ const initialState = {
   activeFilePath: null as string | null,
   files: null as VirtualProjectFiles | null,
   previewNonce: 0,
+  savedSnapshot: '',
   isGenerating: false,
   accumulated: '',
   versions: [],
@@ -113,6 +116,9 @@ export const useGenerationStore = create<GenerationState>()(
 
       bumpPreviewNonce: () =>
         set((state) => ({ previewNonce: (state.previewNonce + 1) % Number.MAX_SAFE_INTEGER })),
+
+      markSaved: (snapshot) =>
+        set((state) => ({ savedSnapshot: snapshot ?? serializeVirtualFiles(state.files || extractVirtualFiles(state.currentCode)) })),
 
       setIsGenerating: (isGenerating) => set({ isGenerating }),
 
@@ -186,6 +192,7 @@ export const useGenerationStore = create<GenerationState>()(
             currentCode: parsed.files[parsed.entryPath]?.content || code,
             files: parsed,
             activeFilePath: parsed.entryPath,
+            savedSnapshot: code,
             versions: [baseVersion],
             currentVersionId: baseVersion.id,
           };
@@ -199,6 +206,7 @@ export const useGenerationStore = create<GenerationState>()(
         currentCode: state.currentCode,
         activeFilePath: state.activeFilePath,
         files: state.files,
+        savedSnapshot: state.savedSnapshot,
       }),
     }
   )

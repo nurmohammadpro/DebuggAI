@@ -26,12 +26,14 @@ interface ChatPanelProps {
   height?: string;
   className?: string;
   chromeless?: boolean;
+  mode?: 'build' | 'debug';
 }
 
 export function ChatPanel({
   height = '600px',
   className,
   chromeless = false,
+  mode = 'build',
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -105,6 +107,24 @@ export function ChatPanel({
     }
   };
 
+  const starterPrompts =
+    mode === 'debug'
+      ? [
+          'My app crashes with: TypeError ... Fix it and explain.',
+          'Review this function for bugs and edge cases.',
+          'I get a hydration error in Next.js — help me fix it.',
+        ]
+      : [
+          'Create a login form with email + password',
+          'Create a todo list with add/delete',
+          'Create a dashboard with stats cards and a chart',
+        ];
+
+  const placeholder =
+    mode === 'debug'
+      ? 'Describe the bug / paste the error...'
+      : 'Describe what you want to build...';
+
   const Container: ElementType = chromeless ? 'div' : Card;
 
   return (
@@ -113,20 +133,27 @@ export function ChatPanel({
       style={{ height }}
     >
       {/* Header */}
-      {!chromeless && (
-        <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
+      <div
+        className={`border-b flex items-center justify-between ${
+          chromeless ? 'border-border/40 px-3 h-11 bg-card' : 'px-4 py-2 bg-muted/50'
+        }`}
+      >
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-medium">AI Assistant</h3>
+          <span className="text-[10px] px-2 py-0.5 rounded-full border border-border/50 bg-muted/40 text-muted-foreground">
+            {mode === 'debug' ? 'Debug' : 'Build'}
+          </span>
         </div>
-        <StackSelector>
-          <Button variant="outline" size="sm" className="h-8">
-            <Layers className="mr-2 h-3 w-3" />
-            New Project
-          </Button>
-        </StackSelector>
-        </div>
-      )}
+        {!chromeless && (
+          <StackSelector>
+            <Button variant="outline" size="sm" className="h-8">
+              <Layers className="mr-2 h-3 w-3" />
+              New Project
+            </Button>
+          </StackSelector>
+        )}
+      </div>
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
@@ -134,41 +161,34 @@ export function ChatPanel({
           <div className="flex items-center justify-center h-full text-center">
             <div className="max-w-sm">
               <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <h4 className="text-lg font-medium mb-2">Start Building</h4>
+              <h4 className="text-lg font-medium mb-2">
+                {mode === 'debug' ? 'Start Debugging' : 'Start Building'}
+              </h4>
               <p className="text-sm text-muted-foreground mb-4">
-                Describe what you want to build, or start with a new project template.
+                {mode === 'debug'
+                  ? 'Describe the issue, paste the error, and we’ll fix it.'
+                  : 'Describe what you want to build, or start with a new project template.'}
               </p>
-              <StackSelector>
-                <Button variant="default" size="sm">
-                  <Layers className="mr-2 h-4 w-4" />
-                  Create New Project
-                </Button>
-              </StackSelector>
+              {!chromeless && (
+                <StackSelector>
+                  <Button variant="default" size="sm">
+                    <Layers className="mr-2 h-4 w-4" />
+                    Create New Project
+                  </Button>
+                </StackSelector>
+              )}
               <div className="mt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left"
-                  onClick={() => setInput('Create a login form with email and password fields')}
-                >
-                  Create a login form
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left"
-                  onClick={() => setInput('Create a todo list component with add and delete functionality')}
-                >
-                  Create a todo list
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-left"
-                  onClick={() => setInput('Create a dashboard with stats cards and a chart')}
-                >
-                  Create a dashboard
-                </Button>
+                {starterPrompts.map((p) => (
+                  <Button
+                    key={p}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-left"
+                    onClick={() => setInput(p)}
+                  >
+                    {p}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>
@@ -226,7 +246,7 @@ export function ChatPanel({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Describe what you want to build..."
+            placeholder={placeholder}
             className="min-h-[60px] max-h-[120px] resize-none"
             disabled={isLoading}
           />

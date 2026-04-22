@@ -6,6 +6,7 @@ import { ChatPanel } from '@/components/web-builder/chat-panel';
 import { PreviewPane } from '@/components/web-builder/preview-pane';
 import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspacePanelPlaceholder } from '@/components/workspace/workspace-panel-placeholder';
+import type { WorkspaceMode } from '@/store/workspace-store';
 
 import type { WorkspaceRightTab } from './workspace-icon-sidebar';
 
@@ -15,12 +16,14 @@ export function WorkspaceRightPanel({
   collapsed,
   onToggleCollapsed,
   width,
+  mode,
 }: {
   activeTab: WorkspaceRightTab;
   onTabChange: (tab: WorkspaceRightTab) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   width: number;
+  mode: WorkspaceMode;
 }) {
   const tabs = useMemo(
     () => [
@@ -83,7 +86,12 @@ export function WorkspaceRightPanel({
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'chat' && (
           <div className="h-full">
-            <ChatPanel height="100%" chromeless className="h-full bg-transparent" />
+            <ChatPanel
+              height="100%"
+              chromeless
+              mode={mode}
+              className="h-full bg-transparent"
+            />
           </div>
         )}
 

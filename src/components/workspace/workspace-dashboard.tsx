@@ -8,6 +8,7 @@ import { useSessionStore } from '@/store/session-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
 import { useProject } from '@/hooks/queries/use-project';
 import { useGenerationStore } from '@/store/generation-store';
+import { useMemo } from 'react';
 import { getProjectKey } from '@/lib/project/project-key';
 import { WorkspaceTopbar } from '@/components/workspace/workspace-topbar';
 import {
@@ -27,7 +28,8 @@ export function WorkspaceDashboard() {
   const { isAuthenticated, isLoading } = useSessionStore();
   const { mode, setMode, selectedProjectId, setSelectedProjectId, setProjectKey } =
     useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, getProjectCode, savedSnapshot, currentCode, files } =
+    useGenerationStore();
 
   const [leftView, setLeftView] = useState<WorkspaceLeftView>('explorer');
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('chat');
@@ -116,12 +118,20 @@ export function WorkspaceDashboard() {
 
   if (!isAuthenticated) return null;
 
+  const unsavedCount = useMemo(() => {
+    const currentSnapshot = getProjectCode();
+    const a = (savedSnapshot || '').trim();
+    const b = (currentSnapshot || '').trim();
+    return a && b && a !== b ? 1 : 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCode, files, savedSnapshot]);
+
   return (
     <div className="min-h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
       <WorkspaceTopbar
         projectId={effectiveProjectId}
         branchName="main"
-        unsavedCount={0}
+        unsavedCount={unsavedCount}
         mode={mode}
         onModeChange={setMode}
         onRun={() => {
@@ -182,6 +192,7 @@ export function WorkspaceDashboard() {
           collapsed={rightCollapsed}
           onToggleCollapsed={() => setRightCollapsed((v) => !v)}
           width={clamp(rightWidth, 320, 720)}
+          mode={mode}
         />
       </div>
     </div>
