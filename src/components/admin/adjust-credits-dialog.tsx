@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
-import { queryKeys } from '@/hooks/queries/query-keys';
 
 export function AdjustCreditsDialog({
   open,
@@ -82,7 +81,7 @@ export function AdjustCreditsDialog({
       setAmount('10');
       setDescription('');
 
-      await queryClient.invalidateQueries({ queryKey: queryKeys.adminCredits('') });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'credits'] });
       onAdjusted();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to adjust credits');
@@ -174,4 +173,3 @@ export function AdjustCreditsDialog({
     </Dialog>
   );
 }
-

@@ -31,7 +31,6 @@ import { AdminError } from '@/components/admin/admin-error';
 import { AdminPagination } from '@/components/admin/admin-pagination';
 import { useAdminUsers, type AdminUserRow } from '@/hooks/queries/use-admin-users';
 import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
-import { queryKeys } from '@/hooks/queries/query-keys';
 
 export function AdminUsers() {
   const queryClient = useQueryClient();
@@ -87,7 +86,7 @@ export function AdminUsers() {
       if (!res.ok) throw new Error(json.error || 'Failed to update user');
       toast.success('User updated');
       setEditUser(null);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers('') });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       refetch();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to update user');
@@ -109,7 +108,7 @@ export function AdminUsers() {
       if (!res.ok) throw new Error(json.error || 'Failed to delete user');
       toast.success('User deleted');
       setDeleteUser(null);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers('') });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       refetch();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to delete user');
@@ -294,4 +293,3 @@ export function AdminUsers() {
     </div>
   );
 }
-
