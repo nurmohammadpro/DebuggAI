@@ -17,7 +17,7 @@ interface User {
   avatarUrl?: string;
   plan: PlanType;
   credits: number;
-  isAdmin?: boolean;
+  isAdmin: boolean | null;
 }
 
 interface SessionState {

@@ -97,6 +97,7 @@ export function SessionBootstrapper() {
           avatarUrl: session.user.user_metadata.avatar_url,
           plan: session.user.user_metadata.plan || 'free',
           credits: 0,
+          isAdmin: null,
         });
         await hydrateUser(session.user.id, email);
       } else {
@@ -124,6 +125,7 @@ export function SessionBootstrapper() {
           avatarUrl: session.user.user_metadata.avatar_url,
           plan: session.user.user_metadata.plan || 'free',
           credits: 0,
+          isAdmin: null,
         });
         await hydrateUser(session.user.id, email);
       } else {

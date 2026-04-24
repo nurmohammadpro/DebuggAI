@@ -1,37 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity, ExternalLink, Loader2 } from 'lucide-react';
 
-import { useSessionStore } from '@/store/session-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { AdminRouteGuard } from '@/components/admin/admin-route-guard';
 
 export function AdminMonitoring() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useSessionStore();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.push('/login');
-      } else if (!user?.isAdmin) {
-        router.push('/dashboard');
-      }
-    }
-  }, [isAuthenticated, isLoading, router, user?.isAdmin]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
+    <AdminRouteGuard>
     <div className="p-6 max-w-5xl">
       <div className="mb-6">
         <div className="flex items-center gap-2">
@@ -76,6 +57,6 @@ export function AdminMonitoring() {
         </CardContent>
       </Card>
     </div>
+    </AdminRouteGuard>
   );
 }
-
