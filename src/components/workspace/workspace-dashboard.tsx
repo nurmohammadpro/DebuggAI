@@ -41,6 +41,14 @@ export function WorkspaceDashboard() {
   const effectiveProjectId = urlProjectId || selectedProjectId;
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
 
+  const unsavedCount = useMemo(() => {
+    const currentSnapshot = getProjectCode();
+    const a = (savedSnapshot || '').trim();
+    const b = (currentSnapshot || '').trim();
+    return a && b && a !== b ? 1 : 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCode, files, savedSnapshot]);
+
   useEffect(() => {
     if (urlProjectId && urlProjectId !== selectedProjectId) {
       setSelectedProjectId(urlProjectId);
@@ -117,14 +125,6 @@ export function WorkspaceDashboard() {
   }
 
   if (!isAuthenticated) return null;
-
-  const unsavedCount = useMemo(() => {
-    const currentSnapshot = getProjectCode();
-    const a = (savedSnapshot || '').trim();
-    const b = (currentSnapshot || '').trim();
-    return a && b && a !== b ? 1 : 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCode, files, savedSnapshot]);
 
   return (
     <div className="min-h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
