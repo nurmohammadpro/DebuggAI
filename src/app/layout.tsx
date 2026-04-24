@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
+import { ThemeInitScript } from "@/components/theme-init-script";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,13 +37,8 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          enableColorScheme={false}
-          disableTransitionOnChange
-        >
+        <ThemeInitScript />
+        <ThemeProvider defaultTheme="dark">
           <QueryProvider>
             {children}
             <Toaster />

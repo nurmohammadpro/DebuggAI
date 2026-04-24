@@ -12,7 +12,7 @@ import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useGenerationStore } from '@/store/generation-store';
 import { Card } from '@/components/ui/card';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/theme-provider';
 
 interface CodeEditorProps {
   height?: string;
