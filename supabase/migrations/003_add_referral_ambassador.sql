@@ -2,6 +2,9 @@
 
 -- Ensure metadata column is JSONB
 ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+ALTER TABLE public.profiles
   ALTER COLUMN metadata SET DEFAULT '{}'::jsonb,
   ALTER COLUMN metadata SET NOT NULL;
 
