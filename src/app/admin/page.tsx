@@ -9,7 +9,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
-import { TrendingUpIcon, TrendingDownIcon, BugIcon, CoinsIcon, Building2Icon, UsersIcon, AlertCircleIcon, CheckCircleIcon, ClockIcon, RefreshCwIcon, DownloadIcon, CalendarIcon } from 'lucide-react';
+import { BugIcon, CoinsIcon, Building2Icon, UsersIcon, AlertCircleIcon, CheckCircleIcon, ClockIcon, RefreshCwIcon, DownloadIcon, FileTextIcon } from 'lucide-react';
 import { getDashboardStats, getRecentActivity } from '@/lib/admin/auth';
 
 interface DashboardStats {
@@ -76,9 +76,6 @@ export default function AdminDashboardPage() {
       id: 'users',
       label: 'Total Users',
       value: stats?.totalUsers || 0,
-      previousValue: Math.floor((stats?.totalUsers || 0) * 0.92),
-      change: 8.2,
-      changeType: 'increase' as const,
       icon: UsersIcon,
       color: '#40C4FF',
     },
@@ -86,9 +83,6 @@ export default function AdminDashboardPage() {
       id: 'credits',
       label: 'Total Credits',
       value: stats?.totalCredits || 0,
-      previousValue: Math.floor((stats?.totalCredits || 0) * 0.95),
-      change: 5.1,
-      changeType: 'increase' as const,
       icon: CoinsIcon,
       color: '#FFAB00',
     },
@@ -96,9 +90,6 @@ export default function AdminDashboardPage() {
       id: 'debug',
       label: 'Debug Sessions',
       value: stats?.debugSessions || 0,
-      previousValue: Math.floor((stats?.debugSessions || 0) * 0.88),
-      change: 12.3,
-      changeType: 'increase' as const,
       icon: BugIcon,
       color: '#00C853',
     },
@@ -106,9 +97,6 @@ export default function AdminDashboardPage() {
       id: 'builder',
       label: 'Builder Sessions',
       value: stats?.builderSessions || 0,
-      previousValue: Math.floor((stats?.builderSessions || 0) * 0.90),
-      change: -2.4,
-      changeType: 'decrease' as const,
       icon: Building2Icon,
       color: '#CE93D8',
     },
@@ -235,7 +223,6 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => {
           const Icon = stat.icon;
-          const isPositive = stat.changeType === 'increase';
 
           return (
             <div
@@ -249,16 +236,6 @@ export default function AdminDashboardPage() {
                   </div>
                   <span className="text-xs uppercase tracking-wider text-[#4D6B4D]">{stat.label}</span>
                 </div>
-                <div className={`flex items-center gap-1 text-xs font-medium ${
-                  isPositive ? 'text-[#00C853]' : 'text-[#FF5252]'
-                }`}>
-                  {isPositive ? (
-                    <TrendingUpIcon className="w-3 h-3" />
-                  ) : (
-                    <TrendingDownIcon className="w-3 h-3" />
-                  )}
-                  <span>{Math.abs(stat.change)}%</span>
-                </div>
               </div>
 
               <div className="text-3xl font-semibold text-[#E8F5E9] mb-1">
@@ -266,9 +243,7 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#4D6B4D]">
-                  {stat.previousValue.toLocaleString()} previous {timeRange}
-                </span>
+                <span className="text-[#4D6B4D]">Total all time</span>
                 <span className="text-[#8BAD8B] group-hover:text-[#00C853] transition-colors">
                   View details →
                 </span>
@@ -358,56 +333,30 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions & System Health */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5">
-            <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-                <UsersIcon className="w-4 h-4 text-[#8BAD8B]" />
-                <span className="flex-1">Manage Users</span>
-                <span className="text-xs text-[#4D6B4D]">→</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-                <CoinsIcon className="w-4 h-4 text-[#8BAD8B]" />
-                <span className="flex-1">View Credits</span>
-                <span className="text-xs text-[#4D6B4D]">→</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-                <AlertCircleIcon className="w-4 h-4 text-[#8BAD8B]" />
-                <span className="flex-1">Review Abuse Reports</span>
-                <span className="text-xs text-[#FF5252]">3 new</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-                <CalendarIcon className="w-4 h-4 text-[#8BAD8B]" />
-                <span className="flex-1">Audit Log</span>
-                <span className="text-xs text-[#4D6B4D]">→</span>
-              </button>
-            </div>
-          </div>
-
-          {/* System Health */}
-          <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5">
-            <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">System Health</h3>
-            <div className="space-y-4">
-              {[
-                { label: 'API Response Time', value: '45ms', status: 'healthy' },
-                { label: 'Database Latency', value: '12ms', status: 'healthy' },
-                { label: 'Error Rate', value: '0.02%', status: 'healthy' },
-                { label: 'Uptime (30d)', value: '99.97%', status: 'healthy' },
-              ].map((metric) => (
-                <div key={metric.label} className="flex items-center justify-between">
-                  <span className="text-sm text-[#8BAD8B]">{metric.label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-[#E8F5E9]">{metric.value}</span>
-                    <span className={`w-2 h-2 rounded-full ${
-                      metric.status === 'healthy' ? 'bg-[#00C853]' : 'bg-[#FF5252]'
-                    }`} />
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Quick Actions */}
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5">
+          <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Quick Actions</h3>
+          <div className="space-y-2">
+            <a href="/admin/users" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+              <UsersIcon className="w-4 h-4 text-[#8BAD8B]" />
+              <span className="flex-1">Manage Users</span>
+              <span className="text-xs text-[#4D6B4D]">→</span>
+            </a>
+            <a href="/admin/credits" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+              <CoinsIcon className="w-4 h-4 text-[#8BAD8B]" />
+              <span className="flex-1">View Credits</span>
+              <span className="text-xs text-[#4D6B4D]">→</span>
+            </a>
+            <a href="/admin/abuse" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+              <AlertCircleIcon className="w-4 h-4 text-[#8BAD8B]" />
+              <span className="flex-1">Review Abuse Reports</span>
+              <span className="text-xs text-[#4D6B4D]">→</span>
+            </a>
+            <a href="/admin/audit" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+              <FileTextIcon className="w-4 h-4 text-[#8BAD8B]" />
+              <span className="flex-1">Audit Log</span>
+              <span className="text-xs text-[#4D6B4D]">→</span>
+            </a>
           </div>
         </div>
       </div>
