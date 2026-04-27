@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('profiles')
-      .select('id, email, full_name, avatar_url, plan, is_admin, created_at, updated_at', { count: 'exact' });
+      .select('id, email, full_name, avatar_url, plan_type, is_admin, created_at, updated_at', { count: 'exact' });
 
     if (search) {
       query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
     }
 
-    if (plan && ['free', 'pro', 'enterprise'].includes(plan)) {
-      query = query.eq('plan', plan);
+    if (plan && ['free', 'pro', 'team', 'business', 'enterprise'].includes(plan)) {
+      query = query.eq('plan_type', plan);
     }
 
     const { data: users, count, error } = await query
@@ -69,9 +69,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { userId, plan, is_admin, full_name } = body as {
+    const { userId, plan_type, is_admin, full_name } = body as {
       userId?: string;
-      plan?: string;
+      plan_type?: string;
       is_admin?: boolean;
       full_name?: string;
     };
@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updateData: Record<string, any> = {};
-    if (plan !== undefined) updateData.plan = plan;
+    if (plan_type !== undefined) updateData.plan_type = plan_type;
     if (is_admin !== undefined) updateData.is_admin = is_admin;
     if (full_name !== undefined) updateData.full_name = full_name;
 
