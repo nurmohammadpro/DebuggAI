@@ -97,7 +97,7 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Header */}
-      <header className="fixed top-0 right-0 left-0 lg:left-64 z-40 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="fixed top-0 right-0 left-0 lg:left-64 z-40 h-14 bg-background border-b">
         <div className="flex h-14 items-center justify-between px-6">
           {/* Page Title */}
           <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
 
       {/* Mobile Header */}
       <div className="lg:hidden">
-        <header className="sticky top-0 z-40 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-40 h-14 bg-background border-b">
           <div className="flex h-14 items-center justify-between px-4">
             <Link href="/dashboard" className="flex items-center gap-2.5">
               <Logo className="h-5 w-auto" />
@@ -273,7 +273,7 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
         </header>
 
         {/* Mobile Navigation */}
-        <nav className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <nav className="border-t bg-background">
           <div className="grid grid-cols-6 gap-1 p-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
