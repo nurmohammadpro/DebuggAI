@@ -17,8 +17,15 @@ function Dialog({ ...props }: DialogPrimitive.Root.Props) {
 }
 
 function DialogTrigger({ children, ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props}>{children}</DialogPrimitive.Trigger>
+  const { asChild, ...rest } = props
+  return (
+    <DialogPrimitive.Trigger data-slot="dialog-trigger" asChild={asChild} {...rest}>
+      {children}
+    </DialogPrimitive.Trigger>
+  )
 }
+
+DialogTrigger.displayName = DialogPrimitive.Trigger.displayName
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
