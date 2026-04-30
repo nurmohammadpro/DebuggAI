@@ -37,32 +37,10 @@ export default function WebBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div>
-            <h1 className="h2">Web Builder</h1>
-            <p className="text-xs text-text2">
-              Build apps with AI - Describe what you want and watch it come to life
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <a
-              href="https://supabase.com/dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-text2 hover:text-text transition-colors"
-            >
-              Need help?
-            </a>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
+      <div className="flex-1 p-4 sm:p-6">
+        <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-80px)]">
           {/* Chat Panel */}
           <div className="lg:col-span-1">
             <ChatPanel height="calc(100vh-180px)" />

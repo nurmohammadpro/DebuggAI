@@ -341,7 +341,7 @@ export default function ReferralsPage() {
 
       {/* Tabs for Referrals and Leaderboard */}
       <Tabs defaultValue="my-referrals" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-xs sm:max-w-md grid-cols-2">
           <TabsTrigger value="my-referrals">My Referrals</TabsTrigger>
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
         </TabsList>
