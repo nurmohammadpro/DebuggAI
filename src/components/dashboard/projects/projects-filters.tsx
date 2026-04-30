@@ -23,20 +23,20 @@ export function ProjectsFilters({
   onStackChange: (value: string) => void;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-2 sm:gap-3 sm:grid-cols-3">
       <div className="sm:col-span-2 space-y-1">
-        <Label className="text-xs text-muted-foreground">Search</Label>
+        <Label className="text-[10px] sm:text-xs text-muted-foreground">Search</Label>
         <Input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search by prompt or description…"
-          className="w-full"
+          className="w-full text-sm"
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Stack</Label>
+        <Label className="text-[10px] sm:text-xs text-muted-foreground">Stack</Label>
         <Select value={stack} onValueChange={(v) => onStackChange(v || 'all')}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full h-9">
             <SelectValue placeholder="All stacks" />
           </SelectTrigger>
           <SelectContent>

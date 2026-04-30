@@ -66,17 +66,18 @@ export function ProjectsHub() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <div className="text-2xl font-bold tracking-tight">Projects</div>
-          <div className="text-sm text-muted-foreground">
+        <div className="min-w-0">
+          <div className="text-xl sm:text-2xl font-bold tracking-tight">Projects</div>
+          <div className="text-xs sm:text-sm text-muted-foreground mt-1">
             Open a project in the workspace, or generate a new one.
           </div>
         </div>
         <CreateProjectDialog>
           <Plus className="mr-2 h-4 w-4" />
-          New Project
+          <span className="hidden sm:inline">New Project</span>
+          <span className="sm:hidden">Create</span>
         </CreateProjectDialog>
       </div>
 
@@ -87,16 +88,16 @@ export function ProjectsHub() {
         onStackChange={setStack}
       />
 
-      <div className="grid lg:grid-cols-[1fr,360px] gap-6 items-start">
-        <div className="space-y-4">
+      <div className="grid lg:grid-cols-[1fr,360px] gap-4 sm:gap-6 items-start">
+        <div className="space-y-4 order-2 lg:order-1">
           {error && (
-            <Card className="p-6">
+            <Card className="p-4 sm:p-6">
               <div className="text-sm font-medium">Failed to load projects</div>
               <div className="text-xs text-muted-foreground mt-1">
                 {error instanceof Error ? error.message : 'Unknown error'}
               </div>
               <div className="mt-4">
-                <Button variant="outline" onClick={() => refetch()}>
+                <Button variant="outline" onClick={() => refetch()} className="w-full sm:w-auto">
                   Retry
                 </Button>
               </div>
@@ -105,14 +106,14 @@ export function ProjectsHub() {
 
           {isLoading && (
             <div className="grid gap-3">
-              <Card className="p-4 h-20 animate-pulse" />
-              <Card className="p-4 h-20 animate-pulse" />
-              <Card className="p-4 h-20 animate-pulse" />
+              <Card className="p-4 h-16 sm:h-20 animate-pulse" />
+              <Card className="p-4 h-16 sm:h-20 animate-pulse" />
+              <Card className="p-4 h-16 sm:h-20 animate-pulse" />
             </div>
           )}
 
           {!isLoading && !error && projects.length === 0 && (
-            <Card className="p-10 text-center">
+            <Card className="p-6 sm:p-10 text-center">
               <div className="text-sm font-semibold">No projects yet</div>
               <div className="text-xs text-muted-foreground mt-1">
                 Generate your first project to get started.
@@ -121,7 +122,7 @@ export function ProjectsHub() {
           )}
 
           {!isLoading && !error && projects.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted-foreground">
                 <div>
                   <Badge variant="outline" className="text-xs">
@@ -151,7 +152,7 @@ export function ProjectsHub() {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4 order-1 lg:order-2">
           <RecentDebugSessions />
           <RecentTransactions />
         </div>

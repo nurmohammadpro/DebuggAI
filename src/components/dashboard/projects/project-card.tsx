@@ -28,57 +28,63 @@ export function ProjectCard({
     (project.prompt ? truncate(project.prompt, 60) : 'Untitled project');
 
   return (
-    <Card className="p-4 gap-3">
-      <div className="flex flex-col sm:flex-row sm:items-start gap-3 min-w-0">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0 flex-wrap">
-            <div className="font-semibold truncate">{title}</div>
-            {project.stack && (
-              <Badge variant="outline" className="text-xs shrink-0">
-                {project.stack.toUpperCase()}
-              </Badge>
+    <Card className="p-3 sm:p-4 gap-3">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+              <div className="font-semibold truncate text-sm sm:text-base">{title}</div>
+              {project.stack && (
+                <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
+                  {project.stack.toUpperCase()}
+                </Badge>
+              )}
+            </div>
+            {project.prompt && (
+              <div className="text-xs text-muted-foreground mt-1 line-clamp-2 sm:line-clamp-3">
+                {project.prompt}
+              </div>
             )}
           </div>
-          {project.prompt && (
-            <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {project.prompt}
-            </div>
-          )}
         </div>
 
-        <div className="flex items-center gap-1 sm:self-center">
-          <Link href={`/dashboard?project=${project.id}`}>
-            <Button size="icon" variant="outline" className="h-8 w-8" title="Open in workspace">
-              <ExternalLink className="h-4 w-4" />
+        {/* Actions */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+          <Link href={`/dashboard?project=${project.id}`} className="flex-1">
+            <Button variant="default" size="sm" className="w-full h-9 sm:h-8">
+              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+              <span className="text-xs sm:text-sm">Open</span>
             </Button>
           </Link>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            title="Duplicate"
-            onClick={() => onDuplicate(project)}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            title="Rename"
-            onClick={() => setRenameOpen(true)}
-          >
-            <span className="text-xs font-semibold">Aa</span>
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-8 w-8"
-            title="Delete"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-8 w-8 sm:h-8 sm:w-8"
+              title="Duplicate"
+              onClick={() => onDuplicate(project)}
+            >
+              <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-8 w-8 sm:h-8 sm:w-8"
+              title="Rename"
+              onClick={() => setRenameOpen(true)}
+            >
+              <span className="text-[10px] sm:text-xs font-semibold">Aa</span>
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-8 w-8 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
+              title="Delete"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
