@@ -89,8 +89,8 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
     router.push('/');
   };
 
-  // Don't show sidebar for workspace (main dashboard route)
-  if (pathname === '/dashboard') {
+  // Don't show sidebar for workspace (main dashboard route) and web builder
+  if (pathname === '/dashboard' || pathname === '/dashboard/web-builder') {
     return <>{children}</>;
   }
 
