@@ -13,7 +13,7 @@ export function RecentTransactions() {
   const { data, isLoading, error } = useMyTransactions(5, true);
 
   return (
-    <Card className="p-4">
+    <Card className="p-3 sm:p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="text-sm font-semibold">Recent Transactions</div>
         <Link href="/dashboard/settings/transactions">
@@ -47,14 +47,14 @@ export function RecentTransactions() {
               key={t.id}
               className="flex items-start gap-2 rounded-md border border-border/40 p-2 hover:bg-muted/20 transition-colors"
             >
-              <ArrowDownUp className="h-4 w-4 mt-0.5 text-muted-foreground" />
+              <ArrowDownUp className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge
                     variant={
                       t.type === 'earned' ? 'green' : t.type === 'spent' ? 'red' : 'gray'
                     }
-                    className="text-[10px] h-5 px-1.5"
+                    className="text-[10px] h-5 px-1.5 shrink-0"
                   >
                     {t.type}
                   </Badge>

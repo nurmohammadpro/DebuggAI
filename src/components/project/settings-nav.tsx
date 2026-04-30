@@ -115,7 +115,7 @@ export function SettingsNav({ projectId }: SettingsNavProps) {
   ];
 
   return (
-    <div className="flex flex-col w-64 border-r bg-card">
+    <div className="flex flex-col w-64 border-r bg-card shrink-0">
       <div className="p-4 border-b">
         <h2 className="text-sm font-semibold text-foreground">Project Settings</h2>
         <p className="text-xs text-muted-foreground mt-1">
@@ -170,9 +170,9 @@ export function SettingsNav({ projectId }: SettingsNavProps) {
       {/* Pro Badge */}
       <div className="p-4 border-t">
         <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-          <Crown className="w-4 h-4 text-primary" />
-          <div className="flex-1">
-            <div className="text-xs font-medium text-foreground">
+          <Crown className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-medium text-foreground truncate">
               Upgrade to Pro
             </div>
             <div className="text-xs text-muted-foreground">

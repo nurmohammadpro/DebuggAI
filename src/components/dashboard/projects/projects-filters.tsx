@@ -30,12 +30,13 @@ export function ProjectsFilters({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search by prompt or description…"
+          className="w-full"
         />
       </div>
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">Stack</Label>
         <Select value={stack} onValueChange={(v) => onStackChange(v || 'all')}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="All stacks" />
           </SelectTrigger>
           <SelectContent>

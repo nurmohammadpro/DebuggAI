@@ -153,77 +153,77 @@ export default function ReferralsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
         {/* Hero Section */}
         <Card className="mb-6 border-green/20" style={{ background: 'var(--ds-green-muted)', boxShadow: '0 0 0 1px rgba(0,200,83,0.1)' }}>
-          <div className="p-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="display mb-2">Invite Friends, Earn Credits</h2>
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div className="text-center lg:text-left">
+                <h2 className="display mb-2 text-2xl sm:text-3xl">Invite Friends, Earn Credits</h2>
                 <p className="text-text2 mb-4">
                   Share your unique referral link with friends and earn <strong style={{ color: 'var(--ds-green)' }}>10 credits</strong> for each signup.
                   Your friends get <strong style={{ color: 'var(--ds-green)' }}>5 bonus credits</strong> too!
                 </p>
                 {stats?.ambassadorTier && (
-                  <div className="flex items-center gap-2" style={{ color: AMBASSADOR_COLORS[stats.ambassadorTier] }}>
+                  <div className="flex items-center justify-center lg:justify-start gap-2" style={{ color: AMBASSADOR_COLORS[stats.ambassadorTier] }}>
                     {AmbassadorIcon && <AmbassadorIcon className="h-5 w-5" />}
                     <span className="font-semibold capitalize">{stats.ambassadorTier} Ambassador</span>
                   </div>
                 )}
               </div>
-              <div className="text-6xl">🎁</div>
+              <div className="text-4xl sm:text-6xl self-center">🎁</div>
             </div>
           </div>
         </Card>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <Card>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
                 <Users className="h-5 w-5 text-text3" />
               </div>
-              <div className="stat" style={{ color: 'var(--ds-blue)' }}>{stats?.totalReferrals || 0}</div>
-              <div className="text-sm text-text3">Total Referrals</div>
+              <div className="stat text-lg sm:text-xl" style={{ color: 'var(--ds-blue)' }}>{stats?.totalReferrals || 0}</div>
+              <div className="text-xs sm:text-sm text-text3">Total Referrals</div>
             </div>
           </Card>
 
           <Card>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
                 <TrendingUp className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
               </div>
-              <div className="stat" style={{ color: 'var(--ds-green)' }}>{stats?.completedReferrals || 0}</div>
-              <div className="text-sm text-text3">Completed</div>
+              <div className="stat text-lg sm:text-xl" style={{ color: 'var(--ds-green)' }}>{stats?.completedReferrals || 0}</div>
+              <div className="text-xs sm:text-sm text-text3">Completed</div>
             </div>
           </Card>
 
           <Card>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
                 <Zap className="h-5 w-5" style={{ color: 'var(--ds-amber)' }} />
               </div>
-              <div className="stat" style={{ color: 'var(--ds-amber)' }}>{stats?.totalCreditsEarned || 0}</div>
-              <div className="text-sm text-text3">Credits Earned</div>
+              <div className="stat text-lg sm:text-xl" style={{ color: 'var(--ds-amber)' }}>{stats?.totalCreditsEarned || 0}</div>
+              <div className="text-xs sm:text-sm text-text3">Credits Earned</div>
             </div>
           </Card>
 
           <Card>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
                 <Trophy className="h-5 w-5" style={{ color: 'var(--ds-purple)' }} />
               </div>
-              <div className="stat capitalize" style={{ color: 'var(--ds-purple)' }}>
+              <div className="stat capitalize text-lg sm:text-xl" style={{ color: 'var(--ds-purple)' }}>
                 {stats?.ambassadorTier || '-'}
               </div>
-              <div className="text-sm text-text3">Ambassador Tier</div>
+              <div className="text-xs sm:text-sm text-text3">Ambassador Tier</div>
             </div>
           </Card>
         </div>
 
         {/* Referral Link Section */}
         <Card className="mb-6">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h3 className="h3 mb-4 flex items-center gap-2">
               <Share2 className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
               Your Referral Link
@@ -237,9 +237,9 @@ export default function ReferralsPage() {
                     <Input
                       value={referralUrl ?? ''}
                       readOnly
-                      className="font-mono"
+                      className="font-mono text-sm"
                     />
-                    <Button onClick={handleCopyLink} variant="outline">
+                    <Button onClick={handleCopyLink} variant="outline" size="icon">
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -251,9 +251,9 @@ export default function ReferralsPage() {
                     <Input
                       value={referralCode}
                       readOnly
-                      className="font-mono text-center text-lg"
+                      className="font-mono text-center text-base sm:text-lg"
                     />
-                    <Button onClick={handleCopyCode} variant="outline">
+                    <Button onClick={handleCopyCode} variant="outline" size="icon">
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -294,7 +294,7 @@ export default function ReferralsPage() {
         {/* Milestone Progress */}
         {stats?.ambassadorTier && stats?.nextMilestone && (
           <Card className="mb-6">
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <h3 className="h3 mb-4 flex items-center gap-2">
                 <Crown className="h-5 w-5" style={{ color: 'var(--ds-amber)' }} />
                 Ambassador Progress
@@ -347,7 +347,7 @@ export default function ReferralsPage() {
           <TabsContent value="my-referrals" className="mt-6">
             {/* Referral History */}
             <Card>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <h3 className="h3 mb-4">Referral History</h3>
 
                 {referrals.length > 0 ? (
@@ -355,10 +355,10 @@ export default function ReferralsPage() {
                     {referrals.map((referral) => (
                       <div
                         key={referral.id}
-                        className="flex items-center justify-between p-4 border border-border rounded-ds hover:bg-card2"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-border rounded-ds hover:bg-card2"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: 'var(--ds-green-muted)' }}>
+                          <div className="h-10 w-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--ds-green-muted)' }}>
                             <Users className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
                           </div>
                           <div>
@@ -370,7 +370,7 @@ export default function ReferralsPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <Badge
                             variant={referral.status === 'completed' ? 'green' : 'gray'}
                             pill

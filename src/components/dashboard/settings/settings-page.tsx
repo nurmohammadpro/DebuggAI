@@ -45,12 +45,12 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-4xl">
         {/* Current Plan Card */}
         <Card className="mb-6">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h2 className="h3 mb-4">Current Plan</h2>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="stat capitalize" style={{ color: 'var(--ds-green)' }}>{user?.plan}</h3>
@@ -63,7 +63,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <Link href="/pricing">
-                <Button>Upgrade Plan</Button>
+                <Button className="w-full sm:w-auto">Upgrade Plan</Button>
               </Link>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function SettingsPage() {
         <div className="grid md:grid-cols-1 gap-4">
           {settingsSections.map((section) => (
             <Card key={section.title}>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 rounded-ds" style={{ background: 'var(--ds-surface3)' }}>
                     <section.icon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
@@ -102,16 +102,16 @@ export default function SettingsPage() {
 
         {/* Danger Zone */}
         <Card className="mt-6 border-red/30" style={{ boxShadow: '0 0 0 1px rgba(255,82,82,0.15)' }}>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <h3 className="h3 mb-2" style={{ color: 'var(--ds-red)' }}>Danger Zone</h3>
             <p className="text-sm text-text2 mb-4">
               Irreversible actions that affect your account
             </p>
-            <div className="flex gap-3">
-              <Button variant="destructive" size="sm">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="destructive" size="sm" className="w-full sm:w-auto">
                 Delete Account
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 Export Data
               </Button>
             </div>

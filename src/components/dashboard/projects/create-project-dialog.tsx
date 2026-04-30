@@ -88,7 +88,7 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-4 sm:p-6">
           <div className="space-y-2">
             <Label htmlFor="projectName">Project name</Label>
             <Input
@@ -96,12 +96,13 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My next app"
+              className="w-full"
             />
           </div>
 
           <div className="space-y-3">
             <Label>Stack</Label>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {WEB_BUILDER_STACKS.map((stack) => (
                 <Card
                   key={stack.id}
@@ -127,7 +128,7 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-border/40">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border/40">
             <div className="text-xs text-muted-foreground">
               {stackMeta ? (
                 <>
@@ -139,11 +140,11 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
               ) : null}
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)} disabled={creating}>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={() => setOpen(false)} disabled={creating} className="flex-1 sm:flex-none">
                 Cancel
               </Button>
-              <Button onClick={onCreate} disabled={creating}>
+              <Button onClick={onCreate} disabled={creating} className="flex-1 sm:flex-none">
                 {creating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

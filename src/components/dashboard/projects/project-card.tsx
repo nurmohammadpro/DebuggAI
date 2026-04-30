@@ -29,12 +29,12 @@ export function ProjectCard({
 
   return (
     <Card className="p-4 gap-3">
-      <div className="flex items-start gap-3 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3 min-w-0">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <div className="font-semibold truncate">{title}</div>
             {project.stack && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs shrink-0">
                 {project.stack.toUpperCase()}
               </Badge>
             )}
@@ -46,7 +46,7 @@ export function ProjectCard({
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 sm:self-center">
           <Link href={`/dashboard?project=${project.id}`}>
             <Button size="icon" variant="outline" className="h-8 w-8" title="Open in workspace">
               <ExternalLink className="h-4 w-4" />

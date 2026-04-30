@@ -145,7 +145,7 @@ export default function PricingPage() {
           <h1 className="h2">Pricing</h1>
           {user && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-text2">Current plan:</span>
+              <span className="text-sm text-text2 hidden sm:inline">Current plan:</span>
               <Badge variant={user.plan === 'free' ? 'gray' : 'green'} pill>
                 {user.plan}
               </Badge>
@@ -155,21 +155,21 @@ export default function PricingPage() {
       </div>
 
       {/* Hero */}
-      <div className="border-b border-border bg-card/50 py-12">
+      <div className="border-b border-border bg-card/50 py-8 sm:py-12">
         <div className="container mx-auto px-4 text-center">
           <div className="badge badge-pill bg-green mb-4" style={{ display: 'inline-flex' }}>
             Pricing
           </div>
-          <h2 className="h1 mb-3">Simple, transparent pricing</h2>
-          <p className="text-lg text-text2">
+          <h2 className="h1 mb-3 text-2xl sm:text-4xl">Simple, transparent pricing</h2>
+          <p className="text-base sm:text-lg text-text2">
             Start free, upgrade when you need more power
           </p>
         </div>
       </div>
 
       {/* Plans */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="grid md:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
           {PLANS.map((plan) => (
             <Card
               key={plan.id}
@@ -178,7 +178,7 @@ export default function PricingPage() {
               }`}
               style={plan.badge ? { boxShadow: '0 0 0 1px rgba(0,200,83,0.15)' } : undefined}
             >
-              <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-10 pb-6 px-6' : 'p-6'}`}>
+              <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-10 pb-6 px-4 sm:px-6' : 'p-4 sm:p-6'}`}>
                 {plan.badge && (
                   <div className="absolute top-4 left-1/2 -translate-x-1/2">
                     <Badge variant="green" className="text-xs font-medium" style={{ padding: '4px 16px', fontSize: '11px' }}>
@@ -244,15 +244,15 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ */}
-        <div className="mt-12 max-w-3xl mx-auto">
-          <div className="text-center mb-8">
+        <div className="mt-8 sm:mt-12 max-w-3xl mx-auto">
+          <div className="text-center mb-6 sm:mb-8">
             <div className="badge badge-pill bg-purple mb-4" style={{ display: 'inline-flex' }}>
               FAQ
             </div>
             <h2 className="h2">Frequently Asked Questions</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card className="p-5">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Card className="p-4 sm:p-5">
               <h3 className="h3 mb-2">What are credits?</h3>
               <p className="text-sm text-text2">
                 Credits are used for AI-powered features. Debugging uses 1 credit per analysis,
@@ -260,21 +260,21 @@ export default function PricingPage() {
                 cost 20-100 credits.
               </p>
             </Card>
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <h3 className="h3 mb-2">Do credits roll over?</h3>
               <p className="text-sm text-text2">
                 No, credits reset each billing cycle. However, your history and generated code
                 are preserved based on your plan's retention period.
               </p>
             </Card>
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <h3 className="h3 mb-2">Can I cancel anytime?</h3>
               <p className="text-sm text-text2">
                 Yes! You can cancel your subscription at any time. Your plan will remain active
                 until the end of your billing period.
               </p>
             </Card>
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <h3 className="h3 mb-2">What payment methods do you accept?</h3>
               <p className="text-sm text-text2">
                 We accept all major credit and debit cards through Stripe.

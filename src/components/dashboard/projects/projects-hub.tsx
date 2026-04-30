@@ -66,7 +66,7 @@ export function ProjectsHub() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="text-2xl font-bold tracking-tight">Projects</div>
@@ -122,7 +122,7 @@ export function ProjectsHub() {
 
           {!isLoading && !error && projects.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted-foreground">
                 <div>
                   <Badge variant="outline" className="text-xs">
                     {projects.length}

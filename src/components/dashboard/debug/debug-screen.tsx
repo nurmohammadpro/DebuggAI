@@ -105,9 +105,9 @@ export function DebugScreen() {
   };
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
       <div className="mb-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Bug className="h-5 w-5 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">AI Debugger</h1>
           <Badge variant="green" className="ml-2">
@@ -120,8 +120,8 @@ export function DebugScreen() {
       </div>
 
       <div className="grid gap-6">
-        <Card className="p-5">
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <Card className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="min-w-0">
               <div className="font-medium flex items-center gap-2">
                 <Code2 className="h-4 w-4 text-muted-foreground" />
@@ -132,12 +132,12 @@ export function DebugScreen() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <Select
                 value={currentLanguage}
                 onValueChange={(v) => setCurrentLanguage(v as any)}
               >
-                <SelectTrigger className="w-[260px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="Select language (auto-detect if not specified)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -152,9 +152,11 @@ export function DebugScreen() {
               <Button
                 variant="outline"
                 onClick={() => router.push('/dashboard/debug/history')}
+                className="w-full sm:w-auto"
               >
                 <History className="h-4 w-4 mr-2" />
-                History
+                <span className="hidden sm:inline">History</span>
+                <span className="sm:hidden">History</span>
               </Button>
             </div>
           </div>
@@ -167,7 +169,7 @@ export function DebugScreen() {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Paste your code here..."
-                className="mt-1 font-mono text-xs min-h-[240px]"
+                className="mt-1 font-mono text-xs min-h-[200px] sm:min-h-[240px]"
               />
             </div>
 
@@ -178,18 +180,18 @@ export function DebugScreen() {
                 value={errorMessage}
                 onChange={(e) => setErrorMessage(e.target.value)}
                 placeholder="Paste the error message you're seeing..."
-                className="mt-1 font-mono text-xs min-h-[92px]"
+                className="mt-1 font-mono text-xs min-h-[80px] sm:min-h-[92px]"
               />
             </div>
 
-            <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-xs text-muted-foreground">
                 Credits: <span className="text-foreground">1</span> per analysis
               </div>
               <Button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="min-w-[180px]"
+                className="w-full sm:w-auto min-w-[180px]"
               >
                 {isAnalyzing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -202,8 +204,8 @@ export function DebugScreen() {
           </div>
         </Card>
 
-        <Card className="p-5">
-          <div className="font-medium flex items-center gap-2">
+        <Card className="p-4 sm:p-5">
+          <div className="font-medium flex items-center gap-2 flex-wrap">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
             Result
             {detectedLanguage ? (
@@ -219,7 +221,7 @@ export function DebugScreen() {
           <div className="mt-4">
             {analysis ? (
               <div className="prose prose-invert max-w-none text-sm">
-                <pre className="whitespace-pre-wrap break-words bg-muted/30 border border-border rounded-md p-4 text-xs leading-relaxed">
+                <pre className="whitespace-pre-wrap break-words bg-muted/30 border border-border rounded-md p-4 text-xs leading-relaxed overflow-x-auto">
                   {analysis}
                 </pre>
               </div>

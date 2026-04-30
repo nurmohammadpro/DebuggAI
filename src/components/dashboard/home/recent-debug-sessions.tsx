@@ -13,7 +13,7 @@ export function RecentDebugSessions() {
   const { data, isLoading, error } = useMyDebugSessions(5, true);
 
   return (
-    <Card className="p-4">
+    <Card className="p-3 sm:p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="text-sm font-semibold">Recent Debug Sessions</div>
         <Link href="/dashboard/debug/history">
@@ -49,10 +49,10 @@ export function RecentDebugSessions() {
               key={s.id}
               className="flex items-start gap-2 rounded-md border border-border/40 p-2 hover:bg-muted/20 transition-colors"
             >
-              <Bug className="h-4 w-4 mt-0.5 text-muted-foreground" />
+              <Bug className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] h-5 px-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0">
                     {s.language}
                   </Badge>
                   <div className="text-xs text-muted-foreground">

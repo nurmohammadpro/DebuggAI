@@ -17,22 +17,22 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
   // For now, we'll just render the page
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)]">
       <SettingsNav projectId={projectId} />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-8">
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold">General Settings</h1>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-2xl font-bold">General Settings</h1>
             <p className="text-muted-foreground mt-2">
               Manage your project configuration and preferences
             </p>
           </div>
 
           {/* Project Name */}
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Project Information</h2>
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">Project Information</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Project Name</label>
@@ -54,8 +54,8 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
           </section>
 
           {/* Framework & Runtime */}
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Framework & Runtime</h2>
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">Framework & Runtime</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Framework</label>
@@ -79,8 +79,8 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
           </section>
 
           {/* Build Settings */}
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Build Settings</h2>
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">Build Settings</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Build Command</label>
@@ -110,8 +110,8 @@ export default async function ProjectSettingsPage({ params }: ProjectSettingsPag
           </section>
 
           {/* Environment */}
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Environment</h2>
+          <section className="mb-6 sm:mb-8">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">Environment</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
