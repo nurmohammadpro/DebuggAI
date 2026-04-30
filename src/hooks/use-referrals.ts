@@ -5,7 +5,8 @@
  */
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import { useSessionStore } from '@/store/session-store';
 
 export interface Referral {
   id: string;
@@ -41,6 +42,7 @@ interface UseReferralsOptions {
 export function useReferrals(options: UseReferralsOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
+  const { user } = useSessionStore();
 
   /**
    * Generate a referral code for the current user
@@ -51,8 +53,9 @@ export function useReferrals(options: UseReferralsOptions = {}) {
       const response = await fetch('/api/referrals/generate', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('supabase_token')}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ userId: user?.id }),
       });
 
       if (!response.ok) {
@@ -80,10 +83,9 @@ export function useReferrals(options: UseReferralsOptions = {}) {
       const response = await fetch('/api/referrals/track', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('supabase_token')}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ referralCode }),
+        body: JSON.stringify({ referralCode, userId: user?.id }),
       });
 
       if (!response.ok) {
@@ -105,14 +107,7 @@ export function useReferrals(options: UseReferralsOptions = {}) {
    * Get referral statistics
    */
   const getStats = async (): Promise<ReferralStats> => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!user?.id) {
       throw new Error('Not authenticated');
     }
 
@@ -164,14 +159,7 @@ export function useReferrals(options: UseReferralsOptions = {}) {
    * Get referral list
    */
   const getReferrals = async (): Promise<Referral[]> => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!user?.id) {
       throw new Error('Not authenticated');
     }
 

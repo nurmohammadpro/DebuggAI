@@ -105,7 +105,7 @@ export function DebugScreen() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-2xl font-bold tracking-tight">AI Debugger</h1>

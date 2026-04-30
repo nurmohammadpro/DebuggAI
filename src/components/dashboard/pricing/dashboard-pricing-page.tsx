@@ -141,7 +141,7 @@ export default function PricingPage() {
     <div>
       {/* Page Header */}
       <div className="border-b border-border bg-card/50 py-8 sm:py-12 -mx-4 sm:-mx-6 px-4 sm:px-6 mb-8">
-        <div className="text-center">
+        <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
           <p className="text-base sm:text-lg text-muted-foreground">
             Start free, upgrade when you need more power
@@ -150,7 +150,7 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <div className="grid md:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto mb-8">
+      <div className="grid md:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto mb-8 px-4 sm:px-6">
         {PLANS.map((plan) => (
           <Card
             key={plan.id}
@@ -225,7 +225,7 @@ export default function PricingPage() {
       </div>
 
       {/* FAQ */}
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-xl font-semibold mb-3">Frequently Asked Questions</h2>
         </div>

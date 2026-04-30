@@ -274,8 +274,10 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
       </div>
 
       {/* Main Content */}
-      <main className="lg:pl-64">
-        {children}
+      <main className="lg:pl-64 min-h-screen">
+        <div className="w-full">
+          {children}
+        </div>
       </main>
     </div>
   );
