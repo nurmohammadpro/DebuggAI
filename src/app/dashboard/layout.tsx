@@ -1,9 +1,10 @@
 /**
  * Private Layout - For dashboard pages
- * No Navigation or Footer
+ * Provides navigation sidebar for client dashboard
  */
 
 import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
+import { ClientDashboardShell } from '@/components/dashboard/client-dashboard-shell';
 
 export default function DashboardLayout({
   children,
@@ -11,9 +12,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen">
+    <ClientDashboardShell>
       <SessionBootstrapper />
       <main>{children}</main>
-    </div>
+    </ClientDashboardShell>
   );
 }

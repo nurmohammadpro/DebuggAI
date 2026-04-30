@@ -108,7 +108,6 @@ export function DebugScreen() {
     <div className="p-4 sm:p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center gap-2 flex-wrap">
-          <Bug className="h-5 w-5 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight">AI Debugger</h1>
           <Badge variant="green" className="ml-2">
             Beta

@@ -35,89 +35,86 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-14 flex items-center gap-2">
-          <SettingsIcon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
-          <h1 className="h2">Settings</h1>
-        </div>
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your account and preferences
+        </p>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-4xl">
-        {/* Current Plan Card */}
-        <Card className="mb-6">
-          <div className="p-4 sm:p-6">
-            <h2 className="h3 mb-4">Current Plan</h2>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="stat capitalize" style={{ color: 'var(--ds-green)' }}>{user?.plan}</h3>
-                  <Badge variant="green" pill>
-                    Active
-                  </Badge>
-                </div>
-                <p className="text-text2">
-                  {credits === -1 ? 'Unlimited' : `${credits} credits`} remaining
-                </p>
+      {/* Current Plan Card */}
+      <Card className="mb-6">
+        <div className="p-4 sm:p-6">
+          <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="stat capitalize" style={{ color: 'var(--ds-green)' }}>{user?.plan}</h3>
+                <Badge variant="green" pill>
+                  Active
+                </Badge>
               </div>
-              <Link href="/pricing">
-                <Button className="w-full sm:w-auto">Upgrade Plan</Button>
-              </Link>
+              <p className="text-muted-foreground">
+                {credits === -1 ? 'Unlimited' : `${credits} credits`} remaining
+              </p>
             </div>
+            <Link href="/dashboard/pricing">
+              <Button className="w-full sm:w-auto">Upgrade Plan</Button>
+            </Link>
           </div>
-        </Card>
-
-        {/* Settings Sections */}
-        <div className="grid md:grid-cols-1 gap-4">
-          {settingsSections.map((section) => (
-            <Card key={section.title}>
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-ds" style={{ background: 'var(--ds-surface3)' }}>
-                    <section.icon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-text">{section.title}</h3>
-                    <p className="text-sm text-text2">{section.description}</p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  {section.items.map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start"
-                      >
-                        {item.label}
-                      </Button>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          ))}
         </div>
+      </Card>
 
-        {/* Danger Zone */}
-        <Card className="mt-6 border-red/30" style={{ boxShadow: '0 0 0 1px rgba(255,82,82,0.15)' }}>
-          <div className="p-4 sm:p-6">
-            <h3 className="h3 mb-2" style={{ color: 'var(--ds-red)' }}>Danger Zone</h3>
-            <p className="text-sm text-text2 mb-4">
-              Irreversible actions that affect your account
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="destructive" size="sm" className="w-full sm:w-auto">
-                Delete Account
-              </Button>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                Export Data
-              </Button>
+      {/* Settings Sections */}
+      <div className="grid md:grid-cols-1 gap-4">
+        {settingsSections.map((section) => (
+          <Card key={section.title}>
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-ds" style={{ background: 'var(--ds-surface3)' }}>
+                  <section.icon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">{section.title}</h3>
+                  <p className="text-sm text-muted-foreground">{section.description}</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                {section.items.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                    >
+                      {item.label}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        ))}
       </div>
+
+      {/* Danger Zone */}
+      <Card className="mt-6 border-red/30" style={{ boxShadow: '0 0 0 1px rgba(255,82,82,0.15)' }}>
+        <div className="p-4 sm:p-6">
+          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--ds-red)' }}>Danger Zone</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Irreversible actions that affect your account
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+              Delete Account
+            </Button>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+              Export Data
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
