@@ -138,19 +138,17 @@ export default function PricingPage() {
   };
 
   return (
-    <div>
+    <div className="p-4 sm:p-6">
       {/* Page Header */}
-      <div className="border-b border-border bg-card/50 py-8 sm:py-12 -mx-4 sm:-mx-6 px-4 sm:px-6 mb-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
-          <p className="text-base sm:text-lg text-muted-foreground">
-            Start free, upgrade when you need more power
-          </p>
-        </div>
+      <div className="text-center mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
+        <p className="text-base sm:text-lg text-muted-foreground">
+          Start free, upgrade when you need more power
+        </p>
       </div>
 
       {/* Plans */}
-      <div className="grid md:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto mb-8 px-4 sm:px-6">
+      <div className="grid md:grid-cols-3 gap-4 sm:gap-6 mb-8">
         {PLANS.map((plan) => (
           <Card
             key={plan.id}
@@ -225,11 +223,11 @@ export default function PricingPage() {
       </div>
 
       {/* FAQ */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      <div>
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-xl font-semibold mb-3">Frequently Asked Questions</h2>
         </div>
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4 max-w-5xl mx-auto">
           <Card className="p-4 sm:p-5">
             <h3 className="font-semibold mb-2">What are credits?</h3>
             <p className="text-sm text-muted-foreground">

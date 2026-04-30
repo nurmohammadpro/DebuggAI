@@ -62,12 +62,15 @@ export function TransactionsHistory() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ArrowDownUp className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-semibold">Transaction History</h1>
+    <div className="p-4 sm:p-6">
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Transaction History</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              View and manage your credit transactions
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -87,7 +90,7 @@ export function TransactionsHistory() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div>
         <Card className="mb-6">
           <div className="p-4">
             <div className="grid md:grid-cols-2 gap-4">
