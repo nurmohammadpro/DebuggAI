@@ -6,6 +6,22 @@
  */
 
 export function buildPreviewHTML(code: string): string {
+  // Handle empty or invalid code
+  if (!code || code.trim() === '') {
+    code = `
+export default function App() {
+  return (
+    <div style={{ padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <h1 style={{ margin: 0, fontSize: 24 }}>Welcome to DeBuggAI</h1>
+      <p style={{ marginTop: 8, color: '#6b7280' }}>
+        Start building in the editor, or ask the assistant to generate the app.
+      </p>
+    </div>
+  );
+}
+    `.trim();
+  }
+
   const serializedCode = JSON.stringify(code);
   return `
 <!DOCTYPE html>
@@ -31,10 +47,24 @@ export function buildPreviewHTML(code: string): string {
     #root {
       min-height: 100vh;
     }
+    .error-display {
+      padding: 24px;
+      color: #dc2626;
+      background: #fee2e2;
+      border-radius: 8px;
+      font-family: system-ui;
+    }
+    .error-display h3 {
+      margin: 0 0 8px 0;
+    }
+    .error-display p {
+      margin: 0;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">Loading...</div>
 
   <script>
     const USER_CODE = ${serializedCode};
@@ -102,8 +132,11 @@ export function buildPreviewHTML(code: string): string {
       if (Component && typeof Component === 'function') {
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(Component));
+      } else {
+        throw new Error('Code must export a React component as default or named export');
       }
     } catch (error) {
+      console.error('Preview render error:', error);
       window.parent.postMessage({
         type: 'runtime-error',
         payload: {
@@ -111,6 +144,13 @@ export function buildPreviewHTML(code: string): string {
           source: error.stack || 'unknown',
         }
       }, '*');
+
+      // Show error in preview
+      document.getElementById('root').innerHTML =
+        '<div class="error-display">' +
+        '<h3>Preview Error</h3>' +
+        '<p>' + error.message + '</p>' +
+        '</div>';
     }
   </script>
 </body>

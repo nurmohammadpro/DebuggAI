@@ -28,7 +28,7 @@ export function SignupForm() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -41,14 +41,27 @@ export function SignupForm() {
         toast.error(error.message);
         return;
       }
+
+      // Check if user was created and if email confirmation is needed
+      if (data.user) {
+        if (data.user.email_confirmed_at) {
+          // Email auto-confirmed (development mode)
+          toast.success('Account created successfully!');
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = '/dashboard/home';
+          }, 500);
+        } else {
+          // Email confirmation required
+          toast.success('Check your email to confirm your account.');
+        }
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to sign up');
       return;
     } finally {
       setIsLoading(false);
     }
-
-    toast.success('Check your email to confirm your account.');
   };
 
   return (

@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
+import { getSession } from '@/hooks/use-session';
 
 export type TransactionRow = {
   id: string;
@@ -18,15 +19,13 @@ export function useMyTransactions(limit = 100, enabled = true) {
     queryKey: [...queryKeys.myTransactions, { limit }] as const,
     enabled,
     queryFn: async (): Promise<TransactionRow[]> => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) return [];
+      const session = await getSession();
+      if (!session.user) return [];
 
       const { data: wallet, error: walletError } = await supabase
         .from('credit_wallets')
         .select('id')
-        .eq('owner_id', session.user.id)
+        .eq('user_id', session.user.id)
         .single();
 
       if (walletError) throw walletError;

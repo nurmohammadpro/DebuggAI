@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
+import { getSession } from '@/hooks/use-session';
 
 export type DebugSessionRow = {
   id: string;
@@ -20,10 +21,8 @@ export function useMyDebugSessions(limit = 25, enabled = true) {
     queryKey: [...queryKeys.myDebugSessions, { limit }] as const,
     enabled,
     queryFn: async (): Promise<DebugSessionRow[]> => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) return [];
+      const session = await getSession();
+      if (!session.user) return [];
 
       const { data, error } = await supabase
         .from('debug_sessions')

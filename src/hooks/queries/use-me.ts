@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 export interface MeProfile {
   id: string;
@@ -18,10 +19,8 @@ export function useMeProfile(enabled = true) {
     queryKey: queryKeys.me,
     enabled,
     queryFn: async (): Promise<MeProfile | null> => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) return null;
+      const session = await getSession();
+      if (!session.user) return null;
 
       const { data, error } = await supabase
         .from('profiles')

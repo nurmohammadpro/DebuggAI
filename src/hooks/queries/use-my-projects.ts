@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 export type GenerationRow = {
   id: string;
@@ -20,10 +21,8 @@ export function useMyProjects(limit = 50, enabled = true) {
     queryKey: [...queryKeys.myProjects, { limit }] as const,
     enabled,
     queryFn: async (): Promise<GenerationRow[]> => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) return [];
+      const session = await getSession();
+      if (!session.user) return [];
 
       const { data, error } = await supabase
         .from('generations')

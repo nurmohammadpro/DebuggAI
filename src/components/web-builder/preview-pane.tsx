@@ -201,7 +201,9 @@ export function PreviewPane({
             ref={iframeRef}
             title="Preview"
             className="w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin"
+            // Note: allow-scripts + allow-same-origin is needed for React to work in the preview
+            // This is safe because we control the preview content (blob URL)
+            sandbox="allow-scripts allow-same-origin allow-forms"
           />
         </div>
       )}

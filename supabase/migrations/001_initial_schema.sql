@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.credit_transactions (
 
 -- Generations table (web builder code versions)
 CREATE TABLE IF NOT EXISTS public.generations (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   code TEXT NOT NULL,
   version INTEGER DEFAULT 1 NOT NULL,
