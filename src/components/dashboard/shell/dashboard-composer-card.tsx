@@ -4,7 +4,7 @@ import { ChevronDown, Mic, Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-export function V0ComposerCard({
+export function DashboardComposerCard({
   prompt,
   onPromptChange,
   onSubmit,
@@ -26,7 +26,7 @@ export function V0ComposerCard({
       <div className="mt-6 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
         <div className="p-4">
           <textarea
-            data-v0-composer
+            data-dashboard-composer
             value={prompt}
             onChange={(e) => onPromptChange(e.target.value)}
             placeholder="Ask DeBuggAI to build…"

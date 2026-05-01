@@ -2,9 +2,9 @@
 
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
-import { V0SidebarContent } from '@/components/dashboard/v0/v0-sidebar-content';
+import { DashboardSidebarContent } from '@/components/dashboard/shell/dashboard-sidebar-content';
 
-export function V0Sidebar({
+export function DashboardSidebar({
   activeHref,
   recentChats,
   recentProjects,
@@ -17,7 +17,7 @@ export function V0Sidebar({
 }) {
   return (
     <aside className="hidden md:flex w-[280px] shrink-0 border-r border-border/40 bg-card min-h-screen">
-      <V0SidebarContent
+      <DashboardSidebarContent
         activeHref={activeHref}
         recentChats={recentChats}
         recentProjects={recentProjects}

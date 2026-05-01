@@ -4,11 +4,11 @@ import { ChevronDown, X } from 'lucide-react';
 
 import { Logo } from '@/components/logo';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { V0SidebarContent } from '@/components/dashboard/v0/v0-sidebar-content';
+import { DashboardSidebarContent } from '@/components/dashboard/shell/dashboard-sidebar-content';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
-export function V0MobileDrawer({
+export function DashboardMobileDrawer({
   open,
   onOpenChange,
   onNewChatClick,
@@ -51,7 +51,7 @@ export function V0MobileDrawer({
           </button>
         </div>
 
-        <V0SidebarContent
+        <DashboardSidebarContent
           showHeader={false}
           activeHref={activeHref}
           recentChats={recentChats}

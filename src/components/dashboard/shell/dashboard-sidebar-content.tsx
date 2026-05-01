@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { v0MoreNav, v0PrimaryNav } from '@/components/dashboard/v0/v0-nav';
+import { dashboardMoreNav, dashboardPrimaryNav } from '@/components/dashboard/shell/dashboard-nav';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
@@ -73,7 +73,7 @@ function RecentsList({
   );
 }
 
-export function V0SidebarContent({
+export function DashboardSidebarContent({
   activeHref,
   recentChats,
   recentProjects,
@@ -94,15 +94,15 @@ export function V0SidebarContent({
   const [moreCollapsed, setMoreCollapsed] = useState(true);
 
   const filteredPrimary = useMemo(() => {
-    if (!query.trim()) return v0PrimaryNav;
+    if (!query.trim()) return dashboardPrimaryNav;
     const q = query.toLowerCase();
-    return v0PrimaryNav.filter((n) => n.label.toLowerCase().includes(q));
+    return dashboardPrimaryNav.filter((n) => n.label.toLowerCase().includes(q));
   }, [query]);
 
   const filteredMore = useMemo(() => {
-    if (!query.trim()) return v0MoreNav;
+    if (!query.trim()) return dashboardMoreNav;
     const q = query.toLowerCase();
-    return v0MoreNav.filter((n) => n.label.toLowerCase().includes(q));
+    return dashboardMoreNav.filter((n) => n.label.toLowerCase().includes(q));
   }, [query]);
 
   const filteredChats = useMemo(() => {

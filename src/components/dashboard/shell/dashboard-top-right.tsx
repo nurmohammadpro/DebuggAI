@@ -2,7 +2,7 @@
 
 import { useSessionStore } from '@/store/session-store';
 
-export function V0HomeTopRight() {
+export function DashboardTopRight() {
   const { user } = useSessionStore();
 
   return (
@@ -17,4 +17,3 @@ export function V0HomeTopRight() {
     </div>
   );
 }
-
