@@ -95,10 +95,48 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Desktop Header */}
-      <header className="fixed top-0 right-0 left-0 lg:left-64 z-40 h-14 bg-background border-b">
-        <div className="flex h-14 items-center justify-between px-6">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      {/* Sidebar - Fixed on desktop */}
+      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-card hidden lg:flex flex-col">
+        {/* Logo */}
+        <div className="h-14 flex items-center px-6 border-b border-border/40">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <Logo className="h-6 w-auto" />
+            <span className="font-semibold text-base font-mono text-foreground">
+              DeBuggAI
+            </span>
+          </Link>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {item.title}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-64">
+        {/* Desktop Header */}
+        <header className="hidden lg:flex h-14 items-center justify-between px-6 bg-background border-b border-border/40 sticky top-0 z-30">
           {/* Page Title */}
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-medium text-muted-foreground">
@@ -148,10 +186,10 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem>
                   <Link href="/dashboard/settings">Account Settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem>
                   <Link href="/dashboard/pricing">Billing</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -162,66 +200,26 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-card hidden lg:flex flex-col">
-        {/* Logo */}
-        <div className="h-14 flex items-center px-6">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex h-14 items-center justify-between px-4 bg-background border-b border-border/40 sticky top-0 z-30">
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <Logo className="h-6 w-auto" />
-            <span className="font-semibold text-base font-mono text-foreground">
+            <Logo className="h-5 w-auto" />
+            <span className="font-semibold text-sm font-mono text-foreground">
               DeBuggAI
             </span>
           </Link>
-        </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            const Icon = item.icon;
+          <div className="flex items-center gap-2">
+            {/* Credits */}
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <Zap className="h-3 w-3" />
+              <span>{credits === -1 ? '∞' : credits}</span>
+            </div>
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {item.title}
-              </Link>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Mobile Header */}
-      <div className="lg:hidden">
-        <header className="sticky top-0 z-40 h-14 bg-background border-b">
-          <div className="flex h-14 items-center justify-between px-4">
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <Logo className="h-5 w-auto" />
-              <span className="font-semibold text-sm font-mono text-foreground">
-                DeBuggAI
-              </span>
-            </Link>
-
-            <div className="flex items-center gap-2">
-              {/* Credits */}
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                <Zap className="h-3 w-3" />
-                <span>{credits === -1 ? '∞' : credits}</span>
-              </div>
-
-              {/* User Menu */}
-              <DropdownMenu>
+            {/* User Menu */}
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -242,23 +240,23 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/dashboard">Projects</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/dashboard/debug">Debug</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/dashboard/web-builder">Web Builder</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/dashboard/pricing">Pricing</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/dashboard/referrals">Referrals</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <Link href="/dashboard/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -269,11 +267,15 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
-        </header>
+          </header>
 
-        {/* Mobile Navigation */}
-        <nav className="border-t bg-background">
+        {/* Main Content */}
+        <main className="flex-1 min-h-0 pb-16 lg:pb-0">
+          {children}
+        </main>
+
+        {/* Mobile Navigation - Fixed at bottom */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border/40 bg-background z-40 safe-area-inset-bottom">
           <div className="grid grid-cols-6 gap-1 p-2">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -298,11 +300,6 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
           </div>
         </nav>
       </div>
-
-      {/* Main Content */}
-      <main className="lg:pl-64 min-h-screen pt-14 lg:pt-0">
-        {children}
-      </main>
     </div>
   );
 }

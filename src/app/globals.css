@@ -1071,6 +1071,13 @@
   transition-delay: 0.3s;
 }
 
+/* Safe Area Insets for Mobile */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,

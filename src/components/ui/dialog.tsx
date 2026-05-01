@@ -16,16 +16,30 @@ function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
-function DialogTrigger({ children, ...props }: DialogPrimitive.Trigger.Props) {
-  const { asChild, ...rest } = props
+function DialogTrigger({
+  asChild,
+  children,
+  ...props
+}: DialogPrimitive.Trigger.Props & { asChild?: boolean }) {
+  if (asChild) {
+    return (
+      <DialogPrimitive.Trigger
+        data-slot="dialog-trigger"
+        nativeButton={false}
+        render={<span className="inline-flex">{children}</span>}
+        {...props}
+      />
+    )
+  }
+
   return (
-    <DialogPrimitive.Trigger data-slot="dialog-trigger" asChild={asChild} {...rest}>
+    <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props}>
       {children}
     </DialogPrimitive.Trigger>
   )
 }
 
-DialogTrigger.displayName = DialogPrimitive.Trigger.displayName
+(DialogTrigger as any).displayName = "DialogTrigger"
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />

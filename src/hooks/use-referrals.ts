@@ -117,6 +117,10 @@ export function useReferrals(options: UseReferralsOptions = {}) {
       .select('status, credits_earned')
       .eq('referrer_id', user.id);
 
+    const referralRows =
+      (referrals as Array<{ status: Referral['status']; credits_earned: number }>) ||
+      [];
+
     // Get user's profile for ambassador tier
     const { data: profile } = await supabase
       .from('profiles')
@@ -124,10 +128,13 @@ export function useReferrals(options: UseReferralsOptions = {}) {
       .eq('id', user.id)
       .single();
 
-    const totalReferrals = referrals?.length || 0;
-    const completedReferrals = referrals?.filter(r => r.status === 'completed').length || 0;
-    const pendingReferrals = referrals?.filter(r => r.status === 'pending').length || 0;
-    const totalCreditsEarned = referrals?.reduce((sum, r) => sum + r.credits_earned, 0) || 0;
+    const totalReferrals = referralRows.length;
+    const completedReferrals = referralRows.filter((r) => r.status === 'completed').length;
+    const pendingReferrals = referralRows.filter((r) => r.status === 'pending').length;
+    const totalCreditsEarned = referralRows.reduce(
+      (sum, r) => sum + (Number(r.credits_earned) || 0),
+      0
+    );
 
     // Calculate next milestone
     const milestones = [

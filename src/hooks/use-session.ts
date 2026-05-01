@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 
 interface SessionState {
   user: User | null;
@@ -74,14 +74,16 @@ export function useSession() {
     }
 
     // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
       const state: SessionState = {
         user: session?.user || null,
         isLoading: false,
         error: null
       };
       updateSessionState(state);
-    });
+      }
+    );
 
     return () => {
       sessionListeners.delete(setSessionState);
