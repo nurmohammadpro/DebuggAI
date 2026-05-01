@@ -36,6 +36,11 @@ export function AccountMenu({
   const router = useRouter();
   const { user, logout } = useSessionStore();
 
+  const openPublicPage = (path: string) => {
+    if (typeof window === 'undefined') return;
+    window.open(path, '_blank', 'noopener,noreferrer');
+  };
+
   const initial = useMemo(() => {
     return (
       user?.displayName?.charAt(0)?.toUpperCase() ||
@@ -120,14 +125,14 @@ export function AccountMenu({
             Pricing
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => router.push('/docs')}
+            onClick={() => openPublicPage('/docs')}
             className="cursor-pointer px-4"
           >
             <BookOpen className="mr-3 h-4 w-4" />
             Documentation
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => router.push('/contact')}
+            onClick={() => openPublicPage('/contact')}
             className="cursor-pointer px-4"
           >
             <MessageCircle className="mr-3 h-4 w-4" />
@@ -187,4 +192,3 @@ export function AccountMenu({
     </DropdownMenu>
   );
 }
-
