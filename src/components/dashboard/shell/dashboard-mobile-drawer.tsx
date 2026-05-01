@@ -34,7 +34,10 @@ export function DashboardMobileDrawer({
         </div>
       </DialogTrigger>
 
-      <DialogContent className="p-0 max-w-[320px] w-[92vw] sm:w-[320px] left-0 top-0 translate-x-0 translate-y-0 h-screen max-h-screen rounded-none border-r border-border/40">
+      <DialogContent
+        showCloseButton={false}
+        className="p-0 max-w-[320px] w-[92vw] sm:w-[320px] left-0 top-0 translate-x-0 translate-y-0 h-screen max-h-screen rounded-none border-r border-border/40"
+      >
         <div className="h-12 px-4 flex items-center justify-between border-b border-border/40">
           <div className="flex items-center gap-2">
             <Logo className="h-5 w-auto" />
