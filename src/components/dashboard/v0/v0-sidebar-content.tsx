@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { v0SidebarNav } from '@/components/dashboard/v0/v0-nav';
+import { v0MoreNav, v0PrimaryNav } from '@/components/dashboard/v0/v0-nav';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
@@ -91,11 +91,18 @@ export function V0SidebarContent({
   const [query, setQuery] = useState('');
   const [favoritesCollapsed, setFavoritesCollapsed] = useState(true);
   const [recentsCollapsed, setRecentsCollapsed] = useState(false);
+  const [moreCollapsed, setMoreCollapsed] = useState(true);
 
-  const filteredNav = useMemo(() => {
-    if (!query.trim()) return v0SidebarNav;
+  const filteredPrimary = useMemo(() => {
+    if (!query.trim()) return v0PrimaryNav;
     const q = query.toLowerCase();
-    return v0SidebarNav.filter((n) => n.label.toLowerCase().includes(q));
+    return v0PrimaryNav.filter((n) => n.label.toLowerCase().includes(q));
+  }, [query]);
+
+  const filteredMore = useMemo(() => {
+    if (!query.trim()) return v0MoreNav;
+    const q = query.toLowerCase();
+    return v0MoreNav.filter((n) => n.label.toLowerCase().includes(q));
   }, [query]);
 
   const filteredChats = useMemo(() => {
@@ -163,7 +170,7 @@ export function V0SidebarContent({
       </div>
 
       <nav className="px-2 space-y-1">
-        {filteredNav.map((item) => {
+        {filteredPrimary.map((item) => {
           const active = activeHref === item.href;
           return (
             <Link
@@ -230,14 +237,37 @@ export function V0SidebarContent({
           onNavigate={onNavigate}
         />
 
-        <Link
-          href="/dashboard/home"
-          onClick={onNavigate}
-          className="mt-3 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-muted/40 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <span className="opacity-80">…</span>
-          More
-        </Link>
+        <div className="mt-3">
+          <SectionHeader
+            label="More"
+            collapsed={moreCollapsed}
+            onToggle={() => setMoreCollapsed((v) => !v)}
+          />
+          {!moreCollapsed && (
+            <div className="mt-1 space-y-1">
+              {filteredMore.map((item) => {
+                const active =
+                  activeHref === item.href || activeHref.startsWith(item.href + '/');
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted/40',
+                      active
+                        ? 'bg-muted/50 text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

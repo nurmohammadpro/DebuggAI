@@ -1,16 +1,22 @@
 import {
   Home,
   LayoutGrid,
-  MessageSquare,
-  Palette,
-  LayoutTemplate,
+  Bug,
+  Code2,
+  CreditCard,
+  Gift,
+  Settings,
 } from 'lucide-react';
 
-export const v0SidebarNav = [
+export const v0PrimaryNav = [
   { label: 'Home', href: '/dashboard', icon: Home },
-  { label: 'Projects', href: '/dashboard/home', icon: LayoutGrid },
-  { label: 'Chats', href: '/dashboard/debug/history', icon: MessageSquare },
-  { label: 'Design Systems', href: '/dashboard/settings', icon: Palette },
-  { label: 'Templates', href: '/dashboard/web-builder', icon: LayoutTemplate },
 ] as const;
 
+export const v0MoreNav = [
+  { label: 'Projects', href: '/dashboard/home', icon: LayoutGrid },
+  { label: 'Debug', href: '/dashboard/debug', icon: Bug },
+  { label: 'Web Builder', href: '/dashboard/web-builder', icon: Code2 },
+  { label: 'Pricing', href: '/dashboard/pricing', icon: CreditCard },
+  { label: 'Referrals', href: '/dashboard/referrals', icon: Gift },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+] as const;
