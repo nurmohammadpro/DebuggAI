@@ -197,7 +197,7 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-3 mb-6">
         {PLANS.map((plan) => (
           <Card
             key={plan.id}
@@ -206,48 +206,53 @@ export default function PricingPage() {
             }`}
             style={plan.badge ? { boxShadow: '0 0 0 1px rgba(0,200,83,0.15)' } : undefined}
           >
-            <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-9 pb-4 px-4' : 'p-4'}`}>
+            <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-8 pb-3 px-3' : 'p-3'}`}>
               {plan.badge && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2">
                   <Badge
                     variant="green"
-                    className="text-[11px] font-medium"
-                    style={{ padding: '3px 12px' }}
+                    className="text-[10px] font-medium"
+                    style={{ padding: '2px 10px' }}
                   >
                     {plan.badge}
                   </Badge>
                 </div>
               )}
               {/* Header */}
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-2.5 mb-2.5">
                 <div
-                  className="p-2 rounded-ds"
+                  className="p-1.5 rounded-ds"
                   style={{
                     background:
                       plan.id === 'free' ? 'var(--ds-surface3)' : 'var(--ds-green-muted)',
                   }}
                 >
-                  <plan.icon className="h-5 w-5" style={{ color: plan.id === 'free' ? 'var(--ds-text3)' : 'var(--ds-green)' }} />
+                  <plan.icon
+                    className="h-4 w-4"
+                    style={{
+                      color: plan.id === 'free' ? 'var(--ds-text3)' : 'var(--ds-green)',
+                    }}
+                  />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold leading-tight">{plan.name}</h3>
-                  <p className="text-xs text-muted-foreground">{plan.period}</p>
+                  <h3 className="text-sm font-semibold leading-tight">{plan.name}</h3>
+                  <p className="text-[11px] text-muted-foreground">{plan.period}</p>
                 </div>
               </div>
 
               {/* Price */}
-              <div className="mb-4">
+              <div className="mb-3">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-semibold" style={{ color: 'var(--ds-green)' }}>
+                  <span className="text-lg font-semibold" style={{ color: 'var(--ds-green)' }}>
                     {plan.id === 'enterprise'
                       ? '$999+'
                       : `$${plan.price === 0 ? '0' : plan.price}`}
                   </span>
                   {plan.price > 0 && (
-                    <span className="text-xs text-muted-foreground">/month</span>
+                    <span className="text-[11px] text-muted-foreground">/month</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
                   {typeof plan.credits === 'string'
                     ? plan.credits
                     : `${plan.credits.toLocaleString()}`} credits per month
@@ -255,10 +260,13 @@ export default function PricingPage() {
               </div>
 
               {/* Features */}
-              <ul className="space-y-2 mb-4 flex-1">
+              <ul className="space-y-1.5 mb-3 flex-1">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs">
-                    <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--ds-green)' }} />
+                  <li key={i} className="flex items-start gap-2 text-[11px] leading-snug">
+                    <Check
+                      className="h-3.5 w-3.5 shrink-0 mt-[2px]"
+                      style={{ color: 'var(--ds-green)' }}
+                    />
                     <span className="text-muted-foreground">{feature}</span>
                   </li>
                 ))}
@@ -270,7 +278,7 @@ export default function PricingPage() {
                 disabled={isLoading === plan.id || user?.plan === plan.id}
                 className="w-full"
                 variant={plan.id === 'free' ? 'outline' : 'default'}
-                size="default"
+                size="sm"
               >
                 {isLoading === plan.id ? (
                   'Loading...'
