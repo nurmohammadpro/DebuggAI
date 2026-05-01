@@ -16,7 +16,7 @@ import { useSessionStore } from '@/store/session-store';
 import { useRouter } from 'next/navigation';
 
 interface Plan {
-  id: 'free' | 'pro' | 'enterprise';
+  id: 'free' | 'pro' | 'team' | 'business' | 'enterprise';
   name: string;
   price: number;
   credits: number | string;
@@ -25,6 +25,7 @@ interface Plan {
   icon: React.ElementType;
   badge?: string;
   priceId?: string;
+  cta?: 'checkout' | 'contact' | 'coming-soon';
 }
 
 const PLANS: Plan[] = [
@@ -42,6 +43,7 @@ const PLANS: Plan[] = [
       'Web builder templates',
       '10 requests per minute',
     ],
+    cta: 'coming-soon',
   },
   {
     id: 'pro',
@@ -61,24 +63,59 @@ const PLANS: Plan[] = [
       '30 requests per minute',
       'No rate limiting',
     ],
+    cta: 'checkout',
+  },
+  {
+    id: 'team',
+    name: 'Team',
+    price: 99,
+    credits: 2500,
+    period: 'month',
+    icon: Star,
+    features: [
+      '2,500 credits per month',
+      '3 seats included',
+      'Shared credit pool',
+      'Team dashboard',
+      '90-day session history',
+      'Priority support',
+    ],
+    cta: 'coming-soon',
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    price: 299,
+    credits: 10000,
+    period: 'month',
+    icon: Star,
+    features: [
+      '10,000 credits per month',
+      '10 seats included',
+      'Team analytics',
+      'Audit logs',
+      'Priority build/export',
+      'SLA support',
+    ],
+    cta: 'coming-soon',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 49,
-    credits: 'Unlimited',
+    price: 999,
+    credits: 40000,
     period: 'month',
     icon: Star,
+    priceId: 'price_enterprise_monthly',
     features: [
-      'Unlimited credits',
-      'Dedicated AI model',
-      'Unlimited history',
-      'Custom stack templates',
-      'SLA guarantee',
-      'No rate limiting',
-      'Priority support',
+      '40,000 credits per month',
+      'SSO / SAML',
+      'Advanced security controls',
+      'Dedicated support + SLA',
       'Custom integrations',
+      'Priority capacity',
     ],
+    cta: 'contact',
   },
 ];
 
@@ -95,6 +132,16 @@ export default function PricingPage() {
 
     if (plan.id === 'free') {
       toast.info('You are already on the free plan');
+      return;
+    }
+
+    if (plan.cta === 'contact') {
+      router.push('/contact');
+      return;
+    }
+
+    if (plan.cta === 'coming-soon') {
+      toast.message('This plan is coming soon.');
       return;
     }
 
@@ -148,7 +195,7 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <div className="grid md:grid-cols-3 gap-4 sm:gap-6 mb-8">
+      <div className="grid md:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-8">
         {PLANS.map((plan) => (
           <Card
             key={plan.id}
@@ -180,12 +227,16 @@ export default function PricingPage() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-bold" style={{ color: 'var(--ds-green)' }}>
-                    ${plan.price === 0 ? '0' : plan.price}
+                    {plan.id === 'enterprise'
+                      ? '$999+'
+                      : `$${plan.price === 0 ? '0' : plan.price}`}
                   </span>
                   {plan.price > 0 && <span className="text-muted-foreground">/month</span>}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {plan.credits === -1 ? 'Unlimited' : `${plan.credits}`} credits per month
+                  {typeof plan.credits === 'string'
+                    ? plan.credits
+                    : `${plan.credits.toLocaleString()}`} credits per month
                 </p>
               </div>
 
@@ -211,8 +262,12 @@ export default function PricingPage() {
                   'Loading...'
                 ) : user?.plan === plan.id ? (
                   'Current Plan'
+                ) : plan.cta === 'contact' ? (
+                  'Contact Sales'
+                ) : plan.cta === 'coming-soon' ? (
+                  'Coming Soon'
                 ) : plan.id === 'free' ? (
-                  'Downgrade'
+                  'Get Started'
                 ) : (
                   'Upgrade'
                 )}
