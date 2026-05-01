@@ -39,7 +39,9 @@ export function WorkspaceDashboard() {
   const [rightWidth, setRightWidth] = useState(420);
 
   const urlProjectId = searchParams.get('project');
-  const effectiveProjectId = urlProjectId || selectedProjectId;
+  // `/dashboard` should land on the Home screen; the IDE opens only when the URL
+  // explicitly includes `?project=<id>`.
+  const effectiveProjectId = urlProjectId;
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
 
   const unsavedCount = useMemo(() => {
