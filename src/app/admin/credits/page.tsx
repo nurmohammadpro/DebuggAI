@@ -236,7 +236,7 @@ export default function AdminCreditsPage() {
             Manual Adjustment
           </button>
 
-          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-lg p-1">
+          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-md p-1">
             {(['24h', '7d', '30d', 'all'] as TimeRange[]).map((range) => (
               <button
                 key={range}
@@ -275,7 +275,7 @@ export default function AdminCreditsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-lg">
+        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-ds-xl">
           <span className="text-sm text-[#FF5252]">{error}</span>
         </div>
       )}
@@ -288,10 +288,10 @@ export default function AdminCreditsPage() {
           return (
             <div
               key={stat.id}
-              className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5"
+              className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
+                <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ backgroundColor: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
                   <Icon className="w-5 h-5" style={{ color: stat.color }} />
                 </div>
                 <div className={`flex items-center gap-1 text-xs font-medium ${
@@ -319,7 +319,7 @@ export default function AdminCreditsPage() {
       </div>
 
       {/* Transactions Section */}
-      <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl">
+      <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#1F2B1F]">
           <h3 className="text-lg font-medium text-[#E8F5E9]">Transaction History</h3>
@@ -332,14 +332,14 @@ export default function AdminCreditsPage() {
                 placeholder="Search transactions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 pl-9 pr-3 py-2 bg-[#171C17] border border-[#283228] rounded-lg text-[#E8F5E9] placeholder-[#4D6B4D] text-sm focus:outline-none focus:border-[#00C853]"
+                className="w-64 pl-9 pr-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] text-sm focus:outline-none focus:border-[#00C853]"
               />
             </div>
 
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as TransactionFilter)}
-              className="h-9 px-3 bg-[#171C17] border border-[#283228] rounded-lg text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
+              className="h-9 px-3 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
             >
               <option value="all">All Types</option>
               <option value="purchase">Purchases</option>
@@ -372,7 +372,7 @@ export default function AdminCreditsPage() {
                   key={tx.id}
                   className="flex items-center gap-4 px-5 py-4 hover:bg-[#171C17] transition-colors"
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  <div className={`w-10 h-10 rounded-md flex items-center justify-center ${
                     isPositive ? 'bg-[#00C853]/15' : 'bg-[#FF5252]/15'
                   }`}>
                     <Icon className={`w-5 h-5 ${getTransactionColor(tx.type)}`} />
@@ -429,7 +429,7 @@ export default function AdminCreditsPage() {
       {/* Manual Adjustment Modal */}
       {showAdjustModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl w-full max-w-md p-6">
+          <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl w-full max-w-md p-6">
             <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Manual Credit Adjustment</h3>
 
             <form onSubmit={handleManualAdjust} className="space-y-4">
@@ -441,7 +441,7 @@ export default function AdminCreditsPage() {
                   onChange={(e) => setAdjustEmail(e.target.value)}
                   placeholder="user@example.com"
                   required
-                  className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-lg text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
+                  className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
                 />
               </div>
 
@@ -453,7 +453,7 @@ export default function AdminCreditsPage() {
                   onChange={(e) => setAdjustAmount(e.target.value)}
                   placeholder="-100 or 100"
                   required
-                  className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-lg text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
+                  className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
                 />
               </div>
 
@@ -464,7 +464,7 @@ export default function AdminCreditsPage() {
                   value={adjustReason}
                   onChange={(e) => setAdjustReason(e.target.value)}
                   placeholder="Reason for adjustment..."
-                  className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-lg text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
+                  className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
                 />
               </div>
 
@@ -472,14 +472,14 @@ export default function AdminCreditsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAdjustModal(false)}
-                  className="flex-1 h-10 px-4 rounded-lg bg-[#283228] text-[#E8F5E9] font-medium hover:bg-[#1F2B1F] transition-colors text-sm"
+                  className="flex-1 h-10 px-4 rounded-md bg-[#283228] text-[#E8F5E9] font-medium hover:bg-[#1F2B1F] transition-colors text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={adjusting}
-                  className="flex-1 h-10 px-4 rounded-lg bg-[#00C853] text-black font-medium hover:bg-[#00E676] transition-colors text-sm disabled:opacity-50"
+                  className="flex-1 h-10 px-4 rounded-md bg-[#00C853] text-black font-medium hover:bg-[#00E676] transition-colors text-sm disabled:opacity-50"
                 >
                   {adjusting ? 'Processing...' : 'Adjust Credits'}
                 </button>

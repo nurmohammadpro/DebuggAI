@@ -162,7 +162,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range Selector */}
-          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-lg p-1">
+          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-md p-1">
             {(['24h', '7d', '30d', '90d'] as TimeRange[]).map((range) => (
               <button
                 key={range}
@@ -204,7 +204,7 @@ export default function AdminDashboardPage() {
 
       {/* Alert Banner */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-lg">
+        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-ds-xl">
           <AlertCircleIcon className="w-5 h-5 text-[#FF5252] flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-[#FF5252]">Error loading dashboard data</p>
@@ -227,11 +227,11 @@ export default function AdminDashboardPage() {
           return (
             <div
               key={stat.id}
-              className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5 cursor-pointer transition-all hover:translate-y-[-2px] hover:border-[#283228] group"
+              className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5 cursor-pointer transition-all hover:translate-y-[-2px] hover:border-[#283228] group"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
                     <Icon className="w-4 h-4" style={{ color: stat.color }} />
                   </div>
                   <span className="text-xs uppercase tracking-wider text-[#4D6B4D]">{stat.label}</span>
@@ -256,7 +256,7 @@ export default function AdminDashboardPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Live Activity Feed - Takes 2 columns */}
-        <div className="lg:col-span-2 bg-[#111411] border border-[#1F2B1F] rounded-xl">
+        <div className="lg:col-span-2 bg-[#111411] border border-[#1F2B1F] rounded-ds-xl">
           <div className="p-5 border-b border-[#1F2B1F]">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-[#E8F5E9]">Live Activity</h3>
@@ -289,9 +289,9 @@ export default function AdminDashboardPage() {
                   return (
                     <div
                       key={activity.id}
-                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-[#171C17] transition-colors group"
+                      className="flex items-start gap-3 p-3 rounded-md hover:bg-[#171C17] transition-colors group"
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
                         type === 'critical'
                           ? 'bg-[#FF5252]/15'
                           : type === 'success'
@@ -334,25 +334,25 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
           <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Quick Actions</h3>
           <div className="space-y-2">
-            <a href="/admin/users" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+            <a href="/admin/users" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
               <UsersIcon className="w-4 h-4 text-[#8BAD8B]" />
               <span className="flex-1">Manage Users</span>
               <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
-            <a href="/admin/credits" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+            <a href="/admin/credits" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
               <CoinsIcon className="w-4 h-4 text-[#8BAD8B]" />
               <span className="flex-1">View Credits</span>
               <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
-            <a href="/admin/abuse" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+            <a href="/admin/abuse" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
               <AlertCircleIcon className="w-4 h-4 text-[#8BAD8B]" />
               <span className="flex-1">Review Abuse Reports</span>
               <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
-            <a href="/admin/audit" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
+            <a href="/admin/audit" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
               <FileTextIcon className="w-4 h-4 text-[#8BAD8B]" />
               <span className="flex-1">Audit Log</span>
               <span className="text-xs text-[#4D6B4D]">→</span>

@@ -58,7 +58,7 @@ export default async function AdminLayout({
       <aside className="w-64 bg-[#111411] border-r border-[#1F2B1F] flex flex-col">
         {/* Logo */}
         <Link href="/admin" className="h-[52px] flex items-center px-5 gap-3 border-b border-[#1F2B1F]">
-          <div className="w-7 h-7 rounded-lg bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-md bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
             <BugIcon className="w-4 h-4 text-[#00C853]" />
           </div>
           <span className="text-lg font-semibold text-[#E8F5E9]">Admin Console</span>
@@ -81,7 +81,7 @@ export default async function AdminLayout({
         {/* User Section */}
         <div className="p-3 border-t border-[#1F2B1F]">
           <div className="flex items-center gap-3 px-3 py-2">
-            <button className="w-9 h-9 rounded-lg bg-[#171C17] border border-[#1F2B1F] flex items-center justify-center text-[#8BAD8B] hover:border-[#00C853] hover:text-[#00C853] transition-colors">
+            <button className="w-9 h-9 rounded-md bg-[#171C17] border border-[#1F2B1F] flex items-center justify-center text-[#8BAD8B] hover:border-[#00C853] hover:text-[#00C853] transition-colors">
               <BellIcon className="w-4 h-4" />
             </button>
 
@@ -93,7 +93,7 @@ export default async function AdminLayout({
             <form action={handleSignOut}>
               <button
                 type="submit"
-                className="w-9 h-9 rounded-lg bg-[#171C17] border border-[#1F2B1F] flex items-center justify-center text-[#8BAD8B] hover:border-[#00C853] hover:text-[#00C853] transition-colors"
+                className="w-9 h-9 rounded-md bg-[#171C17] border border-[#1F2B1F] flex items-center justify-center text-[#8BAD8B] hover:border-[#00C853] hover:text-[#00C853] transition-colors"
                 title="Sign out"
               >
                 <LogOutIcon className="w-4 h-4" />

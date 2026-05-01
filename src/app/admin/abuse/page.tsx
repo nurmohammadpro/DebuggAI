@@ -84,7 +84,7 @@ export default async function AdminAbusePage() {
         ].map((stat) => (
           <div
             key={stat.id}
-            className={`bg-[#111411] border rounded-xl p-4 cursor-pointer transition-transform hover:translate-y-[-2px] ${
+            className={`bg-[#111411] border rounded-ds-xl p-4 cursor-pointer transition-transform hover:translate-y-[-2px] ${
               stat.severity === 'critical' ? 'border-[#FF5252]/50' : 'border-[#1F2B1F]'
             }`}
           >
@@ -107,7 +107,7 @@ export default async function AdminAbusePage() {
       </div>
 
       {/* Violations */}
-      <div className="bg-[#111411] border border-[#1F2B1F] rounded-xl p-5">
+      <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
         <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Recent Violations</h3>
         <div className="space-y-3">
           {violations.length === 0 ? (
@@ -116,7 +116,7 @@ export default async function AdminAbusePage() {
             violations.map((violation: any) => (
               <div
                 key={violation.id}
-                className={`bg-[#111411] border rounded-lg p-4 border-l-4 ${
+                className={`bg-[#111411] border rounded-md p-4 border-l-4 ${
                   violation.severity === 'critical' ? 'border-l-[#FF5252]' : 'border-l-[#FFAB00]'
                 }`}
               >
@@ -138,11 +138,11 @@ export default async function AdminAbusePage() {
                   </div>
                   <div className="flex gap-2">
                     {violation.canLift && (
-                      <button className="h-8 px-3 rounded-lg bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-xs font-medium">
+                      <button className="h-8 px-3 rounded-md bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-xs font-medium">
                       Lift
                     </button>
                     )}
-                    <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-transparent text-[#FF5252] border border-[#FF5252]/35 hover:bg-[#FF5252]/10 transition-all text-xs font-medium">
+                    <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-transparent text-[#FF5252] border border-[#FF5252]/35 hover:bg-[#FF5252]/10 transition-all text-xs font-medium">
                       <BanIcon className="w-3 h-3" />
                       Ban
                     </button>
