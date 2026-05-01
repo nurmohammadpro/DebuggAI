@@ -187,15 +187,17 @@ export default function PricingPage() {
   return (
     <div className="p-4 sm:p-6">
       {/* Page Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3">Simple, transparent pricing</h1>
-        <p className="text-base sm:text-lg text-muted-foreground">
+      <div className="text-center mb-6">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight mb-2">
+          Simple, transparent pricing
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Start free, upgrade when you need more power
         </p>
       </div>
 
       {/* Plans */}
-      <div className="grid md:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6 mb-8">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
         {PLANS.map((plan) => (
           <Card
             key={plan.id}
@@ -204,36 +206,48 @@ export default function PricingPage() {
             }`}
             style={plan.badge ? { boxShadow: '0 0 0 1px rgba(0,200,83,0.15)' } : undefined}
           >
-            <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-10 pb-6 px-4 sm:px-6' : 'p-4 sm:p-6'}`}>
+            <div className={`flex-1 flex flex-col ${plan.badge ? 'pt-9 pb-4 px-4' : 'p-4'}`}>
               {plan.badge && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2">
-                  <Badge variant="green" className="text-xs font-medium" style={{ padding: '4px 16px', fontSize: '11px' }}>
+                  <Badge
+                    variant="green"
+                    className="text-[11px] font-medium"
+                    style={{ padding: '3px 12px' }}
+                  >
                     {plan.badge}
                   </Badge>
                 </div>
               )}
               {/* Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 rounded-ds" style={{ background: plan.id === 'free' ? 'var(--ds-surface3)' : 'var(--ds-green-muted)' }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="p-2 rounded-ds"
+                  style={{
+                    background:
+                      plan.id === 'free' ? 'var(--ds-surface3)' : 'var(--ds-green-muted)',
+                  }}
+                >
                   <plan.icon className="h-5 w-5" style={{ color: plan.id === 'free' ? 'var(--ds-text3)' : 'var(--ds-green)' }} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan.period}</p>
+                  <h3 className="text-base font-semibold leading-tight">{plan.name}</h3>
+                  <p className="text-xs text-muted-foreground">{plan.period}</p>
                 </div>
               </div>
 
               {/* Price */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold" style={{ color: 'var(--ds-green)' }}>
+                  <span className="text-xl font-semibold" style={{ color: 'var(--ds-green)' }}>
                     {plan.id === 'enterprise'
                       ? '$999+'
                       : `$${plan.price === 0 ? '0' : plan.price}`}
                   </span>
-                  {plan.price > 0 && <span className="text-muted-foreground">/month</span>}
+                  {plan.price > 0 && (
+                    <span className="text-xs text-muted-foreground">/month</span>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {typeof plan.credits === 'string'
                     ? plan.credits
                     : `${plan.credits.toLocaleString()}`} credits per month
@@ -241,9 +255,9 @@ export default function PricingPage() {
               </div>
 
               {/* Features */}
-              <ul className="space-y-3 mb-6 flex-1">
+              <ul className="space-y-2 mb-4 flex-1">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
+                  <li key={i} className="flex items-start gap-2 text-xs">
                     <Check className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--ds-green)' }} />
                     <span className="text-muted-foreground">{feature}</span>
                   </li>
@@ -256,7 +270,7 @@ export default function PricingPage() {
                 disabled={isLoading === plan.id || user?.plan === plan.id}
                 className="w-full"
                 variant={plan.id === 'free' ? 'outline' : 'default'}
-                size="lg"
+                size="default"
               >
                 {isLoading === plan.id ? (
                   'Loading...'
@@ -279,35 +293,35 @@ export default function PricingPage() {
 
       {/* FAQ */}
       <div>
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-xl font-semibold mb-3">Frequently Asked Questions</h2>
+        <div className="text-center mb-5">
+          <h2 className="text-lg font-semibold mb-2">Frequently Asked Questions</h2>
         </div>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Card className="p-4 sm:p-5">
+        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+          <Card className="p-4">
             <h3 className="font-semibold mb-2">What are credits?</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Credits are used for AI-powered features. Debugging uses 1 credit per analysis,
               generating code costs 5-20 credits depending on complexity, and web builder projects
               cost 20-100 credits.
             </p>
           </Card>
-          <Card className="p-4 sm:p-5">
+          <Card className="p-4">
             <h3 className="font-semibold mb-2">Do credits roll over?</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               No, credits reset each billing cycle. However, your history and generated code
               are preserved based on your plan's retention period.
             </p>
           </Card>
-          <Card className="p-4 sm:p-5">
+          <Card className="p-4">
             <h3 className="font-semibold mb-2">Can I cancel anytime?</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Yes! You can cancel your subscription at any time. Your plan will remain active
               until the end of your billing period.
             </p>
           </Card>
-          <Card className="p-4 sm:p-5">
+          <Card className="p-4">
             <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               We accept all major credit and debit cards through Stripe.
             </p>
           </Card>
