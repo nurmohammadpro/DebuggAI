@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   const redirectTo = formData.get('redirect') as string || '/admin';
 
   if (!email || !password) {
-    redirect('/login?error=' + encodeURIComponent('Email and password are required'));
+    redirect('/admin/login?error=' + encodeURIComponent('Email and password are required'));
   }
 
   const supabase = await createAdminClient();
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   });
 
   if (error || !data.user) {
-    redirect('/login?error=' + encodeURIComponent(error?.message || 'Invalid credentials'));
+    redirect('/admin/login?error=' + encodeURIComponent(error?.message || 'Invalid credentials'));
   }
 
   // Check if user is admin
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   if (!profile || !profile.is_admin) {
     // Not an admin, sign out and redirect with error
     await supabase.auth.signOut();
-    redirect('/login?error=' + encodeURIComponent('Admin access required'));
+    redirect('/admin/login?error=' + encodeURIComponent('Admin access required'));
   }
 
   // Successful admin login - redirect to admin dashboard or intended page

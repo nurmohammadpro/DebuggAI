@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailValue, setEmailValue] = useState('');
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,6 +49,31 @@ export function LoginForm() {
     router.push('/dashboard');
   };
 
+  const onResendConfirmation = async () => {
+    const email = emailValue.trim();
+    if (!email) {
+      toast.error('Enter your email first');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success('Confirmation email sent. Check your inbox/spam.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to resend email');
+    }
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -59,6 +85,8 @@ export function LoginForm() {
           placeholder="name@example.com"
           required
           autoComplete="email"
+          value={emailValue}
+          onChange={(e) => setEmailValue(e.target.value)}
         />
       </div>
       <div className="space-y-2">
@@ -83,6 +111,14 @@ export function LoginForm() {
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Signing in…' : 'Sign In'}
       </Button>
+      <button
+        type="button"
+        onClick={onResendConfirmation}
+        className="w-full text-xs text-muted-foreground hover:text-foreground hover:underline"
+        disabled={isLoading}
+      >
+        Resend confirmation email
+      </button>
     </form>
   );
 }
