@@ -21,6 +21,7 @@ import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { WorkspaceRightPanel } from '@/components/workspace/workspace-right-panel';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
 import { toast } from 'sonner';
+import { V0DashboardHome } from '@/components/dashboard/v0/v0-dashboard-home';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -127,6 +128,10 @@ export function WorkspaceDashboard() {
   if (!isAuthenticated) return null;
 
   return (
+    <>
+    {!effectiveProjectId ? (
+      <V0DashboardHome />
+    ) : (
     <div className="min-h-screen w-screen overflow-hidden bg-background text-foreground flex flex-col">
       <WorkspaceTopbar
         projectId={effectiveProjectId}
@@ -196,6 +201,8 @@ export function WorkspaceDashboard() {
         />
       </div>
     </div>
+    )}
+    </>
   );
 }
 

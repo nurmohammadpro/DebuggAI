@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { WEB_BUILDER_STACKS } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
+import { createProjectFromGeneration } from '@/lib/projects/create-project';
 
 export function CreateProjectDialog({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -42,29 +43,17 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
         return;
       }
 
-      const projectKey = crypto.randomUUID();
-      const code = starterCode(name.trim());
-
-      const { data, error } = await supabase
-        .from('generations')
-        .insert({
-          user_id: session.user.id,
-          code,
-          version: 1,
-          description: name.trim(),
-          stack: selectedStack,
-          prompt: `Create a ${selectedStack.toUpperCase()} app: ${name.trim()}`,
-          metadata: { project_key: projectKey, created_from: 'dashboard' },
-        })
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      if (!data?.id) throw new Error('Failed to create project');
+      const { id } = await createProjectFromGeneration({
+        userId: session.user.id,
+        name: name.trim(),
+        stack: selectedStack,
+        prompt: `Create a ${selectedStack.toUpperCase()} app: ${name.trim()}`,
+        createdFrom: 'dashboard-dialog',
+      });
 
       toast.success('Project created');
       setOpen(false);
-      router.push(`/dashboard?project=${data.id}`);
+      router.push(`/dashboard?project=${id}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to create project');
     } finally {
@@ -163,24 +152,4 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
       </DialogContent>
     </Dialog>
   );
-}
-
-function starterCode(name: string) {
-  return `import * as React from 'react';
-
-export default function App() {
-  return (
-    <div style={{ padding: 24, fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif' }}>
-      <h1 style={{ margin: 0, fontSize: 24 }}>${escapeTemplate(name)}</h1>
-      <p style={{ marginTop: 8, color: '#6b7280' }}>
-        Start building in the editor, or ask the assistant to generate the app.
-      </p>
-    </div>
-  );
-}
-`;
-}
-
-function escapeTemplate(value: string) {
-  return value.replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }

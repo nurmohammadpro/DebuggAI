@@ -16,15 +16,10 @@ import {
   CreditCard,
   Gift,
   Settings as SettingsIcon,
-  History,
-  Users,
   LogOut,
   User,
-  Moon,
-  Sun,
 } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
-import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -38,6 +33,7 @@ import { Logo } from '@/components/logo';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Zap } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const navItems = [
   {
@@ -80,7 +76,6 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useSessionStore();
-  const { theme, setTheme } = useTheme();
   const credits = user?.credits;
 
   const handleLogout = async () => {
@@ -153,16 +148,7 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
             </div>
 
             {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            <ThemeToggle className="h-8 w-8" />
 
             {/* User Menu */}
             <DropdownMenu>
