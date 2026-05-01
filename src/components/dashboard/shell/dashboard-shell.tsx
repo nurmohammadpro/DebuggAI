@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { Logo } from '@/components/logo';
@@ -9,6 +9,7 @@ import { DashboardMobileDrawer } from '@/components/dashboard/shell/dashboard-mo
 import { DashboardTopRight } from '@/components/dashboard/shell/dashboard-top-right';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
+import { readSidebarPrefs, writeSidebarPrefs } from '@/lib/dashboard/sidebar-prefs';
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { data: chats = [] } = useMyDebugSessions(25, true);
 
   const [openMobileNav, setOpenMobileNav] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readSidebarPrefs().collapsed);
 
   const recentProjects = useMemo(() => projects.slice(0, 8), [projects]);
   const recentChats = useMemo(() => chats.slice(0, 10), [chats]);
@@ -25,6 +27,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     el?.focus();
   };
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isB = e.key.toLowerCase() === 'b';
+      if (!isB) return;
+      if (!(e.metaKey || e.ctrlKey)) return;
+      e.preventDefault();
+      setSidebarCollapsed((v) => {
+        const next = !v;
+        const prefs = readSidebarPrefs();
+        writeSidebarPrefs({ ...prefs, collapsed: next });
+        return next;
+      });
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex">
       <DashboardSidebar
@@ -32,6 +51,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         recentChats={recentChats}
         recentProjects={recentProjects}
         onNewChatClick={onNewChatClick}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() =>
+          setSidebarCollapsed((v) => {
+            const next = !v;
+            const prefs = readSidebarPrefs();
+            writeSidebarPrefs({ ...prefs, collapsed: next });
+            return next;
+          })
+        }
       />
 
       <div className="md:hidden fixed inset-x-0 top-0 h-12 border-b border-border/40 bg-background z-40 flex items-center px-3 gap-2">

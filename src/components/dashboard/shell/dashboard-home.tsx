@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
@@ -12,6 +12,7 @@ import { DashboardSidebar } from '@/components/dashboard/shell/dashboard-sidebar
 import { DashboardMobileDrawer } from '@/components/dashboard/shell/dashboard-mobile-drawer';
 import { DashboardComposerCard } from '@/components/dashboard/shell/dashboard-composer-card';
 import { DashboardTopRight } from '@/components/dashboard/shell/dashboard-top-right';
+import { readSidebarPrefs, writeSidebarPrefs } from '@/lib/dashboard/sidebar-prefs';
 
 export function DashboardHome() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export function DashboardHome() {
   const [openMobileNav, setOpenMobileNav] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [creating, setCreating] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readSidebarPrefs().collapsed);
 
   const activeHref = '/dashboard';
 
@@ -31,6 +33,23 @@ export function DashboardHome() {
     const el = document.querySelector<HTMLTextAreaElement>('textarea[data-dashboard-composer]');
     el?.focus();
   };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isB = e.key.toLowerCase() === 'b';
+      if (!isB) return;
+      if (!(e.metaKey || e.ctrlKey)) return;
+      e.preventDefault();
+      setSidebarCollapsed((v) => {
+        const next = !v;
+        const prefs = readSidebarPrefs();
+        writeSidebarPrefs({ ...prefs, collapsed: next });
+        return next;
+      });
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const onCreate = async () => {
     if (!prompt.trim()) return;
@@ -68,6 +87,15 @@ export function DashboardHome() {
         recentChats={recentChats}
         recentProjects={recentProjects}
         onNewChatClick={onNewChatClick}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() =>
+          setSidebarCollapsed((v) => {
+            const next = !v;
+            const prefs = readSidebarPrefs();
+            writeSidebarPrefs({ ...prefs, collapsed: next });
+            return next;
+          })
+        }
       />
 
       <div className="md:hidden fixed inset-x-0 top-0 h-12 border-b border-border/40 bg-background z-40 flex items-center px-3 gap-2">

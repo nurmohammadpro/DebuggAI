@@ -15,9 +15,19 @@ import { WEB_BUILDER_STACKS } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 import { createProjectFromGeneration } from '@/lib/projects/create-project';
 
-export function CreateProjectDialog({ children }: { children: React.ReactNode }) {
+export function CreateProjectDialog({
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [name, setName] = useState('New Project');
   const [selectedStack, setSelectedStack] = useState<string>('mern');
   const [creating, setCreating] = useState(false);
@@ -63,9 +73,11 @@ export function CreateProjectDialog({ children }: { children: React.ReactNode })
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="btn group/button inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
-        {children}
-      </DialogTrigger>
+      {children ? (
+        <DialogTrigger className="btn group/button inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+          {children}
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

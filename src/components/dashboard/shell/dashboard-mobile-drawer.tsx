@@ -52,12 +52,12 @@ export function DashboardMobileDrawer({
         </div>
 
         <DashboardSidebarContent
-          showHeader={false}
           activeHref={activeHref}
           recentChats={recentChats}
           recentProjects={recentProjects}
           onNewChatClick={onNewChatClick}
           onNavigate={() => onOpenChange(false)}
+          collapsed={false}
         />
       </DialogContent>
     </Dialog>

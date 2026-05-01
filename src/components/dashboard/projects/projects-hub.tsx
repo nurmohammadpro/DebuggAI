@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Plus } from 'lucide-react';
@@ -18,10 +19,21 @@ import { RecentTransactions } from '@/components/dashboard/home/recent-transacti
 import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
 
 export function ProjectsHub() {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [stack, setStack] = useState('all');
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useMyProjects(75, true);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('create') !== '1') return;
+    setCreateOpen(true);
+    url.searchParams.delete('create');
+    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
+    router.replace(next);
+  }, [router]);
 
   const projects = useMemo(() => {
     const list = data || [];
@@ -74,7 +86,7 @@ export function ProjectsHub() {
             Open a project in the workspace, or generate a new one.
           </div>
         </div>
-        <CreateProjectDialog>
+        <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen}>
           <Plus className="mr-2 h-4 w-4" />
           <span className="hidden sm:inline">New Project</span>
           <span className="sm:hidden">Create</span>
