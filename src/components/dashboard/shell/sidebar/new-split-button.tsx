@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Plus } from 'lucide-react';
+import { Plus, FolderKanban } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,8 +25,7 @@ export function NewSplitButton({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="w-full justify-center px-2 transition-all duration-200 hover:scale-105"
-            variant="outline"
+            className="w-full justify-center px-2 h-10 rounded-lg bg-foreground hover:bg-foreground/90 text-background"
             size="icon"
             title="New"
             aria-label="New"
@@ -34,11 +33,13 @@ export function NewSplitButton({
             <Plus className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-44">
-          <DropdownMenuItem onClick={onNewChat} className="cursor-pointer">
+        <DropdownMenuContent align="start" className="w-52">
+          <DropdownMenuItem onClick={onNewChat} className="cursor-pointer gap-2">
+            <Plus className="h-4 w-4" />
             New Chat
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer">
+          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer gap-2">
+            <FolderKanban className="h-4 w-4" />
             New Project
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -47,31 +48,27 @@ export function NewSplitButton({
   }
 
   return (
-    <div className="flex w-full gap-2">
+    <div className="flex gap-1.5">
       <Button
-        className={cn(
-          'flex-1 justify-start gap-2 transition-all duration-200',
-          'hover:bg-primary/90 active:scale-95'
-        )}
-        variant="default"
+        className="flex-1 justify-start gap-2.5 h-10 rounded-lg bg-foreground hover:bg-foreground/90 text-background active:scale-[0.98] transition-all duration-200"
         onClick={onNewChat}
       >
-        <Plus className="h-4 w-4 flex-shrink-0" />
-        <span className="truncate">New Chat</span>
+        <Plus className="h-4 w-4 shrink-0" />
+        <span className="truncate font-medium">New Chat</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="w-10 px-0 transition-all duration-200 hover:scale-105"
-            variant="outline"
+            className="h-10 w-10 px-0 rounded-lg bg-foreground hover:bg-foreground/90 text-background shrink-0"
             aria-label="More new options"
             title="More new options"
           >
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <FolderKanban className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-44">
-          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer">
+        <DropdownMenuContent align="start" className="w-52">
+          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer gap-2">
+            <FolderKanban className="h-4 w-4" />
             New Project
           </DropdownMenuItem>
         </DropdownMenuContent>

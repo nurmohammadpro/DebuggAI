@@ -37,24 +37,21 @@ export default function WebBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Main Content */}
-      <div className="flex-1 p-4 sm:p-6">
-        <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-80px)]">
-          {/* Chat Panel */}
-          <div className="lg:col-span-1">
-            <ChatPanel height="calc(100vh-180px)" />
-          </div>
+    <div className="flex flex-col h-[calc(100vh-6rem)] p-4 sm:p-6">
+      <div className="grid lg:grid-cols-3 gap-6 flex-1 min-h-0">
+        {/* Chat Panel */}
+        <div className="lg:col-span-1 min-h-0">
+          <ChatPanel height="100%" />
+        </div>
 
-          {/* Editor */}
-          <div className="lg:col-span-1">
-            <CodeEditor height="calc(100vh-180px)" />
-          </div>
+        {/* Editor */}
+        <div className="lg:col-span-1 min-h-0">
+          <CodeEditor height="100%" />
+        </div>
 
-          {/* Preview */}
-          <div className="lg:col-span-1">
-            <PreviewPane height="calc(100vh-180px)" />
-          </div>
+        {/* Preview */}
+        <div className="lg:col-span-1 min-h-0">
+          <PreviewPane height="100%" />
         </div>
       </div>
     </div>

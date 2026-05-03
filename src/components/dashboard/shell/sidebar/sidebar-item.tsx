@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { MoreHorizontal, Pin, PinOff, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -31,39 +32,39 @@ export function SidebarItem({
   const Icon = icon;
 
   return (
-    <div className={cn('group relative transition-all duration-200', collapsed ? 'px-1' : 'px-0')}>
-      {active && !collapsed && (
-        <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary transition-all duration-300" />
-      )}
-      {active && collapsed && (
-        <div className="absolute inset-0 rounded-md bg-primary/10 transition-all duration-300" />
-      )}
+    <div className={cn('group relative', collapsed && 'flex justify-center')}>
       <Link
         href={href}
         onClick={onNavigate}
         title={collapsed ? label : undefined}
         className={cn(
-          'flex items-center gap-3 rounded-md text-sm font-medium transition-all duration-200',
-          'hover:bg-muted/60 active:bg-muted/80',
-          collapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2.5',
+          'flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200',
+          collapsed ? 'p-2 justify-center' : 'px-3 py-2.5',
           active
-            ? 'text-foreground bg-muted/40'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
         )}
       >
         <Icon
           className={cn(
-            'h-4 w-4 shrink-0 transition-all duration-200',
-            active ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+            'h-4 w-4 shrink-0 transition-transform duration-150',
+            active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
+            !collapsed && 'group-hover:scale-110',
           )}
         />
-        {!collapsed && (
-          <span className="truncate transition-all duration-200">{label}</span>
-        )}
+        {!collapsed && <span className="truncate">{label}</span>}
       </Link>
 
+      {/* Tooltip on hover when collapsed */}
+      {collapsed && (
+        <div className="pointer-events-none absolute left-full ml-2 z-50 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+          {label}
+          <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+        </div>
+      )}
+
       {!collapsed && menu && (
-        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto">
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           {menu}
         </div>
       )}
@@ -89,7 +90,7 @@ export function SidebarItemMenu({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all duration-200"
+          className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           aria-label="More"
           title="More"
         >

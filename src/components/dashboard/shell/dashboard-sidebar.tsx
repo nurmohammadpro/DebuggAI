@@ -4,6 +4,7 @@ import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import { DashboardSidebarContent } from '@/components/dashboard/shell/dashboard-sidebar-content';
 import { SidebarHeader } from '@/components/dashboard/shell/sidebar/sidebar-header';
+import { SidebarRail } from '@/components/dashboard/shell/sidebar/sidebar-rail';
 
 export function DashboardSidebar({
   activeHref,
@@ -22,11 +23,11 @@ export function DashboardSidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex shrink-0 border-r border-border/50 bg-card/50 backdrop-blur-sm min-h-screen transition-all duration-300 ease-in-out overflow-hidden ${
-        collapsed ? 'w-16' : 'w-64'
+      className={`hidden md:flex shrink-0 relative border-r border-border/30 bg-card min-h-screen transition-all duration-300 ease-in-out overflow-hidden ${
+        collapsed ? 'w-[68px]' : 'w-[280px]'
       }`}
     >
-      <div className="flex flex-col w-64 min-w-64 min-h-0">
+      <div className="flex flex-col w-full min-w-0 min-h-0">
         <SidebarHeader collapsed={collapsed} onToggleCollapsed={onToggleCollapsed} />
         <DashboardSidebarContent
           activeHref={activeHref}
@@ -36,6 +37,7 @@ export function DashboardSidebar({
           collapsed={collapsed}
         />
       </div>
+      <SidebarRail collapsed={collapsed} onToggle={onToggleCollapsed} />
     </aside>
   );
 }

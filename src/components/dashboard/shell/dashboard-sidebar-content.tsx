@@ -1,17 +1,33 @@
 'use client';
 
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import {
+  Search,
+  X,
+  MoreHorizontal,
+  Pin,
+  PinOff,
+  ExternalLink,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { dashboardMoreNav, dashboardPrimaryNav } from '@/components/dashboard/shell/dashboard-nav';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
-import { SidebarSection } from '@/components/dashboard/shell/sidebar/sidebar-section';
-import { SidebarItem, SidebarItemMenu } from '@/components/dashboard/shell/sidebar/sidebar-item';
+import { SidebarItem } from '@/components/dashboard/shell/sidebar/sidebar-item';
 import { readSidebarPrefs, writeSidebarPrefs } from '@/lib/dashboard/sidebar-prefs';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { DeleteProjectDialog } from '@/components/dashboard/projects/delete-project-dialog';
@@ -19,6 +35,7 @@ import { RenameProjectDialog } from '@/components/dashboard/projects/rename-proj
 import { DeleteSessionDialog } from '@/components/dashboard/debug/delete-session-dialog';
 import { RenameItemDialog } from '@/components/dashboard/shell/sidebar/rename-item-dialog';
 import { NewSplitButton } from '@/components/dashboard/shell/sidebar/new-split-button';
+import { useSessionStore } from '@/store/session-store';
 
 type DialogState =
   | { type: 'none' }
@@ -31,62 +48,156 @@ function dialogReducer(_: DialogState, action: DialogState): DialogState {
   return action;
 }
 
-function RecentsList({
-  items,
-  emptyLabel,
-  hrefForId,
-  titleForItem,
-  onNavigate,
+// ─── Helpers ────────────────────────────────────────────────────────────
+
+function chatTitle(chat: DebugSessionRow, overrides: Record<string, string>): string {
+  return (
+    overrides[chat.id] ||
+    (chat.error_message || '').slice(0, 80) ||
+    (chat.explanation || '').slice(0, 80) ||
+    (chat.language || '') ||
+    'Chat'
+  );
+}
+
+function projectTitle(project: GenerationRow): string {
+  return ((project.description || project.prompt || 'Untitled') as string).slice(0, 64);
+}
+
+function relativeTime(dateStr: string | undefined): string {
+  if (!dateStr) return '';
+  const dt = new Date(dateStr).getTime();
+  if (isNaN(dt)) return '';
+  const now = Date.now();
+  const seconds = Math.floor((now - dt) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+}
+
+// ─── Section Header ──────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+      {children}
+    </div>
+  );
+}
+
+// ─── Session Row ─────────────────────────────────────────────────────────
+
+function SessionRow({
+  href,
+  label,
+  timestamp,
   collapsed,
-  pinnedIds,
+  pinned,
   onTogglePinned,
-  onRenameItem,
-  onDeleteItem,
+  onRename,
+  onDelete,
+  onNavigate,
 }: {
-  items: Array<{ id: string }>;
-  emptyLabel: string;
-  hrefForId: (id: string) => string;
-  titleForItem: (item: any) => string;
-  onNavigate?: () => void;
+  href: string;
+  label: string;
+  timestamp: string;
   collapsed: boolean;
-  pinnedIds: string[];
-  onTogglePinned: (id: string) => void;
-  onRenameItem?: (item: any) => void;
-  onDeleteItem?: (item: any) => void;
+  pinned: boolean;
+  onTogglePinned: () => void;
+  onRename?: () => void;
+  onDelete?: () => void;
+  onNavigate?: () => void;
 }) {
-  if (items.length === 0) {
-    return collapsed ? null : (
-      <div className="px-2 py-2 text-xs text-muted-foreground">{emptyLabel}</div>
+  const [showMenu, setShowMenu] = useState(false);
+
+  if (collapsed) {
+    return (
+      <div className="group relative px-1">
+        <Link
+          href={href}
+          onClick={onNavigate}
+          title={label}
+          className="flex items-center justify-center w-full px-2 py-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200"
+        >
+          <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+        </Link>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-1">
-      {items.slice(0, 6).map((item) => (
-        <SidebarItem
-          key={item.id}
-          href={hrefForId(item.id)}
-          label={titleForItem(item)}
-          icon={() => <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />}
-          active={false}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-          menu={
-            <SidebarItemMenu
-              pinned={pinnedIds.includes(item.id)}
-              onTogglePinned={() => onTogglePinned(item.id)}
-              onOpenInNewTab={() => {
-                window.open(hrefForId(item.id), '_blank', 'noopener,noreferrer');
+    <div
+      className="group relative"
+      onMouseLeave={() => setShowMenu(false)}
+    >
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+      >
+        <span className="h-2 w-2 rounded-full bg-muted-foreground/30 shrink-0" />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate">{label}</span>
+          {timestamp && (
+            <span className="text-[10px] text-muted-foreground/60">{timestamp}</span>
+          )}
+        </div>
+        {pinned && <Pin className="h-3 w-3 text-muted-foreground/60 shrink-0" />}
+      </Link>
+
+      <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+        <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
+          <DropdownMenuTrigger asChild>
+            <button
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              className={cn(
+                'h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-all',
+                showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+              )}
+              aria-label="More"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={onTogglePinned} className="cursor-pointer">
+              {pinned ? <PinOff className="mr-2 h-4 w-4" /> : <Pin className="mr-2 h-4 w-4" />}
+              {pinned ? 'Unpin' : 'Pin'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                window.open(href, '_blank', 'noopener,noreferrer');
               }}
-              onRename={onRenameItem ? () => onRenameItem(item) : undefined}
-              onDelete={onDeleteItem ? () => onDeleteItem(item) : undefined}
-            />
-          }
-        />
-      ))}
+              className="cursor-pointer"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Open in new tab
+            </DropdownMenuItem>
+            {onRename && (
+              <DropdownMenuItem onClick={onRename} className="cursor-pointer">
+                <Pencil className="mr-2 h-4 w-4" />
+                Rename
+              </DropdownMenuItem>
+            )}
+            {onDelete && (
+              <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }
+
+// ─── Main Component ──────────────────────────────────────────────────────
 
 export function DashboardSidebarContent({
   activeHref,
@@ -105,16 +216,14 @@ export function DashboardSidebarContent({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user } = useSessionStore();
   const [query, setQuery] = useState('');
-  const [recentsCollapsed, setRecentsCollapsed] = useState(false);
-  const [moreCollapsed, setMoreCollapsed] = useState(true);
   const [prefs, setPrefs] = useState(() => readSidebarPrefs());
   const searchRef = useRef<HTMLInputElement>(null);
   const [dialog, dispatchDialog] = useReducer(dialogReducer, { type: 'none' as const });
 
   useEffect(() => {
     writeSidebarPrefs({ ...prefs, collapsed });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefs, collapsed]);
 
   useEffect(() => {
@@ -127,39 +236,29 @@ export function DashboardSidebarContent({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const filteredPrimary = useMemo(() => {
-    if (!query.trim()) return dashboardPrimaryNav;
-    const q = query.toLowerCase();
-    return dashboardPrimaryNav.filter((n) => n.label.toLowerCase().includes(q));
-  }, [query]);
+  const clearSearch = useCallback(() => {
+    setQuery('');
+    searchRef.current?.blur();
+  }, []);
 
-  const filteredMore = useMemo(() => {
-    if (!query.trim()) return dashboardMoreNav;
-    const q = query.toLowerCase();
-    return dashboardMoreNav.filter((n) => n.label.toLowerCase().includes(q));
-  }, [query]);
+  const isSearching = query.trim().length > 0;
+
+  // ── filtered data ──────────────────────────────────────────────────────
 
   const filteredChats = useMemo(() => {
-    if (!query.trim()) return recentChats;
+    if (!isSearching) return recentChats;
     const q = query.toLowerCase();
     return recentChats.filter((c) => {
-      const title =
-        prefs.chatTitleOverrides[c.id] ||
-        (c.error_message || '').slice(0, 80) ||
-        (c.explanation || '').slice(0, 80) ||
-        (c.language || '').slice(0, 80);
-      return title.toLowerCase().includes(q);
-    });
-  }, [prefs.chatTitleOverrides, query, recentChats]);
-
-  const filteredProjects = useMemo(() => {
-    if (!query.trim()) return recentProjects;
-    const q = query.toLowerCase();
-    return recentProjects.filter((p) => {
-      const title = (p.description || p.prompt || 'Untitled').toLowerCase();
+      const title = chatTitle(c, prefs.chatTitleOverrides).toLowerCase();
       return title.includes(q);
     });
-  }, [query, recentProjects]);
+  }, [prefs.chatTitleOverrides, query, recentChats, isSearching]);
+
+  const filteredProjects = useMemo(() => {
+    if (!isSearching) return recentProjects;
+    const q = query.toLowerCase();
+    return recentProjects.filter((p) => projectTitle(p).toLowerCase().includes(q));
+  }, [query, recentProjects, isSearching]);
 
   const pinnedProjects = useMemo(() => {
     const ids = new Set(prefs.pinnedProjectIds);
@@ -170,6 +269,10 @@ export function DashboardSidebarContent({
     const ids = new Set(prefs.pinnedChatIds);
     return recentChats.filter((c) => ids.has(c.id));
   }, [prefs.pinnedChatIds, recentChats]);
+
+  const hasPinned = pinnedChats.length > 0 || pinnedProjects.length > 0;
+
+  // ── pin toggles ────────────────────────────────────────────────────────
 
   const togglePinnedProject = (id: string) => {
     setPrefs((prev) => {
@@ -195,6 +298,8 @@ export function DashboardSidebarContent({
     });
   };
 
+  // ── dialog openers ─────────────────────────────────────────────────────
+
   const openRenameChat = (chat: DebugSessionRow) => {
     const fallback =
       (chat.error_message || '').slice(0, 64) ||
@@ -209,32 +314,46 @@ export function DashboardSidebarContent({
   };
 
   const openDeleteChat = (chat: DebugSessionRow) => {
-    const fallback =
-      (prefs.chatTitleOverrides[chat.id] ||
-        (chat.error_message || '').slice(0, 64) ||
-        chat.language ||
-        'Chat') as string;
+    const fallback = (prefs.chatTitleOverrides[chat.id] ||
+      (chat.error_message || '').slice(0, 64) ||
+      chat.language ||
+      'Chat') as string;
     dispatchDialog({ type: 'deleteChat', id: chat.id, name: fallback });
   };
 
   const openRenameProject = (project: GenerationRow) => {
-    const name = ((project.description || project.prompt || 'Untitled') as string).slice(0, 64);
+    const name = projectTitle(project);
     dispatchDialog({ type: 'renameProject', id: project.id, initial: name });
   };
 
   const openDeleteProject = (project: GenerationRow) => {
-    const name = ((project.description || project.prompt || 'Untitled') as string).slice(0, 64);
+    const name = projectTitle(project);
     dispatchDialog({ type: 'deleteProject', id: project.id, name: name });
   };
+
+  // ── user display ───────────────────────────────────────────────────────
+
+  const userInitial = user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
+  const userDisplayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const userPlan = user?.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : 'Free';
+
+  // ── combined nav for Ctrl+K search mode ─────────────────────────────────
+
+  const allNavItems = useMemo(
+    () => [...dashboardPrimaryNav, ...dashboardMoreNav],
+    [],
+  );
+
+  // ── render ─────────────────────────────────────────────────────────────
 
   return (
     <div
       className={cn(
-        'flex flex-col w-full min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent',
-        collapsed ? 'px-1' : ''
+        'flex flex-col w-full min-h-0 overflow-y-auto overflow-x-hidden',
       )}
     >
-      <div className={cn('transition-all duration-300', collapsed ? 'p-2' : 'p-3')}>
+      {/* ── New Chat / Search ──────────────────────────────────────── */}
+      <div className={cn('px-3 pt-3 pb-2 space-y-2', collapsed && 'px-2')}>
         <NewSplitButton
           collapsed={collapsed}
           onNewChat={() => {
@@ -246,186 +365,242 @@ export function DashboardSidebarContent({
             onNavigate?.();
           }}
         />
-      </div>
 
-      {!collapsed && (
-        <div className="px-3 pb-3 transition-all duration-300">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors duration-200" />
+        {!collapsed && (
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground" />
             <Input
               ref={searchRef}
-              className="pl-9 pr-12 transition-all duration-200 focus:ring-2 focus:ring-primary/50"
+              className="pl-9 pr-12 h-9 text-sm rounded-lg bg-accent/40 border-transparent focus:bg-background focus:border-input transition-all duration-150"
               placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60 pointer-events-none transition-all duration-200">
-              {typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘/' : 'Ctrl+/'}
-            </kbd>
+            {query ? (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded hover:bg-accent transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            ) : (
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/40 pointer-events-none">
+                {typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘/' : 'Ctrl+/'}
+              </kbd>
+            )}
           </div>
+        )}
+      </div>
+
+      {collapsed && (
+        <div className="px-2 pb-2">
+          <button
+            onClick={() => searchRef.current?.focus()}
+            className="w-full flex items-center justify-center py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </div>
       )}
 
-      <nav className={cn('space-y-1 transition-all duration-300', collapsed ? 'px-0' : 'px-2')}>
-        {filteredPrimary.map((item) => {
-          const active = activeHref === item.href;
-          return (
-            <SidebarItem
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              icon={item.icon}
-              active={active}
-              collapsed={collapsed}
-              onNavigate={onNavigate}
-            />
-          );
-        })}
+      {/* ── NAV ────────────────────────────────────────────────────── */}
+      <nav className={cn('space-y-0.5', collapsed ? 'px-1' : 'px-2')}>
+        {!isSearching && !collapsed && <SectionLabel>Tools</SectionLabel>}
+
+        {isSearching
+          ? allNavItems
+              .filter((n) => n.label.toLowerCase().includes(query.toLowerCase()))
+              .map((item) => (
+                <SidebarItem
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  active={activeHref === item.href || activeHref.startsWith(item.href + '/')}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                />
+              ))
+          : (
+            <>
+              {dashboardPrimaryNav.map((item) => (
+                <SidebarItem
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  active={activeHref === item.href}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                />
+              ))}
+              {dashboardMoreNav.map((item) => (
+                <SidebarItem
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  active={activeHref === item.href || activeHref.startsWith(item.href + '/')}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </>
+          )}
       </nav>
 
-      {!collapsed && (
-        <div className="mt-4 px-3">
-          <SidebarSection
-            label="Favorites"
-            collapsed={pinnedChats.length === 0 && pinnedProjects.length === 0}
-            onToggle={() => {
-              // Toggle behavior not stored; section auto-opens when pinned items exist.
-              if (pinnedChats.length || pinnedProjects.length) {
-                setPrefs((p) => ({ ...p, pinnedChatIds: [], pinnedProjectIds: [] }));
-              }
-            }}
-            dense
-          >
-            <div className="space-y-1">
-              {pinnedChats.map((c) => (
-                <SidebarItem
-                  key={c.id}
-                  href={`/dashboard/debug/history?session=${c.id}`}
-                  label={(
-                    (prefs.chatTitleOverrides[c.id] ||
-                      c.error_message ||
-                      c.language ||
-                      'Chat') as string
-                  ).slice(0, 64)}
-                  icon={() => <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />}
-                  active={false}
-                  collapsed={false}
-                  onNavigate={onNavigate}
-                  menu={
-                    <SidebarItemMenu
-                      pinned
-                      onTogglePinned={() => togglePinnedChat(c.id)}
-                      onOpenInNewTab={() => {
-                        window.open(`/dashboard/debug/history?session=${c.id}`, '_blank', 'noopener,noreferrer');
-                      }}
-                      onRename={() => openRenameChat(c)}
-                      onDelete={() => openDeleteChat(c)}
-                    />
-                  }
-                />
-              ))}
-              {pinnedProjects.map((p) => (
-                <SidebarItem
-                  key={p.id}
-                  href={`/dashboard?project=${p.id}`}
-                  label={((p.description || p.prompt || 'Untitled') as string).slice(0, 64)}
-                  icon={() => <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />}
-                  active={false}
-                  collapsed={false}
-                  onNavigate={onNavigate}
-                  menu={
-                    <SidebarItemMenu
-                      pinned
-                      onTogglePinned={() => togglePinnedProject(p.id)}
-                      onOpenInNewTab={() => {
-                        window.open(`/dashboard?project=${p.id}`, '_blank', 'noopener,noreferrer');
-                      }}
-                      onRename={() => openRenameProject(p)}
-                      onDelete={() => openDeleteProject(p)}
-                    />
-                  }
-                />
-              ))}
+      {/* ── Favorites (pinned items) ────────────────────────────────── */}
+      {!isSearching && hasPinned && (
+        <div className={cn('mt-4', collapsed ? 'px-1' : 'px-2')}>
+          {!collapsed && <SectionLabel>Favorites</SectionLabel>}
+
+          {collapsed && (
+            <div className="flex justify-center py-2">
+              <div className="h-px w-6 bg-border" />
             </div>
-          </SidebarSection>
+          )}
+
+          <div className="space-y-0.5">
+            {pinnedChats.map((c) => (
+              <SessionRow
+                key={c.id}
+                href={`/dashboard/debug/history?session=${c.id}`}
+                label={chatTitle(c, prefs.chatTitleOverrides)}
+                timestamp={relativeTime((c as DebugSessionRow & { created_at?: string }).created_at)}
+                collapsed={collapsed}
+                pinned
+                onTogglePinned={() => togglePinnedChat(c.id)}
+                onRename={() => openRenameChat(c)}
+                onDelete={() => openDeleteChat(c)}
+                onNavigate={onNavigate}
+              />
+            ))}
+            {pinnedProjects.map((p) => (
+              <SessionRow
+                key={p.id}
+                href={`/dashboard?project=${p.id}`}
+                label={projectTitle(p)}
+                timestamp={relativeTime((p as GenerationRow & { created_at?: string }).created_at)}
+                collapsed={collapsed}
+                pinned
+                onTogglePinned={() => togglePinnedProject(p.id)}
+                onRename={() => openRenameProject(p)}
+                onDelete={() => openDeleteProject(p)}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {!collapsed && (
-        <div className="mt-4 px-3 min-h-0 transition-all duration-300">
-          <SidebarSection
-            label="Recent Chats"
-            collapsed={recentsCollapsed}
-            onToggle={() => setRecentsCollapsed((v) => !v)}
-            dense
-          >
-          <RecentsList
-            items={filteredChats as any}
-            emptyLabel="No recent chats yet."
-            hrefForId={(id) => `/dashboard/debug/history?session=${id}`}
-            titleForItem={(c: DebugSessionRow) =>
-              ((
-                prefs.chatTitleOverrides[c.id] ||
-                (c.error_message || c.language || 'Chat')
-              ) as string).slice(0, 64)
-            }
-            onNavigate={onNavigate}
-            collapsed={false}
-            pinnedIds={prefs.pinnedChatIds}
-            onTogglePinned={togglePinnedChat}
-            onRenameItem={(c: DebugSessionRow) => openRenameChat(c)}
-            onDeleteItem={(c: DebugSessionRow) => openDeleteChat(c)}
-          />
-        </SidebarSection>
-      </div>
-      )}
+      {/* ── Recent Chats ────────────────────────────────────────────── */}
+      <div className={cn('mt-4 flex-1 min-h-0', collapsed ? 'px-1' : 'px-2')}>
+        {!isSearching && recentChats.length > 0 && (
+          <>
+            {!collapsed && <SectionLabel>Recent</SectionLabel>}
 
-      {!collapsed && (
-        <div className="mt-4 px-3 pb-4 transition-all duration-300">
-          <div className="text-xs font-medium text-muted-foreground mb-2 px-2">
-            Recent Projects
-          </div>
-          <RecentsList
-            items={filteredProjects as any}
-            emptyLabel="No projects yet."
-            hrefForId={(id) => `/dashboard?project=${id}`}
-            titleForItem={(p: GenerationRow) =>
-              ((p.description || p.prompt || 'Untitled') as string).slice(0, 64)
-            }
-            onNavigate={onNavigate}
-            collapsed={false}
-            pinnedIds={prefs.pinnedProjectIds}
-            onTogglePinned={togglePinnedProject}
-            onRenameItem={(p: GenerationRow) => openRenameProject(p)}
-            onDeleteItem={(p: GenerationRow) => openDeleteProject(p)}
-          />
+            {collapsed && pinnedChats.length === 0 && pinnedProjects.length === 0 && (
+              <div className="flex justify-center py-2">
+                <div className="h-px w-6 bg-border" />
+              </div>
+            )}
 
-          <SidebarSection
-            label="More"
-            collapsed={moreCollapsed}
-            onToggle={() => setMoreCollapsed((v) => !v)}
-          >
-            <div className="space-y-1">
-              {filteredMore.map((item) => {
-                const active =
-                  activeHref === item.href || activeHref.startsWith(item.href + '/');
+            <div className="space-y-0.5">
+              {filteredChats.slice(0, isSearching ? undefined : 10).map((c) => {
+                const pinned = prefs.pinnedChatIds.includes(c.id);
                 return (
-                  <SidebarItem
-                    key={item.href}
-                    href={item.href}
-                    label={item.label}
-                    icon={item.icon}
-                    active={active}
-                    collapsed={false}
+                  <SessionRow
+                    key={c.id}
+                    href={`/dashboard/debug/history?session=${c.id}`}
+                    label={chatTitle(c, prefs.chatTitleOverrides)}
+                    timestamp={relativeTime((c as DebugSessionRow & { created_at?: string }).created_at)}
+                    collapsed={collapsed}
+                    pinned={pinned}
+                    onTogglePinned={() => togglePinnedChat(c.id)}
+                    onRename={() => openRenameChat(c)}
+                    onDelete={() => openDeleteChat(c)}
                     onNavigate={onNavigate}
                   />
                 );
               })}
             </div>
-          </SidebarSection>
-        </div>
-      )}
 
+            {!isSearching && filteredChats.length === 0 && !collapsed && (
+              <div className="px-3 py-2 text-xs text-muted-foreground/60">
+                No recent chats yet.
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Recent Projects ──────────────────────────────────────── */}
+        {!isSearching && filteredProjects.length > 0 && (
+          <>
+            {!collapsed && <SectionLabel>Recent Projects</SectionLabel>}
+            <div className="space-y-0.5">
+              {filteredProjects.slice(0, isSearching ? undefined : 6).map((p) => {
+                const pinned = prefs.pinnedProjectIds.includes(p.id);
+                return (
+                  <SessionRow
+                    key={p.id}
+                    href={`/dashboard?project=${p.id}`}
+                    label={projectTitle(p)}
+                    timestamp={relativeTime((p as GenerationRow & { created_at?: string }).created_at)}
+                    collapsed={collapsed}
+                    pinned={pinned}
+                    onTogglePinned={() => togglePinnedProject(p.id)}
+                    onRename={() => openRenameProject(p)}
+                    onDelete={() => openDeleteProject(p)}
+                    onNavigate={onNavigate}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ── Search results header ─────────────────────────────────── */}
+        {isSearching && filteredChats.length === 0 && filteredProjects.length === 0 && (
+          <div className="px-3 py-4 text-xs text-muted-foreground/60 text-center">
+            No results found.
+          </div>
+        )}
+      </div>
+
+      {/* ── User Footer ────────────────────────────────────────────── */}
+      <div className="mt-auto border-t border-border/40 p-2">
+        <button
+          className={cn(
+            'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground',
+            collapsed && 'justify-center px-2',
+          )}
+        >
+          {user?.avatarUrl ? (
+            <Image
+              src={user.avatarUrl}
+              alt={userDisplayName}
+              width={28}
+              height={28}
+              unoptimized
+              className="h-7 w-7 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-emerald-500 to-emerald-600">
+              <span className="text-xs font-bold text-white">{userInitial}</span>
+            </div>
+          )}
+          {!collapsed && (
+            <div className="flex flex-col items-start min-w-0">
+              <span className="text-sm font-medium text-foreground truncate w-full">{userDisplayName}</span>
+              <span className="text-[10px] text-muted-foreground/60">{userPlan} Plan</span>
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* ── Dialogs ────────────────────────────────────────────────── */}
       <RenameItemDialog
         open={dialog.type === 'renameChat'}
         onOpenChange={() => dispatchDialog({ type: 'none' })}
