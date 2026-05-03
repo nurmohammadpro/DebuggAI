@@ -24,6 +24,7 @@ interface Plan {
   features: string[];
   icon: React.ElementType;
   badge?: string;
+  timeframe?: string;
   priceId?: string;
   cta?: 'checkout' | 'contact' | 'coming-soon';
 }
@@ -80,6 +81,7 @@ const PLANS: Plan[] = [
       '90-day session history',
       'Priority support',
     ],
+    timeframe: 'Q4 2026',
     cta: 'coming-soon',
   },
   {
@@ -97,6 +99,7 @@ const PLANS: Plan[] = [
       'Priority build/export',
       'SLA support',
     ],
+    timeframe: 'Q4 2026',
     cta: 'coming-soon',
   },
   {
@@ -131,7 +134,11 @@ export default function PricingPage() {
     }
 
     if (plan.id === 'free') {
-      toast.info('You are already on the free plan');
+      if (isAuthenticated) {
+        router.push('/dashboard');
+      } else {
+        router.push('/signup');
+      }
       return;
     }
 
@@ -236,7 +243,14 @@ export default function PricingPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold leading-tight">{plan.name}</h3>
-                  <p className="text-[11px] text-muted-foreground">{plan.period}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {plan.period}
+                    {plan.timeframe && (
+                      <span className="ml-1.5 text-[10px] text-amber bg-amber/10 px-1.5 py-0.5 rounded-full">
+                        {plan.timeframe}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
 
@@ -284,12 +298,12 @@ export default function PricingPage() {
                   'Loading...'
                 ) : user?.plan === plan.id ? (
                   'Current Plan'
+                ) : plan.id === 'free' ? (
+                  'Get Started'
                 ) : plan.cta === 'contact' ? (
                   'Contact Sales'
                 ) : plan.cta === 'coming-soon' ? (
                   'Coming Soon'
-                ) : plan.id === 'free' ? (
-                  'Get Started'
                 ) : (
                   'Upgrade'
                 )}

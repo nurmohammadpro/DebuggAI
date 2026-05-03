@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
@@ -19,6 +19,17 @@ import { RenameProjectDialog } from '@/components/dashboard/projects/rename-proj
 import { DeleteSessionDialog } from '@/components/dashboard/debug/delete-session-dialog';
 import { RenameItemDialog } from '@/components/dashboard/shell/sidebar/rename-item-dialog';
 import { NewSplitButton } from '@/components/dashboard/shell/sidebar/new-split-button';
+
+type DialogState =
+  | { type: 'none' }
+  | { type: 'renameChat'; id: string; initial: string }
+  | { type: 'deleteChat'; id: string; name: string }
+  | { type: 'renameProject'; id: string; initial: string }
+  | { type: 'deleteProject'; id: string; name: string };
+
+function dialogReducer(_: DialogState, action: DialogState): DialogState {
+  return action;
+}
 
 function RecentsList({
   items,
@@ -98,27 +109,23 @@ export function DashboardSidebarContent({
   const [recentsCollapsed, setRecentsCollapsed] = useState(false);
   const [moreCollapsed, setMoreCollapsed] = useState(true);
   const [prefs, setPrefs] = useState(() => readSidebarPrefs());
-
-  const [renameChatOpen, setRenameChatOpen] = useState(false);
-  const [renameChatId, setRenameChatId] = useState<string>('');
-  const [renameChatInitial, setRenameChatInitial] = useState<string>('');
-
-  const [deleteChatOpen, setDeleteChatOpen] = useState(false);
-  const [deleteChatId, setDeleteChatId] = useState<string>('');
-  const [deleteChatName, setDeleteChatName] = useState<string>('');
-
-  const [renameProjectOpen, setRenameProjectOpen] = useState(false);
-  const [renameProjectId, setRenameProjectId] = useState<string>('');
-  const [renameProjectInitial, setRenameProjectInitial] = useState<string>('');
-
-  const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
-  const [deleteProjectId, setDeleteProjectId] = useState<string>('');
-  const [deleteProjectName, setDeleteProjectName] = useState<string>('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [dialog, dispatchDialog] = useReducer(dialogReducer, { type: 'none' as const });
 
   useEffect(() => {
     writeSidebarPrefs({ ...prefs, collapsed });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefs, collapsed]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== '/' || !(e.metaKey || e.ctrlKey)) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const filteredPrimary = useMemo(() => {
     if (!query.trim()) return dashboardPrimaryNav;
@@ -194,9 +201,11 @@ export function DashboardSidebarContent({
       (chat.explanation || '').slice(0, 64) ||
       chat.language ||
       'Chat';
-    setRenameChatId(chat.id);
-    setRenameChatInitial(prefs.chatTitleOverrides[chat.id] || fallback);
-    setRenameChatOpen(true);
+    dispatchDialog({
+      type: 'renameChat',
+      id: chat.id,
+      initial: prefs.chatTitleOverrides[chat.id] || fallback,
+    });
   };
 
   const openDeleteChat = (chat: DebugSessionRow) => {
@@ -205,23 +214,17 @@ export function DashboardSidebarContent({
         (chat.error_message || '').slice(0, 64) ||
         chat.language ||
         'Chat') as string;
-    setDeleteChatId(chat.id);
-    setDeleteChatName(fallback);
-    setDeleteChatOpen(true);
+    dispatchDialog({ type: 'deleteChat', id: chat.id, name: fallback });
   };
 
   const openRenameProject = (project: GenerationRow) => {
     const name = ((project.description || project.prompt || 'Untitled') as string).slice(0, 64);
-    setRenameProjectId(project.id);
-    setRenameProjectInitial(name);
-    setRenameProjectOpen(true);
+    dispatchDialog({ type: 'renameProject', id: project.id, initial: name });
   };
 
   const openDeleteProject = (project: GenerationRow) => {
     const name = ((project.description || project.prompt || 'Untitled') as string).slice(0, 64);
-    setDeleteProjectId(project.id);
-    setDeleteProjectName(name);
-    setDeleteProjectOpen(true);
+    dispatchDialog({ type: 'deleteProject', id: project.id, name: name });
   };
 
   return (
@@ -250,11 +253,15 @@ export function DashboardSidebarContent({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              className="pl-9"
+              ref={searchRef}
+              className="pl-9 pr-12"
               placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60 pointer-events-none">
+              {typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘/' : 'Ctrl+/'}
+            </kbd>
           </div>
         </div>
       )}
@@ -420,56 +427,58 @@ export function DashboardSidebarContent({
       )}
 
       <RenameItemDialog
-        open={renameChatOpen}
-        onOpenChange={setRenameChatOpen}
+        open={dialog.type === 'renameChat'}
+        onOpenChange={() => dispatchDialog({ type: 'none' })}
         title="Rename chat"
         description="Renames this chat in your sidebar (local to this browser)."
-        initialValue={renameChatInitial}
+        initialValue={dialog.type === 'renameChat' ? dialog.initial : ''}
         placeholder="Chat name"
         onSave={(nextValue) => {
           const v = nextValue.trim();
-          if (!v) return;
+          if (!v || dialog.type !== 'renameChat') return;
           setPrefs((prev) => ({
             ...prev,
-            chatTitleOverrides: { ...prev.chatTitleOverrides, [renameChatId]: v },
+            chatTitleOverrides: { ...prev.chatTitleOverrides, [dialog.id]: v },
           }));
-          setRenameChatOpen(false);
+          dispatchDialog({ type: 'none' });
         }}
       />
 
       <DeleteSessionDialog
-        open={deleteChatOpen}
-        onOpenChange={setDeleteChatOpen}
-        sessionId={deleteChatId}
-        sessionName={deleteChatName}
+        open={dialog.type === 'deleteChat'}
+        onOpenChange={() => dispatchDialog({ type: 'none' })}
+        sessionId={dialog.type === 'deleteChat' ? dialog.id : ''}
+        sessionName={dialog.type === 'deleteChat' ? dialog.name : ''}
         onDeleted={async () => {
+          if (dialog.type !== 'deleteChat') return;
           setPrefs((prev) => ({
             ...prev,
-            pinnedChatIds: prev.pinnedChatIds.filter((x) => x !== deleteChatId),
+            pinnedChatIds: prev.pinnedChatIds.filter((x) => x !== dialog.id),
           }));
           await queryClient.invalidateQueries({ queryKey: queryKeys.myDebugSessions });
         }}
       />
 
       <RenameProjectDialog
-        open={renameProjectOpen}
-        onOpenChange={setRenameProjectOpen}
-        projectId={renameProjectId}
-        initialName={renameProjectInitial}
+        open={dialog.type === 'renameProject'}
+        onOpenChange={() => dispatchDialog({ type: 'none' })}
+        projectId={dialog.type === 'renameProject' ? dialog.id : ''}
+        initialName={dialog.type === 'renameProject' ? dialog.initial : ''}
         onRenamed={async () => {
           await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
         }}
       />
 
       <DeleteProjectDialog
-        open={deleteProjectOpen}
-        onOpenChange={setDeleteProjectOpen}
-        projectId={deleteProjectId}
-        projectName={deleteProjectName}
+        open={dialog.type === 'deleteProject'}
+        onOpenChange={() => dispatchDialog({ type: 'none' })}
+        projectId={dialog.type === 'deleteProject' ? dialog.id : ''}
+        projectName={dialog.type === 'deleteProject' ? dialog.name : ''}
         onDeleted={async () => {
+          if (dialog.type !== 'deleteProject') return;
           setPrefs((prev) => ({
             ...prev,
-            pinnedProjectIds: prev.pinnedProjectIds.filter((x) => x !== deleteProjectId),
+            pinnedProjectIds: prev.pinnedProjectIds.filter((x) => x !== dialog.id),
           }));
           await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
         }}

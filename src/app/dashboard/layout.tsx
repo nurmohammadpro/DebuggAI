@@ -5,6 +5,7 @@
 
 import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
 import { ClientDashboardShell } from '@/components/dashboard/client-dashboard-shell';
+import { DashboardErrorBoundary } from '@/components/dashboard/dashboard-error-boundary';
 
 export default function DashboardLayout({
   children,
@@ -14,7 +15,9 @@ export default function DashboardLayout({
   return (
     <ClientDashboardShell>
       <SessionBootstrapper />
-      <main>{children}</main>
+      <DashboardErrorBoundary>
+        <main>{children}</main>
+      </DashboardErrorBoundary>
     </ClientDashboardShell>
   );
 }

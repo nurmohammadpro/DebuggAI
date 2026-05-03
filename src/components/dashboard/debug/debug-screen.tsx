@@ -6,7 +6,7 @@
  * Professional · Minimal · Developer-focused · Dark-first
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Bug, Loader2, Sparkles, History, Code2 } from 'lucide-react';
@@ -29,10 +29,31 @@ import {
 
 export function DebugScreen() {
   const router = useRouter();
-  const { currentLanguage, setCurrentLanguage, addSession } = useDebugStore();
+  const {
+    currentLanguage,
+    setCurrentLanguage,
+    currentCode: storedCode,
+    currentError: storedError,
+    setCurrentCode,
+    setCurrentError,
+    addSession,
+  } = useDebugStore();
 
   const [code, setCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    if (storedCode || storedError) {
+      setCode(storedCode);
+      setErrorMessage(storedError);
+      // Clear the store so reloads don't re-populate
+      setCurrentCode('');
+      setCurrentError('');
+    }
+    initialized.current = true;
+  }, [storedCode, storedError, setCurrentCode, setCurrentError]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState('');
   const [detectedLanguage, setDetectedLanguage] = useState('');

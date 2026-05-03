@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -22,8 +23,10 @@ import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
+import { useDebugStore, type Language } from '@/store/debug-store';
 
 export function DebugHistory() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [languageFilter, setLanguageFilter] = useState<'all' | string>('all');
@@ -232,7 +235,13 @@ export function DebugHistory() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => toast.message('Re-run coming soon')}
+                    onClick={() => {
+                      const store = useDebugStore.getState();
+                      store.setCurrentCode(session.code);
+                      if (session.language) store.setCurrentLanguage(session.language as Language);
+                      if (session.error_message) store.setCurrentError(session.error_message);
+                      router.push('/dashboard/debug');
+                    }}
                   >
                     <RefreshCw className="mr-1 h-3 w-3" />
                     Re-run

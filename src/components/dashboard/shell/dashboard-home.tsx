@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { useMyProjects } from '@/hooks/queries/use-my-projects';
-import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { supabase } from '@/lib/supabase';
 import { createProjectFromGeneration } from '@/lib/projects/create-project';
 import { toast } from 'sonner';
@@ -12,44 +10,27 @@ import { DashboardSidebar } from '@/components/dashboard/shell/dashboard-sidebar
 import { DashboardMobileDrawer } from '@/components/dashboard/shell/dashboard-mobile-drawer';
 import { DashboardComposerCard } from '@/components/dashboard/shell/dashboard-composer-card';
 import { DashboardTopRight } from '@/components/dashboard/shell/dashboard-top-right';
-import { readSidebarPrefs, writeSidebarPrefs } from '@/lib/dashboard/sidebar-prefs';
+import { CommandPalette } from '@/components/dashboard/command-palette';
+import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 
 export function DashboardHome() {
   const router = useRouter();
-  const { data: projects = [] } = useMyProjects(25, true);
-  const { data: chats = [] } = useMyDebugSessions(25, true);
+  const {
+    recentChats,
+    recentProjects,
+    openMobileNav,
+    setOpenMobileNav,
+    openCommandPalette,
+    setOpenCommandPalette,
+    sidebarCollapsed,
+    toggleSidebar,
+    onNewChatClick,
+  } = useDashboardShell();
 
-  const [openMobileNav, setOpenMobileNav] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [creating, setCreating] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readSidebarPrefs().collapsed);
 
   const activeHref = '/dashboard';
-
-  const recentProjects = useMemo(() => projects.slice(0, 8), [projects]);
-  const recentChats = useMemo(() => chats.slice(0, 10), [chats]);
-
-  const onNewChatClick = () => {
-    const el = document.querySelector<HTMLTextAreaElement>('textarea[data-dashboard-composer]');
-    el?.focus();
-  };
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const isB = e.key.toLowerCase() === 'b';
-      if (!isB) return;
-      if (!(e.metaKey || e.ctrlKey)) return;
-      e.preventDefault();
-      setSidebarCollapsed((v) => {
-        const next = !v;
-        const prefs = readSidebarPrefs();
-        writeSidebarPrefs({ ...prefs, collapsed: next });
-        return next;
-      });
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
 
   const onCreate = async () => {
     if (!prompt.trim()) return;
@@ -82,20 +63,20 @@ export function DashboardHome() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
+      <a
+        href="#dashboard-main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-card focus:border focus:border-border focus:rounded-md focus:text-foreground"
+      >
+        Skip to content
+      </a>
+
       <DashboardSidebar
         activeHref={activeHref}
         recentChats={recentChats}
         recentProjects={recentProjects}
         onNewChatClick={onNewChatClick}
         collapsed={sidebarCollapsed}
-        onToggleCollapsed={() =>
-          setSidebarCollapsed((v) => {
-            const next = !v;
-            const prefs = readSidebarPrefs();
-            writeSidebarPrefs({ ...prefs, collapsed: next });
-            return next;
-          })
-        }
+        onToggleCollapsed={toggleSidebar}
       />
 
       <div className="md:hidden fixed inset-x-0 top-0 h-12 border-b border-border/40 bg-background z-40 flex items-center px-3 gap-2">
@@ -115,7 +96,7 @@ export function DashboardHome() {
         </div>
       </div>
 
-      <main className="flex-1 min-w-0">
+      <main id="dashboard-main-content" className="flex-1 min-w-0">
         <div className="hidden md:flex h-12 items-center justify-end px-5">
           <DashboardTopRight />
         </div>
@@ -130,6 +111,8 @@ export function DashboardHome() {
           />
         </div>
       </main>
+
+      <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
     </div>
   );
 }
