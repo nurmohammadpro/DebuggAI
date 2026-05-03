@@ -16,10 +16,10 @@ export function SidebarHeader({
     <div
       className={cn(
         'h-12 flex items-center gap-2 border-b border-border/40',
-        collapsed ? 'px-2 justify-center' : 'px-4'
+        collapsed ? 'px-2' : 'px-4'
       )}
     >
-      <Logo className="h-5 w-auto" />
+      <Logo className="h-5 w-auto shrink-0" />
       {!collapsed && (
         <button
           className="inline-flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted/40 text-sm font-medium min-w-0"
@@ -35,7 +35,7 @@ export function SidebarHeader({
         type="button"
         onClick={onToggleCollapsed}
         className={cn(
-          'btn btn-ghost h-9 w-9 px-0',
+          'btn btn-ghost h-9 w-9 px-0 shrink-0',
           collapsed ? 'ml-0' : 'ml-auto'
         )}
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
