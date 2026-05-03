@@ -18,21 +18,29 @@ export function SidebarSection({
   dense?: boolean;
 }) {
   return (
-    <div className={cn(dense ? '' : 'mt-4')}>
+    <div className={cn('transition-all duration-200', dense ? '' : 'mt-4')}>
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-muted/30"
+        className="w-full flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground px-2 py-1.5 rounded-md hover:bg-muted/40 transition-all duration-200 uppercase tracking-wider"
       >
-        <span>{label}</span>
-        {collapsed ? (
-          <ChevronRight className="h-4 w-4 opacity-70" />
-        ) : (
-          <ChevronDown className="h-4 w-4 opacity-70" />
-        )}
+        <span className="transition-all duration-200">{label}</span>
+        <div className="transition-transform duration-300">
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4 opacity-60" />
+          ) : (
+            <ChevronDown className="h-4 w-4 opacity-60" />
+          )}
+        </div>
       </button>
-      {!collapsed && <div className="mt-1">{children}</div>}
+      <div
+        className={cn(
+          'overflow-hidden transition-all duration-300',
+          collapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'
+        )}
+      >
+        <div className="mt-1.5 space-y-1">{children}</div>
+      </div>
     </div>
   );
 }
-

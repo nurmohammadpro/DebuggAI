@@ -230,11 +230,11 @@ export function DashboardSidebarContent({
   return (
     <div
       className={cn(
-        'flex flex-col w-full min-h-0 overflow-y-auto',
+        'flex flex-col w-full min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent',
         collapsed ? 'px-1' : ''
       )}
     >
-      <div className={collapsed ? 'p-2' : 'p-3'}>
+      <div className={cn('transition-all duration-300', collapsed ? 'p-2' : 'p-3')}>
         <NewSplitButton
           collapsed={collapsed}
           onNewChat={() => {
@@ -249,24 +249,24 @@ export function DashboardSidebarContent({
       </div>
 
       {!collapsed && (
-        <div className="px-3 pb-3">
+        <div className="px-3 pb-3 transition-all duration-300">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors duration-200" />
             <Input
               ref={searchRef}
-              className="pl-9 pr-12"
+              className="pl-9 pr-12 transition-all duration-200 focus:ring-2 focus:ring-primary/50"
               placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60 pointer-events-none">
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60 pointer-events-none transition-all duration-200">
               {typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘/' : 'Ctrl+/'}
             </kbd>
           </div>
         </div>
       )}
 
-      <nav className={cn('space-y-1', collapsed ? 'px-0' : 'px-2')}>
+      <nav className={cn('space-y-1 transition-all duration-300', collapsed ? 'px-0' : 'px-2')}>
         {filteredPrimary.map((item) => {
           const active = activeHref === item.href;
           return (
@@ -352,7 +352,7 @@ export function DashboardSidebarContent({
       )}
 
       {!collapsed && (
-        <div className="mt-4 px-3 min-h-0">
+        <div className="mt-4 px-3 min-h-0 transition-all duration-300">
           <SidebarSection
             label="Recent Chats"
             collapsed={recentsCollapsed}
@@ -381,7 +381,7 @@ export function DashboardSidebarContent({
       )}
 
       {!collapsed && (
-        <div className="mt-4 px-3 pb-4">
+        <div className="mt-4 px-3 pb-4 transition-all duration-300">
           <div className="text-xs font-medium text-muted-foreground mb-2 px-2">
             Recent Projects
           </div>

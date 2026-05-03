@@ -25,7 +25,7 @@ export function NewSplitButton({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="w-full justify-center px-2"
+            className="w-full justify-center px-2 transition-all duration-200 hover:scale-105"
             variant="outline"
             size="icon"
             title="New"
@@ -47,19 +47,22 @@ export function NewSplitButton({
   }
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full gap-2">
       <Button
-        className={cn('flex-1 justify-start gap-2 rounded-r-none')}
-        variant="outline"
+        className={cn(
+          'flex-1 justify-start gap-2 transition-all duration-200',
+          'hover:bg-primary/90 active:scale-95'
+        )}
+        variant="default"
         onClick={onNewChat}
       >
-        <Plus className="h-4 w-4" />
-        New Chat
+        <Plus className="h-4 w-4 flex-shrink-0" />
+        <span className="truncate">New Chat</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="w-10 px-0 rounded-l-none"
+            className="w-10 px-0 transition-all duration-200 hover:scale-105"
             variant="outline"
             aria-label="More new options"
             title="More new options"
@@ -76,4 +79,3 @@ export function NewSplitButton({
     </div>
   );
 }
-

@@ -27,7 +27,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex">
       {isFetching > 0 && (
-        <div className="fixed top-0 left-0 right-0 h-0.5 z-[100] bg-primary/60 animate-pulse" />
+        <div className="fixed top-0 left-0 right-0 h-1 z-[100] bg-gradient-to-r from-primary via-primary to-primary/50 animate-pulse" />
       )}
 
       <a
@@ -46,7 +46,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         onToggleCollapsed={toggleSidebar}
       />
 
-      <div className="md:hidden fixed inset-x-0 top-0 h-12 border-b border-border/40 bg-background z-40 flex items-center px-3 gap-2">
+      <div className="md:hidden fixed inset-x-0 top-0 h-12 border-b border-border/40 bg-background/95 backdrop-blur-sm z-40 flex items-center px-3 gap-2 transition-all duration-300">
         <DashboardMobileDrawer
           open={openMobileNav}
           onOpenChange={setOpenMobileNav}
@@ -66,11 +66,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <main id="dashboard-main-content" className="flex-1 min-w-0">
-        <div className="hidden md:flex h-12 items-center justify-end px-5">
+        <div className="hidden md:flex h-14 items-center justify-end px-5 border-b border-border/40 bg-background/50 backdrop-blur-sm transition-all duration-300">
           <DashboardTopRight />
         </div>
         <DashboardBreadcrumbs />
-        <div className="pt-12 md:pt-0 min-h-[calc(100vh-3rem)]">{children}</div>
+        <div className="pt-12 md:pt-0 min-h-[calc(100vh-3.5rem)]">{children}</div>
       </main>
 
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
