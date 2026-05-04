@@ -24,7 +24,7 @@ export async function checkCredits(
   const { data: wallet } = await supabase
     .from('credit_wallets')
     .select('balance')
-    .eq('owner_id', userId)
+    .eq('user_id', userId)
     .single();
 
   if (!wallet) {
@@ -145,7 +145,7 @@ export async function getCredits(userId: string): Promise<number> {
   const { data: wallet } = await supabase
     .from('credit_wallets')
     .select('balance')
-    .eq('owner_id', userId)
+    .eq('user_id', userId)
     .single();
 
   return wallet?.balance || 0;
@@ -158,7 +158,7 @@ async function getWalletId(userId: string): Promise<string | null> {
   const { data: wallet } = await supabase
     .from('credit_wallets')
     .select('id')
-    .eq('owner_id', userId)
+    .eq('user_id', userId)
     .single();
 
   return wallet?.id || null;
@@ -169,7 +169,7 @@ async function getWalletId(userId: string): Promise<string | null> {
  */
 async function createWallet(userId: string): Promise<void> {
   await supabase.from('credit_wallets').insert({
-    owner_id: userId,
+    user_id: userId,
     balance: 30, // Free tier
   });
 }
@@ -184,7 +184,7 @@ export async function getTransactions(
   const { data: wallets } = await supabase
     .from('credit_wallets')
     .select('id')
-    .eq('owner_id', userId);
+    .eq('user_id', userId);
 
   const walletIds = ((wallets || []) as Array<{ id: string }>).map((w) => w.id);
 

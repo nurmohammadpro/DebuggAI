@@ -80,6 +80,15 @@ export function Navigation() {
           </span>
         </Link>
 
+        {/* Desktop Nav Links */}
+        <div className="hidden md:flex items-center gap-1 ml-8">
+          <Link href="/features" className="nav-link">Features</Link>
+          <Link href="/demo" className="nav-link">Live Demo</Link>
+          <Link href="/languages" className="nav-link">Languages</Link>
+          <Link href="/pricing" className="nav-link">Pricing</Link>
+          <Link href="/faq" className="nav-link">FAQ</Link>
+        </div>
+
         {/* Right Side Actions */}
         <div className="ml-auto flex items-center gap-2">
           {isAuthenticated ? (
@@ -173,7 +182,7 @@ export function Navigation() {
           )}
 
           {/* Mobile Menu Button */}
-          <div className="relative" ref={menuRef}>
+          <div className="relative md:hidden" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="nav-link p-2"
