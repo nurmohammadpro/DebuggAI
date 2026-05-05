@@ -12,7 +12,6 @@ import {
 export type WorkspaceLeftView = 'explorer' | 'search';
 export type WorkspaceRightTab =
   | 'chat'
-  | 'preview'
   | 'console'
   | 'git'
   | 'env'

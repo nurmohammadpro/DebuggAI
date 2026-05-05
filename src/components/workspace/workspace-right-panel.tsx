@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ChevronRight, MessageSquare, Eye, Terminal, GitBranch, Plug, SlidersHorizontal } from 'lucide-react';
+import { ChevronRight, MessageSquare, Terminal, GitBranch, Plug, SlidersHorizontal } from 'lucide-react';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { PreviewPane } from '@/components/web-builder/preview-pane';
 import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspacePanelPlaceholder } from '@/components/workspace/workspace-panel-placeholder';
 import type { WorkspaceMode } from '@/store/workspace-store';
@@ -28,7 +27,6 @@ export function WorkspaceRightPanel({
   const tabs = useMemo(
     () => [
       { id: 'chat' as const, label: 'Chat', icon: MessageSquare },
-      { id: 'preview' as const, label: 'Preview', icon: Eye },
       { id: 'console' as const, label: 'Console', icon: Terminal },
       { id: 'git' as const, label: 'Git', icon: GitBranch },
       { id: 'env' as const, label: 'Env', icon: SlidersHorizontal },
@@ -92,12 +90,6 @@ export function WorkspaceRightPanel({
               mode={mode}
               className="h-full bg-transparent"
             />
-          </div>
-        )}
-
-        {activeTab === 'preview' && (
-          <div className="h-full">
-            <PreviewPane height="100%" chromeless className="h-full bg-transparent" />
           </div>
         )}
 

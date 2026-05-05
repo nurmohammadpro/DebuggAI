@@ -12,8 +12,8 @@ export type AdminCreditTx = {
   description: string | null;
   created_at: string;
   wallet?: {
-    owner_id: string;
-    owner?: { email: string; full_name: string | null };
+    user_id: string;
+    profiles?: { email: string; full_name: string | null };
   };
 };
 

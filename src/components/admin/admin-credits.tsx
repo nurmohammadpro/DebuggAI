@@ -134,7 +134,7 @@ export function AdminCredits() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="font-medium truncate">
-                        {tx.wallet?.owner?.email || tx.wallet?.owner_id || 'Unknown'}
+                        {tx.wallet?.profiles?.email || tx.wallet?.user_id || 'Unknown'}
                       </span>
                       <Badge variant="outline" className="text-xs">
                         {tx.source}

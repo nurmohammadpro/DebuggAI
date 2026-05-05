@@ -247,7 +247,44 @@ BEGIN
   END LOOP;
 END $$;
 
--- 14. ROW-LEVEL SECURITY (RLS) POLICIES
+-- 14. ENSURE CORE TABLES EXIST (idempotent)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS debug_sessions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  language      TEXT NOT NULL,
+  code          TEXT NOT NULL,
+  error_message TEXT,
+  fix           TEXT,
+  explanation   TEXT,
+  tags          TEXT[],
+  created_at    TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS generations (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  code        TEXT DEFAULT '',
+  version     INTEGER DEFAULT 1,
+  description TEXT,
+  stack       TEXT,
+  prompt      TEXT,
+  metadata    JSONB DEFAULT '{}',
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS credit_transactions (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wallet_id   UUID NOT NULL REFERENCES credit_wallets(id) ON DELETE CASCADE,
+  amount      INTEGER NOT NULL,
+  type        TEXT NOT NULL,
+  source      TEXT,
+  description TEXT,
+  metadata    JSONB DEFAULT '{}',
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- 15. ROW-LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 
 -- Profiles: users can read their own, admins can read all
@@ -344,7 +381,7 @@ BEGIN
   END IF;
 END $$;
 
--- 15. HELPER FUNCTION: is_admin (for RLS policies and API checks)
+-- 16. HELPER FUNCTION: is_admin (for RLS policies and API checks)
 -- ============================================================================
 CREATE OR REPLACE FUNCTION is_admin(p_user_id UUID)
 RETURNS BOOLEAN
@@ -359,7 +396,7 @@ AS $$
   );
 $$;
 
--- 16. HELPER FUNCTION: get_user_plan
+-- 17. HELPER FUNCTION: get_user_plan
 -- ============================================================================
 CREATE OR REPLACE FUNCTION get_user_plan(p_user_id UUID)
 RETURNS TEXT

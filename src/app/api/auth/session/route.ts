@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const { data } = await auth.supabase
       .from('credit_wallets')
       .select('id, balance')
-      .eq('owner_id', user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
     response.wallet = data || null;
   } catch {

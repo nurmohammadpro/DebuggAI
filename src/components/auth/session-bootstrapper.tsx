@@ -34,7 +34,7 @@ export function SessionBootstrapper() {
             event: 'UPDATE',
             schema: 'public',
             table: 'credit_wallets',
-            filter: `owner_id=eq.${userId}`,
+            filter: `user_id=eq.${userId}`,
           },
           (payload: RealtimePostgresUpdatePayload<{ balance: number }>) => {
             const newBalance = payload.new.balance;
@@ -57,7 +57,7 @@ export function SessionBootstrapper() {
           supabase
             .from('credit_wallets')
             .select('balance')
-            .eq('owner_id', userId)
+            .eq('user_id', userId)
             .single(),
           supabase.from('profiles').select('is_admin').eq('id', userId).single(),
         ]);

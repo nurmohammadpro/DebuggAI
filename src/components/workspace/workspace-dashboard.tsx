@@ -18,6 +18,7 @@ import {
 } from '@/components/workspace/workspace-icon-sidebar';
 import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
+import type { EditorView } from '@/components/workspace/workspace-editor';
 import { WorkspaceRightPanel } from '@/components/workspace/workspace-right-panel';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
 import { toast } from 'sonner';
@@ -37,6 +38,7 @@ export function WorkspaceDashboard() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [explorerWidth, setExplorerWidth] = useState(288);
   const [rightWidth, setRightWidth] = useState(420);
+  const [editorView, setEditorView] = useState<EditorView>('code');
 
   const urlProjectId = searchParams.get('project');
   // `/dashboard` should land on the Home screen; the IDE opens only when the URL
@@ -76,7 +78,7 @@ export function WorkspaceDashboard() {
       setRightTab('console');
     } else {
       setRightCollapsed(false);
-      setRightTab('preview');
+      setRightTab('chat');
     }
   }, [mode]);
 
@@ -142,8 +144,7 @@ export function WorkspaceDashboard() {
         mode={mode}
         onModeChange={setMode}
         onRun={() => {
-          setRightCollapsed(false);
-          setRightTab('preview');
+          setEditorView('preview');
           bumpPreviewNonce();
         }}
         onShare={async () => {
@@ -184,7 +185,7 @@ export function WorkspaceDashboard() {
           onResize={(dx) => setExplorerWidth((w) => clamp(w + dx, 220, 520))}
         />
 
-        <WorkspaceEditor />
+        <WorkspaceEditor editorView={editorView} onEditorViewChange={setEditorView} />
 
         <WorkspaceSplitter
           ariaLabel="Resize right panel"

@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
           description,
           created_at,
           wallet:credit_wallets!inner(
-            owner_id,
-            owner:profiles(email, full_name)
+            user_id,
+            profiles(email, full_name)
           )
         `,
         { count: 'exact' }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     const { data: wallet, error: walletError } = await supabaseAdmin
       .from('credit_wallets')
       .select('id, balance')
-      .eq('owner_id', userId)
+      .eq('user_id', userId)
       .single();
 
     if (walletError) {

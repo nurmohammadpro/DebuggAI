@@ -11,16 +11,10 @@ export function WorkspaceEditorTabs() {
     return all.sort();
   }, [files]);
 
-  if (!files || orderedPaths.length === 0) {
-    return (
-      <div className="h-11 border-b border-border/40 bg-card flex items-center px-3 text-xs text-muted-foreground">
-        No files loaded
-      </div>
-    );
-  }
+  if (!files || orderedPaths.length === 0) return null;
 
   return (
-    <div className="h-11 border-b border-border/40 bg-card flex items-center overflow-x-auto px-2 gap-1">
+    <>
       {orderedPaths.map((path) => (
         <button
           key={path}
@@ -35,7 +29,7 @@ export function WorkspaceEditorTabs() {
           {basename(path)}
         </button>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -43,4 +37,3 @@ function basename(path: string) {
   const parts = path.split('/');
   return parts[parts.length - 1] || path;
 }
-
