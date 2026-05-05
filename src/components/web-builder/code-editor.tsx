@@ -8,7 +8,7 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { DiffEditor } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useGenerationStore } from '@/store/generation-store';
 import { Card } from '@/components/ui/card';
@@ -20,6 +20,8 @@ interface CodeEditorProps {
   className?: string;
   showHeader?: boolean;
   language?: string;
+  showDiff?: boolean;
+  originalCode?: string;
 }
 
 export function CodeEditor({
@@ -28,9 +30,11 @@ export function CodeEditor({
   className,
   showHeader = true,
   language = 'typescript',
+  showDiff = false,
+  originalCode = '',
 }: CodeEditorProps) {
   const { currentCode, setCurrentCode } = useGenerationStore();
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | editor.IStandaloneDiffEditor | null>(null);
   const { resolvedTheme } = useTheme();
   const editorTheme =
     resolvedTheme === 'light' ? 'debuggai-light' : 'debuggai-dark';
@@ -91,57 +95,81 @@ export function CodeEditor({
   }, []);
 
   const handleEditorChange = (value: string | undefined) => {
-    if (value !== undefined) {
+    if (value !== undefined && !showDiff) {
       setCurrentCode(value);
     }
   };
 
-  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
+  const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor | editor.IStandaloneDiffEditor) => {
     editorRef.current = editor;
 
-    // Set editor options
-    editor.updateOptions({
-      fontSize: 14,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      automaticLayout: true,
-    });
+    if ('updateOptions' in editor) {
+      editor.updateOptions({
+        fontSize: 14,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+      });
+    }
+  };
+
+  const commonOptions = {
+    readOnly,
+    fontSize: 14,
+    fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
+    fontLigatures: true,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    tabSize: 2,
+    insertSpaces: true,
+    wordWrap: 'on' as const,
+    lineNumbers: 'on' as const,
+    renderLineHighlight: 'all' as const,
+    cursorBlinking: 'smooth' as const,
+    cursorSmoothCaretAnimation: 'on' as const,
+    smoothScrolling: true,
   };
 
   return (
     <Card className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
       {showHeader && (
-        <div className="border-b px-4 py-2 bg-muted/50">
+        <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
           <h3 className="text-sm font-medium">Code Editor</h3>
+          {showDiff && (
+            <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full border border-amber-500/20 uppercase font-bold">
+              Diff Mode
+            </span>
+          )}
         </div>
       )}
       <div className="flex-1 min-h-0">
-        <Editor
-          height="100%"
-          language={language}
-          value={currentCode}
-          onChange={handleEditorChange}
-          onMount={handleEditorDidMount}
-          beforeMount={defineThemes}
-          theme={editorTheme}
-          options={{
-            readOnly,
-            fontSize: 14,
-            fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
-            fontLigatures: true,
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          tabSize: 2,
-          insertSpaces: true,
-          wordWrap: 'on',
-          lineNumbers: 'on',
-          renderLineHighlight: 'all',
-          cursorBlinking: 'smooth',
-          cursorSmoothCaretAnimation: 'on',
-          smoothScrolling: true,
-        }}
-        />
+        {showDiff ? (
+          <DiffEditor
+            height="100%"
+            language={language}
+            original={originalCode}
+            modified={currentCode}
+            onMount={handleEditorDidMount}
+            beforeMount={defineThemes}
+            theme={editorTheme}
+            options={{
+              ...commonOptions,
+              renderSideBySide: true,
+            }}
+          />
+        ) : (
+          <Editor
+            height="100%"
+            language={language}
+            value={currentCode}
+            onChange={handleEditorChange}
+            onMount={handleEditorDidMount}
+            beforeMount={defineThemes}
+            theme={editorTheme}
+            options={commonOptions}
+          />
+        )}
       </div>
     </Card>
   );

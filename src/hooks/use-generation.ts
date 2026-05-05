@@ -6,6 +6,8 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/queries/query-keys';
 import { useGenerationStore } from '@/store/generation-store';
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 import { extractCode } from '@/lib/extract-code';
@@ -32,12 +34,19 @@ interface DebugRequest {
 
 export function useGeneration(options: UseGenerationOptions = {}) {
   const { onChunk, onDone, onError } = options;
+  const queryClient = useQueryClient();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const { appendAccumulated, resetAccumulated, setCurrentCode, addVersion } =
-    useGenerationStore();
+  const { 
+    appendAccumulated, 
+    resetAccumulated, 
+    setCurrentCode, 
+    addVersion,
+    currentProjectId,
+    setProjectId
+  } = useGenerationStore();
 
   const getAuthHeaders = async () => {
     const {
@@ -99,6 +108,44 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         // Save as new version
         addVersion(code, 'Generated');
 
+        // Persistence to Supabase
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            if (currentProjectId) {
+              // Update existing project
+              await supabase
+                .from('generations')
+                .update({ 
+                  code,
+                  // In a real app we might increment version, but for now just update
+                })
+                .eq('id', currentProjectId);
+            } else {
+              // Create new project
+              const { data, error } = await supabase
+                .from('generations')
+                .insert({
+                  user_id: user.id,
+                  code,
+                  prompt: request.prompt,
+                  description: request.prompt.slice(0, 50),
+                  version: 1,
+                })
+                .select()
+                .single();
+              
+              if (data && !error) {
+                setProjectId(data.id);
+              }
+            }
+            // Invalidate the projects query so the sidebar updates
+            await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
+          }
+        } catch (saveError) {
+          console.error('Failed to persist generation:', saveError);
+        }
+
         // Call onDone callback
         onDone?.(code);
 
@@ -113,7 +160,18 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         setIsLoading(false);
       }
     },
-    [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError]
+    [
+      appendAccumulated, 
+      resetAccumulated, 
+      setCurrentCode, 
+      addVersion, 
+      onChunk, 
+      onDone, 
+      onError,
+      currentProjectId,
+      setProjectId,
+      queryClient
+    ]
   );
 
   /**

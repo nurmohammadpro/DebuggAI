@@ -23,11 +23,11 @@ export function DashboardSidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex shrink-0 relative border-r border-border/30 bg-card min-h-screen transition-all duration-300 ease-in-out overflow-hidden ${
+      className={`hidden md:flex shrink-0 sticky top-0 border-r border-border/30 bg-card h-screen transition-all duration-300 ease-in-out overflow-hidden ${
         collapsed ? 'w-[68px]' : 'w-[280px]'
       }`}
     >
-      <div className="flex flex-col w-full min-w-0 min-h-0">
+      <div className="flex flex-col w-full h-full min-w-0">
         <SidebarHeader collapsed={collapsed} onToggleCollapsed={onToggleCollapsed} />
         <DashboardSidebarContent
           activeHref={activeHref}

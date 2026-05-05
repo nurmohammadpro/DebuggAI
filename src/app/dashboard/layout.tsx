@@ -16,7 +16,7 @@ export default function DashboardLayout({
     <ClientDashboardShell>
       <SessionBootstrapper />
       <DashboardErrorBoundary>
-        <main>{children}</main>
+        {children}
       </DashboardErrorBoundary>
     </ClientDashboardShell>
   );

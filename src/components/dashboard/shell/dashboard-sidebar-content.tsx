@@ -28,7 +28,7 @@ import { dashboardMoreNav, dashboardPrimaryNav } from '@/components/dashboard/sh
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import { SidebarItem } from '@/components/dashboard/shell/sidebar/sidebar-item';
-import { readSidebarPrefs, writeSidebarPrefs } from '@/lib/dashboard/sidebar-prefs';
+import { useShellStore } from '@/store/shell-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { DeleteProjectDialog } from '@/components/dashboard/projects/delete-project-dialog';
 import { RenameProjectDialog } from '@/components/dashboard/projects/rename-project-dialog';
@@ -217,14 +217,20 @@ export function DashboardSidebarContent({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useSessionStore();
+  const {
+    pinnedProjectIds,
+    pinnedChatIds,
+    chatTitleOverrides,
+    togglePinnedProject,
+    togglePinnedChat,
+    updateChatTitleOverride,
+    setPinnedProjectIds,
+    setPinnedChatIds,
+  } = useShellStore();
+  
   const [query, setQuery] = useState('');
-  const [prefs, setPrefs] = useState(() => readSidebarPrefs());
   const searchRef = useRef<HTMLInputElement>(null);
   const [dialog, dispatchDialog] = useReducer(dialogReducer, { type: 'none' as const });
-
-  useEffect(() => {
-    writeSidebarPrefs({ ...prefs, collapsed });
-  }, [prefs, collapsed]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -249,10 +255,10 @@ export function DashboardSidebarContent({
     if (!isSearching) return recentChats;
     const q = query.toLowerCase();
     return recentChats.filter((c) => {
-      const title = chatTitle(c, prefs.chatTitleOverrides).toLowerCase();
+      const title = chatTitle(c, chatTitleOverrides).toLowerCase();
       return title.includes(q);
     });
-  }, [prefs.chatTitleOverrides, query, recentChats, isSearching]);
+  }, [chatTitleOverrides, query, recentChats, isSearching]);
 
   const filteredProjects = useMemo(() => {
     if (!isSearching) return recentProjects;
@@ -261,42 +267,17 @@ export function DashboardSidebarContent({
   }, [query, recentProjects, isSearching]);
 
   const pinnedProjects = useMemo(() => {
-    const ids = new Set(prefs.pinnedProjectIds);
+    const ids = new Set(pinnedProjectIds);
     return recentProjects.filter((p) => ids.has(p.id));
-  }, [prefs.pinnedProjectIds, recentProjects]);
+  }, [pinnedProjectIds, recentProjects]);
 
   const pinnedChats = useMemo(() => {
-    const ids = new Set(prefs.pinnedChatIds);
+    const ids = new Set(pinnedChatIds);
     return recentChats.filter((c) => ids.has(c.id));
-  }, [prefs.pinnedChatIds, recentChats]);
+  }, [pinnedChatIds, recentChats]);
 
   const hasPinned = pinnedChats.length > 0 || pinnedProjects.length > 0;
 
-  // ── pin toggles ────────────────────────────────────────────────────────
-
-  const togglePinnedProject = (id: string) => {
-    setPrefs((prev) => {
-      const exists = prev.pinnedProjectIds.includes(id);
-      return {
-        ...prev,
-        pinnedProjectIds: exists
-          ? prev.pinnedProjectIds.filter((x) => x !== id)
-          : [id, ...prev.pinnedProjectIds],
-      };
-    });
-  };
-
-  const togglePinnedChat = (id: string) => {
-    setPrefs((prev) => {
-      const exists = prev.pinnedChatIds.includes(id);
-      return {
-        ...prev,
-        pinnedChatIds: exists
-          ? prev.pinnedChatIds.filter((x) => x !== id)
-          : [id, ...prev.pinnedChatIds],
-      };
-    });
-  };
 
   // ── dialog openers ─────────────────────────────────────────────────────
 
@@ -309,12 +290,12 @@ export function DashboardSidebarContent({
     dispatchDialog({
       type: 'renameChat',
       id: chat.id,
-      initial: prefs.chatTitleOverrides[chat.id] || fallback,
+      initial: chatTitleOverrides[chat.id] || fallback,
     });
   };
 
   const openDeleteChat = (chat: DebugSessionRow) => {
-    const fallback = (prefs.chatTitleOverrides[chat.id] ||
+    const fallback = (chatTitleOverrides[chat.id] ||
       (chat.error_message || '').slice(0, 64) ||
       chat.language ||
       'Chat') as string;
@@ -347,11 +328,8 @@ export function DashboardSidebarContent({
   // ── render ─────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className={cn(
-        'flex flex-col w-full min-h-0 overflow-y-auto overflow-x-hidden',
-      )}
-    >
+    <div className="flex flex-col flex-1 w-full min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4">
       {/* ── New Chat / Search ──────────────────────────────────────── */}
       <div className={cn('px-3 pt-3 pb-2 space-y-2', collapsed && 'px-2')}>
         <NewSplitButton
@@ -467,7 +445,7 @@ export function DashboardSidebarContent({
               <SessionRow
                 key={c.id}
                 href={`/dashboard/debug/history?session=${c.id}`}
-                label={chatTitle(c, prefs.chatTitleOverrides)}
+                label={chatTitle(c, chatTitleOverrides)}
                 timestamp={relativeTime((c as DebugSessionRow & { created_at?: string }).created_at)}
                 collapsed={collapsed}
                 pinned
@@ -509,15 +487,15 @@ export function DashboardSidebarContent({
 
             <div className="space-y-0.5">
               {filteredChats.slice(0, isSearching ? undefined : 10).map((c) => {
-                const pinned = prefs.pinnedChatIds.includes(c.id);
+                const pinned = pinnedChatIds.includes(c.id);
                 return (
                   <SessionRow
                     key={c.id}
                     href={`/dashboard/debug/history?session=${c.id}`}
-                    label={chatTitle(c, prefs.chatTitleOverrides)}
+                    label={chatTitle(c, chatTitleOverrides)}
                     timestamp={relativeTime((c as DebugSessionRow & { created_at?: string }).created_at)}
                     collapsed={collapsed}
-                    pinned={pinned}
+                    pinned={pinnedChatIds.includes(c.id)}
                     onTogglePinned={() => togglePinnedChat(c.id)}
                     onRename={() => openRenameChat(c)}
                     onDelete={() => openDeleteChat(c)}
@@ -541,7 +519,6 @@ export function DashboardSidebarContent({
             {!collapsed && <SectionLabel>Recent Projects</SectionLabel>}
             <div className="space-y-0.5">
               {filteredProjects.slice(0, isSearching ? undefined : 6).map((p) => {
-                const pinned = prefs.pinnedProjectIds.includes(p.id);
                 return (
                   <SessionRow
                     key={p.id}
@@ -549,7 +526,7 @@ export function DashboardSidebarContent({
                     label={projectTitle(p)}
                     timestamp={relativeTime((p as GenerationRow & { created_at?: string }).created_at)}
                     collapsed={collapsed}
-                    pinned={pinned}
+                    pinned={pinnedProjectIds.includes(p.id)}
                     onTogglePinned={() => togglePinnedProject(p.id)}
                     onRename={() => openRenameProject(p)}
                     onDelete={() => openDeleteProject(p)}
@@ -568,9 +545,10 @@ export function DashboardSidebarContent({
           </div>
         )}
       </div>
+      </div>
 
       {/* ── User Footer ────────────────────────────────────────────── */}
-      <div className="mt-auto border-t border-border/40 p-2">
+      <div className="shrink-0 border-t border-border/40 p-2">
         <button
           className={cn(
             'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground',
@@ -611,10 +589,7 @@ export function DashboardSidebarContent({
         onSave={(nextValue) => {
           const v = nextValue.trim();
           if (!v || dialog.type !== 'renameChat') return;
-          setPrefs((prev) => ({
-            ...prev,
-            chatTitleOverrides: { ...prev.chatTitleOverrides, [dialog.id]: v },
-          }));
+          updateChatTitleOverride(dialog.id, v);
           dispatchDialog({ type: 'none' });
         }}
       />
@@ -626,10 +601,7 @@ export function DashboardSidebarContent({
         sessionName={dialog.type === 'deleteChat' ? dialog.name : ''}
         onDeleted={async () => {
           if (dialog.type !== 'deleteChat') return;
-          setPrefs((prev) => ({
-            ...prev,
-            pinnedChatIds: prev.pinnedChatIds.filter((x) => x !== dialog.id),
-          }));
+          setPinnedChatIds(pinnedChatIds.filter((x) => x !== dialog.id));
           await queryClient.invalidateQueries({ queryKey: queryKeys.myDebugSessions });
         }}
       />
@@ -651,10 +623,7 @@ export function DashboardSidebarContent({
         projectName={dialog.type === 'deleteProject' ? dialog.name : ''}
         onDeleted={async () => {
           if (dialog.type !== 'deleteProject') return;
-          setPrefs((prev) => ({
-            ...prev,
-            pinnedProjectIds: prev.pinnedProjectIds.filter((x) => x !== dialog.id),
-          }));
+          setPinnedProjectIds(pinnedProjectIds.filter((x) => x !== dialog.id));
           await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
         }}
       />

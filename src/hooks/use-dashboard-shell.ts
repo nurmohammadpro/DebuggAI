@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
-import { readSidebarPrefs, writeSidebarPrefs } from '@/lib/dashboard/sidebar-prefs';
+import { useShellStore } from '@/store/shell-store';
 
 export function useDashboardShell() {
   const pathname = usePathname();
@@ -14,26 +14,11 @@ export function useDashboardShell() {
 
   const [openMobileNav, setOpenMobileNav] = useState(false);
   const [openCommandPalette, setOpenCommandPalette] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  // Sync collapsed state from localStorage after mount to avoid
-  // server/client hydration mismatch (server always renders false).
-  useEffect(() => {
-    const stored = readSidebarPrefs().collapsed;
-    if (stored) setSidebarCollapsed(stored);
-  }, []);
+  
+  const { sidebarCollapsed, toggleSidebar } = useShellStore();
 
   const recentProjects = useMemo(() => projects.slice(0, 8), [projects]);
   const recentChats = useMemo(() => chats.slice(0, 10), [chats]);
-
-  const toggleSidebar = useCallback(() => {
-    setSidebarCollapsed((v) => {
-      const next = !v;
-      const prefs = readSidebarPrefs();
-      writeSidebarPrefs({ ...prefs, collapsed: next });
-      return next;
-    });
-  }, []);
 
   const onNewChatClick = useCallback(() => {
     const el = document.querySelector<HTMLTextAreaElement>(

@@ -7,218 +7,193 @@
 
 'use client';
 
-import { useEffect, useRef, useCallback, type ElementType } from 'react';
+import { SandpackProvider, SandpackPreview } from '@codesandbox/sandpack-react';
 import { useGenerationStore } from '@/store/generation-store';
-import { buildPreviewTSX } from '@/lib/preview-builder';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { RefreshCw, Play, Maximize2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useTheme } from '@/components/theme-provider';
+import { cn } from '@/lib/utils';
 
 interface PreviewPaneProps {
   height?: string;
   className?: string;
   chromeless?: boolean;
+  sandboxUrl?: string | null;
 }
 
 export function PreviewPane({
   height = '600px',
   className,
   chromeless = false,
+  sandboxUrl,
 }: PreviewPaneProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const {
+    files,
     currentCode,
-    versions,
-    currentVersionId,
-    setCurrentVersion,
     lastError,
-    setLastError,
-    previewNonce,
-  } =
-    useGenerationStore();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+    setLastError
+  } = useGenerationStore();
+  const { resolvedTheme } = useTheme();
+  const [nonce, setNonce] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const updatePreview = useCallback((code: string) => {
-    if (!iframeRef.current) return;
-
-    const html = buildPreviewTSX(code);
-    const iframe = iframeRef.current;
-
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-
-    iframe.src = url;
-
-    // Clean up object URL when iframe loads
-    iframe.onload = () => {
-      URL.revokeObjectURL(url);
-    };
-  }, []);
-
-  // Debounced update function
-  const debouncedUpdate = useCallback((code: string) => {
-    const timeoutId = setTimeout(() => {
-      updatePreview(code);
-    }, 500); // 500ms debounce
-    return () => clearTimeout(timeoutId);
-  }, [updatePreview]);
-
-  // Listen for errors from iframe
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'runtime-error') {
-        setLastError(event.data.payload);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [setLastError]);
-
-  // Update preview when code changes (debounced)
-  useEffect(() => {
-    if (currentCode) {
-      debouncedUpdate(currentCode);
+  const sandpackFiles = useMemo(() => {
+    if (!files) return undefined;
+    const result: Record<string, { code: string }> = {};
+    for (const [path, file] of Object.entries(files.files)) {
+      if (file.status === 'deleted') continue;
+      // Sandpack expects keys like "/App.tsx" (relative to project root)
+      const key = path.startsWith('/') ? path : '/' + path;
+      result[key] = { code: file.content };
     }
-  }, [currentCode, debouncedUpdate]);
-
-  // Force refresh (Run button)
-  useEffect(() => {
-    if (!currentCode) return;
-    updatePreview(currentCode);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewNonce]);
+    return result;
+  }, [files, currentCode]);
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    updatePreview(currentCode);
-    setLastError(null); // Clear errors on refresh
-    setTimeout(() => setIsRefreshing(false), 500);
+    setIsLoading(true);
+    setNonce(n => n + 1);
+    setLastError(null);
   };
-
-  const handleVersionChange = (versionId: string) => {
-    setCurrentVersion(versionId);
-    const version = versions.find((v) => v.id === versionId);
-    if (version) {
-      updatePreview(version.code);
-      setLastError(null);
-    }
-  };
-
-  const currentVersion = versions.find((v) => v.id === currentVersionId);
-  const Container: ElementType = chromeless ? 'div' : Card;
 
   return (
-    <Container className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
+    <Card 
+      className={cn(
+        "overflow-hidden flex flex-col border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.2)] bg-black/10 backdrop-blur-xl", 
+        !chromeless && "rounded-2xl border",
+        className
+      )} 
+      style={{ height }}
+    >
       {/* Header */}
       <div
-        className={`border-b flex items-center justify-between ${
-          chromeless ? 'border-border/40 px-3 h-11 bg-card' : 'px-4 py-2 bg-muted/50'
-        }`}
+        className={cn(
+          "flex items-center justify-between border-b border-white/[0.05] bg-white/[0.02] backdrop-blur-md px-4 h-12 shrink-0",
+          !chromeless && "rounded-t-2xl"
+        )}
       >
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium">Live Preview</h3>
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <Play className="h-3.5 w-3.5 text-emerald-400" />
+            <div className="absolute inset-0 bg-emerald-400/20 blur-sm rounded-full animate-pulse" />
+          </div>
+          <h3 className="text-[13px] font-bold tracking-tight uppercase">Live Preview</h3>
           {lastError && (
-            <Badge variant="red" className="text-xs">
-              Error
+            <Badge variant="red" className="text-[9px] h-4 px-1.5 uppercase font-black bg-rose-500 text-white border-0 shadow-lg shadow-rose-950/20">
+              Runtime Error
             </Badge>
+          )}
+          {!isLoading && !lastError && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 animate-in fade-in duration-500">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Active</span>
+            </div>
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* Version Selector */}
-          {versions.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-xs">
-                  {currentVersion?.description ||
-                    `Version ${
-                      versions.findIndex((v) => v.id === currentVersionId) + 1
-                    }`}
-                  <ChevronDown className="ml-1 h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {versions.map((version, index) => (
-                  <DropdownMenuItem
-                    key={version.id}
-                    onClick={() => handleVersionChange(version.id)}
-                    className={version.id === currentVersionId ? 'bg-accent' : ''}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm">
-                        {version.description || `Version ${index + 1}`}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(version.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Refresh Button */}
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-8 w-8 p-0 rounded-lg hover:bg-white/[0.05] text-muted-foreground hover:text-foreground transition-all"
             onClick={handleRefresh}
-            disabled={isRefreshing}
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
           </Button>
-
-          {/* Collapse Button */}
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-8 w-8 p-0 rounded-lg hover:bg-white/[0.05] text-muted-foreground hover:text-foreground transition-all"
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+            <Maximize2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
 
-      {/* Iframe */}
-      {!isCollapsed && (
-        <div className="flex-1 min-h-0 bg-background">
+      {/* Sandbox preview (iframe from Docker container) */}
+      {sandboxUrl ? (
+        <div className="flex-1 min-h-0 relative bg-white">
           <iframe
-            ref={iframeRef}
-            title="Preview"
+            src={sandboxUrl}
             className="w-full h-full border-0"
-            // Note: allow-scripts + allow-same-origin is needed for React to work in the preview
-            // This is safe because we control the preview content (blob URL)
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            title="Live Preview"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+            onLoad={() => setIsLoading(false)}
           />
         </div>
+      ) : (
+        <>
+      {/* Sandpack content (in-browser fallback) */}
+      <div className="flex-1 min-h-0 bg-white relative">
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-950 animate-in fade-in duration-500">
+            <div className="relative mb-8">
+              <div className="w-16 h-16 rounded-2xl border-2 border-emerald-500/20 animate-spin [animation-duration:3s]" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Play className="h-6 w-6 text-emerald-500 animate-pulse" />
+              </div>
+              <div className="absolute -inset-4 bg-emerald-500/5 blur-2xl rounded-full" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-[0.3em] animate-pulse">Initializing Sandbox</span>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 bg-emerald-500/20 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-1 h-1 bg-emerald-500/20 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-1 h-1 bg-emerald-500/20 rounded-full animate-bounce" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <SandpackProvider
+          key={nonce}
+          template="react"
+          theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+          files={sandpackFiles}
+          options={{
+            recompileMode: 'delayed',
+            recompileDelay: 500,
+          }}
+        >
+          <SandpackPreview
+            style={{ height: '100%', border: 'none' }}
+            showNavigator={false}
+            showOpenInCodeSandbox={false}
+            onLoad={() => setIsLoading(false)}
+          />
+        </SandpackProvider>
+      </div>
+        </>
       )}
 
+      {/* Status Bar */}
+      <div className="h-6 border-t border-white/[0.05] bg-white/[0.02] px-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tighter">Engine:</span>
+            <span className="text-[9px] font-bold text-emerald-400/60 uppercase">React v18</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tighter">Port:</span>
+            <span className="text-[9px] font-bold text-emerald-400/60 uppercase">3000</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest">Sandbox-V2-Isolated</span>
+        </div>
+      </div>
+
       {/* Error Display */}
-      {lastError && !isCollapsed && (
-        <div className="border-t p-4 bg-destructive/10">
-          <div className="flex items-start justify-between">
+      {lastError && (
+        <div className="border-t border-rose-500/20 p-4 bg-rose-500/5 backdrop-blur-sm shrink-0">
+          <div className="flex items-start gap-3">
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-destructive mb-1">Runtime Error</h4>
-              <p className="text-sm text-destructive/80">{lastError.message}</p>
+              <h4 className="text-xs font-bold text-rose-500 uppercase tracking-wider mb-1">Runtime Error</h4>
+              <p className="text-sm text-foreground/90 font-mono leading-relaxed">{lastError.message}</p>
               {lastError.lineno && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Line {lastError.lineno}
-                  {lastError.colno && `, Column ${lastError.colno}`}
+                <p className="text-xs text-muted-foreground mt-2 font-mono">
+                  at line {lastError.lineno}{lastError.colno && `:${lastError.colno}`}
                 </p>
               )}
             </div>
@@ -226,13 +201,13 @@ export function PreviewPane({
               variant="ghost"
               size="sm"
               onClick={() => setLastError(null)}
-              className="h-8"
+              className="h-6 text-[10px] uppercase font-bold text-rose-500 hover:bg-rose-500/10"
             >
-              Clear
+              Dismiss
             </Button>
           </div>
         </div>
       )}
-    </Container>
+    </Card>
   );
 }

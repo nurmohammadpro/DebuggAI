@@ -2,6 +2,7 @@ export type VirtualFile = {
   path: string;
   content: string;
   language?: string;
+  status?: 'added' | 'modified' | 'deleted' | 'unchanged';
 };
 
 export type VirtualProjectFiles = {
@@ -11,16 +12,26 @@ export type VirtualProjectFiles = {
 
 const DEFAULT_ENTRY = 'src/App.tsx';
 
-export function extractVirtualFiles(raw: string): VirtualProjectFiles {
+export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): VirtualProjectFiles {
   const files = new Map<string, VirtualFile>();
 
   const pushFile = (path: string, content: string, language?: string) => {
     const normalized = normalizePath(path);
     if (!normalized) return;
+    
+    const formattedContent = content.replace(/\s+$/, '') + '\n';
+    let status: VirtualFile['status'] = 'added';
+    
+    if (base && base.files[normalized]) {
+      const original = base.files[normalized];
+      status = original.content === formattedContent ? 'unchanged' : 'modified';
+    }
+
     files.set(normalized, {
       path: normalized,
-      content: content.replace(/\s+$/, '') + '\n',
+      content: formattedContent,
       language: language || languageFromPath(normalized),
+      status,
     });
   };
 
@@ -50,6 +61,18 @@ export function extractVirtualFiles(raw: string): VirtualProjectFiles {
       }
     } else {
       pushFile(DEFAULT_ENTRY, raw.trimEnd(), 'typescript');
+    }
+  }
+
+  // 3) Detect deleted files (present in base but not in current result)
+  if (base) {
+    for (const path of Object.keys(base.files)) {
+      if (!files.has(path)) {
+        files.set(path, {
+          ...base.files[path],
+          status: 'deleted',
+        });
+      }
     }
   }
 
