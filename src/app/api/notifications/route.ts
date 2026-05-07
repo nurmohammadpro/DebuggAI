@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .range((page - 1) * limit, page * limit - 1);
 
-  if (unreadOnly) query = query.eq('read', false);
+  if (unreadOnly) query = query.eq('is_read', false);
 
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -55,9 +55,9 @@ export async function PATCH(req: NextRequest) {
   if (readAll) {
     const { error } = await auth.supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('user_id', auth.user!.id)
-      .eq('read', false);
+      .eq('is_read', false);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await auth.supabase
     .from('notifications')
-    .update({ read: true })
+    .update({ is_read: true })
     .eq('user_id', auth.user!.id)
     .in('id', ids);
 

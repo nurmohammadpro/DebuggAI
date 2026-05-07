@@ -16,16 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Bell,
-  Menu,
-  Zap,
-} from 'lucide-react';
+import { Menu, Zap } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { NotificationCenter } from '@/components/dashboard/notification-center';
 
 export function Navigation() {
   const router = useRouter();
@@ -33,7 +30,6 @@ export function Navigation() {
   const credits = user?.credits;
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -98,11 +94,7 @@ export function Navigation() {
                 {credits === -1 ? '∞' : credits}
               </div>
 
-              {/* Notifications */}
-              <button className="nav-notif" onClick={() => setHasNotifications(false)}>
-                <Bell className="h-4 w-4" />
-                {hasNotifications && <div className="notif-dot"></div>}
-              </button>
+              <NotificationCenter />
 
               <ThemeToggle className="nav-notif" />
 

@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ChevronRight, MessageSquare, Terminal, GitBranch, Plug, SlidersHorizontal } from 'lucide-react';
+import { ChevronRight, MessageSquare, Terminal, GitBranch, SlidersHorizontal, Plug } from 'lucide-react';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
 import { ErrorConsole } from '@/components/web-builder/error-console';
-import { WorkspacePanelPlaceholder } from '@/components/workspace/workspace-panel-placeholder';
+import { WorkspaceGitPanel } from '@/components/workspace/workspace-git-panel';
+import { WorkspaceEnvPanel } from '@/components/workspace/workspace-env-panel';
+import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
 import type { WorkspaceMode } from '@/store/workspace-store';
 
 import type { WorkspaceRightTab } from './workspace-icon-sidebar';
@@ -37,13 +39,13 @@ export function WorkspaceRightPanel({
 
   if (collapsed) {
     return (
-      <aside className="w-10 bg-card flex items-center justify-center">
+      <aside className="w-10 bg-[var(--app-panel)] flex items-center justify-center">
         <button
-          className="h-8 w-8 rounded-[8px] hover:bg-muted/40 flex items-center justify-center"
+          className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
           title="Expand panel"
           onClick={onToggleCollapsed}
         >
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-[var(--app-text-dim)]" />
         </button>
       </aside>
     );
@@ -51,17 +53,17 @@ export function WorkspaceRightPanel({
 
   return (
     <aside
-      className="bg-card flex flex-col min-w-[320px]"
+      className="bg-[var(--app-panel)] flex flex-col min-w-[320px]"
       style={{ width }}
     >
-      <div className="h-11 border-b border-border/40 flex items-center gap-1 px-2 overflow-x-auto">
+      <div className="h-11 border-b border-[var(--app-border)] flex items-center gap-1 px-2 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.id}
-            className={`h-8 px-3 rounded-full text-xs border transition-colors inline-flex items-center gap-2 ${
+            className={`h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors inline-flex items-center gap-2 border ${
               activeTab === t.id
-                ? 'bg-muted/50 border-border text-foreground'
-                : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted/30 hover:border-border'
+                ? 'bg-[var(--app-surface)] border-[var(--app-border)] text-[var(--app-text)]'
+                : 'bg-transparent border-transparent text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]/50 hover:border-[var(--app-border)]/50'
             }`}
             onClick={() => onTabChange(t.id)}
           >
@@ -73,11 +75,11 @@ export function WorkspaceRightPanel({
         <div className="flex-1" />
 
         <button
-          className="h-8 w-8 rounded-[8px] hover:bg-muted/40 flex items-center justify-center"
+          className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
           title="Collapse panel"
           onClick={onToggleCollapsed}
         >
-          <ChevronRight className="h-4 w-4 rotate-180 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 rotate-180 text-[var(--app-text-dim)]" />
         </button>
       </div>
 
@@ -100,15 +102,15 @@ export function WorkspaceRightPanel({
         )}
 
         {activeTab === 'git' && (
-          <WorkspacePanelPlaceholder title="Source Control" description="Git changes panel (mock UI)." />
+          <WorkspaceGitPanel />
         )}
 
         {activeTab === 'env' && (
-          <WorkspacePanelPlaceholder title="Environment" description="Environment variables panel (mock UI)." />
+          <WorkspaceEnvPanel />
         )}
 
         {activeTab === 'connections' && (
-          <WorkspacePanelPlaceholder title="Connections" description="Integrations / connections panel (mock UI)." />
+          <WorkspaceConnectionsPanel />
         )}
       </div>
     </aside>

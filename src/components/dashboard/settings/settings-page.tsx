@@ -1,16 +1,69 @@
 'use client';
 
-import { CreditCard } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { CreditCard, Shield, User, Camera } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import Link from 'next/link';
 
 export default function SettingsPage() {
   const { user, isAuthenticated } = useSessionStore();
   const credits = user?.credits;
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (!isAuthenticated) {
     return null;
   }
+
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ display_name: displayName })
+        .eq('id', user?.id);
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success('Profile updated');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update profile');
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `avatars/${user?.id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: urlData.publicUrl })
+        .eq('id', user?.id);
+
+      toast.success('Avatar updated');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const settingsSections = [
     {
@@ -21,6 +74,15 @@ export default function SettingsPage() {
         { label: 'Subscription', href: '/dashboard/pricing' },
         { label: 'Transaction History', href: '/dashboard/settings/transactions' },
         { label: 'Referral Program', href: '/dashboard/referrals' },
+      ],
+    },
+    {
+      title: 'Security',
+      description: 'Protect your account with additional security',
+      icon: Shield,
+      items: [
+        { label: 'Two-Factor Authentication', href: '/dashboard/settings/security' },
+        { label: 'Danger Zone', href: '/dashboard/settings/danger' },
       ],
     },
   ];
@@ -34,6 +96,64 @@ export default function SettingsPage() {
           Manage your account and preferences
         </p>
       </div>
+
+      {/* Profile Section */}
+      <section className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5 mb-6">
+        <h2 className="text-[13px] font-medium text-[var(--app-text)] mb-4">Profile</h2>
+        <div className="flex items-start gap-4">
+          <div className="relative">
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="w-16 h-16 rounded-[10px] bg-[var(--app-surface)] flex items-center justify-center text-[var(--app-text-muted)] overflow-hidden border border-[var(--app-border)] hover:border-[var(--app-accent)] transition-colors"
+            >
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User className="h-8 w-8" />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity rounded-[10px]">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+          </div>
+          <div className="flex-1 space-y-3 max-w-sm">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-1">
+                Display Name
+              </label>
+              <input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full h-9 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-1">
+                Email
+              </label>
+              <input
+                value={user?.email || ''}
+                disabled
+                className="w-full h-9 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text-muted)] outline-none"
+              />
+            </div>
+            <button
+              onClick={handleSaveProfile}
+              className="h-8 px-4 rounded-[8px] bg-[var(--app-accent)] text-black text-[11px] font-semibold uppercase tracking-tight hover:opacity-90 transition-opacity"
+            >
+              Save Profile
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* Current Plan Card */}
       <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5 mb-6">
@@ -91,9 +211,11 @@ export default function SettingsPage() {
           Irreversible actions that affect your account
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
-          <button className="inline-flex items-center rounded-[8px] bg-[var(--app-danger)] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:opacity-90 w-full sm:w-auto">
-            Delete Account
-          </button>
+          <Link href="/dashboard/settings/danger">
+            <button className="inline-flex items-center rounded-[8px] bg-[var(--app-danger)] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:opacity-90 w-full sm:w-auto">
+              Delete Account
+            </button>
+          </Link>
           <button className="inline-flex items-center rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] w-full sm:w-auto">
             Export Data
           </button>

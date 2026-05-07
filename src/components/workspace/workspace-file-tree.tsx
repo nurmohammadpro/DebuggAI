@@ -2,11 +2,14 @@
 
 import { useState } from 'react';
 import { RefreshCw, FilePlus, FolderPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import type { WorkspaceLeftView } from './workspace-icon-sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkspaceFileTreeView } from '@/components/workspace/workspace-file-tree-view';
 import { WorkspaceVersionsList } from '@/components/workspace/workspace-versions-list';
+import { useGenerationStore } from '@/store/generation-store';
+import { useWorkspaceStore } from '@/store/workspace-store';
 
 export function WorkspaceFileTree({
   view,
@@ -16,6 +19,74 @@ export function WorkspaceFileTree({
   width: number;
 }) {
   const [query, setQuery] = useState('');
+  const { selectedProjectId, projectKey } = useWorkspaceStore();
+
+  const handleNewFile = () => {
+    const name = window.prompt('File name:');
+    if (!name) return;
+
+    const state = useGenerationStore.getState();
+    if (!state.files) {
+      toast.error('No project files loaded');
+      return;
+    }
+
+    const path = name.includes('/') ? name : `src/${name}`;
+    if (state.files.files[path]) {
+      toast.error('File already exists');
+      return;
+    }
+
+    useGenerationStore.setState({
+      files: {
+        ...state.files,
+        files: {
+          ...state.files.files,
+          [path]: { path, content: '', status: 'added' as const },
+        },
+      },
+      activeFilePath: path,
+    });
+  };
+
+  const handleNewFolder = () => {
+    const name = window.prompt('Folder name:');
+    if (!name) return;
+
+    const state = useGenerationStore.getState();
+    if (!state.files) {
+      toast.error('No project files loaded');
+      return;
+    }
+
+    const folderPath = name.endsWith('/') ? name : `${name}/`;
+    const markerPath = `${folderPath}.gitkeep`;
+
+    if (state.files.files[markerPath]) {
+      toast.error('Folder already exists');
+      return;
+    }
+
+    useGenerationStore.setState({
+      files: {
+        ...state.files,
+        files: {
+          ...state.files.files,
+          [markerPath]: { path: markerPath, content: '', status: 'added' as const },
+        },
+      },
+    });
+  };
+
+  const handleRefresh = () => {
+    // Reload from project data
+    if (!selectedProjectId) return;
+    const state = useGenerationStore.getState();
+    if (state.currentProjectId === selectedProjectId && state.files) {
+      // Already loaded — just trigger a re-render
+      useGenerationStore.setState({ files: { ...state.files } });
+    }
+  };
 
   return (
     <aside
@@ -32,21 +103,21 @@ export function WorkspaceFileTree({
               <button
                 className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="New file"
-                disabled
+                onClick={handleNewFile}
               >
                 <FilePlus className="h-4 w-4 text-[var(--app-text-dim)]" />
               </button>
               <button
                 className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="New folder"
-                disabled
+                onClick={handleNewFolder}
               >
                 <FolderPlus className="h-4 w-4 text-[var(--app-text-dim)]" />
               </button>
               <button
                 className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="Refresh"
-                disabled
+                onClick={handleRefresh}
               >
                 <RefreshCw className="h-4 w-4 text-[var(--app-text-dim)]" />
               </button>

@@ -18,6 +18,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronDown,
+  MessageSquareIcon,
+  MailIcon,
 } from 'lucide-react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -50,6 +52,13 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Audit', href: '/admin/audit', icon: <FileTextIcon className="w-4 h-4" />, description: 'Action logs and trails' },
       { label: 'Abuse', href: '/admin/abuse', icon: <ShieldAlertIcon className="w-4 h-4" />, description: 'Reports and violations' },
+    ],
+  },
+  {
+    title: 'Communication',
+    items: [
+      { label: 'Contact', href: '/admin/contact', icon: <MessageSquareIcon className="w-4 h-4" />, description: 'Form submissions' },
+      { label: 'Newsletter', href: '/admin/newsletter', icon: <MailIcon className="w-4 h-4" />, description: 'Email subscribers' },
     ],
   },
   {

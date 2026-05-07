@@ -31,10 +31,10 @@ export function WorkspaceTopbar({
   const { user } = useSessionStore();
 
   return (
-    <header className="h-11 flex items-center bg-card border-b border-border/40 sticky top-0 z-50">
+    <header className="h-11 flex items-center bg-[var(--app-panel)] border-b border-[var(--app-border)] sticky top-0 z-50">
       <Link
         href="/dashboard"
-        className="h-full px-4 flex items-center gap-2 border-r border-border/40 hover:bg-muted/30 transition-colors"
+        className="h-full px-4 flex items-center gap-2 border-r border-[var(--app-border)] hover:bg-[var(--app-surface)] transition-colors"
       >
         <Logo className="h-5 w-auto" />
       </Link>
@@ -44,19 +44,19 @@ export function WorkspaceTopbar({
         <WorkspaceModeToggle mode={mode} onModeChange={onModeChange} />
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+      <div className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)] min-w-0">
         <Link
           href="/dashboard/home"
-          className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          className="text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors flex items-center gap-1"
         >
           Projects
         </Link>
-        <span className="text-muted-foreground/60">/</span>
-        <span className="ml-2 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-muted/50 border border-border">
+        <span className="text-[var(--app-text-dim)]">/</span>
+        <span className="ml-2 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
           {branchName}
         </span>
         {unsavedCount > 0 && (
-          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
+          <span className="text-[11px] px-2 py-0.5 rounded-[6px] bg-[var(--app-warning)]/10 border border-[var(--app-warning)]/20 text-[var(--app-warning)]">
             {unsavedCount} unsaved
           </span>
         )}
@@ -67,18 +67,18 @@ export function WorkspaceTopbar({
       <div className="flex items-center gap-2 pr-3">
         <ThemeToggle className="h-8 w-8" />
 
-        <div className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full bg-muted/40 border border-border">
-          <Zap className="h-3.5 w-3.5 text-primary" />
-          <span className="font-semibold">
+        <div className="hidden sm:flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
+          <Zap className="h-3.5 w-3.5" style={{ color: 'var(--app-accent)' }} />
+          <span className="font-semibold text-[var(--app-text)]">
             {user?.credits === -1 ? '∞' : user?.credits ?? 0}
           </span>
-          <span className="text-muted-foreground">credits</span>
+          <span className="text-[var(--app-text-muted)]">credits</span>
         </div>
 
         <WorkspaceSaveVersionButton />
 
         <button
-          className="h-8 px-3 rounded-full border border-border/50 bg-transparent hover:bg-muted/40 transition-colors inline-flex items-center gap-2 text-xs"
+          className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
           onClick={onShare}
         >
           <Share2 className="h-3.5 w-3.5" />
@@ -86,7 +86,7 @@ export function WorkspaceTopbar({
         </button>
 
         <button
-          className="h-8 px-3 rounded-full bg-primary text-primary-foreground hover:brightness-110 transition inline-flex items-center gap-2 text-xs font-semibold"
+          className="h-8 px-3 rounded-[6px] bg-[var(--app-accent)] text-black hover:opacity-90 transition inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight"
           onClick={onRun}
         >
           <Play className="h-3.5 w-3.5" />

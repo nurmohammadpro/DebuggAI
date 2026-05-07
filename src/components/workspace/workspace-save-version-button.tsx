@@ -5,7 +5,6 @@ import { Save, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useGenerationStore } from '@/store/generation-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
@@ -34,10 +33,21 @@ export function WorkspaceSaveVersionButton() {
       const code = getProjectCode();
       const description = `Saved ${new Date().toLocaleString()}`;
 
+      // Query max version for this user and increment
+      const { data: latest } = await supabase
+        .from('generations')
+        .select('version')
+        .eq('user_id', session.user.id)
+        .order('version', { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextVersion = (latest?.version || 0) + 1;
+
       const { error } = await supabase.from('generations').insert({
         user_id: session.user.id,
         code,
-        version: 1,
+        version: nextVersion,
         description,
         metadata: { project_key: projectKey },
       });
@@ -57,9 +67,8 @@ export function WorkspaceSaveVersionButton() {
   };
 
   return (
-    <Button
-      variant="outline"
-      className="h-8 px-3 rounded-full text-xs"
+    <button
+      className="h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] inline-flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
       onClick={onSave}
       disabled={disabled}
       title={disabled ? 'Select a project to save versions' : 'Save version'}
@@ -69,7 +78,7 @@ export function WorkspaceSaveVersionButton() {
       ) : (
         <Save className="h-3.5 w-3.5" />
       )}
-      <span className="hidden sm:inline ml-2">Save</span>
-    </Button>
+      <span className="hidden sm:inline">Save</span>
+    </button>
   );
 }

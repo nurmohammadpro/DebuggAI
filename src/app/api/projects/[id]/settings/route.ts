@@ -3,17 +3,38 @@
  * Handles CRUD operations for project settings
  */
 
-import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireUser } from '@/lib/server/auth';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
+
+async function verifyProjectOwnership(projectId: string, userId: string) {
+  const supabase = createSupabaseAdmin();
+  const { data: project, error } = await supabase
+    .from('generations')
+    .select('user_id')
+    .eq('id', projectId)
+    .single();
+
+  if (error || !project) return false;
+  return project.user_id === userId;
+}
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const { id: projectId } = await params;
-    const supabase = createSupabaseAdmin();
 
+    const isOwner = await verifyProjectOwnership(projectId, auth.user!.id);
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const supabase = createSupabaseAdmin();
     const { data: settings, error } = await supabase
       .from('project_settings')
       .select('*')
@@ -38,8 +59,17 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const { id: projectId } = await params;
+
+    const isOwner = await verifyProjectOwnership(projectId, auth.user!.id);
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
     const supabase = createSupabaseAdmin();
 
@@ -71,8 +101,17 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const { id: projectId } = await params;
+
+    const isOwner = await verifyProjectOwnership(projectId, auth.user!.id);
+    if (!isOwner) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
     const supabase = createSupabaseAdmin();
 

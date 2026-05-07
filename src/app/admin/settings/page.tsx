@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { HelpCircleIcon, RefreshCwIcon, Trash2Icon, MailIcon, AlertTriangleIcon, SaveIcon, SettingsIcon, ShieldIcon, BellIcon, GlobeIcon, DatabaseIcon } from 'lucide-react';
+import { HelpCircleIcon, RefreshCwIcon, Trash2Icon, AlertTriangleIcon, SaveIcon, SettingsIcon, ShieldIcon, BellIcon, GlobeIcon, DatabaseIcon } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
@@ -269,21 +269,65 @@ export default function AdminSettingsPage() {
               <h3 className="text-lg font-medium text-[#E8F5E9] mb-6">Database Maintenance</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-sm font-medium justify-start">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/admin/maintenance', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'vacuum' }),
+                        });
+                      } catch {}
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-sm font-medium justify-start"
+                  >
                     <RefreshCwIcon className="w-4 h-4" />
-                    Reset monthly credits
+                    Vacuum database
                   </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-sm font-medium justify-start">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/admin/maintenance', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'reindex' }),
+                        });
+                      } catch {}
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-sm font-medium justify-start"
+                  >
+                    <RefreshCwIcon className="w-4 h-4" />
+                    Rebuild indexes
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/admin/maintenance', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'purge_sessions' }),
+                        });
+                      } catch {}
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-sm font-medium justify-start"
+                  >
                     <Trash2Icon className="w-4 h-4" />
                     Purge old sessions
                   </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all text-sm font-medium justify-start">
-                    <MailIcon className="w-4 h-4" />
-                    Send system announcement
-                  </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#FF5252] border border-[#FF5252]/35 hover:bg-[#FF5252]/10 transition-all text-sm font-medium justify-start">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/admin/maintenance', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'cache_clear' }),
+                        });
+                      } catch {}
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-[8px] bg-transparent text-[#FF5252] border border-[#FF5252]/35 hover:bg-[#FF5252]/10 transition-all text-sm font-medium justify-start"
+                  >
                     <AlertTriangleIcon className="w-4 h-4" />
-                    Emergency mode toggle
+                    Clear cache
                   </button>
                 </div>
               </div>

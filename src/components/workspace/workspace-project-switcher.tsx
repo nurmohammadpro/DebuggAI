@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,14 +33,13 @@ export function WorkspaceProjectSwitcher({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          className="h-8 px-3 rounded-full border border-border bg-transparent hover:bg-muted/40 text-xs"
+          className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] text-[11px] text-[var(--app-text)] transition-colors inline-flex items-center gap-2"
         >
           <span className="max-w-[220px] truncate">{label}</span>
-          <ChevronDown className="ml-2 h-3.5 w-3.5 text-muted-foreground" />
-        </Button>
+          <ChevronDown className="h-3.5 w-3.5 text-[var(--app-text-dim)]" />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72">
         <DropdownMenuItem
@@ -50,7 +48,7 @@ export function WorkspaceProjectSwitcher({
         >
           Browse projects…
         </DropdownMenuItem>
-        <div className="h-px my-1 bg-border/60" />
+        <div className="h-px my-1 bg-[var(--app-border)]" />
         {(data || []).slice(0, 12).map((p) => {
           const name =
             p.description ||
@@ -74,4 +72,3 @@ function truncate(text: string, max: number) {
   if (text.length <= max) return text;
   return `${text.slice(0, Math.max(0, max - 1)).trim()}…`;
 }
-
