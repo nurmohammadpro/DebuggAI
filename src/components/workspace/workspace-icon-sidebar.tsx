@@ -27,7 +27,7 @@ export function WorkspaceIconSidebar({
   onRightTabChange: (tab: WorkspaceRightTab) => void;
 }) {
   const itemBase =
-    'h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition';
+    'h-10 w-10 rounded-[8px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition';
   const itemActive = 'bg-muted/50 text-foreground border border-border';
 
   return (

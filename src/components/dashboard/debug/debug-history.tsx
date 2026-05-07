@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, Clock, Bug, Trash2, RefreshCw, History } from 'lucide-react';
+import { Search, Clock, Bug, Trash2, RefreshCw } from 'lucide-react';
 
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
+import { queryKeys } from '@/hooks/queries/query-keys';
+import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
+import { DEBUG_LANGUAGES } from '@/lib/constants';
+import { useDebugStore, type Language } from '@/store/debug-store';
 import {
   Select,
   SelectContent,
@@ -19,11 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
-import { queryKeys } from '@/hooks/queries/query-keys';
-import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
-import { DEBUG_LANGUAGES } from '@/lib/constants';
-import { useDebugStore, type Language } from '@/store/debug-store';
 
 export function DebugHistory() {
   const router = useRouter();
@@ -88,118 +83,119 @@ export function DebugHistory() {
       <div className="mb-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Debug History</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">Debug History</h1>
+            <p className="text-[13px] text-[var(--app-text-muted)] mt-1">
               View and manage your past debugging sessions
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={handleClearAll}
             disabled={(data || []).length === 0}
+            className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
             Clear All
-          </Button>
+          </button>
         </div>
       </div>
 
-      <Card className="mb-6">
-        <div className="p-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search code or errors..."
-                  className="pl-10"
-                />
-              </div>
+      {/* Filter Bar */}
+      <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 mb-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label htmlFor="search" className="text-[13px] font-medium text-[var(--app-text-muted)]">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--app-text-dim)]" />
+              <input
+                id="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search code or errors..."
+                className="w-full h-9 pl-10 rounded-[8px] border-0 bg-[var(--app-panel-2)] text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+              />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Filter by Language</Label>
-              <Select
-                value={languageFilter}
-                onValueChange={(v) => setLanguageFilter(v || 'all')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All languages" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Languages</SelectItem>
-                  {DEBUG_LANGUAGES.map((lang) => (
-                    <SelectItem key={lang.id} value={lang.id}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-medium text-[var(--app-text-muted)]">Filter by Language</label>
+            <Select
+              value={languageFilter}
+              onValueChange={(v) => setLanguageFilter(v || 'all')}
+            >
+              <SelectTrigger className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
+                <SelectValue placeholder="All languages" />
+              </SelectTrigger>
+              <SelectContent className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+                <SelectItem value="all">All Languages</SelectItem>
+                {DEBUG_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.id} value={lang.id}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </Card>
+      </div>
 
       {error && (
-        <Card className="p-6">
-          <div className="text-sm font-medium">Failed to load history</div>
-          <div className="text-xs text-muted-foreground mt-1">
+        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-6">
+          <div className="text-[13px] font-medium text-[var(--app-text)]">Failed to load history</div>
+          <div className="text-xs text-[var(--app-text-muted)] mt-1">
             {error instanceof Error ? error.message : 'Unknown error'}
           </div>
-          <div className="mt-4 flex gap-2">
-            <Button variant="outline" onClick={() => refetch()}>
+          <div className="mt-4">
+            <button
+              onClick={() => refetch()}
+              className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+            >
               Retry
-            </Button>
+            </button>
           </div>
-        </Card>
+        </div>
       )}
 
       {isLoading && (
-        <Card>
+        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl">
           <div className="flex items-center justify-center h-64">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            <RefreshCw className="h-8 w-8 animate-spin text-[var(--app-text-dim)]" />
           </div>
-        </Card>
+        </div>
       )}
 
       {!isLoading && !error && filtered.length === 0 && (
-        <Card>
-          <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
-            <Bug className="h-16 w-16 mb-4 opacity-20" />
+        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl">
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <Bug className="h-16 w-16 mb-4 text-[var(--app-text-dim)]" />
             {(data || []).length === 0 ? (
               <>
-                <p className="text-lg font-medium mb-2">No debug sessions yet</p>
-                <p className="text-sm">
+                <p className="text-[16px] font-medium text-[var(--app-text)] mb-2">No debug sessions yet</p>
+                <p className="text-[13px] text-[var(--app-text-muted)]">
                   Your debugging history will appear here after you analyze code.
                 </p>
               </>
             ) : (
               <>
-                <p className="text-lg font-medium mb-2">No matching sessions</p>
-                <p className="text-sm">
+                <p className="text-[16px] font-medium text-[var(--app-text)] mb-2">No matching sessions</p>
+                <p className="text-[13px] text-[var(--app-text-muted)]">
                   Try adjusting your search or filter to find what you&apos;re looking for.
                 </p>
               </>
             )}
           </div>
-        </Card>
+        </div>
       )}
 
       {!isLoading && !error && filtered.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((session) => (
-            <Card key={session.id} className="flex flex-col">
+            <div key={session.id} className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl flex flex-col overflow-hidden">
               <div className="p-4 flex-1 space-y-3">
                 <div className="flex items-start justify-between">
-                  <Badge variant="outline" className="text-xs">
+                  <span className="inline-flex rounded-[6px] border border-[var(--app-border)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)]">
                     {session.language}
-                  </Badge>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  </span>
+                  <div className="flex items-center gap-1 text-[11px] text-[var(--app-text-dim)]">
                     <Clock className="h-3 w-3" />
                     {formatDistanceToNow(new Date(session.created_at), {
                       addSuffix: true,
@@ -208,33 +204,31 @@ export function DebugHistory() {
                 </div>
 
                 {session.error_message && (
-                  <div className="bg-destructive/10 rounded-md p-2 text-xs text-destructive">
+                  <div className="bg-[var(--app-danger-soft)] rounded-[6px] p-2 text-xs text-[var(--app-danger)]">
                     <p className="font-medium mb-1">Error:</p>
                     <p className="line-clamp-2">{session.error_message}</p>
                   </div>
                 )}
 
-                <div className="bg-muted/50 rounded-md p-2">
-                  <p className="text-xs font-mono line-clamp-3">{session.code}</p>
+                <div className="bg-[var(--app-surface)] rounded-[6px] p-2">
+                  <p className="text-xs font-mono line-clamp-3 text-[var(--app-text)]">{session.code}</p>
                 </div>
 
                 {session.tags && session.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {session.tags.map((tag, i) => (
-                      <Badge key={`${session.id}:${i}`} variant="outline" className="text-xs">
+                      <span key={`${session.id}:${i}`} className="inline-flex rounded-[6px] border border-[var(--app-border)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)]">
                         {tag}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="p-4 pt-0 border-t border-border/40">
+              <div className="p-4 pt-0 border-t border-[var(--app-border)]">
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
+                  <button
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
                     onClick={() => {
                       const store = useDebugStore.getState();
                       store.setCurrentCode(session.code);
@@ -243,20 +237,19 @@ export function DebugHistory() {
                       router.push('/dashboard/debug');
                     }}
                   >
-                    <RefreshCw className="mr-1 h-3 w-3" />
+                    <RefreshCw className="h-3 w-3" />
                     Re-run
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  </button>
+                  <button
                     onClick={() => handleDelete(session.id)}
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-[8px] text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-danger-soft)] hover:text-[var(--app-danger)]"
                     title="Delete"
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

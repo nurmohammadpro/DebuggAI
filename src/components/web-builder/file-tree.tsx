@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  File, 
-  Folder, 
-  ChevronRight, 
+import {
+  File,
+  Folder,
+  ChevronRight,
   ChevronDown,
   Plus,
   FileCode,
@@ -13,7 +13,7 @@ import {
   Hash
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { VirtualProjectFiles, VirtualFile } from '@/lib/project/virtual-files';
+import type { VirtualProjectFiles } from '@/lib/project/virtual-files';
 
 interface FileTreeProps {
   files: VirtualProjectFiles | null;
@@ -30,27 +30,26 @@ export function FileTree({
 }: FileTreeProps) {
   if (!files) return null;
 
-  // Build folder structure
   const structure = buildTree(Object.keys(files.files));
 
   return (
-    <div className={cn("flex flex-col h-full bg-black/20 backdrop-blur-md select-none", className)}>
-      <div className="px-4 h-12 flex items-center justify-between border-b border-white/[0.05] bg-white/[0.02]">
+    <div className={cn("flex flex-col h-full bg-[var(--app-panel-2)] select-none", className)}>
+      <div className="px-4 h-12 flex items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-surface)]">
         <div className="flex items-center gap-2">
-          <Folder className="h-3.5 w-3.5 text-muted-foreground/60" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">Explorer</span>
+          <Folder className="h-3.5 w-3.5 text-[var(--app-text-dim)]" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--app-text-dim)]">Explorer</span>
         </div>
-        <button className="p-1.5 hover:bg-white/[0.05] rounded-md transition-all group">
-          <Plus className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+        <button className="p-1.5 rounded-[6px] hover:bg-[var(--app-surface)] transition-colors group">
+          <Plus className="h-3.5 w-3.5 text-[var(--app-text-dim)] group-hover:text-[var(--app-text)] transition-colors" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto py-3 scrollbar-thin scrollbar-thumb-white/[0.05]">
+      <div className="flex-1 overflow-y-auto py-3">
         {structure.map((item) => (
-          <TreeItem 
-            key={item.path} 
-            item={item} 
-            files={files} 
-            activePath={activePath} 
+          <TreeItem
+            key={item.path}
+            item={item}
+            files={files}
+            activePath={activePath}
             onSelect={onSelect}
             depth={0}
           />
@@ -95,7 +94,6 @@ function buildTree(paths: string[]): Node[] {
     }
   }
 
-  // Sort: folders first, then files
   const sortNodes = (nodes: Node[]) => {
     nodes.sort((a, b) => {
       if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
@@ -108,42 +106,42 @@ function buildTree(paths: string[]): Node[] {
   return root;
 }
 
-function TreeItem({ 
-  item, 
-  files, 
-  activePath, 
+function TreeItem({
+  item,
+  files,
+  activePath,
   onSelect,
   depth
-}: { 
-  item: Node; 
-  files: VirtualProjectFiles; 
-  activePath: string | null; 
+}: {
+  item: Node;
+  files: VirtualProjectFiles;
+  activePath: string | null;
   onSelect: (path: string) => void;
   depth: number;
 }) {
   const [isOpen, setIsOpen] = useState(true);
   const isActive = activePath === item.path;
   const file = files.files[item.path];
-  
+
   const statusColor = {
-    added: 'text-emerald-400',
-    modified: 'text-amber-400',
-    deleted: 'text-rose-400 line-through opacity-40',
+    added: 'text-[var(--app-success)]',
+    modified: 'text-[var(--app-warning)]',
+    deleted: 'text-[var(--app-danger)] line-through opacity-40',
     unchanged: ''
   }[file?.status || 'unchanged'];
 
-  const Icon = item.type === 'folder' 
+  const Icon = item.type === 'folder'
     ? (isOpen ? ChevronDown : ChevronRight)
     : getFileIcon(item.name);
 
   return (
     <div className="animate-in fade-in slide-in-from-left-1 duration-300">
-      <div 
+      <div
         className={cn(
-          "group flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-all border-l-2",
-          isActive 
-            ? "bg-emerald-500/10 border-emerald-500 text-foreground" 
-            : "border-transparent text-muted-foreground/70 hover:bg-white/[0.03] hover:text-foreground",
+          "group flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-colors border-l-2",
+          isActive
+            ? "bg-[var(--app-accent-soft)] border-[var(--app-accent)] text-[var(--app-text)]"
+            : "border-transparent text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]",
         )}
         style={{ paddingLeft: `${(depth + 1) * 14}px` }}
         onClick={() => {
@@ -154,25 +152,25 @@ function TreeItem({
           }
         }}
       >
-        <span className="shrink-0 transition-transform duration-200 group-hover:scale-110">
+        <span className="shrink-0">
           {item.type === 'folder' ? (
-            <Folder className={cn("h-3.5 w-3.5", isOpen ? "text-emerald-500/60" : "text-muted-foreground/40")} />
+            <Folder className={cn("h-3.5 w-3.5", isOpen ? "text-[var(--app-accent)]" : "text-[var(--app-text-dim)]")} />
           ) : (
-            <Icon className={cn("h-3.5 w-3.5", statusColor || "text-muted-foreground/40")} />
+            <Icon className={cn("h-3.5 w-3.5", statusColor || "text-[var(--app-text-dim)]")} />
           )}
         </span>
         <span className={cn(
           "text-[12px] font-medium truncate flex-1 tracking-tight",
-          isActive && "font-bold"
+          isActive && "font-semibold"
         )}>
           {item.name}
         </span>
         {file?.status && file.status !== 'unchanged' && (
           <div className={cn(
-            "flex items-center justify-center w-4 h-4 rounded-full text-[8px] font-bold uppercase ring-1 ring-inset",
-            file.status === 'added' && "bg-emerald-500/10 text-emerald-400 ring-emerald-500/20",
-            file.status === 'modified' && "bg-amber-500/10 text-amber-400 ring-amber-500/20",
-            file.status === 'deleted' && "bg-rose-500/10 text-rose-400 ring-rose-500/20"
+            "flex items-center justify-center w-4 h-4 rounded-full text-[8px] font-semibold uppercase",
+            file.status === 'added' && "bg-[var(--app-success-soft)] text-[var(--app-success)]",
+            file.status === 'modified' && "bg-[var(--app-warning-soft)] text-[var(--app-warning)]",
+            file.status === 'deleted' && "bg-[var(--app-danger-soft)] text-[var(--app-danger)]"
           )}>
             {file.status[0]}
           </div>
@@ -180,13 +178,13 @@ function TreeItem({
       </div>
       {item.type === 'folder' && isOpen && (
         <div className="relative">
-          <div className="absolute left-[18px] top-0 bottom-0 w-px bg-white/[0.03]" style={{ left: `${(depth + 1) * 14 + 6}px` }} />
+          <div className="absolute top-0 bottom-0 w-px bg-[var(--app-border)]" style={{ left: `${(depth + 1) * 14 + 6}px` }} />
           {item.children.map((child) => (
-            <TreeItem 
-              key={child.path} 
-              item={child} 
-              files={files} 
-              activePath={activePath} 
+            <TreeItem
+              key={child.path}
+              item={child}
+              files={files}
+              activePath={activePath}
               onSelect={onSelect}
               depth={depth + 1}
             />

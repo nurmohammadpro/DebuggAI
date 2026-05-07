@@ -2,8 +2,6 @@
 
 import { Component } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 interface ErrorBoundaryState {
   error: Error | null;
@@ -23,27 +21,28 @@ export class DashboardErrorBoundary extends Component<
     if (this.state.error) {
       return (
         <div className="flex items-center justify-center min-h-[60vh] p-6">
-          <Card className="max-w-md w-full p-6 text-center">
-            <AlertTriangle className="h-10 w-10 mx-auto mb-4 text-destructive" />
-            <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
-            <p className="text-sm text-muted-foreground mb-4">
+          <div className="max-w-md w-full rounded-[10px] bg-[var(--app-panel-2)] border border-[var(--app-border)] backdrop-blur-xl p-6 text-center">
+            <AlertTriangle className="h-10 w-10 mx-auto mb-4 text-[var(--app-danger)]" />
+            <h2 className="text-[16px] font-medium mb-2 text-[var(--app-text)]">Something went wrong</h2>
+            <p className="text-[13px] text-[var(--app-text-muted)] mb-4">
               An unexpected error occurred. Please try reloading the page.
             </p>
             {this.state.error.message && (
-              <p className="text-xs text-muted-foreground mb-4 font-mono bg-muted p-2 rounded-md max-h-24 overflow-auto">
+              <p className="text-xs text-[var(--app-text-muted)] mb-4 font-mono bg-[var(--app-surface)] p-2 rounded-[6px] max-h-24 overflow-auto">
                 {this.state.error.message}
               </p>
             )}
-            <Button
+            <button
               onClick={() => {
                 this.setState({ error: null });
                 window.location.reload();
               }}
+              className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90"
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
               Reload page
-            </Button>
-          </Card>
+            </button>
+          </div>
         </div>
       );
     }

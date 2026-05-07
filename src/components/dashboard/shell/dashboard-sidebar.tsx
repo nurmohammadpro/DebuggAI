@@ -23,7 +23,7 @@ export function DashboardSidebar({
 }) {
   return (
     <aside
-      className={`hidden md:flex shrink-0 sticky top-0 border-r border-border/30 bg-card h-screen transition-all duration-300 ease-in-out overflow-hidden ${
+      className={`hidden md:flex shrink-0 sticky top-0 bg-[var(--app-bg)] h-screen transition-all duration-300 ease-in-out overflow-hidden border-r border-[var(--app-border)] ${
         collapsed ? 'w-[68px]' : 'w-[280px]'
       }`}
     >

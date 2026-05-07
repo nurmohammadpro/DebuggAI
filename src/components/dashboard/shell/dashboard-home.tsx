@@ -62,10 +62,10 @@ export function DashboardHome() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] flex">
       <a
         href="#dashboard-main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-card focus:border focus:border-border focus:rounded-md focus:text-foreground"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--app-panel)] focus:text-[var(--app-text)]"
       >
         Skip to content
       </a>
@@ -79,7 +79,7 @@ export function DashboardHome() {
         onToggleCollapsed={toggleSidebar}
       />
 
-      <div className="md:hidden fixed inset-x-0 top-0 h-12 border-b border-border/40 bg-background z-40 flex items-center px-3 gap-2">
+      <div className="md:hidden fixed inset-x-0 top-0 h-14 bg-[var(--app-bg)] z-40 flex items-center px-3 gap-2 border-b border-[var(--app-border)]">
         <DashboardMobileDrawer
           open={openMobileNav}
           onOpenChange={setOpenMobileNav}
@@ -97,11 +97,11 @@ export function DashboardHome() {
       </div>
 
       <main id="dashboard-main-content" className="flex-1 min-w-0">
-        <div className="hidden md:flex h-12 items-center justify-end px-5">
+        <div className="hidden md:flex h-14 items-center justify-end px-6 border-b border-[var(--app-border)]">
           <DashboardTopRight />
         </div>
 
-        <div className="pt-12 md:pt-0 min-h-[calc(100vh-3rem)] flex items-center justify-center px-4">
+        <div className="pt-14 md:pt-0 min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4">
           <DashboardComposerCard
             prompt={prompt}
             onPromptChange={setPrompt}

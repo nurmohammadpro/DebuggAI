@@ -40,7 +40,7 @@ export function WorkspaceVersionsList() {
           {error instanceof Error ? error.message : 'Unknown error'}
         </div>
         <button
-          className="mt-3 h-8 px-3 rounded-md border border-border/50 text-xs inline-flex items-center gap-2 hover:bg-muted/40"
+          className="mt-3 h-8 px-3 rounded-[8px] border border-border/50 text-xs inline-flex items-center gap-2 hover:bg-muted/40"
           onClick={() => refetch()}
         >
           <RefreshCw className="h-3.5 w-3.5" />
@@ -63,7 +63,7 @@ export function WorkspaceVersionsList() {
       {data.map((v) => (
         <button
           key={v.id}
-          className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-left hover:bg-muted/40"
+          className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-sm text-left hover:bg-muted/40"
           onClick={() => loadFromProject(v.code, v.description || 'Version')}
         >
           <History className="h-4 w-4 text-muted-foreground" />

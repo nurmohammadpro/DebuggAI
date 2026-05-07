@@ -142,12 +142,12 @@ export default function AdminReferralsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-md p-1">
+          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-[8px] p-1">
             {(['7d', '30d', '90d', 'all'] as TimeRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-[8px] text-xs font-medium transition-all ${
                   timeRange === range
                     ? 'bg-[#00C853] text-black'
                     : 'text-[#8BAD8B] hover:text-[#E8F5E9]'
@@ -181,11 +181,11 @@ export default function AdminReferralsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-ds-xl">
+        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-[8px]-xl">
           <span className="text-sm text-[#FF5252]">{error}</span>
           <button
             onClick={fetchReferralData}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#FF5252] text-black hover:bg-[#FF7B7B] transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-[8px] bg-[#FF5252] text-black hover:bg-[#FF7B7B] transition-colors"
           >
             Retry
           </button>
@@ -194,9 +194,9 @@ export default function AdminReferralsPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-md bg-[#00C853]/15 border border-[#00C853]/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[8px] bg-[#00C853]/15 border border-[#00C853]/30 flex items-center justify-center">
               <UsersIcon className="w-5 h-5 text-[#00C853]" />
             </div>
             <span className="text-xs uppercase tracking-wider text-[#4D6B4D]">Total Referrals</span>
@@ -207,9 +207,9 @@ export default function AdminReferralsPage() {
           <p className="text-xs text-[#8BAD8B] mt-1">All time</p>
         </div>
 
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-md bg-[#FFAB00]/15 border border-[#FFAB00]/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[8px] bg-[#FFAB00]/15 border border-[#FFAB00]/30 flex items-center justify-center">
               <CoinsIcon className="w-5 h-5 text-[#FFAB00]" />
             </div>
             <span className="text-xs uppercase tracking-wider text-[#4D6B4D]">Total Payouts</span>
@@ -220,9 +220,9 @@ export default function AdminReferralsPage() {
           <p className="text-xs text-[#8BAD8B] mt-1">Credits awarded</p>
         </div>
 
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-md bg-[#CE93D8]/15 border border-[#CE93D8]/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[8px] bg-[#CE93D8]/15 border border-[#CE93D8]/30 flex items-center justify-center">
               <TrophyIcon className="w-5 h-5 text-[#CE93D8]" />
             </div>
             <span className="text-xs uppercase tracking-wider text-[#4D6B4D]">Active Ambassadors</span>
@@ -236,7 +236,7 @@ export default function AdminReferralsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Leaderboard */}
-        <div className="lg:col-span-2 bg-[#111411] border border-[#1F2B1F] rounded-ds-xl">
+        <div className="lg:col-span-2 bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl">
           <div className="p-5 border-b border-[#1F2B1F]">
             <h3 className="text-lg font-medium text-[#E8F5E9]">Ambassador Leaderboard</h3>
             <p className="text-xs text-[#8BAD8B] mt-1">Top performers ranked by referral count</p>
@@ -285,7 +285,7 @@ export default function AdminReferralsPage() {
                       <p className="text-xs text-[#4D6B4D]">earned</p>
                     </div>
 
-                    <div className={`px-3 py-1 rounded-md border ${getTierBackground(ambassador.tier)}`}>
+                    <div className={`px-3 py-1 rounded-[8px] border ${getTierBackground(ambassador.tier)}`}>
                       {getTierBadge(ambassador.tier)}
                     </div>
                   </div>
@@ -296,7 +296,7 @@ export default function AdminReferralsPage() {
         </div>
 
         {/* Tier Breakdown */}
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-5">
           <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Tier Breakdown</h3>
 
           <div className="space-y-4">
@@ -333,7 +333,7 @@ export default function AdminReferralsPage() {
           </div>
 
           {/* Referral Program Info */}
-          <div className="mt-6 p-4 bg-[#00C853]/5 border border-[#00C853]/30 rounded-ds-xl">
+          <div className="mt-6 p-4 bg-[#00C853]/5 border border-[#00C853]/30 rounded-[8px]-xl">
             <h4 className="text-sm font-medium text-[#00C853] mb-2">Program Details</h4>
             <ul className="space-y-1 text-xs text-[#8BAD8B]">
               <li>• 10 credits per successful referral</li>

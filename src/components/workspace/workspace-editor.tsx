@@ -18,33 +18,33 @@ export function WorkspaceEditor({
   const language = activeFilePath ? files?.files[activeFilePath]?.language : undefined;
 
   return (
-    <section className="flex-1 min-w-0 bg-background flex flex-col min-h-0">
+    <section className="flex-1 min-w-0 bg-[var(--app-bg)] flex flex-col min-h-0">
       {/* Toolbar: file tabs + code/preview toggle */}
-      <div className="h-11 border-b border-border/40 bg-card flex items-center overflow-x-auto px-2 gap-2">
+      <div className="h-11 border-b border-[var(--app-border)] bg-[var(--app-panel)] flex items-center overflow-x-auto px-2 gap-2">
         <div className="flex-1 min-w-0 overflow-x-auto flex items-center gap-1">
           <WorkspaceEditorTabs />
           {(!files || Object.keys(files.files).length === 0) && (
-            <span className="text-xs text-muted-foreground px-3">No files loaded</span>
+            <span className="text-xs text-[var(--app-text-muted)] px-3">No files loaded</span>
           )}
         </div>
 
         {/* Code / Preview segmented toggle */}
-        <div className="flex items-center shrink-0 mr-1 bg-muted/40 rounded-full p-0.5 border border-border/40">
+        <div className="flex items-center shrink-0 mr-1 rounded-[8px] bg-[var(--app-panel-2)] p-0.5">
           <button
-            className={`h-7 px-3 rounded-full text-xs transition-colors ${
+            className={`h-7 px-3 rounded-[6px] text-[11px] font-normal transition-colors ${
               editorView === 'code'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
             }`}
             onClick={() => onEditorViewChange?.('code')}
           >
             Code
           </button>
           <button
-            className={`h-7 px-3 rounded-full text-xs transition-colors ${
+            className={`h-7 px-3 rounded-[6px] text-[11px] font-normal transition-colors ${
               editorView === 'preview'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
             }`}
             onClick={() => onEditorViewChange?.('preview')}
           >
@@ -56,13 +56,13 @@ export function WorkspaceEditor({
       {/* Content area */}
       <div className="flex-1 min-h-0">
         {editorView === 'preview' ? (
-          <PreviewPane height="100%" chromeless className="h-full bg-transparent" />
+          <PreviewPane height="100%" chromeless className="h-full" />
         ) : (
           <CodeEditor
             height="100%"
             showHeader={false}
             language={language}
-            className="rounded-none border-0 shadow-none bg-transparent"
+            className="rounded-none border-0 bg-transparent"
           />
         )}
       </div>

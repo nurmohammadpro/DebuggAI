@@ -4,21 +4,29 @@ export function AdminPageHeader({
   title,
   description,
   right,
+  badge,
 }: {
   title: string;
   description?: string;
   right?: React.ReactNode;
+  badge?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {description ? (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        ) : null}
+    <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+      <div className="flex items-center gap-3">
+        <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">
+          {title}
+        </h1>
+        {badge}
       </div>
-      {right ? <div className="shrink-0">{right}</div> : null}
+      <div className="flex flex-wrap items-center gap-2">
+        {right}
+      </div>
+      {description && (
+        <p className="w-full text-[13px] font-normal text-[var(--app-text-muted)] mt-0">
+          {description}
+        </p>
+      )}
     </div>
   );
 }
-

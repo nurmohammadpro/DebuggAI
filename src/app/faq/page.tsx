@@ -39,13 +39,13 @@ export default function FAQPage() {
       <main className="max-w-3xl mx-auto px-6 pt-16 pb-24">
         {/* Header */}
         <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
             FAQ
           </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+          <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
             Frequently Asked Questions
           </h1>
-          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--app-text-muted)' }}>
             Everything you need to know about using DeBuggAI
           </p>
         </div>
@@ -62,7 +62,7 @@ export default function FAQPage() {
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   className="collapse-trigger w-full flex items-center gap-3 p-4"
                   style={{ 
-                    background: isOpen ? 'var(--ds-surface2)' : 'transparent',
+                    background: isOpen ? 'var(--app-panel-2)' : 'transparent',
                     border: 'none',
                     width: '100%',
                     textAlign: 'left',
@@ -74,7 +74,7 @@ export default function FAQPage() {
                     {isOpen ? '−' : '+'}
                   </div>
                   
-                  <span className="text-body font-medium flex-1" style={{ color: 'var(--ds-text)' }}>
+                  <span className="text-body font-medium flex-1" style={{ color: 'var(--app-text)' }}>
                     {faq.question}
                   </span>
 
@@ -102,7 +102,7 @@ export default function FAQPage() {
                     overflow: 'hidden'
                   }}
                 >
-                  <p className="text-body" style={{ color: 'var(--ds-text2)', marginTop: 0 }}>
+                  <p className="text-body" style={{ color: 'var(--app-text-muted)', marginTop: 0 }}>
                     {faq.answer}
                   </p>
                 </div>
@@ -113,8 +113,8 @@ export default function FAQPage() {
 
         {/* Bottom CTA Section */}
         <div className="text-center mt-16">
-          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
-          <p className="text-body mb-6" style={{ color: 'var(--ds-text2)' }}>
+          <div style={{ borderTop: '1px solid var(--app-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <p className="text-body mb-6" style={{ color: 'var(--app-text-muted)' }}>
             Still have questions?
           </p>
           <div className="flex flex-wrap gap-4 justify-center">

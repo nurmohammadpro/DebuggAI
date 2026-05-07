@@ -30,7 +30,7 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "tab-bar inline-flex items-center rounded-full p-1",
+  "tab-bar inline-flex items-center rounded-ds p-1",
   {
     variants: {
       variant: {
@@ -64,8 +64,8 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "tab relative inline-flex h-7 items-center justify-center gap-1.5 rounded-full px-3 py-0 text-sm font-medium whitespace-nowrap transition-all duration-150 cursor-pointer select-none",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-transparent group-data-[variant=line]/tabs-list:data-active:border-green",
+        "tab relative inline-flex h-7 items-center justify-center gap-1.5 rounded-ds px-3 py-0 text-sm font-medium whitespace-nowrap transition-all duration-150 cursor-pointer select-none",
+        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:rounded-ds group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-transparent group-data-[variant=line]/tabs-list:data-active:border-green",
         "disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "data-active:bg-green-muted data-active:text-green",
         className

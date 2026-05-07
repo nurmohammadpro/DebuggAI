@@ -22,13 +22,13 @@ export default function LanguagesPage() {
       <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
         {/* Header */}
         <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
             Languages
           </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+          <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
             Supported Languages
           </h1>
-          <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--app-text-muted)' }}>
             Debug code in 10+ programming languages with deep AI-powered context analysis.
           </p>
         </div>
@@ -48,10 +48,10 @@ export default function LanguagesPage() {
                 }} 
               />
               <div className="flex-1 min-w-0">
-                <h3 className="text-h3" style={{ color: 'var(--ds-text)', marginBottom: '2px' }}>
+                <h3 className="text-h3" style={{ color: 'var(--app-text)', marginBottom: '2px' }}>
                   {lang.name}
                 </h3>
-                <p className="text-caption" style={{ color: 'var(--ds-text3)' }}>
+                <p className="text-caption" style={{ color: 'var(--app-text-dim)' }}>
                   {lang.description}
                 </p>
               </div>
@@ -61,11 +61,11 @@ export default function LanguagesPage() {
 
         {/* Bottom CTA Section */}
         <div className="text-center mt-16">
-          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
-          <p className="text-body mb-2" style={{ color: 'var(--ds-text2)' }}>
+          <div style={{ borderTop: '1px solid var(--app-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <p className="text-body mb-2" style={{ color: 'var(--app-text-muted)' }}>
             Don&apos;t see your language?
           </p>
-          <p className="text-caption mb-8" style={{ color: 'var(--ds-text3)' }}>
+          <p className="text-caption mb-8" style={{ color: 'var(--app-text-dim)' }}>
             We&apos;re constantly adding support for new languages and frameworks.
           </p>
           <Link href="/signup">

@@ -4,40 +4,36 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { ArrowRight, Loader2, ArrowDownUp } from 'lucide-react';
 
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useMyTransactions } from '@/hooks/queries/use-my-transactions';
 
 export function RecentTransactions() {
   const { data, isLoading, error } = useMyTransactions(5, true);
 
   return (
-    <Card className="p-2.5 sm:p-3 sm:p-4">
-      <div className="flex items-center justify-between mb-2 sm:mb-3">
-        <div className="text-xs sm:text-sm font-semibold">Recent Transactions</div>
+    <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[13px] font-medium text-[var(--app-text)]">Recent Transactions</div>
         <Link href="/dashboard/settings/transactions">
-          <Button variant="ghost" size="sm" className="h-7 w-7 sm:h-8 sm:px-2 text-xs p-0">
-            <ArrowRight className="h-3.5 w-3.5" />
-            <span className="sr-only">View all</span>
-          </Button>
+          <button className="h-8 w-8 rounded-[6px] inline-flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+            <ArrowRight className="h-4 w-4" />
+          </button>
         </Link>
       </div>
 
       {isLoading && (
-        <div className="flex items-center justify-center py-4 sm:py-6 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--app-text-dim)]" />
         </div>
       )}
 
       {error && (
-        <div className="text-[10px] sm:text-xs text-muted-foreground">
+        <div className="text-[13px] text-[var(--app-text-muted)]">
           Failed to load transactions.
         </div>
       )}
 
       {!isLoading && !error && (!data || data.length === 0) && (
-        <div className="text-[10px] sm:text-xs text-muted-foreground text-center py-3 sm:py-4">
+        <div className="text-[13px] text-[var(--app-text-muted)] text-center py-4">
           No transactions yet.
         </div>
       )}
@@ -47,23 +43,26 @@ export function RecentTransactions() {
           {data.map((t) => (
             <div
               key={t.id}
-              className="flex items-start gap-2 rounded-md border border-border/40 p-2 hover:bg-muted/20 transition-colors"
+              className="flex items-start gap-2 p-2 rounded-[6px] hover:bg-[var(--app-panel-2)] transition-colors"
             >
-              <ArrowDownUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 text-muted-foreground shrink-0" />
+              <ArrowDownUp className="h-4 w-4 mt-0.5 text-[var(--app-text-dim)] shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <Badge
-                    variant={
-                      t.type === 'earned' ? 'green' : t.type === 'spent' ? 'red' : 'gray'
-                    }
-                    className="text-[10px] h-4 sm:h-5 px-1 sm:px-1.5 shrink-0"
+                  <span
+                    className={`inline-flex rounded-[6px] px-2 py-0.5 text-[11px] font-normal shrink-0 ${
+                      t.type === 'earned'
+                        ? 'bg-[var(--app-success-soft)] text-[var(--app-success)]'
+                        : t.type === 'spent'
+                        ? 'bg-[var(--app-danger-soft)] text-[var(--app-danger)]'
+                        : 'bg-[var(--app-surface)] text-[var(--app-text-muted)]'
+                    }`}
                   >
                     {t.type}
-                  </Badge>
+                  </span>
                 </div>
-                <div className="text-[10px] sm:text-xs mt-1 text-muted-foreground flex items-center justify-between gap-2">
+                <div className="text-[13px] mt-1 text-[var(--app-text-muted)] flex items-center justify-between gap-2">
                   <span className="truncate">{t.source}</span>
-                  <span className="shrink-0 tabular-nums text-foreground/90">
+                  <span className="shrink-0 tabular-nums text-[var(--app-text)]">
                     {t.amount > 0 ? '+' : ''}
                     {t.amount}
                   </span>
@@ -73,7 +72,6 @@ export function RecentTransactions() {
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
-

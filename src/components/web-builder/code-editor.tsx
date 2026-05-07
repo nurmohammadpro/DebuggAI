@@ -1,17 +1,9 @@
-/**
- * Code Editor Component
- *
- * Monaco Editor wrapper with TypeScript/JSX support.
- * Two-way sync with generation store.
- */
-
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useGenerationStore } from '@/store/generation-store';
-import { Card } from '@/components/ui/card';
 import { useTheme } from '@/components/theme-provider';
 
 interface CodeEditorProps {
@@ -39,8 +31,13 @@ export function CodeEditor({
   const editorTheme =
     resolvedTheme === 'light' ? 'debuggai-light' : 'debuggai-dark';
 
+  useEffect(() => {
+    return () => {
+      editorRef.current = null;
+    };
+  }, []);
+
   const defineThemes = useCallback((monaco: typeof import('monaco-editor')) => {
-    // Keep Monaco colors aligned with our design tokens in `src/app/globals.css`
     monaco.editor.defineTheme('debuggai-dark', {
       base: 'vs-dark',
       inherit: true,
@@ -132,12 +129,12 @@ export function CodeEditor({
   };
 
   return (
-    <Card className={`overflow-hidden flex flex-col ${className || ''}`} style={{ height }}>
+    <div className={`overflow-hidden flex flex-col rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)] ${className || ''}`} style={{ height }}>
       {showHeader && (
-        <div className="border-b px-4 py-2 bg-muted/50 flex items-center justify-between">
-          <h3 className="text-sm font-medium">Code Editor</h3>
+        <div className="border-b border-[var(--app-border)] px-4 py-2 bg-[var(--app-panel-2)] flex items-center justify-between">
+          <h3 className="text-[13px] font-medium text-[var(--app-text)]">Code Editor</h3>
           {showDiff && (
-            <span className="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full border border-amber-500/20 uppercase font-bold">
+            <span className="text-[10px] bg-[var(--app-warning-soft)] text-[var(--app-warning)] px-2 py-0.5 rounded-[6px] border border-[var(--app-warning)]/20 uppercase font-semibold">
               Diff Mode
             </span>
           )}
@@ -146,6 +143,7 @@ export function CodeEditor({
       <div className="flex-1 min-h-0">
         {showDiff ? (
           <DiffEditor
+            key="diff-editor"
             height="100%"
             language={language}
             original={originalCode}
@@ -160,6 +158,7 @@ export function CodeEditor({
           />
         ) : (
           <Editor
+            key="editor"
             height="100%"
             language={language}
             value={currentCode}
@@ -171,6 +170,6 @@ export function CodeEditor({
           />
         )}
       </div>
-    </Card>
+    </div>
   );
 }

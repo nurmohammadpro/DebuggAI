@@ -15,7 +15,7 @@ export function SidebarHeader({
   return (
     <div
       className={cn(
-        'h-14 flex items-center border-b border-border/30 transition-colors duration-150',
+        'h-14 flex items-center transition-colors duration-150',
         collapsed ? 'justify-center' : 'px-3 justify-between',
       )}
     >
@@ -23,7 +23,7 @@ export function SidebarHeader({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-[8px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
           aria-label="Expand sidebar"
           title="Expand sidebar"
         >
@@ -33,13 +33,13 @@ export function SidebarHeader({
         <>
           <div className="flex items-center gap-2.5">
             <Logo className="h-5 w-auto shrink-0" />
-            <span className="text-sm font-semibold text-foreground">DeBuggAI</span>
+            <span className="text-[13px] font-semibold text-[var(--app-text)]">DeBuggAI</span>
           </div>
 
           <button
             type="button"
             onClick={onToggleCollapsed}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-[8px] text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >

@@ -261,6 +261,16 @@ CREATE TABLE IF NOT EXISTS debug_sessions (
   created_at    TIMESTAMPTZ DEFAULT now()
 );
 
+-- Add missing columns if table already existed from 011_debug_sessions.sql
+ALTER TABLE debug_sessions ADD COLUMN IF NOT EXISTS language TEXT;
+ALTER TABLE debug_sessions ADD COLUMN IF NOT EXISTS code TEXT NOT NULL DEFAULT '';
+ALTER TABLE debug_sessions ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE debug_sessions ADD COLUMN IF NOT EXISTS fix TEXT;
+ALTER TABLE debug_sessions ADD COLUMN IF NOT EXISTS explanation TEXT;
+ALTER TABLE debug_sessions ADD COLUMN IF NOT EXISTS tags TEXT[];
+
+UPDATE debug_sessions SET code = COALESCE(prompt, '') WHERE code = '' AND prompt IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS generations (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,

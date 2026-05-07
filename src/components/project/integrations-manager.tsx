@@ -268,7 +268,7 @@ export function IntegrationsManager({ projectId }: IntegrationsManagerProps) {
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[8px] hover:bg-primary/90 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Integration
@@ -282,7 +282,7 @@ export function IntegrationsManager({ projectId }: IntegrationsManagerProps) {
             key={category}
             onClick={() => setSelectedCategory(category)}
             className={cn(
-              'px-3 py-1.5 text-sm rounded-lg transition-colors capitalize',
+              'px-3 py-1.5 text-sm rounded-[8px] transition-colors capitalize',
               selectedCategory === category
                 ? 'bg-primary text-primary-foreground'
                 : 'hover:bg-accent'
@@ -382,10 +382,10 @@ function IntegrationCard({
   onToggle,
 }: IntegrationCardProps) {
   return (
-    <div className="p-4 border rounded-lg bg-card">
+    <div className="p-4 border rounded-[8px] bg-card">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-lg">
+          <div className="w-10 h-10 rounded-[8px] bg-primary/10 flex items-center justify-center text-lg">
             {config.icon}
           </div>
           <div>
@@ -408,7 +408,7 @@ function IntegrationCard({
           <button
             onClick={() => onToggle(!integration.enabled)}
             className={cn(
-              'px-3 py-1.5 text-sm rounded-lg transition-colors',
+              'px-3 py-1.5 text-sm rounded-[8px] transition-colors',
               integration.enabled
                 ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
@@ -418,13 +418,13 @@ function IntegrationCard({
           </button>
           <button
             onClick={onEdit}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            className="p-2 hover:bg-accent rounded-[8px] transition-colors"
           >
             <Lock className="w-4 h-4 text-muted-foreground" />
           </button>
           <button
             onClick={onDelete}
-            className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors"
+            className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-[8px] transition-colors"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -441,10 +441,10 @@ interface IntegrationConfigCardProps {
 
 function IntegrationConfigCard({ config, onAdd }: IntegrationConfigCardProps) {
   return (
-    <div className="p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group">
+    <div className="p-4 border rounded-[8px] hover:bg-accent/50 transition-colors cursor-pointer group">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-lg">
+          <div className="w-10 h-10 rounded-[8px] bg-primary/10 flex items-center justify-center text-lg">
             {config.icon}
           </div>
           <div className="flex-1">
@@ -456,7 +456,7 @@ function IntegrationConfigCard({ config, onAdd }: IntegrationConfigCardProps) {
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onAdd}
-            className="px-3 py-1.5 text-sm rounded-lg border hover:bg-accent transition-colors"
+            className="px-3 py-1.5 text-sm rounded-[8px] border hover:bg-accent transition-colors"
           >
             Add
           </button>
@@ -465,7 +465,7 @@ function IntegrationConfigCard({ config, onAdd }: IntegrationConfigCardProps) {
               href={config.docsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 hover:bg-accent rounded-lg transition-colors"
+              className="p-2 hover:bg-accent rounded-[8px] transition-colors"
             >
               <ExternalLink className="w-4 h-4 text-muted-foreground" />
             </a>
@@ -508,7 +508,7 @@ function IntegrationFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-background rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-background rounded-[8px] max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 space-y-6">
           <div>
             <h2 className="text-lg font-semibold">
@@ -531,7 +531,7 @@ function IntegrationFormModal({
                     setSelectedType(e.target.value);
                     setConfig({});
                   }}
-                  className="w-full px-3 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 >
                   <option value="">Select a service...</option>
@@ -569,7 +569,7 @@ function IntegrationFormModal({
                       }
                       placeholder={field.placeholder}
                       required={field.required}
-                      className="w-full px-3 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                     {field.description && (
                       <p className="text-xs text-muted-foreground">{field.description}</p>
@@ -583,14 +583,14 @@ function IntegrationFormModal({
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 text-sm rounded-lg border hover:bg-accent transition-colors"
+                className="px-4 py-2 text-sm rounded-[8px] border hover:bg-accent transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!selectedType}
-                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm rounded-[8px] bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isEditing ? 'Update' : 'Add'} Integration
               </button>

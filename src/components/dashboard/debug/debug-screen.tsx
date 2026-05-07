@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Debug Screen (Client Dashboard)
- *
- * Professional · Minimal · Developer-focused · Dark-first
- */
-
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -14,11 +8,6 @@ import { Bug, Loader2, Sparkles, History, Code2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore } from '@/store/debug-store';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -48,7 +37,6 @@ export function DebugScreen() {
     if (storedCode || storedError) {
       setCode(storedCode);
       setErrorMessage(storedError);
-      // Clear the store so reloads don't re-populate
       setCurrentCode('');
       setCurrentError('');
     }
@@ -101,7 +89,6 @@ export function DebugScreen() {
       setAnalysis(data.analysis);
       setDetectedLanguage(data.language);
 
-      // Keep a local session snapshot (recent list)
       try {
         addSession({
           id: crypto.randomUUID(),
@@ -126,132 +113,128 @@ export function DebugScreen() {
   };
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-2xl font-bold tracking-tight">AI Debugger</h1>
-          <Badge variant="green" className="ml-2">
-            Beta
-          </Badge>
+    <div className="flex flex-col">
+      {/* Code Input Section */}
+      <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] m-4 sm:m-6 p-4 sm:p-6">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">AI Debugger</h1>
+            <span className="inline-flex rounded-[6px] border-0 bg-[var(--app-success-soft)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-success)]">
+              Beta
+            </span>
+          </div>
+          <p className="text-[13px] text-[var(--app-text-muted)] mt-1">
+            Paste code and an error. Get an explanation and a suggested fix.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Paste code and an error. Get an explanation and a suggested fix.
-        </p>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <div className="text-[13px] font-medium text-[var(--app-text)] flex items-center gap-2">
+              <Code2 className="h-4 w-4 text-[var(--app-text-dim)]" />
+              Code + error
+            </div>
+            <div className="text-xs text-[var(--app-text-muted)] mt-1">
+              Choose a language or leave auto-detect on.
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Select
+              value={currentLanguage}
+              onValueChange={(v) => setCurrentLanguage(v as any)}
+            >
+              <SelectTrigger className="w-full sm:w-[200px] rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+                {DEBUG_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.id} value={lang.id}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <button
+              onClick={() => router.push('/dashboard/debug/history')}
+              className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+            >
+              <History className="h-4 w-4" />
+              <span>History</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          <div>
+            <label htmlFor="debugCode" className="text-[13px] font-medium text-[var(--app-text-muted)]">Code</label>
+            <textarea
+              id="debugCode"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Paste your code here..."
+              className="mt-1 w-full font-mono text-xs min-h-[200px] sm:min-h-[240px] rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 resize-y"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="debugError" className="text-[13px] font-medium text-[var(--app-text-muted)]">Error (optional)</label>
+            <textarea
+              id="debugError"
+              value={errorMessage}
+              onChange={(e) => setErrorMessage(e.target.value)}
+              placeholder="Paste the error message you're seeing..."
+              className="mt-1 w-full font-mono text-xs min-h-[80px] sm:min-h-[92px] rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 resize-y"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-xs text-[var(--app-text-muted)]">
+              Credits: <span className="text-[var(--app-text)]">1</span> per analysis
+            </div>
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50 w-full sm:w-auto min-w-[180px] justify-center"
+            >
+              {isAnalyzing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {isAnalyzing ? 'Analyzing...' : 'Analyze'}
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6">
-        <Card className="p-4 sm:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div className="min-w-0">
-              <div className="font-medium flex items-center gap-2">
-                <Code2 className="h-4 w-4 text-muted-foreground" />
-                Code + error
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Choose a language or leave auto-detect on.
-              </div>
+      {/* Results Section */}
+      <div className="rounded-[8px] bg-[var(--app-panel-2)] backdrop-blur-xl border border-[var(--app-border)] mx-4 sm:mx-6 mb-4 sm:mb-6 p-4 sm:p-6">
+        <div className="text-[13px] font-medium text-[var(--app-text)] flex items-center gap-2 flex-wrap">
+          <Sparkles className="h-4 w-4 text-[var(--app-text-dim)]" />
+          Result
+          {detectedLanguage ? (
+            <span className="inline-flex rounded-[6px] border border-[var(--app-border)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)]">
+              {detectedLanguage}
+            </span>
+          ) : null}
+        </div>
+        <div className="text-xs text-[var(--app-text-muted)] mt-1">
+          Explanation + suggested fix (when available).
+        </div>
+
+        <div className="mt-4">
+          {analysis ? (
+            <pre className="whitespace-pre-wrap break-words bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[8px] p-4 text-xs leading-relaxed overflow-x-auto text-[var(--app-text)] font-mono">
+              {analysis}
+            </pre>
+          ) : (
+            <div className="text-[13px] text-[var(--app-text-muted)]">
+              Run an analysis to see results here.
             </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <Select
-                value={currentLanguage}
-                onValueChange={(v) => setCurrentLanguage(v as any)}
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Select language (auto-detect if not specified)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DEBUG_LANGUAGES.map((lang) => (
-                    <SelectItem key={lang.id} value={lang.id}>
-                      {lang.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                onClick={() => router.push('/dashboard/debug/history')}
-                className="w-full sm:w-auto"
-              >
-                <History className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">History</span>
-                <span className="sm:hidden">History</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            <div>
-              <Label htmlFor="debugCode">Code</Label>
-              <Textarea
-                id="debugCode"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Paste your code here..."
-                className="mt-1 font-mono text-xs min-h-[200px] sm:min-h-[240px]"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="debugError">Error (optional)</Label>
-              <Textarea
-                id="debugError"
-                value={errorMessage}
-                onChange={(e) => setErrorMessage(e.target.value)}
-                placeholder="Paste the error message you're seeing..."
-                className="mt-1 font-mono text-xs min-h-[80px] sm:min-h-[92px]"
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-xs text-muted-foreground">
-                Credits: <span className="text-foreground">1</span> per analysis
-              </div>
-              <Button
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-                className="w-full sm:w-auto min-w-[180px]"
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Sparkles className="h-4 w-4 mr-2" />
-                )}
-                {isAnalyzing ? 'Analyzing…' : 'Analyze'}
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 sm:p-5">
-          <div className="font-medium flex items-center gap-2 flex-wrap">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-            Result
-            {detectedLanguage ? (
-              <Badge variant="outline" className="ml-2 text-xs">
-                {detectedLanguage}
-              </Badge>
-            ) : null}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Explanation + suggested fix (when available).
-          </div>
-
-          <div className="mt-4">
-            {analysis ? (
-              <div className="prose prose-invert max-w-none text-sm">
-                <pre className="whitespace-pre-wrap break-words bg-muted/30 border border-border rounded-md p-4 text-xs leading-relaxed overflow-x-auto">
-                  {analysis}
-                </pre>
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                Run an analysis to see results here.
-              </div>
-            )}
-          </div>
-        </Card>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -137,7 +137,7 @@ export default function AdminAuditPage() {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value as DateRange)}
-            className="h-10 px-4 bg-[#111411] border border-[#1F2B1F] rounded-md text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
+            className="h-10 px-4 bg-[#111411] border border-[#1F2B1F] rounded-[8px] text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
           >
             <option value="24h">Last 24 hours</option>
             <option value="7d">Last 7 days</option>
@@ -157,11 +157,11 @@ export default function AdminAuditPage() {
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-ds-xl">
+        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-[8px]-xl">
           <span className="text-sm text-[#FF5252]">{error}</span>
           <button
             onClick={fetchAuditData}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#FF5252] text-black hover:bg-[#FF7B7B] transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-[8px] bg-[#FF5252] text-black hover:bg-[#FF7B7B] transition-colors"
           >
             Retry
           </button>
@@ -177,14 +177,14 @@ export default function AdminAuditPage() {
             placeholder="Search by actor, action, or target..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
+            className="w-full pl-9 pr-3 py-2 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853]"
           />
         </div>
 
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value as ActionCategory)}
-          className="h-10 w-40 px-3 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
+          className="h-10 w-40 px-3 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
         >
           <option value="all">All Actions</option>
           <option value="admin">Admin</option>
@@ -197,23 +197,23 @@ export default function AdminAuditPage() {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-4">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-4">
           <p className="text-xs text-[#8BAD8B] mb-1">Total Events</p>
           <p className="text-2xl font-semibold text-[#E8F5E9]">{filteredEvents.length}</p>
         </div>
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-4">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-4">
           <p className="text-xs text-[#8BAD8B] mb-1">Admin Actions</p>
           <p className="text-2xl font-semibold text-[#FFAB00]">
             {filteredEvents.filter(e => e.action.startsWith('admin')).length}
           </p>
         </div>
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-4">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-4">
           <p className="text-xs text-[#8BAD8B] mb-1">Auth Events</p>
           <p className="text-2xl font-semibold text-[#40C4FF]">
             {filteredEvents.filter(e => e.action.startsWith('auth')).length}
           </p>
         </div>
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-4">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-4">
           <p className="text-xs text-[#8BAD8B] mb-1">Credit Actions</p>
           <p className="text-2xl font-semibold text-[#00C853]">
             {filteredEvents.filter(e => e.action.startsWith('credit')).length}
@@ -222,7 +222,7 @@ export default function AdminAuditPage() {
       </div>
 
       {/* Audit Log */}
-      <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl overflow-hidden">
+      <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-[#8BAD8B]">Loading audit log...</div>
@@ -243,7 +243,7 @@ export default function AdminAuditPage() {
                   key={event.id}
                   className="flex items-start gap-4 px-5 py-4 hover:bg-[#171C17] transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-md bg-[#1E261E] flex items-center justify-center flex-shrink-0 border border-[#1F2B1F]">
+                  <div className="w-10 h-10 rounded-[8px] bg-[#1E261E] flex items-center justify-center flex-shrink-0 border border-[#1F2B1F]">
                     <Icon className="w-5 h-5 text-[#8BAD8B]" />
                   </div>
 
@@ -262,7 +262,7 @@ export default function AdminAuditPage() {
                         <summary className="text-xs text-[#4D6B4D] cursor-pointer hover:text-[#8BAD8B]">
                           View metadata
                         </summary>
-                        <pre className="text-xs text-[#4D6B4D] mt-2 overflow-x-auto bg-[#0A0D0A] p-2 rounded">
+                        <pre className="text-xs text-[#4D6B4D] mt-2 overflow-x-auto bg-[#0A0D0A] p-2 rounded-[8px]">
                           {JSON.stringify(event.metadata, null, 2)}
                         </pre>
                       </details>

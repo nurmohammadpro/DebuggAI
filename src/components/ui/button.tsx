@@ -10,27 +10,27 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "btn group/button inline-flex shrink-0 items-center justify-center rounded-[999px] border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all duration-150 outline-none select-none focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:text-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 active:scale-[0.97]",
+  "btn group/button inline-flex shrink-0 items-center justify-center rounded-ds bg-clip-padding text-[15px] font-medium whitespace-nowrap transition-all duration-100 outline-none select-none focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:text-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 active:opacity-85",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-[#00E676]",
         outline:
-          "border-primary text-primary bg-transparent hover:bg-[rgba(0,200,83,0.12)]",
+          "border border-primary text-primary bg-transparent hover:bg-[rgba(0,200,83,0.12)]",
         ghost:
-          "border-border2 text-text2 bg-transparent hover:border-primary hover:text-primary hover:bg-surface2",
+          "text-text2 bg-transparent hover:text-primary hover:bg-surface2",
         secondary:
           "bg-surface2 text-text2 hover:bg-surface3 hover:text-foreground",
         destructive:
-          "bg-transparent text-destructive border-[rgba(255,82,82,0.35)] hover:bg-[rgba(255,82,82,0.1)]",
+          "bg-transparent text-destructive hover:bg-[rgba(255,82,82,0.1)]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default:
-          "h-[40px] px-5 text-[13.5px]",
-        sm: "h-[30px] px-[14px] text-xs",
-        lg: "h-[52px] px-8 text-[15px]",
-        icon: "size-9",
+          "h-[44px] px-6",
+        sm: "h-[34px] px-4 text-[13px]",
+        lg: "h-[56px] px-9 text-[17px]",
+        icon: "size-10",
       },
     },
     defaultVariants: {

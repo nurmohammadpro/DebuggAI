@@ -12,13 +12,13 @@ export default function DemoPage() {
       <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
             Live Demo
           </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+          <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
             Watch DeBuggAI in action
           </h1>
-          <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--app-text-muted)' }}>
             Follow a real-world scenario where DeBuggAI identifies a silent array mutation bug, explains the root cause, and outputs a production-ready fix in seconds.
           </p>
         </div>
@@ -26,18 +26,18 @@ export default function DemoPage() {
         {/* Step 1: The Problem */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: 'var(--ds-r6)', background: 'var(--ds-red)', color: '#fff', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-danger)', color: '#fff', fontSize: '12px', fontWeight: '600' }}>
               1
             </div>
-            <h2 className="text-h2" style={{ color: 'var(--ds-text)' }}>The Buggy Code</h2>
+            <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>The Buggy Code</h2>
           </div>
           
           <div className="code-window">
             <div className="code-header">
               <div className="code-dots">
-                <div className="code-dot" style={{ background: 'var(--ds-red)' }}></div>
-                <div className="code-dot" style={{ background: 'var(--ds-amber)' }}></div>
-                <div className="code-dot" style={{ background: 'var(--ds-green)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-danger)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-warning)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-accent)' }}></div>
               </div>
               <span className="code-lang">userController.js</span>
             </div>
@@ -60,18 +60,18 @@ export default function DemoPage() {
         {/* Step 2: The AI Analysis (Terminal) */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: 'var(--ds-r6)', background: 'var(--ds-green)', color: '#000', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: '#000', fontSize: '12px', fontWeight: '600' }}>
               2
             </div>
-            <h2 className="text-h2" style={{ color: 'var(--ds-text)' }}>DeBuggAI Analysis</h2>
+            <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>DeBuggAI Analysis</h2>
           </div>
 
           <div className="terminal">
             <div className="terminal-header">
               <div className="flex gap-1.5">
-                <div className="code-dot" style={{ background: 'var(--ds-red)' }}></div>
-                <div className="code-dot" style={{ background: 'var(--ds-amber)' }}></div>
-                <div className="code-dot" style={{ background: 'var(--ds-green)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-danger)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-warning)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-accent)' }}></div>
               </div>
               <span className="terminal-title">debuggai-cli --analyze userController.js</span>
             </div>
@@ -92,34 +92,34 @@ export default function DemoPage() {
         {/* Step 3: AI Insights Breakdown */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: 'var(--ds-r6)', background: 'var(--ds-blue)', color: '#000', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-info)', color: '#000', fontSize: '12px', fontWeight: '600' }}>
               3
             </div>
-            <h2 className="text-h2" style={{ color: 'var(--ds-text)' }}>Root Cause Breakdown</h2>
+            <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>Root Cause Breakdown</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card-sm">
               <div className="flex items-center gap-2 mb-2">
-                <Bug className="h-4 w-4" style={{ color: 'var(--ds-red)' }} />
+                <Bug className="h-4 w-4" style={{ color: 'var(--app-danger)' }} />
                 <span className="card-title" style={{ marginBottom: 0 }}>State Mutation</span>
               </div>
               <p className="card-sub" style={{ marginBottom: 0 }}>
-                Directly assigning <span className="text-mono" style={{ fontSize: '11px', color: 'var(--ds-text)' }}>user.lastSeen</span> bypasses React/State management immutability rules, causing unpredictable re-renders.
+                Directly assigning <span className="text-mono" style={{ fontSize: '11px', color: 'var(--app-text)' }}>user.lastSeen</span> bypasses React/State management immutability rules, causing unpredictable re-renders.
               </p>
             </div>
             <div className="card-sm">
               <div className="flex items-center gap-2 mb-2">
-                <ShieldAlert className="h-4 w-4" style={{ color: 'var(--ds-amber)' }} />
+                <ShieldAlert className="h-4 w-4" style={{ color: 'var(--app-warning)' }} />
                 <span className="card-title" style={{ marginBottom: 0 }}>Memory Leak Risk</span>
               </div>
               <p className="card-sub" style={{ marginBottom: 0 }}>
-                Utilizing <span className="text-mono" style={{ fontSize: '11px', color: 'var(--ds-text)' }}>.map()</span> without a return for all branches creates sparse arrays, increasing garbage collection overhead.
+                Utilizing <span className="text-mono" style={{ fontSize: '11px', color: 'var(--app-text)' }}>.map()</span> without a return for all branches creates sparse arrays, increasing garbage collection overhead.
               </p>
             </div>
             <div className="card-sm">
               <div className="flex items-center gap-2 mb-2">
-                <Gauge className="h-4 w-4" style={{ color: 'var(--ds-green)' }} />
+                <Gauge className="h-4 w-4" style={{ color: 'var(--app-accent)' }} />
                 <span className="card-title" style={{ marginBottom: 0 }}>Performance Hit</span>
               </div>
               <p className="card-sub" style={{ marginBottom: 0 }}>
@@ -132,18 +132,18 @@ export default function DemoPage() {
         {/* Step 4: The Fixed Code */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: 'var(--ds-r6)', background: 'var(--ds-green)', color: '#000', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: '#000', fontSize: '12px', fontWeight: '600' }}>
               4
             </div>
-            <h2 className="text-h2" style={{ color: 'var(--ds-text)' }}>The Production-Ready Fix</h2>
+            <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>The Production-Ready Fix</h2>
           </div>
           
-          <div className="code-window" style={{ borderColor: 'var(--ds-green)', boxShadow: '0 0 30px rgba(0,200,83,0.08)' }}>
-            <div className="code-header" style={{ background: 'var(--ds-surface2)' }}>
+          <div className="code-window" style={{ borderColor: 'var(--app-accent)', boxShadow: '0 0 30px rgba(0,200,83,0.08)' }}>
+            <div className="code-header" style={{ background: 'var(--app-panel-2)' }}>
               <div className="code-dots">
-                <div className="code-dot" style={{ background: 'var(--ds-red)' }}></div>
-                <div className="code-dot" style={{ background: 'var(--ds-amber)' }}></div>
-                <div className="code-dot" style={{ background: 'var(--ds-green)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-danger)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-warning)' }}></div>
+                <div className="code-dot" style={{ background: 'var(--app-accent)' }}></div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="code-lang">userController.js</span>
@@ -168,11 +168,11 @@ export default function DemoPage() {
 
         {/* Bottom CTA Section */}
         <div className="text-center">
-          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
-          <h2 className="text-h1 mb-3" style={{ color: 'var(--ds-text)' }}>
+          <div style={{ borderTop: '1px solid var(--app-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <h2 className="text-h1 mb-3" style={{ color: 'var(--app-text)' }}>
             Stop guessing. Start fixing.
           </h2>
-          <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--app-text-muted)' }}>
             Paste your stack trace, code block, or error logs and let DeBuggAI handle the rest.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">

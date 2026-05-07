@@ -3,16 +3,6 @@
 import { useMemo, useState } from 'react';
 import { Plus, RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { AdminLoading } from '@/components/admin/admin-loading';
 import { AdminError } from '@/components/admin/admin-error';
@@ -47,15 +37,18 @@ export function AdminCredits() {
 
   if (error) {
     return (
-      <div className="p-6 max-w-6xl">
+      <div>
         <AdminPageHeader
           title="Credit Management"
           description="View transactions and adjust balances"
           right={
-            <Button onClick={() => setAdjustOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <button
+              onClick={() => setAdjustOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--app-accent)] px-3 py-1.5 text-xs font-medium text-black transition-colors hover:opacity-90"
+            >
+              <Plus className="h-3.5 w-3.5" />
               Adjust Credits
-            </Button>
+            </button>
           }
         />
         <AdminError
@@ -73,101 +66,110 @@ export function AdminCredits() {
   }
 
   return (
-    <div className="p-6 max-w-6xl">
+    <div>
       <AdminPageHeader
         title="Credit Management"
         description="View transactions and adjust balances"
         right={
-          <Button onClick={() => setAdjustOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+          <button
+            onClick={() => setAdjustOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--app-accent)] px-3 py-1.5 text-xs font-medium text-black transition-colors hover:opacity-90"
+          >
+            <Plus className="h-3.5 w-3.5" />
             Adjust Credits
-          </Button>
+          </button>
         }
       />
 
-      <Card className="mb-4">
-        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v || 'all')}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="earned">Earned</SelectItem>
-              <SelectItem value="spent">Spent</SelectItem>
-              <SelectItem value="refunded">Refunded</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-3 mb-4 rounded-[8px] bg-[var(--app-panel)] p-4 backdrop-blur-xl">
+        <div className="flex gap-0.5 rounded-[8px] bg-[var(--app-panel-2)] p-1">
+          {(['all', 'earned', 'spent', 'refunded'] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => setTypeFilter(type)}
+              className={`rounded-[6px] px-2.5 py-1.5 text-[11px] font-normal capitalize transition-colors ${
+                typeFilter === type
+                  ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <TrendingUp className="h-3.5 w-3.5 text-green" />
-              {summary.earned} earned
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <TrendingDown className="h-3.5 w-3.5 text-red" />
-              {summary.spent} spent
-            </span>
-          </div>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="inline-flex items-center gap-1 text-[var(--app-success)]">
+            <TrendingUp className="h-3.5 w-3.5" />
+            {summary.earned} earned
+          </span>
+          <span className="inline-flex items-center gap-1 text-[var(--app-danger)]">
+            <TrendingDown className="h-3.5 w-3.5" />
+            {summary.spent} spent
+          </span>
+        </div>
 
-          <div className="flex-1" />
+        <div className="flex-1" />
 
-          <Button variant="outline" size="icon" onClick={() => refetch()} title="Refresh">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </CardContent>
-      </Card>
+        <button
+          onClick={() => refetch()}
+          className="flex h-8 w-8 items-center justify-center rounded-[8px] border-0 bg-[var(--app-panel-2)] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+          title="Refresh"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
       {txs.length === 0 ? (
-        <Card className="p-10 text-center">
-          <div className="text-sm font-semibold">No transactions</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Credits activity will appear here.
-          </div>
-        </Card>
+        <div className="rounded-[8px] bg-[var(--app-panel)] p-10 text-center backdrop-blur-xl">
+          <p className="text-sm font-medium text-[var(--app-text)]">No transactions</p>
+          <p className="mt-1 text-xs text-[var(--app-text-muted)]">Credits activity will appear here.</p>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {txs.map((tx) => (
-            <Card key={tx.id} className="hover:bg-muted/10 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium truncate">
-                        {tx.wallet?.profiles?.email || tx.wallet?.user_id || 'Unknown'}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {tx.source}
-                      </Badge>
-                      <Badge
-                        variant={tx.type === 'earned' ? 'green' : tx.type === 'spent' ? 'red' : 'gray'}
-                        className="text-xs"
-                      >
-                        {tx.type}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {tx.description || 'No description'}
-                    </div>
+        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl overflow-hidden">
+          <div className="divide-y divide-[var(--app-border)]">
+            {txs.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-[var(--app-surface-subtle)]"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-normal text-[var(--app-text)] truncate">
+                      {tx.wallet?.profiles?.email || tx.wallet?.user_id || 'Unknown'}
+                    </span>
+                    <span className="inline-flex rounded-[6px] border border-[var(--app-border)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)]">
+                      {tx.source}
+                    </span>
+                    <span className={`inline-flex rounded-[6px] border-0 px-2 py-0.5 text-[11px] font-normal capitalize ${
+                      tx.type === 'earned'
+                        ? 'bg-[var(--app-success-soft)] text-[var(--app-success)]'
+                        : tx.type === 'spent'
+                        ? 'bg-[var(--app-danger-soft)] text-[var(--app-danger)]'
+                        : 'bg-[var(--app-surface)] text-[var(--app-text-muted)]'
+                    }`}>
+                      {tx.type}
+                    </span>
                   </div>
-
-                  <div className="shrink-0 text-right">
-                    <div
-                      className={`font-semibold ${
-                        tx.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-                      }`}
-                    >
-                      {tx.amount > 0 ? '+' : ''}
-                      {tx.amount}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(tx.created_at).toLocaleString()}
-                    </div>
-                  </div>
+                  <p className="mt-0.5 text-xs text-[var(--app-text-muted)] truncate">
+                    {tx.description || 'No description'}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                <div className="shrink-0 text-right">
+                  <p className={`text-sm font-medium ${
+                    tx.amount > 0 ? 'text-[var(--app-success)]' : 'text-[var(--app-danger)]'
+                  }`}>
+                    {tx.amount > 0 ? '+' : ''}{tx.amount}
+                  </p>
+                  <p className="text-[11px] text-[var(--app-text-dim)]">
+                    {new Date(tx.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -186,4 +188,3 @@ export function AdminCredits() {
     </div>
   );
 }
-

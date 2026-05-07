@@ -59,13 +59,12 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          'h-8 w-8 p-0 rounded-full inline-flex items-center justify-center text-xs font-semibold outline-none',
+          'h-8 w-8 p-0 inline-flex items-center justify-center rounded-[8px] text-[13px] font-medium outline-none',
           className
         )}
         style={{
-          background: 'var(--ds-green-muted)',
-          border: '2px solid rgba(0,200,83,0.3)',
-          color: 'var(--ds-green)',
+          background: 'var(--app-accent-soft)',
+          color: 'var(--app-accent)',
         }}
         aria-label="Account menu"
         title="Account"
@@ -73,24 +72,23 @@ export function AccountMenu({
         {initial}
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align={align} className="w-[320px] p-0 overflow-hidden">
+      <DropdownMenuContent align={align} className="w-[320px] p-0 rounded-[10px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
         <DropdownMenuLabel className="font-normal p-4">
           <div className="flex items-center gap-3">
             <div
-              className="h-9 w-9 rounded-full inline-flex items-center justify-center text-sm font-semibold"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-[8px] text-[13px] font-medium"
               style={{
-                background: 'var(--ds-green-muted)',
-                border: '2px solid rgba(0,200,83,0.25)',
-                color: 'var(--ds-green)',
+                background: 'var(--app-accent-soft)',
+                color: 'var(--app-accent)',
               }}
             >
               {initial}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-none truncate">
+              <p className="text-[13px] font-medium leading-none truncate text-[var(--app-text)]">
                 {user?.displayName || 'Developer'}
               </p>
-              <p className="text-xs leading-none text-muted-foreground truncate mt-1">
+              <p className="text-xs leading-none text-[var(--app-text-muted)] truncate mt-1">
                 {user?.email}
               </p>
             </div>
@@ -102,14 +100,14 @@ export function AccountMenu({
         <div className="py-1">
           <DropdownMenuItem
             onClick={() => router.push('/dashboard/settings')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <UserIcon className="mr-3 h-4 w-4" />
             Profile
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => router.push('/dashboard/settings')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <Settings className="mr-3 h-4 w-4" />
             Account Settings
@@ -119,28 +117,28 @@ export function AccountMenu({
 
           <DropdownMenuItem
             onClick={() => router.push('/dashboard/pricing')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <CreditCard className="mr-3 h-4 w-4" />
             Pricing
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => openPublicPage('/docs')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <BookOpen className="mr-3 h-4 w-4" />
             Documentation
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => openPublicPage('/contact')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <MessageCircle className="mr-3 h-4 w-4" />
             Feedback
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => router.push('/dashboard/referrals')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <Gift className="mr-3 h-4 w-4" />
             Refer
@@ -150,7 +148,7 @@ export function AccountMenu({
 
           <DropdownMenuItem
             onClick={() => router.push('/dashboard')}
-            className="cursor-pointer px-4"
+            className="cursor-pointer px-4 text-[13px]"
           >
             <MessageSquarePlus className="mr-3 h-4 w-4" />
             New Chat
@@ -160,11 +158,11 @@ export function AccountMenu({
         <DropdownMenuSeparator />
 
         <div className="px-4 py-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
+          <div className="text-[11px] font-normal uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-2">
             Preferences
           </div>
           <div className="flex items-center justify-between">
-            <div className="text-sm">Theme</div>
+            <div className="text-[13px] text-[var(--app-text)]">Theme</div>
             <ThemeToggle className="h-9 w-9" />
           </div>
         </div>
@@ -176,14 +174,14 @@ export function AccountMenu({
             <>
               <DropdownMenuItem
                 onClick={() => router.push('/dashboard/admin')}
-                className="cursor-pointer px-4"
+                className="cursor-pointer px-4 text-[13px]"
               >
                 Admin Panel
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
           )}
-          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4">
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4 text-[13px]">
             <LogOut className="mr-3 h-4 w-4" />
             Sign out
           </DropdownMenuItem>

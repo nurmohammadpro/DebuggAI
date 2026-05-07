@@ -1,4 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+'use client';
+
+import type { LucideIcon } from 'lucide-react';
 
 export function DashboardStatCard({
   title,
@@ -13,34 +15,24 @@ export function DashboardStatCard({
   icon: React.ElementType;
   color: 'red' | 'blue' | 'green' | 'amber' | 'purple';
 }) {
-  const colors: Record<string, string> = {
-    red: 'var(--ds-red)',
-    blue: 'var(--ds-blue)',
-    green: 'var(--ds-green)',
-    amber: 'var(--ds-amber)',
-    purple: 'var(--ds-purple)',
+  const colorMap: Record<string, string> = {
+    red: 'var(--app-danger)',
+    blue: 'var(--app-info)',
+    green: 'var(--app-success)',
+    amber: 'var(--app-warning)',
+    purple: 'var(--app-purple)',
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-text3">{title}</CardTitle>
-          <div
-            className="p-2 rounded-ds"
-            style={{ background: `${colors[color]}15`, transition: 'transform 150ms' }}
-          >
-            <Icon className="h-4 w-4" style={{ color: colors[color] }} />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="stat" style={{ color: colors[color] }}>
-          {value}
-        </div>
-        <p className="text-xs text-text3 mt-1">{description}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5">
+      <div className="flex items-center justify-between">
+        <div className="text-[13px] text-[var(--app-text-muted)]">{title}</div>
+        <Icon className="h-4 w-4 shrink-0" style={{ color: colorMap[color] }} />
+      </div>
+      <div className="text-lg font-medium leading-none mt-2" style={{ color: colorMap[color] }}>
+        {value}
+      </div>
+      <p className="text-[13px] text-[var(--app-text-muted)] mt-1">{description}</p>
+    </div>
   );
 }
-

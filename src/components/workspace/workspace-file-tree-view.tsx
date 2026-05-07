@@ -62,7 +62,7 @@ function NodeRow({
     const active = activeFilePath === node.path;
     return (
       <button
-        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left hover:bg-muted/40 ${
+        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-[8px] text-sm text-left hover:bg-muted/40 ${
           active ? 'bg-muted/50' : ''
         }`}
         style={{ paddingLeft: 8 + depth * 12 }}

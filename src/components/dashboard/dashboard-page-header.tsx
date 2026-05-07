@@ -12,14 +12,14 @@ export function DashboardPageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          {Icon && <Icon className="h-5 w-5 text-primary shrink-0" />}
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {Icon && <Icon className="h-4 w-4 text-[var(--app-accent)] shrink-0" />}
+          <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">{title}</h1>
         </div>
         {description && (
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          <p className="text-[13px] text-[var(--app-text-muted)] mt-1">{description}</p>
         )}
       </div>
       {children && <div className="shrink-0">{children}</div>}

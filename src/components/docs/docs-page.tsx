@@ -81,7 +81,7 @@ export function DocsPage() {
           {sections.map((s) => (
             <Card key={s.title} className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-ds bg-muted/40 border border-border/40">
+                <div className="p-2 rounded-[8px] bg-muted/40 border border-border/40">
                   <s.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div className="min-w-0">

@@ -123,7 +123,7 @@ export function WorkspaceDashboard() {
       <div className="h-screen w-screen flex items-center justify-center bg-background">
         <div
           className="animate-spin rounded-full h-8 w-8 border-b-2"
-          style={{ borderColor: 'var(--ds-green)' }}
+          style={{ borderColor: 'var(--app-accent)' }}
         />
       </div>
     );

@@ -2,6 +2,7 @@
  * Admin Dashboard Overview Page
  *
  * Enterprise-grade admin dashboard with real-time metrics, trends, and actionable insights.
+ * Styled with V03 design system patterns.
  */
 
 'use client';
@@ -9,7 +10,19 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
-import { BugIcon, CoinsIcon, Building2Icon, UsersIcon, AlertCircleIcon, CheckCircleIcon, ClockIcon, RefreshCwIcon, DownloadIcon, FileTextIcon } from 'lucide-react';
+import {
+  BugIcon,
+  CoinsIcon,
+  Building2Icon,
+  UsersIcon,
+  AlertCircleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  RefreshCwIcon,
+  DownloadIcon,
+  FileTextIcon,
+} from 'lucide-react';
+
 import { getDashboardStats, getRecentActivity } from '@/lib/admin/auth';
 
 interface DashboardStats {
@@ -29,6 +42,47 @@ interface Activity {
 }
 
 type TimeRange = '24h' | '7d' | '30d' | '90d';
+
+function formatRelativeTime(date: string) {
+  const diffMs = Date.now() - new Date(date).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+}
+
+function StatGridCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  color: string;
+}) {
+  return (
+    <div className="rounded-[8px] bg-[var(--app-panel)] p-5 backdrop-blur-xl transition-colors duration-200 hover:bg-[var(--app-panel-2)]">
+      <div className="flex items-center justify-between mb-4">
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-[7px]"
+          style={{ backgroundColor: `${color}18`, color }}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <p className="text-[22px] font-medium tracking-[-0.03em] text-[var(--app-text)]">
+        {value.toLocaleString()}
+      </p>
+      <p className="mt-1 text-sm font-normal text-[var(--app-text-muted)]">{label}</p>
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -66,71 +120,29 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (!autoRefresh) return;
-
-    const interval = setInterval(fetchDashboardData, 30000); // 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, [autoRefresh, timeRange]);
 
   const statCards = [
-    {
-      id: 'users',
-      label: 'Total Users',
-      value: stats?.totalUsers || 0,
-      icon: UsersIcon,
-      color: '#40C4FF',
-    },
-    {
-      id: 'credits',
-      label: 'Total Credits',
-      value: stats?.totalCredits || 0,
-      icon: CoinsIcon,
-      color: '#FFAB00',
-    },
-    {
-      id: 'debug',
-      label: 'Debug Sessions',
-      value: stats?.debugSessions || 0,
-      icon: BugIcon,
-      color: '#00C853',
-    },
-    {
-      id: 'builder',
-      label: 'Builder Sessions',
-      value: stats?.builderSessions || 0,
-      icon: Building2Icon,
-      color: '#CE93D8',
-    },
+    { id: 'users', label: 'Total Users', value: stats?.totalUsers || 0, icon: UsersIcon, color: '#40C4FF' },
+    { id: 'credits', label: 'Total Credits', value: stats?.totalCredits || 0, icon: CoinsIcon, color: '#FFAB00' },
+    { id: 'debug', label: 'Debug Sessions', value: stats?.debugSessions || 0, icon: BugIcon, color: '#00C853' },
+    { id: 'builder', label: 'Builder Sessions', value: stats?.builderSessions || 0, icon: Building2Icon, color: '#CE93D8' },
   ];
 
-  const getActivityType = (activity: Activity) => {
+  const getActivityConfig = (activity: Activity) => {
     const action = activity.action.toLowerCase();
-    if (action.includes('ban') || action.includes('delete')) return 'critical';
-    if (action.includes('credit')) return 'success';
-    if (action.includes('update') || action.includes('modify')) return 'info';
-    return 'default';
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'critical': return AlertCircleIcon;
-      case 'success': return CheckCircleIcon;
-      case 'info': return ClockIcon;
-      default: return ClockIcon;
+    if (action.includes('ban') || action.includes('delete')) {
+      return { icon: AlertCircleIcon, bg: 'bg-[var(--app-danger-soft)]', text: 'text-[var(--app-danger)]' };
     }
-  };
-
-  const formatRelativeTime = (date: string) => {
-    const now = new Date();
-    const then = new Date(date);
-    const diffMs = now.getTime() - then.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    if (action.includes('credit')) {
+      return { icon: CheckCircleIcon, bg: 'bg-[var(--app-success-soft)]', text: 'text-[var(--app-success)]' };
+    }
+    if (action.includes('update') || action.includes('modify')) {
+      return { icon: ClockIcon, bg: 'bg-[var(--app-info-soft)]', text: 'text-[var(--app-info)]' };
+    }
+    return { icon: ClockIcon, bg: 'bg-[var(--app-surface)]', text: 'text-[var(--app-text-muted)]' };
   };
 
   const exportReport = async () => {
@@ -140,7 +152,6 @@ export default function AdminDashboardPage() {
       stats,
       recentActivity: recentActivity.slice(0, 50),
     };
-
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -151,26 +162,29 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-[#E8F5E9]">Dashboard Overview</h1>
-          <p className="text-sm text-[#4D6B4D] mt-1">
+          <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">
+            Dashboard Overview
+          </h1>
+          <p className="mt-1 text-[13px] font-normal text-[var(--app-text-muted)]">
             Real-time metrics and system health monitoring
           </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-2">
           {/* Time Range Selector */}
-          <div className="inline-flex items-center bg-[#111411] border border-[#1F2B1F] rounded-md p-1">
+          <div className="flex gap-0.5 rounded-[8px] bg-[var(--app-panel)] p-1">
             {(['24h', '7d', '30d', '90d'] as TimeRange[]).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`rounded-[6px] px-3 py-1.5 text-xs font-normal transition-colors ${
                   timeRange === range
-                    ? 'bg-[#00C853] text-black'
-                    : 'text-[#8BAD8B] hover:text-[#E8F5E9]'
+                    ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                    : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
                 }`}
               >
                 {range}
@@ -178,41 +192,41 @@ export default function AdminDashboardPage() {
             ))}
           </div>
 
-          {/* Auto Refresh Toggle */}
+          {/* Auto Refresh */}
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`inline-flex items-center gap-2 h-10 px-4 rounded-full border transition-all font-medium text-[13.5px] ${
+            className={`inline-flex items-center gap-1.5 rounded-[8px] border-0 px-3 py-1.5 text-xs font-normal transition-colors ${
               autoRefresh
-                ? 'bg-[#00C853]/10 text-[#00C853] border-[#00C853]/30'
-                : 'bg-transparent text-[#E8F5E9] border-[#283228] hover:border-[#00C853] hover:text-[#00C853]'
+                ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)]'
+                : 'bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-panel-2)] hover:text-[var(--app-text)]'
             }`}
           >
-            <RefreshCwIcon className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-spin' : ''}`} />
-            {autoRefresh ? 'Auto-refreshing' : 'Auto-refresh'}
+            <RefreshCwIcon className={`h-3.5 w-3.5 ${autoRefresh ? 'animate-spin' : ''}`} />
+            {autoRefresh ? 'Live' : 'Paused'}
           </button>
 
-          {/* Export Button */}
+          {/* Export */}
           <button
             onClick={exportReport}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#00C853] hover:text-[#00C853] transition-all font-medium text-[13.5px]"
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-0 bg-[var(--app-panel)] px-3 py-1.5 text-xs font-normal text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-panel-2)] hover:text-[var(--app-text)]"
           >
-            <DownloadIcon className="w-3.5 h-3.5" />
+            <DownloadIcon className="h-3.5 w-3.5" />
             Export
           </button>
         </div>
       </div>
 
-      {/* Alert Banner */}
+      {/* Error Banner */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-ds-xl">
-          <AlertCircleIcon className="w-5 h-5 text-[#FF5252] flex-shrink-0" />
+        <div className="flex items-center gap-3 rounded-[8px] bg-[var(--app-danger-soft)] border border-[var(--app-danger)]/20 p-4">
+          <AlertCircleIcon className="h-5 w-5 text-[var(--app-danger)] shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-[#FF5252]">Error loading dashboard data</p>
-            <p className="text-xs text-[#FF5252]/80 mt-0.5">{error}</p>
+            <p className="text-sm font-medium text-[var(--app-danger)]">Error loading dashboard data</p>
+            <p className="text-xs text-[var(--app-danger)]/70 mt-0.5">{error}</p>
           </div>
           <button
             onClick={fetchDashboardData}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#FF5252] text-black hover:bg-[#FF7B7B] transition-colors"
+            className="rounded-[8px] bg-[var(--app-danger)] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity"
           >
             Retry
           </button>
@@ -221,109 +235,69 @@ export default function AdminDashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-
-          return (
-            <div
-              key={stat.id}
-              className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5 cursor-pointer transition-all hover:translate-y-[-2px] hover:border-[#283228] group"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: `${stat.color}15`, border: `1px solid ${stat.color}30` }}>
-                    <Icon className="w-4 h-4" style={{ color: stat.color }} />
-                  </div>
-                  <span className="text-xs uppercase tracking-wider text-[#4D6B4D]">{stat.label}</span>
-                </div>
-              </div>
-
-              <div className="text-3xl font-semibold text-[#E8F5E9] mb-1">
-                {stat.value.toLocaleString()}
-              </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#4D6B4D]">Total all time</span>
-                <span className="text-[#8BAD8B] group-hover:text-[#00C853] transition-colors">
-                  View details →
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        {statCards.map((stat) => (
+          <StatGridCard key={stat.id} {...stat} />
+        ))}
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Live Activity Feed - Takes 2 columns */}
-        <div className="lg:col-span-2 bg-[#111411] border border-[#1F2B1F] rounded-ds-xl">
-          <div className="p-5 border-b border-[#1F2B1F]">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-[#E8F5E9]">Live Activity</h3>
-              <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${
-                  autoRefresh
-                    ? 'bg-[#00C853]/15 text-[#00C853]'
-                    : 'bg-[#283228] text-[#8BAD8B]'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${autoRefresh ? 'bg-[#00C853] animate-pulse' : 'bg-[#4D6B4D]'}`} />
-                  {autoRefresh ? 'Live' : 'Paused'}
-                </span>
-              </div>
-            </div>
+        {/* Activity Feed */}
+        <div className="lg:col-span-2 rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl">
+          <div className="border-b border-[var(--app-border)] px-4 py-3">
+            <h3 className="flex items-center gap-2 text-sm font-normal text-[var(--app-text)]">
+              <span className="relative flex h-2 w-2">
+                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${autoRefresh ? 'animate-ping bg-[var(--app-success)]' : 'bg-[var(--app-text-dim)]'}`} />
+                <span className={`relative inline-flex h-2 w-2 rounded-full ${autoRefresh ? 'bg-[var(--app-success)]' : 'bg-[var(--app-text-dim)]'}`} />
+              </span>
+              Live Activity
+            </h3>
           </div>
 
-          <div className="p-5">
-            {recentActivity.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <ClockIcon className="w-12 h-12 text-[#4D6B4D] mb-3" />
-                <p className="text-sm text-[#8BAD8B]">No recent activity</p>
-                <p className="text-xs text-[#4D6B4D] mt-1">Activity will appear here as users interact with the system</p>
+          <div className="p-2">
+            {loading ? (
+              <div className="animate-pulse space-y-2 p-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2">
+                    <div className="h-7 w-7 rounded-xl bg-[var(--app-surface)]" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-3.5 w-44 rounded bg-[var(--app-surface)]" />
+                      <div className="h-3 w-20 rounded bg-[var(--app-surface)]" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <div className="py-12 text-center">
+                <ClockIcon className="mx-auto mb-3 h-10 w-10 text-[var(--app-text-dim)]" />
+                <p className="text-sm text-[var(--app-text-muted)]">No recent activity</p>
+                <p className="mt-1 text-xs text-[var(--app-text-dim)]">Activity will appear here as users interact with the system</p>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="divide-y divide-[var(--app-border)]">
                 {recentActivity.slice(0, 15).map((activity) => {
-                  const type = getActivityType(activity);
-                  const Icon = getActivityIcon(type);
-
+                  const cfg = getActivityConfig(activity);
+                  const Icon = cfg.icon;
                   return (
                     <div
                       key={activity.id}
-                      className="flex items-start gap-3 p-3 rounded-md hover:bg-[#171C17] transition-colors group"
+                      className="group flex items-start gap-3 rounded-[8px] px-2 py-2.5 transition-colors hover:bg-[var(--app-surface-subtle)]"
                     >
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        type === 'critical'
-                          ? 'bg-[#FF5252]/15'
-                          : type === 'success'
-                          ? 'bg-[#00C853]/15'
-                          : type === 'info'
-                          ? 'bg-[#40C4FF]/15'
-                          : 'bg-[#283228]'
-                      }`}>
-                        <Icon className={`w-4 h-4 ${
-                          type === 'critical'
-                            ? 'text-[#FF5252]'
-                            : type === 'success'
-                            ? 'text-[#00C853]'
-                            : type === 'info'
-                            ? 'text-[#40C4FF]'
-                            : 'text-[#8BAD8B]'
-                        }`} />
+                      <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ${cfg.bg} ${cfg.text}`}>
+                        <Icon className="h-3.5 w-3.5" />
                       </div>
-
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-medium text-[#E8F5E9] truncate">
-                            {activity.actor}
-                          </span>
-                          <span className="text-xs text-[#4D6B4D]">•</span>
-                          <span className="text-xs text-[#4D6B4D]">
+                        <p className="text-sm font-normal text-[var(--app-text)]">
+                          {activity.actor}
+                        </p>
+                        <p className="text-sm text-[var(--app-text-muted)]">
+                          {activity.action.replace(/admin\./g, '').replace(/_/g, ' ')}
+                        </p>
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <span className="text-xs text-[var(--app-text-dim)]">
                             {formatRelativeTime(activity.created_at)}
                           </span>
                         </div>
-                        <p className="text-sm text-[#8BAD8B] break-words">
-                          {activity.action.replace(/admin\./g, '').replace(/_/g, ' ')}
-                        </p>
                       </div>
                     </div>
                   );
@@ -334,28 +308,38 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-5">
-          <h3 className="text-lg font-medium text-[#E8F5E9] mb-4">Quick Actions</h3>
-          <div className="space-y-2">
-            <a href="/admin/users" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-              <UsersIcon className="w-4 h-4 text-[#8BAD8B]" />
+        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl">
+          <div className="border-b border-[var(--app-border)] px-4 py-3">
+            <h3 className="text-sm font-normal text-[var(--app-text)]">Quick Actions</h3>
+          </div>
+          <div className="p-2">
+            <a
+              href="/admin/users"
+              className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm font-normal text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)]"
+            >
+              <UsersIcon className="h-4 w-4" />
               <span className="flex-1">Manage Users</span>
-              <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
-            <a href="/admin/credits" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-              <CoinsIcon className="w-4 h-4 text-[#8BAD8B]" />
+            <a
+              href="/admin/credits"
+              className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm font-normal text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)]"
+            >
+              <CoinsIcon className="h-4 w-4" />
               <span className="flex-1">View Credits</span>
-              <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
-            <a href="/admin/abuse" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-              <AlertCircleIcon className="w-4 h-4 text-[#8BAD8B]" />
+            <a
+              href="/admin/abuse"
+              className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm font-normal text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)]"
+            >
+              <AlertCircleIcon className="h-4 w-4" />
               <span className="flex-1">Review Abuse Reports</span>
-              <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
-            <a href="/admin/audit" className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-left text-sm text-[#E8F5E9] hover:bg-[#171C17] transition-colors border border-transparent hover:border-[#1F2B1F]">
-              <FileTextIcon className="w-4 h-4 text-[#8BAD8B]" />
+            <a
+              href="/admin/audit"
+              className="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm font-normal text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-subtle)] hover:text-[var(--app-text)]"
+            >
+              <FileTextIcon className="h-4 w-4" />
               <span className="flex-1">Audit Log</span>
-              <span className="text-xs text-[#4D6B4D]">→</span>
             </a>
           </div>
         </div>

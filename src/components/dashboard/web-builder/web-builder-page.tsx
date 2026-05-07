@@ -2,7 +2,7 @@
  * Web Builder Page - DeBuggAI Design System v1.0
  *
  * Professional · Minimal · Developer-focused · Dark-first
- * Two-column layout: Chat | Code/Preview (togglable like v0.dev)
+ * Two-column layout: Chat | Code/Preview
  */
 
 'use client';
@@ -25,7 +25,6 @@ import {
   Square,
   Download,
   Loader2,
-  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +52,6 @@ export default function WebBuilderPage() {
   }, [isAuthenticated, authLoading, router]);
 
   const handleBuild = async () => {
-    // Convert VirtualProjectFiles to Record<string, string>
     if (!files) return;
     const fileMap: Record<string, string> = {};
     for (const [path, file] of Object.entries(files.files)) {
@@ -65,14 +63,10 @@ export default function WebBuilderPage() {
     setView('preview');
   };
 
-  const sandboxPreviewUrl = sandbox.status === 'running' && sandbox.id
-    ? `/preview/${sandbox.id}`
-    : null;
-
   if (authLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--ds-green)' }}></div>
+      <div className="h-full flex items-center justify-center bg-[var(--app-bg)]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--app-accent)]" />
       </div>
     );
   }
@@ -86,171 +80,171 @@ export default function WebBuilderPage() {
   const showTerminal = isBuilding || isRunning || sandbox.status === 'error';
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden flex gap-6 p-4 sm:p-6">
+    <div className="flex-1 min-h-0 overflow-hidden flex">
       {/* Left Panel: Chat & AI interaction */}
-      <div className="w-[380px] shrink-0 min-h-0">
-        <ChatPanel height="100%" />
+      <div className="w-[380px] shrink-0 min-h-0 bg-[var(--app-panel)] border-r border-[var(--app-border)]">
+        <ChatPanel height="100%" chromeless />
       </div>
 
       {/* Right Panel: Codebase & Preview */}
-      <div className="flex-1 min-h-0 flex flex-col bg-card/60 backdrop-blur-xl rounded-2xl border border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-500">
-          {/* Main Toolbar */}
-          <div className="h-12 border-b border-white/[0.05] flex items-center px-4 shrink-0 bg-white/[0.02] backdrop-blur-md justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.03] border border-white/[0.05]">
-                <Code2 className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400/80">
-                  Workspace
+      <div className="flex-1 min-h-0 flex flex-col bg-[var(--app-panel-2)] overflow-hidden">
+        {/* Main Toolbar */}
+        <div className="h-12 border-b border-[var(--app-border)] flex items-center px-4 shrink-0 bg-[var(--app-panel-2)] justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
+              <Code2 className="h-3.5 w-3.5 text-[var(--app-accent)]" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-accent)]/80">
+                Workspace
+              </span>
+            </div>
+            {view === 'code' && activeFilePath && (
+              <div className="flex items-center gap-2 text-[11px] text-[var(--app-text-dim)]">
+                <span className="opacity-30">/</span>
+                <span className="font-mono bg-[var(--app-surface)] px-2 py-0.5 rounded-[6px] border border-[var(--app-border)] text-[var(--app-text)]/80 truncate max-w-[200px]">
+                  {activeFilePath}
                 </span>
               </div>
-              {view === 'code' && activeFilePath && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 animate-in slide-in-from-left-2 duration-300">
-                  <span className="opacity-30">/</span>
-                  <span className="font-mono bg-white/[0.03] px-2 py-0.5 rounded border border-white/[0.05] text-foreground/80 truncate max-w-[200px]">
-                    {activeFilePath}
-                  </span>
-                </div>
-              )}
-              {isRunning && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Live</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Build & Run button */}
-              {view === 'code' && !isBuilding && !isRunning && (
-                <button
-                  onClick={handleBuild}
-                  disabled={!files}
-                  className={cn(
-                    "flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-bold uppercase tracking-tight transition-all border",
-                    files
-                      ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)] hover:bg-emerald-500/30"
-                      : "text-muted-foreground/40 border-white/[0.05] cursor-not-allowed"
-                  )}
-                >
-                  <PlayIcon className="h-3.5 w-3.5" />
-                  Build & Run
-                </button>
-              )}
-
-              {/* Building state */}
-              {isBuilding && (
-                <div className="flex items-center gap-2 h-8 px-3 rounded-lg text-[11px] font-bold uppercase tracking-tight text-amber-400 border border-amber-500/20 bg-amber-500/10">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Installing...
-                </div>
-              )}
-
-              {/* Running state controls */}
-              {isRunning && (
-                <>
-                  <button
-                    onClick={sandbox.exportZip}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-bold uppercase tracking-tight transition-all border text-muted-foreground border-white/[0.05] hover:bg-white/[0.05] hover:text-foreground"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Export
-                  </button>
-                  <button
-                    onClick={sandbox.stopSandbox}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-bold uppercase tracking-tight transition-all border text-rose-400 border-rose-500/30 hover:bg-rose-500/10"
-                  >
-                    <Square className="h-3.5 w-3.5" />
-                    Stop
-                  </button>
-                </>
-              )}
-
-              {/* Diff button */}
-              {view === 'code' && !isBuilding && (
-                <button
-                  onClick={() => setShowDiff(!showDiff)}
-                  className={cn(
-                    "flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-bold uppercase tracking-tight transition-all border",
-                    showDiff
-                      ? "bg-amber-500/20 text-amber-500 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
-                      : "text-muted-foreground border-white/[0.05] hover:bg-white/[0.05] hover:text-foreground"
-                  )}
-                >
-                  <GitCompare className="h-3.5 w-3.5" />
-                  Diff View
-                </button>
-              )}
-
-              {/* Code/Preview toggle */}
-              <div className="flex items-center bg-black/20 rounded-xl p-1 border border-white/[0.05]">
-                <button
-                  className={cn(
-                    "h-7 px-4 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-2",
-                    view === 'code'
-                      ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.05]'
-                  )}
-                  onClick={() => setView('code')}
-                >
-                  <Code2 className="h-3.5 w-3.5" />
-                  Code
-                </button>
-                <button
-                  className={cn(
-                    "h-7 px-4 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-2",
-                    view === 'preview'
-                      ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.05]'
-                  )}
-                  onClick={() => setView('preview')}
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  Preview
-                </button>
+            )}
+            {isRunning && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] bg-[var(--app-success-soft)] border border-[var(--app-success)]/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--app-success)] animate-pulse" />
+                <span className="text-[10px] font-semibold text-[var(--app-success)] uppercase tracking-[0.12em]">Live</span>
               </div>
-            </div>
+            )}
           </div>
 
-          <div className="flex-1 flex min-h-0">
-            {/* File Tree or Terminal panel */}
-            {view === 'code' && !showTerminal && (
-              <FileTree
-                files={files}
-                activePath={activeFilePath}
-                onSelect={setActiveFilePath}
-                className="w-64 bg-black/10 backdrop-blur-sm border-r border-white/[0.05]"
-              />
-            )}
-            {view === 'code' && showTerminal && (
-              <TerminalPanel
-                logs={sandbox.logs}
-                isBuilding={isBuilding}
-                error={sandbox.error}
-                className="w-80 bg-black/10 backdrop-blur-sm border-r border-white/[0.05]"
-              />
+          <div className="flex items-center gap-2">
+            {/* Build & Run button */}
+            {view === 'code' && !isBuilding && !isRunning && (
+              <button
+                onClick={handleBuild}
+                disabled={!files}
+                className={cn(
+                  "flex items-center gap-1.5 h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border",
+                  files
+                    ? "bg-[var(--app-accent)] text-black border-[var(--app-accent)] hover:opacity-90"
+                    : "text-[var(--app-text-dim)] border-[var(--app-border)] cursor-not-allowed"
+                )}
+              >
+                <PlayIcon className="h-3.5 w-3.5" />
+                Build & Run
+              </button>
             )}
 
-            {/* Editor or Preview Pane */}
-            <div className="flex-1 min-h-0 relative bg-black/5 animate-in fade-in zoom-in-95 duration-500">
-              {view === 'preview' ? (
-                <PreviewPane
-                  height="100%"
-                  chromeless
-                  className="h-full bg-transparent"
-                  sandboxUrl={isRunning ? `/preview/${sandbox.id}` : null}
-                />
-              ) : (
-                <CodeEditor
-                  height="100%"
-                  showHeader={false}
-                  showDiff={showDiff}
-                  originalCode={savedSnapshot}
-                  className="rounded-none border-0 shadow-none bg-transparent"
-                />
-              )}
+            {/* Building state */}
+            {isBuilding && (
+              <div className="flex items-center gap-2 h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight text-[var(--app-warning)] border border-[var(--app-warning)]/20 bg-[var(--app-warning)]/10">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Installing...
+              </div>
+            )}
+
+            {/* Running state controls */}
+            {isRunning && (
+              <>
+                <button
+                  onClick={sandbox.exportZip}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border text-[var(--app-text-muted)] border-[var(--app-border)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export
+                </button>
+                <button
+                  onClick={sandbox.stopSandbox}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border text-[var(--app-danger)] border-[var(--app-danger)]/30 hover:bg-[var(--app-danger)]/10"
+                >
+                  <Square className="h-3.5 w-3.5" />
+                  Stop
+                </button>
+              </>
+            )}
+
+            {/* Diff button */}
+            {view === 'code' && !isBuilding && (
+              <button
+                onClick={() => setShowDiff(!showDiff)}
+                className={cn(
+                  "flex items-center gap-1.5 h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border",
+                  showDiff
+                    ? "bg-[var(--app-warning)]/20 text-[var(--app-warning)] border-[var(--app-warning)]/40"
+                    : "text-[var(--app-text-muted)] border-[var(--app-border)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                )}
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+                Diff View
+              </button>
+            )}
+
+            {/* Code/Preview toggle */}
+            <div className="flex items-center bg-[var(--app-panel-2)] rounded-[6px] p-0.5 border border-[var(--app-border)]">
+              <button
+                className={cn(
+                  "h-7 px-4 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-2",
+                  view === 'code'
+                    ? 'bg-[var(--app-accent)] text-black'
+                    : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
+                )}
+                onClick={() => setView('code')}
+              >
+                <Code2 className="h-3.5 w-3.5" />
+                Code
+              </button>
+              <button
+                className={cn(
+                  "h-7 px-4 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-2",
+                  view === 'preview'
+                    ? 'bg-[var(--app-accent)] text-black'
+                    : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
+                )}
+                onClick={() => setView('preview')}
+              >
+                <Play className="h-3.5 w-3.5" />
+                Preview
+              </button>
             </div>
           </div>
         </div>
+
+        <div className="flex-1 flex min-h-0">
+          {/* File Tree or Terminal panel */}
+          {view === 'code' && !showTerminal && (
+            <FileTree
+              files={files}
+              activePath={activeFilePath}
+              onSelect={setActiveFilePath}
+              className="w-64 bg-[var(--app-panel)] border-r border-[var(--app-border)]"
+            />
+          )}
+          {view === 'code' && showTerminal && (
+            <TerminalPanel
+              logs={sandbox.logs}
+              isBuilding={isBuilding}
+              error={sandbox.error}
+              className="w-80 bg-[var(--app-panel)] border-r border-[var(--app-border)]"
+            />
+          )}
+
+          {/* Editor or Preview Pane */}
+          <div className="flex-1 min-h-0 relative">
+            {view === 'preview' ? (
+              <PreviewPane
+                height="100%"
+                chromeless
+                className="h-full bg-transparent"
+                sandboxUrl={isRunning ? `/preview/${sandbox.id}` : null}
+              />
+            ) : (
+              <CodeEditor
+                height="100%"
+                showHeader={false}
+                showDiff={showDiff}
+                originalCode={savedSnapshot}
+                className="border-0 bg-transparent"
+              />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

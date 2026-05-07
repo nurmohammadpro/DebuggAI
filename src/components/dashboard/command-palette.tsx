@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, ArrowRight, Home, LayoutGrid, Bug, Code2, Plus, Sparkles } from 'lucide-react';
+import { Search, ArrowRight, LayoutGrid, Bug, Code2, Plus, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
@@ -149,39 +148,37 @@ export function CommandPalette({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="p-0 max-w-lg">
+      <DialogContent showCloseButton={false} className="p-0 max-w-lg rounded-[10px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
         <DialogTitle className="sr-only">Command Palette</DialogTitle>
-        <div className="flex items-center border-b border-border/40 px-4">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <Input
+        <div className="flex items-center border-b border-[var(--app-border)] px-4">
+          <Search className="h-4 w-4 text-[var(--app-text-dim)] shrink-0" />
+          <input
             ref={inputRef}
-            className="border-0 bg-transparent h-12 focus-visible:ring-0 focus-visible:shadow-none text-sm"
+            className="w-full border-0 bg-transparent h-12 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none"
             placeholder="Type a command or search..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
           />
-          <kbd className="text-[10px] text-muted-foreground/60 shrink-0 ml-2">
-            esc
-          </kbd>
+          <kbd className="text-[10px] text-[var(--app-text-dim)] shrink-0 ml-2">esc</kbd>
         </div>
         <div className="max-h-72 overflow-y-auto p-2">
           {query.trim() === '' && (
-            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+            <div className="px-3 py-6 text-center text-[13px] text-[var(--app-text-muted)]">
               <Sparkles className="h-6 w-6 mx-auto mb-2 opacity-40" />
               Type to search projects, chats, and pages
             </div>
           )}
 
           {query.trim() !== '' && flatFiltered.length === 0 && (
-            <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+            <div className="px-3 py-8 text-center text-[13px] text-[var(--app-text-muted)]">
               No results found for &ldquo;{query}&rdquo;
             </div>
           )}
 
           {Object.entries(groupedBySection).map(([section, items]) => (
             <div key={section} className="mb-2">
-              <div className="px-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="px-3 py-1.5 text-[11px] font-normal uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
                 {section}
               </div>
               {items.map((item) => {
@@ -192,24 +189,24 @@ export function CommandPalette({
                     key={item.id}
                     type="button"
                     className={cn(
-                      'flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm transition-colors text-left',
+                      'flex items-center gap-3 w-full px-3 py-2 rounded-[8px] text-[13px] transition-colors text-left',
                       isSelected
-                        ? 'bg-primary/15 text-primary'
-                        : 'text-foreground hover:bg-muted',
+                        ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)]'
+                        : 'text-[var(--app-text)] hover:bg-[var(--app-surface)]',
                     )}
                     onClick={() => navigate(item)}
                     onMouseEnter={() => setSelectedIndex(idx)}
                   >
-                    <item.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <item.icon className="h-4 w-4 shrink-0 text-[var(--app-text-dim)]" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate">{item.label}</div>
                       {item.description && (
-                        <div className="text-xs text-muted-foreground truncate">
+                        <div className="text-xs text-[var(--app-text-muted)] truncate">
                           {item.description}
                         </div>
                       )}
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100" />
                   </button>
                 );
               })}

@@ -22,7 +22,7 @@ export function SidebarSection({
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground px-2 py-1 rounded-md hover:bg-accent/40 transition-colors"
+        className="w-full flex items-center justify-between text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground px-2 py-1 hover:bg-accent/40 transition-colors"
       >
         <span>{label}</span>
         {collapsed ? (

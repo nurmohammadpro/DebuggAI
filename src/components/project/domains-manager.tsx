@@ -128,7 +128,7 @@ export function DomainsManager({ projectId }: DomainsManagerProps) {
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[8px] hover:bg-primary/90 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Domain
@@ -147,7 +147,7 @@ export function DomainsManager({ projectId }: DomainsManagerProps) {
       {/* Domains List */}
       <div className="space-y-4">
         {domains.length === 0 ? (
-          <div className="p-8 text-center border rounded-lg text-muted-foreground">
+          <div className="p-8 text-center border rounded-[8px] text-muted-foreground">
             <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No custom domains configured</p>
             <p className="text-sm mt-2">Add a custom domain to give your project a professional URL</p>
@@ -168,18 +168,18 @@ export function DomainsManager({ projectId }: DomainsManagerProps) {
 
       {/* DNS Instructions */}
       {domains.some(d => !d.verified_at) && (
-        <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
+        <div className="p-4 rounded-[8px] bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">DNS Configuration</h4>
           <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
             To verify your domain, add the following DNS records:
           </p>
           <div className="space-y-2 text-sm">
-            <div className="grid grid-cols-3 gap-2 p-2 bg-blue-100 dark:bg-blue-900/20 rounded">
+            <div className="grid grid-cols-3 gap-2 p-2 bg-blue-100 dark:bg-blue-900/20 rounded-[8px]">
               <span className="font-medium">Type</span>
               <span className="font-medium">Name</span>
               <span className="font-medium">Value</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 p-2 bg-background rounded">
+            <div className="grid grid-cols-3 gap-2 p-2 bg-background rounded-[8px]">
               <span className="font-mono">CNAME</span>
               <span className="font-mono">your-domain</span>
               <span className="font-mono text-xs">your-app.vercel.app</span>
@@ -203,7 +203,7 @@ function DomainCard({ domain, onSetPrimary, onDelete, onVerify, isVerifying }: D
   const status = domain.verified_at ? 'verified' : 'pending';
 
   return (
-    <div className="p-4 border rounded-lg bg-card">
+    <div className="p-4 border rounded-[8px] bg-card">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3">
@@ -227,14 +227,14 @@ function DomainCard({ domain, onSetPrimary, onDelete, onVerify, isVerifying }: D
           </div>
 
           {!domain.verified_at && (
-            <div className="mt-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800">
+            <div className="mt-3 p-3 rounded-[8px] bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800">
               <p className="text-sm text-yellow-900 dark:text-yellow-100">
                 <strong>Pending verification</strong> - Add the DNS records below to verify ownership
               </p>
               <button
                 onClick={onVerify}
                 disabled={isVerifying}
-                className="mt-2 px-3 py-1 text-sm rounded bg-yellow-100 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-900/30 disabled:opacity-50 transition-colors"
+                className="mt-2 px-3 py-1 text-sm rounded-[8px] bg-yellow-100 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-900/30 disabled:opacity-50 transition-colors"
               >
                 {isVerifying ? 'Verifying...' : 'Verify Domain'}
               </button>
@@ -246,14 +246,14 @@ function DomainCard({ domain, onSetPrimary, onDelete, onVerify, isVerifying }: D
           {!domain.primary_domain && (
             <button
               onClick={onSetPrimary}
-              className="px-3 py-1.5 text-sm rounded-lg border hover:bg-accent transition-colors"
+              className="px-3 py-1.5 text-sm rounded-[8px] border hover:bg-accent transition-colors"
             >
               Set Primary
             </button>
           )}
           <button
             onClick={onDelete}
-            className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors"
+            className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-[8px] transition-colors"
             title="Delete domain"
           >
             <Trash2 className="w-4 h-4" />
@@ -313,7 +313,7 @@ function DomainForm({ onSubmit, onCancel, existingDomains }: DomainFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border rounded-lg bg-accent/30 space-y-4">
+    <form onSubmit={handleSubmit} className="p-4 border rounded-[8px] bg-accent/30 space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">Domain</label>
         <input
@@ -321,7 +321,7 @@ function DomainForm({ onSubmit, onCancel, existingDomains }: DomainFormProps) {
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
           placeholder="your-domain.com"
-          className="w-full px-3 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+          className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono"
           required
         />
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -333,7 +333,7 @@ function DomainForm({ onSubmit, onCancel, existingDomains }: DomainFormProps) {
           id="is-primary"
           checked={isPrimary}
           onChange={(e) => setIsPrimary(e.target.checked)}
-          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+          className="w-4 h-4 rounded-[8px] border-gray-300 text-primary focus:ring-primary"
         />
         <label htmlFor="is-primary" className="text-sm">
           Set as primary domain
@@ -344,13 +344,13 @@ function DomainForm({ onSubmit, onCancel, existingDomains }: DomainFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm rounded-lg border hover:bg-accent transition-colors"
+          className="px-4 py-2 text-sm rounded-[8px] border hover:bg-accent transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 text-sm rounded-[8px] bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Add Domain
         </button>

@@ -41,13 +41,13 @@ export default function FeaturesPage() {
       <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
             Features
           </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+          <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
             Everything you need to debug faster
           </h1>
-          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--app-text-muted)' }}>
             Built for developers who value their time. DeBuggAI integrates seamlessly into your workflow to eliminate tedious troubleshooting.
           </p>
         </div>
@@ -64,12 +64,12 @@ export default function FeaturesPage() {
                   style={{ 
                     width: '40px', 
                     height: '40px', 
-                    borderRadius: 'var(--ds-r8)', 
-                    background: 'var(--ds-green-muted)',
+                    borderRadius: '8px', 
+                    background: 'var(--app-accent-soft)',
                     transition: 'transform 0.2s, background 0.2s'
                   }}
                 >
-                  <Icon className="h-5 w-5" style={{ color: 'var(--ds-green)' }} />
+                  <Icon className="h-5 w-5" style={{ color: 'var(--app-accent)' }} />
                 </div>
                 
                 <h3 className="card-title">{feature.title}</h3>
@@ -84,20 +84,20 @@ export default function FeaturesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Text */}
             <div>
-              <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+              <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
                 Developer Experience
               </p>
-              <h2 className="text-h1 mb-4" style={{ color: 'var(--ds-text)' }}>
+              <h2 className="text-h1 mb-4" style={{ color: 'var(--app-text)' }}>
                 Fits right into your workflow
               </h2>
-              <p className="text-body mb-6" style={{ color: 'var(--ds-text2)' }}>
+              <p className="text-body mb-6" style={{ color: 'var(--app-text-muted)' }}>
                 Don't change how you work. DeBuggAI works with your existing setup, analyzing stack traces, logs, or raw code blocks directly from your terminal or IDE.
               </p>
               <div className="flex flex-col gap-3">
                 {['Copy-paste errors for instant fixes', 'Context-aware variable tracking', 'Zero configuration required'].map((item) => (
                   <div key={item} className="flex items-center gap-3">
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--ds-green)', flexShrink: 0 }}></div>
-                    <span className="text-body" style={{ color: 'var(--ds-text)' }}>{item}</span>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--app-accent)', flexShrink: 0 }}></div>
+                    <span className="text-body" style={{ color: 'var(--app-text)' }}>{item}</span>
                   </div>
                 ))}
               </div>
@@ -107,9 +107,9 @@ export default function FeaturesPage() {
             <div className="terminal">
               <div className="terminal-header">
                 <div className="flex gap-1.5">
-                  <div className="code-dot" style={{ background: 'var(--ds-red)' }}></div>
-                  <div className="code-dot" style={{ background: 'var(--ds-amber)' }}></div>
-                  <div className="code-dot" style={{ background: 'var(--ds-green)' }}></div>
+                  <div className="code-dot" style={{ background: 'var(--app-danger)' }}></div>
+                  <div className="code-dot" style={{ background: 'var(--app-warning)' }}></div>
+                  <div className="code-dot" style={{ background: 'var(--app-accent)' }}></div>
                 </div>
                 <span className="terminal-title">debuggai-cli</span>
               </div>
@@ -134,11 +134,11 @@ export default function FeaturesPage() {
 
         {/* Bottom CTA Section */}
         <div className="text-center mt-24">
-          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
-          <h2 className="text-h1 mb-3" style={{ color: 'var(--ds-text)' }}>
+          <div style={{ borderTop: '1px solid var(--app-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
+          <h2 className="text-h1 mb-3" style={{ color: 'var(--app-text)' }}>
             Ready to ship faster?
           </h2>
-          <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--app-text-muted)' }}>
             Join thousands of developers who debug smarter, not harder.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">

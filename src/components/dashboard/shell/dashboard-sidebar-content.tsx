@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +83,7 @@ function relativeTime(dateStr: string | undefined): string {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+    <div className="mb-1 px-3 text-[11px] font-normal uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
       {children}
     </div>
   );
@@ -122,9 +121,9 @@ function SessionRow({
           href={href}
           onClick={onNavigate}
           title={label}
-          className="flex items-center justify-center w-full px-2 py-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200"
+          className="flex items-center justify-center w-full px-2 py-2.5 text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)] transition-colors rounded-[6px]"
         >
-          <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+          <span className="h-2 w-2 rounded-full bg-[var(--app-text-dim)]" />
         </Link>
       </div>
     );
@@ -138,16 +137,16 @@ function SessionRow({
       <Link
         href={href}
         onClick={onNavigate}
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+        className="flex items-center gap-3 px-3 py-2 text-[13px] transition-colors rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)]"
       >
-        <span className="h-2 w-2 rounded-full bg-muted-foreground/30 shrink-0" />
+        <span className="h-2 w-2 rounded-full bg-[var(--app-text-dim)] shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate">{label}</span>
           {timestamp && (
-            <span className="text-[10px] text-muted-foreground/60">{timestamp}</span>
+            <span className="text-[10px] text-[var(--app-text-dim)]">{timestamp}</span>
           )}
         </div>
-        {pinned && <Pin className="h-3 w-3 text-muted-foreground/60 shrink-0" />}
+        {pinned && <Pin className="h-3 w-3 text-[var(--app-text-dim)] shrink-0" />}
       </Link>
 
       <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
@@ -156,7 +155,7 @@ function SessionRow({
             <button
               onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
               className={cn(
-                'h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-all',
+                'h-7 w-7 inline-flex items-center justify-center rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors',
                 showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
               )}
               aria-label="More"
@@ -164,8 +163,8 @@ function SessionRow({
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={onTogglePinned} className="cursor-pointer">
+          <DropdownMenuContent align="end" className="w-44 rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+            <DropdownMenuItem onClick={onTogglePinned} className="cursor-pointer text-[13px]">
               {pinned ? <PinOff className="mr-2 h-4 w-4" /> : <Pin className="mr-2 h-4 w-4" />}
               {pinned ? 'Unpin' : 'Pin'}
             </DropdownMenuItem>
@@ -173,19 +172,19 @@ function SessionRow({
               onClick={() => {
                 window.open(href, '_blank', 'noopener,noreferrer');
               }}
-              className="cursor-pointer"
+              className="cursor-pointer text-[13px]"
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               Open in new tab
             </DropdownMenuItem>
             {onRename && (
-              <DropdownMenuItem onClick={onRename} className="cursor-pointer">
+              <DropdownMenuItem onClick={onRename} className="cursor-pointer text-[13px]">
                 <Pencil className="mr-2 h-4 w-4" />
                 Rename
               </DropdownMenuItem>
             )}
             {onDelete && (
-              <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-destructive">
+              <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-[13px] text-[var(--app-danger)]">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -227,7 +226,7 @@ export function DashboardSidebarContent({
     setPinnedProjectIds,
     setPinnedChatIds,
   } = useShellStore();
-  
+
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const [dialog, dispatchDialog] = useReducer(dialogReducer, { type: 'none' as const });
@@ -346,10 +345,10 @@ export function DashboardSidebarContent({
 
         {!collapsed && (
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 transition-colors group-focus-within:text-muted-foreground" />
-            <Input
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--app-text-dim)] transition-colors group-focus-within:text-[var(--app-text-muted)]" />
+            <input
               ref={searchRef}
-              className="pl-9 pr-12 h-9 text-sm rounded-lg bg-accent/40 border-transparent focus:bg-background focus:border-input transition-all duration-150"
+              className="w-full h-9 pl-9 pr-12 text-[13px] rounded-[8px] bg-[var(--app-surface)] border-0 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 transition-all"
               placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -357,13 +356,13 @@ export function DashboardSidebarContent({
             {query ? (
               <button
                 onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded hover:bg-accent transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center hover:bg-[var(--app-surface)] rounded-[4px] transition-colors"
                 aria-label="Clear search"
               >
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
+                <X className="h-3.5 w-3.5 text-[var(--app-text-muted)]" />
               </button>
             ) : (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/40 pointer-events-none">
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[var(--app-text-dim)] pointer-events-none">
                 {typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘/' : 'Ctrl+/'}
               </kbd>
             )}
@@ -375,7 +374,7 @@ export function DashboardSidebarContent({
         <div className="px-2 pb-2">
           <button
             onClick={() => searchRef.current?.focus()}
-            className="w-full flex items-center justify-center py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+            className="w-full flex items-center justify-center py-2 text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)] transition-colors rounded-[6px]"
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
@@ -436,7 +435,7 @@ export function DashboardSidebarContent({
 
           {collapsed && (
             <div className="flex justify-center py-2">
-              <div className="h-px w-6 bg-border" />
+              <div className="h-px w-6 bg-[var(--app-border)]" />
             </div>
           )}
 
@@ -481,7 +480,7 @@ export function DashboardSidebarContent({
 
             {collapsed && pinnedChats.length === 0 && pinnedProjects.length === 0 && (
               <div className="flex justify-center py-2">
-                <div className="h-px w-6 bg-border" />
+                <div className="h-px w-6 bg-[var(--app-border)]" />
               </div>
             )}
 
@@ -506,7 +505,7 @@ export function DashboardSidebarContent({
             </div>
 
             {!isSearching && filteredChats.length === 0 && !collapsed && (
-              <div className="px-3 py-2 text-xs text-muted-foreground/60">
+              <div className="px-3 py-2 text-xs text-[var(--app-text-dim)]">
                 No recent chats yet.
               </div>
             )}
@@ -540,7 +539,7 @@ export function DashboardSidebarContent({
 
         {/* ── Search results header ─────────────────────────────────── */}
         {isSearching && filteredChats.length === 0 && filteredProjects.length === 0 && (
-          <div className="px-3 py-4 text-xs text-muted-foreground/60 text-center">
+          <div className="px-3 py-4 text-xs text-[var(--app-text-dim)] text-center">
             No results found.
           </div>
         )}
@@ -548,10 +547,10 @@ export function DashboardSidebarContent({
       </div>
 
       {/* ── User Footer ────────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-border/40 p-2">
+      <div className="shrink-0 p-2">
         <button
           className={cn(
-            'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground',
+            'flex w-full items-center gap-2.5 px-3 py-2 rounded-[8px] text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]',
             collapsed && 'justify-center px-2',
           )}
         >
@@ -565,14 +564,14 @@ export function DashboardSidebarContent({
               className="h-7 w-7 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-emerald-500 to-emerald-600">
-              <span className="text-xs font-bold text-white">{userInitial}</span>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[var(--app-surface)]">
+              <span className="text-xs font-medium text-[var(--app-text-muted)]">{userInitial}</span>
             </div>
           )}
           {!collapsed && (
             <div className="flex flex-col items-start min-w-0">
-              <span className="text-sm font-medium text-foreground truncate w-full">{userDisplayName}</span>
-              <span className="text-[10px] text-muted-foreground/60">{userPlan} Plan</span>
+              <span className="text-[13px] text-[var(--app-text)] truncate w-full">{userDisplayName}</span>
+              <span className="text-[11px] text-[var(--app-text-dim)]">{userPlan} Plan</span>
             </div>
           )}
         </button>

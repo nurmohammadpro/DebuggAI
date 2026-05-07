@@ -151,9 +151,9 @@ export function Small({ children, className, as = 'small' }: TextProps) {
 export function Code({ children, className }: TextProps) {
   return (
     <code className={cn(
-      'relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm',
+      'relative rounded-ds px-[0.3rem] py-[0.2rem] font-mono text-sm',
       'bg-muted text-foreground',
-      'before:content-[""] before:absolute before:inset-0 before:rounded',
+      'before:content-[""] before:absolute before:inset-0 before:rounded-ds',
       'before:bg-primary/10 before:opacity-0 hover:before:opacity-100',
       'before:transition-opacity',
       className

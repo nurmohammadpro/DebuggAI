@@ -8,7 +8,6 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,7 +74,7 @@ export function Navigation() {
         {/* Logo & Brand - JetBrains Mono font */}
         <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo flex items-center gap-2.5">
           <Logo className="h-6 w-auto" />
-          <span className="font-semibold text-base font-mono" style={{ color: 'var(--ds-text)' }}>
+          <span className="font-semibold text-base font-mono" style={{ color: 'var(--app-text)' }}>
             DeBuggAI
           </span>
         </Link>
@@ -95,7 +94,7 @@ export function Navigation() {
             <>
               {/* Credits Badge */}
               <div className="nav-credit">
-                <Zap className="h-3 w-3" style={{ color: 'var(--ds-green)' }} />
+                <Zap className="h-3 w-3" style={{ color: 'var(--app-accent)' }} />
                 {credits === -1 ? '∞' : credits}
               </div>
 
@@ -110,32 +109,22 @@ export function Navigation() {
               {/* User Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="nav-avatar"
+                  <button
+                    className="w-[30px] h-[30px] p-0 rounded-full flex items-center justify-center text-[12px] font-semibold cursor-pointer border-0 outline-none"
                     style={{
-                      width: '30px',
-                      height: '30px',
-                      padding: '0',
-                      borderRadius: '50%',
-                      background: 'var(--ds-green-muted)',
+                      background: 'var(--app-accent-soft)',
                       border: '2px solid rgba(0,200,83,0.3)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: 'var(--ds-green)',
+                      color: 'var(--app-accent)',
                     }}
                   >
                     {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                      <p className="text-[11px] leading-none text-[var(--app-text-muted)]">{user?.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -175,9 +164,9 @@ export function Navigation() {
             </>
           ) : (
             <Link href="/login">
-              <Button size="sm">
+              <button className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-[13px] font-medium bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity">
                 Sign In
-              </Button>
+              </button>
             </Link>
           )}
 
@@ -197,10 +186,10 @@ export function Navigation() {
               <div
                 className="absolute right-0 top-full mt-2 w-56 animate-slide-down z-50"
                 style={{
-                  background: 'var(--ds-surface)',
-                  border: '1px solid var(--ds-border2)',
-                  borderRadius: 'var(--ds-r12)',
-                  boxShadow: 'var(--ds-shadow-card)',
+                  background: 'var(--app-panel)',
+                  border: '1px solid var(--app-border-strong)',
+                  borderRadius: '10px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
                 }}
               >
                 <Link
@@ -240,7 +229,7 @@ export function Navigation() {
                 </Link>
                 {!isAuthenticated && (
                   <>
-                    <div className="border-t border-border2 my-2"></div>
+                    <div className="border-t border-[var(--app-border-strong)] my-2"></div>
                     <Link
                       href="/login"
                       className="mobile-menu-item"

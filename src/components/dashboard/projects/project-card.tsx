@@ -3,9 +3,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Copy, ExternalLink, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import { RenameProjectDialog } from '@/components/dashboard/projects/rename-project-dialog';
 import { DeleteProjectDialog } from '@/components/dashboard/projects/delete-project-dialog';
@@ -28,20 +25,20 @@ export function ProjectCard({
     (project.prompt ? truncate(project.prompt, 60) : 'Untitled project');
 
   return (
-    <Card className="p-3 sm:p-4 gap-3">
+    <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4">
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0 flex-wrap">
-              <div className="font-semibold truncate text-sm sm:text-base">{title}</div>
+              <div className="text-[16px] font-medium text-[var(--app-text)]">{title}</div>
               {project.stack && (
-                <Badge variant="outline" className="text-[10px] sm:text-xs shrink-0">
+                <span className="inline-flex rounded-[6px] bg-[var(--app-surface)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)] shrink-0">
                   {project.stack.toUpperCase()}
-                </Badge>
+                </span>
               )}
             </div>
             {project.prompt && (
-              <div className="text-xs text-muted-foreground mt-1 line-clamp-2 sm:line-clamp-3">
+              <div className="text-[13px] text-[var(--app-text-muted)] mt-1 line-clamp-2">
                 {project.prompt}
               </div>
             )}
@@ -49,41 +46,35 @@ export function ProjectCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+        <div className="flex items-center justify-between gap-2">
           <Link href={`/dashboard?project=${project.id}`} className="flex-1">
-            <Button variant="default" size="sm" className="w-full h-9 sm:h-8">
-              <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
-              <span className="text-xs sm:text-sm">Open</span>
-            </Button>
+            <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-[8px] bg-[var(--app-accent)] px-3 py-1.5 text-[13px] font-medium text-black transition-colors hover:opacity-90">
+              <ExternalLink className="h-4 w-4" />
+              Open
+            </button>
           </Link>
           <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 sm:h-8 sm:w-8"
+            <button
+              className="h-8 w-8 rounded-[8px] inline-flex items-center justify-center text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
               title="Duplicate"
               onClick={() => onDuplicate(project)}
             >
-              <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 sm:h-8 sm:w-8"
+              <Copy className="h-4 w-4" />
+            </button>
+            <button
+              className="h-8 w-8 rounded-[8px] inline-flex items-center justify-center text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
               title="Rename"
               onClick={() => setRenameOpen(true)}
             >
-              <span className="text-[10px] sm:text-xs font-semibold">Aa</span>
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
+              <span className="text-xs font-semibold">Aa</span>
+            </button>
+            <button
+              className="h-8 w-8 rounded-[8px] inline-flex items-center justify-center text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-danger-soft)] hover:text-[var(--app-danger)]"
               title="Delete"
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Button>
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
@@ -103,11 +94,11 @@ export function ProjectCard({
         projectName={title}
         onDeleted={onDeleted}
       />
-    </Card>
+    </div>
   );
 }
 
 function truncate(text: string, max: number) {
   if (text.length <= max) return text;
-  return `${text.slice(0, Math.max(0, max - 1)).trim()}…`;
+  return `${text.slice(0, Math.max(0, max - 1)).trim()}...`;
 }

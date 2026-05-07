@@ -126,7 +126,7 @@ export function AmbassadorLeaderboard() {
               return (
                 <div
                   key={tier}
-                  className={`p-4 rounded-lg border ${config.bg} ${config.borderColor}`}
+                  className={`p-4 rounded-[8px] border ${config.bg} ${config.borderColor}`}
                 >
                   <div className={`flex items-center justify-between mb-2 ${config.color}`}>
                     <Icon className="h-6 w-6" />
@@ -170,7 +170,7 @@ export function AmbassadorLeaderboard() {
                 return (
                   <div
                     key={entry.referrer_id}
-                    className={`flex items-center gap-4 p-4 rounded-lg border transition-all hover:bg-muted/50 ${
+                    className={`flex items-center gap-4 p-4 rounded-[8px] border transition-all hover:bg-muted/50 ${
                       index === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : ''
                     }`}
                   >

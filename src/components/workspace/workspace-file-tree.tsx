@@ -19,36 +19,36 @@ export function WorkspaceFileTree({
 
   return (
     <aside
-      className="bg-card flex flex-col min-w-[220px]"
+      className="bg-[var(--app-panel)] flex flex-col min-w-[220px]"
       style={{ width }}
     >
-      <div className="h-11 px-3 border-b border-border/40 flex items-center gap-2">
-        <span className="text-xs font-semibold tracking-wide text-muted-foreground">
+      <div className="h-11 px-3 border-b border-[var(--app-border)] flex items-center gap-2">
+        <span className="text-xs font-semibold tracking-wide text-[var(--app-text-muted)]">
           {view === 'explorer' ? 'Explorer' : 'Search'}
         </span>
         <div className="ml-auto flex items-center gap-1">
           {view === 'explorer' && (
             <>
               <button
-                className="h-8 w-8 rounded-md hover:bg-muted/40 flex items-center justify-center"
+                className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="New file"
                 disabled
               >
-                <FilePlus className="h-4 w-4 text-muted-foreground" />
+                <FilePlus className="h-4 w-4 text-[var(--app-text-dim)]" />
               </button>
               <button
-                className="h-8 w-8 rounded-md hover:bg-muted/40 flex items-center justify-center"
+                className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="New folder"
                 disabled
               >
-                <FolderPlus className="h-4 w-4 text-muted-foreground" />
+                <FolderPlus className="h-4 w-4 text-[var(--app-text-dim)]" />
               </button>
               <button
-                className="h-8 w-8 rounded-md hover:bg-muted/40 flex items-center justify-center"
+                className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="Refresh"
                 disabled
               >
-                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                <RefreshCw className="h-4 w-4 text-[var(--app-text-dim)]" />
               </button>
             </>
           )}
@@ -56,12 +56,12 @@ export function WorkspaceFileTree({
       </div>
 
       {view === 'search' && (
-        <div className="p-3 border-b border-border/40">
+        <div className="p-3 border-b border-[var(--app-border)]">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search files…"
-            className="w-full h-9 rounded-md bg-muted/30 border border-border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            placeholder="Search files..."
+            className="w-full h-9 rounded-[8px] bg-[var(--app-panel-2)] border-0 px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
           />
         </div>
       )}
@@ -71,11 +71,11 @@ export function WorkspaceFileTree({
           <WorkspaceFileTreeView query={query} />
         ) : (
           <Tabs defaultValue="files" className="gap-2">
-            <TabsList variant="line" className="rounded-none bg-transparent px-1">
-              <TabsTrigger value="files" className="h-8 rounded-none text-xs">
+            <TabsList variant="line" className="bg-transparent px-1 gap-0.5">
+              <TabsTrigger value="files" className="h-8 rounded-[6px] text-[11px]">
                 Files
               </TabsTrigger>
-              <TabsTrigger value="versions" className="h-8 rounded-none text-xs">
+              <TabsTrigger value="versions" className="h-8 rounded-[6px] text-[11px]">
                 Versions
               </TabsTrigger>
             </TabsList>

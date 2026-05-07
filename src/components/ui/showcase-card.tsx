@@ -76,7 +76,7 @@ export function ShowcaseCard({
         <div className="mb-6">
           <div
             className={cn(
-              'relative inline-flex p-4 rounded-2xl',
+              'relative inline-flex p-4 rounded-ds',
               'bg-gradient-to-br shadow-lg',
               'group-hover:shadow-xl group-hover:scale-110',
               'transition-all duration-300 ease-out',
@@ -92,7 +92,7 @@ export function ShowcaseCard({
             ) : null}
 
             {/* Shine effect */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/30 to-transparent" />
+            <div className="absolute inset-0 rounded-ds bg-gradient-to-tr from-white/30 to-transparent" />
           </div>
         </div>
 

@@ -1,18 +1,7 @@
-/**
- * Stack Selector Modal
- *
- * Modal for selecting tech stack and features for web builder.
- */
-
 'use client';
 
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Code2, Zap } from 'lucide-react';
 import { WEB_BUILDER_STACKS } from '@/lib/constants';
 import { toast } from 'sonner';
@@ -69,7 +58,6 @@ export function StackSelector({ children }: StackSelectorProps) {
     try {
       await generate({ prompt });
     } catch (error) {
-      // Error handled in callbacks
       console.error('Generation error:', error);
     }
   };
@@ -87,77 +75,77 @@ export function StackSelector({ children }: StackSelectorProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text)] backdrop-blur-xl">
+        <DialogHeader className="text-left">
+          <DialogTitle className="flex items-center gap-2 text-[16px] font-medium text-[var(--app-text)]">
             <Code2 className="h-5 w-5" />
             Select Your Tech Stack
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-[13px] text-[var(--app-text-muted)]">
             We&apos;ll generate a complete project structure for you.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 py-4">
           {/* Project Name */}
-          <div className="space-y-2">
-            <Label htmlFor="projectName">Project Name</Label>
-            <Input
+          <div className="space-y-1.5">
+            <label htmlFor="projectName" className="text-[13px] font-medium text-[var(--app-text-muted)]">Project Name</label>
+            <input
               id="projectName"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="my-app"
-              className="font-mono"
+              className="w-full h-9 font-mono rounded-[8px] border-0 bg-[var(--app-panel)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
             />
           </div>
 
           {/* Stack Selection */}
           <div className="space-y-3">
-            <Label>Select Technology Stack</Label>
+            <label className="text-[13px] font-medium text-[var(--app-text-muted)]">Select Technology Stack</label>
             <div className="grid md:grid-cols-2 gap-4">
               {WEB_BUILDER_STACKS.map((stack) => (
-                <Card
+                <div
                   key={stack.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedStack === stack.id ? 'ring-2 ring-primary' : ''
+                  className={`cursor-pointer transition-all rounded-[8px] bg-[var(--app-panel)] p-4 ${
+                    selectedStack === stack.id ? 'ring-2 ring-[var(--app-accent)]' : ''
                   }`}
                   onClick={() => setSelectedStack(stack.id)}
                 >
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{stack.icon}</span>
-                        <h3 className="font-semibold">{stack.name}</h3>
-                      </div>
-                      {selectedStack === stack.id && (
-                        <Badge variant="default">Selected</Badge>
-                      )}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{stack.icon}</span>
+                      <h3 className="text-[13px] font-medium text-[var(--app-text)]">{stack.name}</h3>
                     </div>
-                    <p className="text-sm text-muted-foreground">{stack.description}</p>
+                    {selectedStack === stack.id && (
+                      <span className="inline-flex rounded-[6px] bg-[var(--app-accent-soft)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-accent)]">
+                        Selected
+                      </span>
+                    )}
                   </div>
-                </Card>
+                  <p className="text-[13px] text-[var(--app-text-muted)]">{stack.description}</p>
+                </div>
               ))}
             </div>
           </div>
 
           {/* Features Selection */}
           <div className="space-y-3">
-            <Label>Select Features (Optional)</Label>
+            <label className="text-[13px] font-medium text-[var(--app-text-muted)]">Select Features (Optional)</label>
             <div className="grid md:grid-cols-2 gap-4">
               {COMMON_FEATURES.map((feature) => (
-                <div key={feature.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                <div key={feature.id} className="flex items-center space-x-3 p-3 border border-[var(--app-border)] rounded-[8px]">
                   <input
                     type="checkbox"
                     id={feature.id}
                     checked={selectedFeatures.includes(feature.id)}
                     onChange={() => toggleFeature(feature.id)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded-[4px] border-[var(--app-border)] accent-[var(--app-accent)]"
                   />
                   <div className="flex-1">
-                    <Label htmlFor={feature.id} className="cursor-pointer">
+                    <label htmlFor={feature.id} className="cursor-pointer text-[13px] text-[var(--app-text)]">
                       {feature.label}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
+                    </label>
+                    <p className="text-xs text-[var(--app-text-muted)]">
                       {feature.description}
                     </p>
                   </div>
@@ -167,11 +155,13 @@ export function StackSelector({ children }: StackSelectorProps) {
           </div>
 
           {/* Generate Button */}
-          <div className="flex items-center justify-between pt-4 border-t">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex items-center justify-between pt-4 border-t border-[var(--app-border)]">
+            <div className="text-[13px] text-[var(--app-text-muted)]">
               {selectedStack ? (
                 <>
-                  <Badge variant="outline">{selectedStack.toUpperCase()}</Badge>
+                  <span className="inline-flex rounded-[6px] border border-[var(--app-border)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)]">
+                    {selectedStack.toUpperCase()}
+                  </span>
                   {selectedFeatures.length > 0 && (
                     <>
                       {' '}+ {selectedFeatures.length} features
@@ -183,25 +173,29 @@ export function StackSelector({ children }: StackSelectorProps) {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-[8px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+              >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleGenerate}
                 disabled={!selectedStack || isGenerating}
+                className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50"
               >
                 {isGenerating ? (
                   <>
-                    <Zap className="mr-2 h-4 w-4 animate-pulse" />
+                    <Zap className="h-4 w-4 animate-pulse" />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <Code2 className="mr-2 h-4 w-4" />
+                    <Code2 className="h-4 w-4" />
                     Generate Project
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

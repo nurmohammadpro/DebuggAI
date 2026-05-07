@@ -10,7 +10,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "badge inline-flex items-center gap-1 font-mono text-xs font-medium rounded-ds px-2 py-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring/50 disabled:opacity-50 disabled:pointer-events-none",
+  "badge inline-flex items-center gap-1 font-mono text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring/50 disabled:opacity-50 disabled:pointer-events-none",
   {
     variants: {
       variant: {
@@ -34,13 +34,11 @@ export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {
   dot?: boolean
-  pill?: boolean
 }
 
-function Badge({ className, variant, dot, pill, ...props }: BadgeProps) {
+function Badge({ className, variant, dot, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), pill && "badge-pill", className)}>
-      {dot && <span className="badge-dot w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" style={{ backgroundColor: variant === 'green' ? '#00C853' : variant === 'red' ? '#FF5252' : variant === 'amber' ? '#FFAB00' : variant === 'blue' ? '#40C4FF' : variant === 'purple' ? '#CE93D8' : '' }} />}
+    <div className={cn(badgeVariants({ variant }), className)}>
       {props.children}
     </div>
   )

@@ -32,18 +32,18 @@
   --color-blue: var(--ds-blue);
   --color-purple: var(--ds-purple);
 
-  /* Border Radius */
-  --ds-r4: 4px;
+  /* Border Radius — all 6px for consistent Vercel/GitHub-style */
+  --ds-r4: 6px;
   --ds-r6: 6px;
-  --ds-r8: 8px;
-  --ds-r10: 10px;
-  --ds-r12: 12px;
-  --ds-r20: 20px;
-  --ds-r-pill: 999px;
+  --ds-r8: 6px;
+  --ds-r10: 6px;
+  --ds-r12: 6px;
+  --ds-r20: 6px;
+  --ds-r-pill: 9999px;
 
   /* Shadows */
-  --ds-shadow-focus: 0 0 0 3px rgba(0,200,83,0.14);
-  --ds-shadow-card: 0 4px 16px rgba(0,0,0,0.4);
+  --ds-shadow-focus: 0 0 0 2px rgba(0,200,83,0.2);
+  --ds-shadow-card: none;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -103,6 +103,33 @@
   --ds-blue: #2563EB;
   --ds-purple: #7C3AED;
 
+  /* V03-style app variables (light) — mapped to DeBuggAI palette */
+  --app-bg: #F6FAF6;
+  --app-panel: #FFFFFF;
+  --app-panel-2: #F0F6F0;
+  --app-surface: #E6F0E6;
+  --app-surface-subtle: rgba(0, 163, 68, 0.1);
+  --app-text: #0B1A0B;
+  --app-text-muted: #5C745C;
+  --app-text-dim: #86A086;
+  --app-accent: #00A344;
+  --app-accent-soft: rgba(0, 163, 68, 0.12);
+  --app-border: #D6E3D6;
+  --app-border-strong: #C3D5C3;
+  --app-success: #00A344;
+  --app-success-soft: rgba(0, 163, 68, 0.1);
+  --app-danger: #E11D48;
+  --app-danger-soft: rgba(225, 29, 72, 0.08);
+  --app-warning: #D97706;
+  --app-warning-soft: rgba(217, 119, 6, 0.08);
+  --app-info: #2563EB;
+  --app-info-soft: rgba(37, 99, 235, 0.08);
+  --app-purple: #7C3AED;
+  --app-purple-soft: rgba(124, 58, 237, 0.08);
+  --app-overlay: rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+
   /* shadcn/ui variables */
   --background: var(--ds-bg);
   --foreground: var(--ds-text);
@@ -158,6 +185,33 @@
   --ds-blue: #40C4FF;
   --ds-purple: #CE93D8;
 
+  /* V03-style app variables (dark) — mapped to DeBuggAI palette */
+  --app-bg: #0A0D0A;
+  --app-panel: #111411;
+  --app-panel-2: #171C17;
+  --app-surface: #1E261E;
+  --app-surface-subtle: rgba(0, 200, 83, 0.1);
+  --app-text: #E8F5E9;
+  --app-text-muted: #8BAD8B;
+  --app-text-dim: #4D6B4D;
+  --app-accent: #00C853;
+  --app-accent-soft: rgba(0, 200, 83, 0.12);
+  --app-border: #1F2B1F;
+  --app-border-strong: #283228;
+  --app-success: #00C853;
+  --app-success-soft: rgba(0, 200, 83, 0.1);
+  --app-danger: #FF5252;
+  --app-danger-soft: rgba(255, 82, 82, 0.08);
+  --app-warning: #FFAB00;
+  --app-warning-soft: rgba(255, 171, 0, 0.08);
+  --app-info: #40C4FF;
+  --app-info-soft: rgba(64, 196, 255, 0.08);
+  --app-purple: #CE93D8;
+  --app-purple-soft: rgba(206, 147, 216, 0.08);
+  --app-overlay: rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+
   --background: #0A0D0A;
   --foreground: #E8F5E9;
   --card: #111411;
@@ -193,7 +247,7 @@
 
 @layer base {
   * {
-    border-color: var(--ds-border);
+    border-color: var(--app-border);
   }
 
   html {
@@ -211,44 +265,48 @@
     color: var(--foreground);
   }
 
-  /* Typography Scale - DeBuggAI Design System */
+  /* Typography Scale - DeBuggAI Design System (Flat, Huge) */
   h1, .text-display {
-    font-size: 32px;
+    font-size: 28px;
     line-height: 1.2;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.02em;
     font-weight: 600;
+    color: var(--app-text);
   }
 
   h2, .text-h1 {
-    font-size: 22px;
-    line-height: 1.3;
-    letter-spacing: -0.3px;
+    font-size: 24px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
     font-weight: 600;
+    color: var(--app-text);
   }
 
   h3, .text-h2 {
-    font-size: 17px;
-    line-height: 1.4;
-    letter-spacing: -0.2px;
-    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--app-text);
   }
 
   h4, .text-h3 {
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.4;
     font-weight: 500;
+    color: var(--app-text);
   }
 
   p, .text-body {
     font-size: 13px;
     line-height: 1.6;
-    color: var(--ds-text2);
+    color: var(--app-text-muted);
   }
 
   .text-caption {
     font-size: 11px;
     line-height: 1.5;
-    color: var(--ds-text3);
+    color: var(--app-text-dim);
   }
 
   code, .text-mono {
@@ -256,36 +314,36 @@
   }
 
   .stat-value {
-    font-size: 24px;
-    line-height: 1.2;
+    font-size: 28px;
+    line-height: 1.1;
     font-weight: 600;
-    color: var(--ds-green);
+    color: var(--app-accent);
   }
 
   /* Focus States - DeBuggAI Design System */
   :focus-visible {
     @apply outline-none;
-    box-shadow: 0 0 0 3px rgba(0,200,83,0.14);
+    box-shadow: 0 0 0 2px rgba(0,200,83,0.2);
   }
 
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
     @apply outline-none;
-    border-color: #00C853 !important;
-    box-shadow: 0 0 0 3px rgba(0,200,83,0.14) !important;
+    border-color: var(--app-accent) !important;
+    box-shadow: 0 0 0 2px rgba(0,200,83,0.2) !important;
   }
 }
 
 @layer components {
-  /* Button - DeBuggAI Design System */
+  /* Button - DeBuggAI (Rounded edges) */
   .btn {
     @apply inline-flex items-center justify-center;
-    border-radius: 999px;
+    border-radius: 6px;
     font-family: 'Inter', sans-serif;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.1s;
     white-space: nowrap;
     letter-spacing: -0.01em;
     border: none;
@@ -293,108 +351,102 @@
   }
 
   .btn:active {
-    transform: scale(0.97);
+    opacity: 0.85;
   }
 
   .btn-primary {
-    height: 40px;
-    padding: 0 20px;
-    font-size: 13.5px;
-    background: var(--ds-green);
+    height: 44px;
+    padding: 0 24px;
+    font-size: 15px;
+    background: var(--app-accent);
     color: #000000;
   }
 
   .btn-primary:hover {
-    background: #00E676;
+    opacity: 0.9;
   }
 
   .btn-ghost {
-    height: 40px;
-    padding: 0 20px;
-    font-size: 13.5px;
+    height: 44px;
+    padding: 0 24px;
+    font-size: 15px;
     background: transparent;
-    color: var(--ds-text);
-    border: 1px solid var(--ds-border2);
+    color: var(--app-text);
   }
 
   .btn-ghost:hover {
-    border-color: #00C853;
-    color: #00C853;
-    background: var(--ds-surface2);
+    color: var(--app-accent);
+    background: var(--app-surface);
   }
 
   .btn-outline {
-    height: 40px;
-    padding: 0 20px;
-    font-size: 13.5px;
+    height: 44px;
+    padding: 0 24px;
+    font-size: 15px;
     background: transparent;
-    color: var(--ds-green);
-    border: 1px solid var(--ds-green);
+    color: var(--app-accent);
+    border: 1px solid var(--app-accent);
   }
 
   .btn-outline:hover {
-    background: rgba(0,200,83,0.12);
+    background: var(--app-accent-soft);
   }
 
   .btn-danger {
-    height: 40px;
-    padding: 0 20px;
-    font-size: 13.5px;
+    height: 44px;
+    padding: 0 24px;
+    font-size: 15px;
     background: transparent;
-    color: var(--ds-red);
-    border: 1px solid rgba(255,82,82,0.35);
+    color: var(--app-danger);
   }
 
   .btn-danger:hover {
-    background: rgba(255,82,82,0.1);
+    background: var(--app-danger-soft);
   }
 
   .btn-lg {
-    height: 52px;
-    padding: 0 32px;
-    font-size: 15px;
+    height: 56px;
+    padding: 0 36px;
+    font-size: 17px;
   }
 
   .btn-sm {
-    height: 30px;
-    padding: 0 14px;
-    font-size: 12px;
-    border-radius: 999px;
+    height: 34px;
+    padding: 0 16px;
+    font-size: 13px;
   }
 
   .btn-sm.primary {
-    background: var(--ds-green);
+    background: var(--app-accent);
     color: #000000;
   }
 
   .btn-sm.ghost {
-    background: var(--ds-surface2);
-    color: var(--ds-text2);
-    border: 1px solid var(--ds-border);
+    background: var(--app-surface);
+    color: var(--app-text-muted);
   }
 
-  /* Input - DeBuggAI Design System */
+  /* Input - DeBuggAI (Rounded edges) */
   .inp {
     width: 100%;
     border-radius: 8px;
     font-family: 'Inter', sans-serif;
     font-size: 13px;
-    height: 38px;
-    padding: 0 12px;
+    height: 44px;
+    padding: 0 14px;
     outline: none;
-    background: var(--ds-surface2);
-    color: var(--ds-text);
-    border: 1px solid var(--ds-border2);
-    transition: border-color 0.15s, box-shadow 0.15s;
+    background: var(--app-panel-2);
+    color: var(--app-text);
+    border: 1px solid var(--app-border);
+    transition: border-color 0.1s;
   }
 
   .inp::placeholder {
-    color: var(--ds-text3);
+    color: var(--app-text-dim);
   }
 
   .inp:focus {
-    border-color: var(--ds-green);
-    box-shadow: 0 0 0 3px rgba(0,200,83,0.14);
+    border-color: var(--app-accent);
   }
 
   /* Badge - DeBuggAI Design System */
@@ -402,90 +454,83 @@
     @apply inline-flex items-center gap-1;
     font-size: 11px;
     font-weight: 500;
-    border-radius: var(--ds-r4);
-    padding: 2px 8px;
-    letter-spacing: 0.01em;
-    font-family: 'JetBrains Mono', monospace;
+    border-radius: 20px;
+    padding: 2px 10px;
   }
 
   .badge.bg-green {
-    background: rgba(0,200,83,0.15);
-    color: #00E676;
+    background: var(--app-accent-soft);
+    color: var(--app-accent);
   }
 
   .badge.bg-red {
-    background: rgba(255,82,82,0.15);
-    color: #FF7777;
+    background: var(--app-danger-soft);
+    color: var(--app-danger);
   }
 
   .badge.bg-amber {
-    background: rgba(255,171,0,0.15);
-    color: #FFC107;
+    background: var(--app-warning-soft);
+    color: var(--app-warning);
   }
 
   .badge.bg-blue {
-    background: rgba(64,196,255,0.15);
-    color: #40C4FF;
+    background: var(--app-info-soft);
+    color: var(--app-info);
   }
 
   .badge.bg-purple {
-    background: rgba(206,147,216,0.15);
-    color: #CE93D8;
+    background: var(--app-purple-soft);
+    color: var(--app-purple);
   }
 
   .badge.bg-gray {
-    background: var(--ds-surface3);
-    color: var(--ds-text2);
-  }
-
-  .badge-pill {
-    @apply rounded-full;
+    background: var(--app-surface);
+    color: var(--app-text-muted);
   }
 
   .badge-outline {
     @apply bg-transparent border-current;
   }
 
-  /* Card - DeBuggAI Design System */
+  /* Card - DeBuggAI (Rounded edges) */
   .card {
-    background: var(--ds-surface);
-    border: 1px solid var(--ds-border);
-    border-radius: 12px;
-    padding: 20px;
+    background: var(--app-panel);
+    border-radius: 8px;
+    border: 1px solid var(--app-border);
   }
 
   .card-sm {
-    background: var(--ds-surface);
-    border: 1px solid var(--ds-border);
-    border-radius: 10px;
-    padding: 14px 16px;
+    background: var(--app-panel);
+    border-radius: 8px;
+    border: 1px solid var(--app-border);
   }
 
   .card-title {
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 16px;
+    line-height: 1.4;
     font-weight: 500;
-    color: var(--ds-text);
+    letter-spacing: -0.02em;
+    color: var(--app-text);
     margin-bottom: 4px;
   }
 
   .card-sub {
     font-size: 13px;
     line-height: 1.6;
-    color: var(--ds-text2);
+    color: var(--app-text-muted);
   }
 
-  /* Navigation - DeBuggAI Design System */
+  /* Navigation - DeBuggAI (Flat Design) */
   .navbar {
-    @apply h-[52px] flex items-center px-5 gap-0 border-b;
-    border-color: var(--ds-border);
+    @apply h-[56px] flex items-center px-5 gap-0;
+    background: var(--app-bg);
+    border-bottom: 1px solid var(--app-border);
   }
 
   .nav-link {
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 6px;
-    color: var(--ds-text2);
+    height: 36px;
+    padding: 0 14px;
+    color: var(--app-text-muted);
     cursor: pointer;
     @apply flex items-center transition-all duration-150;
     font-size: 13px;
@@ -493,37 +538,83 @@
     border: none;
     background: transparent;
     font-family: 'Inter', sans-serif;
+    border-radius: 8px;
+    text-decoration: none;
   }
 
   .nav-link:hover {
-    color: var(--ds-text);
-    background: var(--ds-surface2);
+    color: var(--app-text);
+    background: var(--app-surface);
   }
 
   .nav-link.active {
-    color: var(--ds-green);
-    background: var(--ds-green-muted);
+    color: var(--app-accent);
+    background: var(--app-accent-soft);
   }
 
-  /* Icon Button - DeBuggAI Design System */
+  /* Icon Button - DeBuggAI (Flat Design) */
   .btn-icon {
-    border-radius: 8px;
-    height: 36px;
+    height: 40px;
     padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.15s;
-    font-size: 14px;
-    background: var(--ds-surface2);
-    color: var(--ds-text2);
-    border: 1px solid var(--ds-border);
+    transition: all 0.1s;
+    font-size: 15px;
+    background: var(--app-surface);
+    color: var(--app-text-muted);
+    border-radius: 8px;
   }
 
   .btn-icon:hover {
-    border-color: var(--ds-green);
-    color: var(--ds-green);
+    color: var(--app-accent);
+  }
+
+  /* Nav Credit Badge */
+  .nav-credit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: var(--app-accent-soft);
+    color: var(--app-accent);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Nav Notification Button */
+  .nav-notif {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--app-text-muted);
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .nav-notif:hover {
+    color: var(--app-text);
+    background: var(--app-surface);
+  }
+
+  .notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--app-accent);
   }
 }
 
@@ -534,15 +625,15 @@
   width: 100%;
   padding: 10px 16px;
   font-size: 13px;
-  color: var(--ds-text2);
+  color: var(--app-text-muted);
   text-decoration: none;
   transition: all 0.15s;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .mobile-menu-item:hover {
-  color: var(--ds-text);
-  background: var(--ds-surface2);
+  color: var(--app-text);
+  background: var(--app-surface);
 }
 
 /* Animation Classes - DeBuggAI Design System */
@@ -617,16 +708,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--ds-surface);
+  background: var(--app-panel);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--ds-border2);
-  border-radius: 4px;
+  background: var(--app-border-strong);
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ds-text3);
+  background: var(--app-text-dim);
 }
 
 /* New Design System Classes & Animations */
@@ -635,8 +726,8 @@
 .nav-logo-icon {
   width: 28px;
   height: 28px;
-  border-radius: var(--ds-r6);
-  background: var(--ds-green-muted);
+  border-radius: 6px;
+  background: var(--app-accent-soft);
   border: 1px solid rgba(0,200,83,0.3);
   display: flex;
   align-items: center;
@@ -650,7 +741,7 @@
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--ds-border);
+  border-bottom: 1px solid var(--app-border);
   transition: background 0.15s;
 }
 
@@ -668,17 +759,17 @@
 .feed-text {
   flex: 1;
   font-size: 12px;
-  color: var(--ds-text2);
+  color: var(--app-text-muted);
 }
 
 .feed-text strong {
-  color: var(--ds-text);
+  color: var(--app-text);
   font-weight: 500;
 }
 
 .feed-time {
   font-size: 10px;
-  color: var(--ds-text3);
+  color: var(--app-text-dim);
   font-family: 'JetBrains Mono', monospace;
   flex-shrink: 0;
 }
@@ -689,18 +780,18 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: var(--ds-r8);
-  border: 1px solid var(--ds-border);
-  background: var(--ds-surface);
+  border-radius: 8px;
+  border: 1px solid var(--app-border);
+  background: var(--app-panel);
   cursor: default;
   transition: all 0.2s;
   font-size: 12px;
-  color: var(--ds-text2);
+  color: var(--app-text-muted);
 }
 
 .lang-tag:hover {
-  border-color: var(--ds-border2);
-  background: var(--ds-surface2);
+  border-color: var(--app-border-strong);
+  background: var(--app-panel-2);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
@@ -715,16 +806,16 @@
 /* Terminal */
 .terminal {
   background: #0C0F0C;
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-r12);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 
 .terminal-header {
   padding: 12px 16px;
-  background: var(--ds-surface2);
-  border-bottom: 1px solid var(--ds-border);
+  background: var(--app-panel-2);
+  border-bottom: 1px solid var(--app-border);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -733,7 +824,7 @@
 .terminal-title {
   font-size: 11px;
   font-family: 'JetBrains Mono', monospace;
-  color: var(--ds-text3);
+  color: var(--app-text-dim);
   margin-left: 8px;
 }
 
@@ -746,30 +837,30 @@
 }
 
 .term-prompt {
-  color: var(--ds-green);
+  color: var(--app-accent);
 }
 
 .term-cmd {
-  color: var(--ds-text);
+  color: var(--app-text);
 }
 
 .term-output {
-  color: var(--ds-text2);
+  color: var(--app-text-muted);
 }
 
 .term-success {
-  color: #00E676;
+  color: var(--app-accent);
 }
 
 .term-error {
-  color: #FF7777;
+  color: var(--app-danger);
 }
 
 .term-cursor {
   display: inline-block;
   width: 7px;
   height: 14px;
-  background: var(--ds-green);
+  background: var(--app-accent);
   animation: blink 1s step-end infinite;
   vertical-align: middle;
   margin-left: 2px;
@@ -777,15 +868,15 @@
 
 /* Code Window */
 .code-window {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-r12);
+  background: var(--app-panel);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .code-window:hover {
-  border-color: var(--ds-border2);
+  border-color: var(--app-border-strong);
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
@@ -794,8 +885,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: var(--ds-surface2);
-  border-bottom: 1px solid var(--ds-border);
+  background: var(--app-panel-2);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .code-dots {
@@ -812,7 +903,7 @@
 .code-lang {
   font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
-  color: var(--ds-text3);
+  color: var(--app-text-dim);
 }
 
 .code-body {
@@ -828,19 +919,19 @@
 .s { color: #A5D6A7; }
 .c { color: #4D6B4D; font-style: italic; }
 .n { color: #40C4FF; }
-.p { color: var(--ds-text2); }
+.p { color: var(--app-text-muted); }
 .err { color: #FF7777; }
 
 /* Collapse/FAQ */
 .collapse-item {
-  border: 1px solid var(--ds-border);
-  border-radius: var(--ds-r8);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
   overflow: hidden;
   transition: border-color 0.2s;
 }
 
 .collapse-item:hover {
-  border-color: var(--ds-border2);
+  border-color: var(--app-border-strong);
 }
 
 .collapse-trigger {
@@ -851,19 +942,19 @@
 .collapse-icon {
   width: 18px;
   height: 18px;
-  border-radius: var(--ds-r4);
-  background: var(--ds-green-muted);
+  border-radius: 4px;
+  background: var(--app-accent-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--ds-green);
+  color: var(--app-accent);
   flex-shrink: 0;
 }
 
 .collapse-arrow {
   margin-left: auto;
-  color: var(--ds-text3);
+  color: var(--app-text-dim);
   font-size: 11px;
   transition: transform 0.2s;
 }
@@ -888,7 +979,7 @@
 
 .card-interactive:hover .card-icon {
   transform: scale(1.08);
-  background: rgba(0,200,83,0.18);
+  background: var(--app-accent-soft);
 }
 
 /* Glow Border Animation */
@@ -917,7 +1008,7 @@
 
 .testimonial-quote {
   font-size: 13px;
-  color: var(--ds-text2);
+  color: var(--app-text-muted);
   line-height: 1.7;
   margin-bottom: 16px;
   font-style: italic;
@@ -944,16 +1035,16 @@
 .testimonial-name {
   font-size: 12px;
   font-weight: 500;
-  color: var(--ds-text);
+  color: var(--app-text);
 }
 
 .testimonial-role {
   font-size: 11px;
-  color: var(--ds-text3);
+  color: var(--app-text-dim);
 }
 
 .star {
-  color: var(--ds-amber);
+  color: var(--app-warning);
   font-size: 12px;
 }
 
@@ -963,40 +1054,40 @@
   align-items: center;
   gap: 4px;
   padding: 2px 6px;
-  border-radius: var(--ds-r4);
-  background: var(--ds-surface3);
-  border: 1px solid var(--ds-border2);
+  border-radius: 4px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-strong);
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: var(--ds-text3);
+  color: var(--app-text-dim);
   line-height: 1.6;
 }
 
 /* Footer Link */
 .footer-link {
   font-size: 13px;
-  color: var(--ds-text2);
+  color: var(--app-text-muted);
   text-decoration: none;
   transition: color 0.15s;
   display: inline-block;
 }
 
 .footer-link:hover {
-  color: var(--ds-green);
+  color: var(--app-accent);
 }
 
 /* Toast */
 .toast {
-  background: var(--ds-surface2);
-  border: 1px solid var(--ds-border2);
-  border-radius: var(--ds-r10);
+  background: var(--app-panel-2);
+  border: 1px solid var(--app-border-strong);
+  border-radius: 10px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
   font-size: 12.5px;
-  color: var(--ds-text);
+  color: var(--app-text);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 

@@ -39,7 +39,7 @@ export function WorkspaceRightPanel({
     return (
       <aside className="w-10 bg-card flex items-center justify-center">
         <button
-          className="h-8 w-8 rounded-md hover:bg-muted/40 flex items-center justify-center"
+          className="h-8 w-8 rounded-[8px] hover:bg-muted/40 flex items-center justify-center"
           title="Expand panel"
           onClick={onToggleCollapsed}
         >
@@ -73,7 +73,7 @@ export function WorkspaceRightPanel({
         <div className="flex-1" />
 
         <button
-          className="h-8 w-8 rounded-md hover:bg-muted/40 flex items-center justify-center"
+          className="h-8 w-8 rounded-[8px] hover:bg-muted/40 flex items-center justify-center"
           title="Collapse panel"
           onClick={onToggleCollapsed}
         >

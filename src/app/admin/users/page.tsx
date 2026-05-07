@@ -250,7 +250,7 @@ export default function AdminUsersPage() {
             placeholder="Search users by email, name, or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853] transition-colors"
+            className="w-full pl-9 pr-3 py-2 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853] transition-colors"
           />
           {searchQuery && (
             <button
@@ -264,7 +264,7 @@ export default function AdminUsersPage() {
 
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex items-center gap-2 h-10 px-4 rounded-md transition-all ${
+          className={`inline-flex items-center gap-2 h-10 px-4 rounded-[8px] transition-all ${
             showFilters
               ? 'bg-[#00C853]/10 text-[#00C853] border-[#00C853]/30'
               : 'bg-[#171C17] text-[#8BAD8B] border-[#283228] hover:border-[#1F2B1F]'
@@ -280,13 +280,13 @@ export default function AdminUsersPage() {
 
       {/* Expanded Filters */}
       {showFilters && (
-        <div className="flex items-center gap-3 p-4 bg-[#111411] border border-[#1F2B1F] rounded-ds-xl">
+        <div className="flex items-center gap-3 p-4 bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl">
           <div className="flex items-center gap-2">
             <span className="text-xs text-[#8BAD8B]">Plan:</span>
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value as PlanFilter)}
-              className="h-8 px-3 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
+              className="h-8 px-3 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
             >
               <option value="all">All Plans</option>
               <option value="free">Free</option>
@@ -302,7 +302,7 @@ export default function AdminUsersPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className="h-8 px-3 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
+              className="h-8 px-3 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
             >
               <option value="all">All Users</option>
               <option value="active">Regular Users</option>
@@ -319,7 +319,7 @@ export default function AdminUsersPage() {
                 setSortField(field as SortField);
                 setSortOrder(order as SortOrder);
               }}
-              className="h-8 px-3 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
+              className="h-8 px-3 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] text-sm focus:outline-none focus:border-[#00C853]"
             >
               <option value="created_at-desc">Newest First</option>
               <option value="created_at-asc">Oldest First</option>
@@ -345,14 +345,14 @@ export default function AdminUsersPage() {
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-ds-xl">
+        <div className="flex items-center gap-3 p-4 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-[8px]-xl">
           <XIcon className="w-5 h-5 text-[#FF5252]" />
           <p className="text-sm text-[#FF5252]">{error}</p>
         </div>
       )}
 
       {/* Users Table */}
-      <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl overflow-hidden">
+      <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl overflow-hidden">
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-[#0A0D0A] border-b border-[#1F2B1F] text-xs font-medium text-[#8BAD8B] uppercase tracking-wider">
           <div className="col-span-1 flex items-center">
@@ -360,7 +360,7 @@ export default function AdminUsersPage() {
               type="checkbox"
               checked={selectAll}
               onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-[#283228] bg-[#171C17] text-[#00C853] focus:ring-0 focus:ring-offset-0"
+              className="w-4 h-4 rounded-[8px] border-[#283228] bg-[#171C17] text-[#00C853] focus:ring-0 focus:ring-offset-0"
             />
           </div>
           <div className="col-span-4">User</div>
@@ -400,7 +400,7 @@ export default function AdminUsersPage() {
                       e.stopPropagation();
                       toggleUserSelection(user.id);
                     }}
-                    className="w-4 h-4 rounded border-[#283228] bg-[#171C17] text-[#00C853] focus:ring-0 focus:ring-offset-0"
+                    className="w-4 h-4 rounded-[8px] border-[#283228] bg-[#171C17] text-[#00C853] focus:ring-0 focus:ring-offset-0"
                   />
                 </div>
 
@@ -415,19 +415,19 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div className="col-span-2 flex items-center">
-                  <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getPlanBadgeClass(user.plan_type)}`}>
+                  <span className={`px-2 py-1 rounded-[8px] text-xs font-medium border ${getPlanBadgeClass(user.plan_type)}`}>
                     {user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1)}
                   </span>
                 </div>
 
                 <div className="col-span-2 flex items-center gap-2">
                   {user.is_admin ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-[#FFAB00]/15 text-[#FFAB00] border border-[#FFAB00]/30">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-[8px] text-xs font-medium bg-[#FFAB00]/15 text-[#FFAB00] border border-[#FFAB00]/30">
                       <ShieldIcon className="w-3 h-3" />
                       Admin
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-[#00C853]/15 text-[#00C853] border border-[#00C853]/30">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-[8px] text-xs font-medium bg-[#00C853]/15 text-[#00C853] border border-[#00C853]/30">
                       <CheckIcon className="w-3 h-3" />
                       Active
                     </span>
@@ -444,7 +444,7 @@ export default function AdminUsersPage() {
                       e.stopPropagation();
                       setActionMenu(actionMenu === user.id ? null : user.id);
                     }}
-                    className="p-1.5 rounded-md hover:bg-[#1F2B1F] transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-[8px] hover:bg-[#1F2B1F] transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <MoreHorizontalIcon className="w-4 h-4 text-[#8BAD8B]" />
                   </button>
@@ -464,7 +464,7 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed bg-[#171C17] text-[#E8F5E9] hover:bg-[#1F2B1F] transition-colors"
+                className="px-3 py-1.5 rounded-[8px] text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed bg-[#171C17] text-[#E8F5E9] hover:bg-[#1F2B1F] transition-colors"
               >
                 Previous
               </button>
@@ -474,7 +474,7 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => setPage(p => p + 1)}
                 disabled={page >= Math.ceil(totalCount / pageSize)}
-                className="px-3 py-1.5 rounded-md text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed bg-[#171C17] text-[#E8F5E9] hover:bg-[#1F2B1F] transition-colors"
+                className="px-3 py-1.5 rounded-[8px] text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed bg-[#171C17] text-[#E8F5E9] hover:bg-[#1F2B1F] transition-colors"
               >
                 Next
               </button>

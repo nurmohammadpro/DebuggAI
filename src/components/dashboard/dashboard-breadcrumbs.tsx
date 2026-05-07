@@ -30,7 +30,6 @@ export function DashboardBreadcrumbs() {
 
   const segments = useMemo(() => {
     const parts = pathname.split('/').filter(Boolean);
-    // Skip 'dashboard' — we show Home as the root
     const dashIdx = parts.indexOf('dashboard');
     const routeParts = dashIdx >= 0 ? parts.slice(dashIdx + 1) : parts;
 
@@ -57,10 +56,10 @@ export function DashboardBreadcrumbs() {
   if (segments.length <= 1) return null;
 
   return (
-    <nav className="flex items-center gap-1 text-xs text-muted-foreground px-5 py-2 border-b border-border/40 overflow-x-auto">
+    <nav className="flex items-center gap-1 text-[13px] text-[var(--app-text-muted)] px-5 py-2 overflow-x-auto">
       <Link
         href="/dashboard"
-        className="hover:text-foreground transition-colors shrink-0 flex items-center gap-1"
+        className="hover:text-[var(--app-text)] transition-colors shrink-0 flex items-center gap-1"
       >
         <Home className="h-3.5 w-3.5" />
       </Link>
@@ -69,22 +68,21 @@ export function DashboardBreadcrumbs() {
         const isLast = i === segments.length - 1;
         let label = seg.label;
 
-        // For dynamic project ID segments, show the project name
         if (seg.isDynamic && seg.seg === projectId && project) {
           label = (project.description || project.prompt || seg.seg).slice(0, 40);
         }
 
         return (
           <span key={seg.href} className="flex items-center gap-1 shrink-0">
-            <ChevronRight className="h-3 w-3 shrink-0" />
+            <ChevronRight className="h-3 w-3 shrink-0 text-[var(--app-text-dim)]" />
             {isLast ? (
-              <span className="text-foreground font-medium truncate max-w-[160px]">
+              <span className="text-[var(--app-text)] font-medium truncate max-w-[160px]">
                 {label}
               </span>
             ) : (
               <Link
                 href={seg.href}
-                className="hover:text-foreground transition-colors truncate max-w-[160px]"
+                className="hover:text-[var(--app-text)] transition-colors truncate max-w-[160px]"
               >
                 {label}
               </Link>

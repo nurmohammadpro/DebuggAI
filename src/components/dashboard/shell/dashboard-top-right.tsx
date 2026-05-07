@@ -11,8 +11,8 @@ export function DashboardTopRight() {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="px-2.5 py-1 rounded-full border border-border/40 text-xs text-muted-foreground bg-card">
-        <span className="font-medium text-foreground">
+      <div className="text-[13px] text-[var(--app-text-muted)]">
+        <span className="text-[var(--app-text)] font-medium">
           {user?.credits === -1 ? '∞' : user?.credits ?? 0}
         </span>
         <span className="ml-1">credits</span>

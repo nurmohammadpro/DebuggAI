@@ -18,7 +18,7 @@ export default async function AdminLoginPage({
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-md bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[8px] bg-[#00C853]/10 border border-[#00C853]/30 flex items-center justify-center">
               <svg
                 className="w-5 h-5 text-[#00C853]"
                 fill="none"
@@ -38,11 +38,11 @@ export default async function AdminLoginPage({
           <p className="text-[#8BAD8B]">Admin Console</p>
         </div>
 
-        <div className="bg-[#111411] border border-[#1F2B1F] rounded-ds-xl p-8">
+        <div className="bg-[#111411] border border-[#1F2B1F] rounded-[8px]-xl p-8">
           <h2 className="text-lg font-medium text-[#E8F5E9] mb-6">Sign in to admin</h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-md">
+            <div className="mb-4 p-3 bg-[#FF5252]/10 border border-[#FF5252]/30 rounded-[8px]">
               <p className="text-sm text-[#FF5252]">{decodeURIComponent(error)}</p>
             </div>
           )}
@@ -63,7 +63,7 @@ export default async function AdminLoginPage({
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853] focus:ring-2 focus:ring-[#00C853]/10 transition-colors"
+                className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853] focus:ring-2 focus:ring-[#00C853]/10 transition-colors"
                 placeholder="admin@example.com"
               />
             </div>
@@ -81,14 +81,14 @@ export default async function AdminLoginPage({
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-md text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853] focus:ring-2 focus:ring-[#00C853]/10 transition-colors"
+                className="w-full px-3 py-2 bg-[#171C17] border border-[#283228] rounded-[8px] text-[#E8F5E9] placeholder-[#4D6B4D] focus:outline-none focus:border-[#00C853] focus:ring-2 focus:ring-[#00C853]/10 transition-colors"
                 placeholder="••••••••"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 bg-[#00C853] text-black font-medium rounded-md hover:bg-[#00E676] focus:outline-none focus:ring-2 focus:ring-[#00C853]/20 transition-colors"
+              className="w-full py-2.5 px-4 bg-[#00C853] text-black font-medium rounded-[8px] hover:bg-[#00E676] focus:outline-none focus:ring-2 focus:ring-[#00C853]/20 transition-colors"
             >
               Sign in
             </button>

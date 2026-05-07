@@ -228,16 +228,16 @@ export default function PricingPage() {
               {/* Header */}
               <div className="flex items-center gap-2.5 mb-2.5">
                 <div
-                  className="p-1.5 rounded-ds"
+                  className="p-1.5 rounded-[8px]"
                   style={{
                     background:
-                      plan.id === 'free' ? 'var(--ds-surface3)' : 'var(--ds-green-muted)',
+                      plan.id === 'free' ? 'var(--app-surface)' : 'var(--app-accent-soft)',
                   }}
                 >
                   <plan.icon
                     className="h-4 w-4"
                     style={{
-                      color: plan.id === 'free' ? 'var(--ds-text3)' : 'var(--ds-green)',
+                      color: plan.id === 'free' ? 'var(--app-text-dim)' : 'var(--app-accent)',
                     }}
                   />
                 </div>
@@ -257,7 +257,7 @@ export default function PricingPage() {
               {/* Price */}
               <div className="mb-3">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-semibold" style={{ color: 'var(--ds-green)' }}>
+                  <span className="text-lg font-semibold" style={{ color: 'var(--app-accent)' }}>
                     {plan.id === 'enterprise'
                       ? '$999+'
                       : `$${plan.price === 0 ? '0' : plan.price}`}
@@ -279,7 +279,7 @@ export default function PricingPage() {
                   <li key={i} className="flex items-start gap-2 text-[11px] leading-snug">
                     <Check
                       className="h-3.5 w-3.5 shrink-0 mt-[2px]"
-                      style={{ color: 'var(--ds-green)' }}
+                      style={{ color: 'var(--app-accent)' }}
                     />
                     <span className="text-muted-foreground">{feature}</span>
                   </li>

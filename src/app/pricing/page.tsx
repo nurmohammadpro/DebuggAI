@@ -15,7 +15,6 @@ const plans = [
       { text: 'Web Builder', included: false },
     ],
     cta: 'Get Started',
-    buttonStyle: 'btn-ghost',
     href: '/signup',
     popular: false,
   },
@@ -32,7 +31,6 @@ const plans = [
       { text: 'Referral program', included: true },
     ],
     cta: 'Upgrade to Pro',
-    buttonStyle: 'btn-primary',
     href: '/signup?plan=pro',
     popular: true,
   },
@@ -48,13 +46,11 @@ const plans = [
       { text: 'Priority support', included: true },
     ],
     cta: 'Contact Sales',
-    buttonStyle: 'btn-outline',
     href: '/contact',
     popular: false,
   },
 ];
 
-// Comparison table data
 const comparisonFeatures = [
   { name: 'Monthly Credits', free: '30', pro: '300', enterprise: 'Unlimited' },
   { name: 'AI Response Speed', free: 'Standard', pro: 'Priority', enterprise: 'Dedicated' },
@@ -74,115 +70,94 @@ export default function PricingPage() {
   return (
     <PublicLayout>
       <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
-        {/* Header Section */}
         <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--ds-green)' }}>
+          <p className="text-[11px] font-medium tracking-[0.12em] uppercase mb-3 text-[var(--app-accent)]">
             Pricing
           </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--ds-text)' }}>
+          <h1 className="text-[28px] font-semibold tracking-tight mb-4 text-[var(--app-text)]">
             Simple, transparent pricing
           </h1>
-          <p className="text-body max-w-md mx-auto" style={{ color: 'var(--ds-text2)' }}>
+          <p className="text-[13px] max-w-md mx-auto text-[var(--app-text-muted)]">
             Start free, upgrade when you need more power. No hidden fees.
           </p>
         </div>
 
-        {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className="relative flex flex-col p-6 transition-all duration-200"
+              className="relative flex flex-col p-6 transition-all duration-200 rounded-[10px]"
               style={{
-                background: 'var(--ds-surface)',
+                background: 'var(--app-panel)',
                 border: plan.popular
-                  ? '1px solid var(--ds-green)'
-                  : '1px solid var(--ds-border)',
-                borderRadius: 'var(--ds-r12)',
+                  ? '1px solid var(--app-accent)'
+                  : '1px solid var(--app-border)',
                 boxShadow: plan.popular
-                  ? '0 0 40px rgba(0,200,83,0.12), var(--ds-shadow-card)'
-                  : 'var(--ds-shadow-card)',
+                  ? '0 0 40px rgba(0,200,83,0.12)'
+                  : 'none',
                 transform: plan.popular ? 'scale(1.03)' : 'scale(1)',
                 zIndex: plan.popular ? 10 : 1,
               }}
             >
-              {/* Most Popular Badge - Brought up and styled to match border */}
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                  <span 
-                    className="font-medium tracking-wide" 
-                    style={{ 
-                      fontSize: '11px', 
-                      background: 'var(--ds-green)', 
-                      color: '#000000',
-                      padding: '4px 16px',
-                      borderRadius: 'var(--ds-r-pill)',
-                      boxShadow: '0 2px 8px rgba(0,200,83,0.3)'
-                    }}
+                  <span
+                    className="font-medium tracking-wide text-[11px] bg-[var(--app-accent)] text-black px-4 py-1 rounded-[20px]"
+                    style={{ boxShadow: '0 2px 8px rgba(0,200,83,0.3)' }}
                   >
                     Most Popular
                   </span>
                 </div>
               )}
 
-              {/* Plan Header */}
               <div className="mb-6">
-                <h3 
-                  className="font-medium tracking-widest uppercase" 
-                  style={{ 
-                    fontSize: '11px', 
-                    color: plan.popular ? 'var(--ds-green)' : 'var(--ds-text3)' 
-                  }}
+                <h3
+                  className="font-medium tracking-[0.12em] uppercase text-[11px]"
+                  style={{ color: plan.popular ? 'var(--app-accent)' : 'var(--app-text-dim)' }}
                 >
                   {plan.name}
                 </h3>
-                
+
                 <div className="flex items-baseline gap-1 mt-4">
-                  <span 
-                    className="font-semibold tracking-tight" 
-                    style={{ 
-                      fontSize: '32px', 
-                      lineHeight: '1.2', 
-                      color: 'var(--ds-text)' 
-                    }}
-                  >
+                  <span className="font-semibold tracking-tight text-[32px] leading-tight text-[var(--app-text)]">
                     {plan.price}
                   </span>
-                  <span className="text-body" style={{ color: 'var(--ds-text3)' }}>/mo</span>
+                  <span className="text-[13px] text-[var(--app-text-dim)]">/mo</span>
                 </div>
-                
-                <p className="text-body mt-2" style={{ color: 'var(--ds-text2)' }}>
+
+                <p className="text-[13px] mt-2 text-[var(--app-text-muted)]">
                   {plan.description}
                 </p>
               </div>
 
-              {/* Divider */}
-              <div style={{ borderTop: '1px solid var(--ds-border)', margin: '0 0 24px 0' }}></div>
+              <div style={{ borderTop: '1px solid var(--app-border)', margin: '0 0 24px 0' }} />
 
-              {/* Features List */}
               <ul className="flex flex-col gap-3 mb-8 flex-1">
                 {plan.features.map((feature) => (
-                  <li key={feature.text} className="flex items-center gap-3" style={{ fontSize: '13px' }}>
+                  <li key={feature.text} className="flex items-center gap-3 text-[13px]">
                     {feature.included ? (
-                      <Check className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--ds-green)' }} />
+                      <Check className="h-4 w-4 flex-shrink-0 text-[var(--app-success)]" />
                     ) : (
-                      <X className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--ds-text3)' }} />
+                      <X className="h-4 w-4 flex-shrink-0 text-[var(--app-text-dim)]" />
                     )}
-                    <span style={{ color: feature.included ? 'var(--ds-text2)' : 'var(--ds-text3)' }}>
+                    <span style={{ color: feature.included ? 'var(--app-text-muted)' : 'var(--app-text-dim)' }}>
                       {feature.text}
                     </span>
                   </li>
                 ))}
               </ul>
 
-              {/* CTA Button */}
               <Link href={plan.href} className="w-full mt-auto">
-                <button 
-                  className={`btn btn-lg w-full ${plan.buttonStyle}`}
+                <button
+                  className="w-full inline-flex items-center justify-center rounded-[8px] px-4 py-2.5 text-[13px] font-medium transition-colors hover:opacity-90"
                   style={plan.popular ? {
-                    background: 'var(--ds-green)',
+                    background: 'var(--app-accent)',
                     color: '#000000'
-                  } : {}}
+                  } : {
+                    background: 'transparent',
+                    color: 'var(--app-text-muted)',
+                    border: '1px solid var(--app-border)',
+                  }}
                 >
                   {plan.cta}
                 </button>
@@ -191,74 +166,51 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Comparison Table Section */}
         <section className="mt-24">
           <div className="text-center mb-10">
-            <h2 className="text-h1 mb-3" style={{ color: 'var(--ds-text)' }}>
+            <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)]">
               Compare Plans
             </h2>
-            <p className="text-body max-w-md mx-auto" style={{ color: 'var(--ds-text2)' }}>
-              A detailed breakdown of what’s included in each tier.
+            <p className="text-[13px] max-w-md mx-auto text-[var(--app-text-muted)]">
+              A detailed breakdown of what's included in each tier.
             </p>
           </div>
 
-          <div 
-            className="overflow-x-auto rounded-xl border" 
-            style={{ 
-              borderColor: 'var(--ds-border)', 
-              background: 'var(--ds-surface)' 
-            }}
+          <div
+            className="overflow-x-auto rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel)]"
           >
             <table className="w-full min-w-[640px]">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--ds-border)' }}>
-                  <th 
-                    className="text-left p-4 font-medium" 
-                    style={{ fontSize: '12px', color: 'var(--ds-text3)', width: '40%' }}
-                  >
+                <tr style={{ borderBottom: '1px solid var(--app-border)' }}>
+                  <th className="text-left p-4 font-medium text-[12px] text-[var(--app-text-dim)]" style={{ width: '40%' }}>
                     FEATURES
                   </th>
-                  <th 
-                    className="text-center p-4 font-medium uppercase tracking-wider" 
-                    style={{ fontSize: '11px', color: 'var(--ds-text3)' }}
-                  >
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
                     Free
                   </th>
-                  <th 
-                    className="text-center p-4 font-medium uppercase tracking-wider" 
-                    style={{ fontSize: '11px', color: 'var(--ds-green)' }}
-                  >
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-accent)]">
                     Pro
                   </th>
-                  <th 
-                    className="text-center p-4 font-medium uppercase tracking-wider" 
-                    style={{ fontSize: '11px', color: 'var(--ds-text3)' }}
-                  >
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
                     Enterprise
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {comparisonFeatures.map((feature, index) => (
-                  <tr 
+                  <tr
                     key={feature.name}
-                    style={{ 
-                      borderBottom: index === comparisonFeatures.length - 1 ? 'none' : '1px solid var(--ds-border)' 
+                    style={{
+                      borderBottom: index === comparisonFeatures.length - 1 ? 'none' : '1px solid var(--app-border)'
                     }}
                   >
-                    <td 
-                      className="p-4" 
-                      style={{ fontSize: '13px', color: 'var(--ds-text)' }}
-                    >
+                    <td className="p-4 text-[13px] text-[var(--app-text)]">
                       {feature.name}
                     </td>
                     <td className="p-4 text-center">
                       <PricingTableCell value={feature.free} />
                     </td>
-                    <td 
-                      className="p-4 text-center" 
-                      style={{ background: 'var(--ds-green-glow)' }}
-                    >
+                    <td className="p-4 text-center" style={{ background: 'var(--app-accent-soft)' }}>
                       <PricingTableCell value={feature.pro} />
                     </td>
                     <td className="p-4 text-center">
@@ -271,15 +223,14 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* Bottom FAQ / Trust Note */}
         <div className="text-center mt-16 flex flex-col items-center gap-4">
-          <div style={{ borderTop: '1px solid var(--ds-border)', width: '80px' }}></div>
-          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--ds-text3)' }}>
-            Have questions about pricing or need a custom setup for your organization? 
+          <div style={{ borderTop: '1px solid var(--app-border)', width: '80px' }} />
+          <p className="text-[13px] max-w-lg mx-auto text-[var(--app-text-dim)]">
+            Have questions about pricing or need a custom setup for your organization?
             Our team is ready to help you find the perfect plan.
           </p>
           <Link href="/contact">
-            <button className="btn btn-ghost">
+            <button className="inline-flex items-center rounded-[8px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]">
               Talk to Sales
             </button>
           </Link>

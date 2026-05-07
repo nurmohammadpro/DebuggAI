@@ -277,7 +277,7 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-[#171C17] border border-[#1F2B1F] flex items-center justify-center text-[#8BAD8B] hover:border-[#00C853] hover:text-[#00C853] transition-colors"
+                className="w-8 h-8 rounded-[8px] bg-[#171C17] border border-[#1F2B1F] flex items-center justify-center text-[#8BAD8B] hover:border-[#00C853] hover:text-[#00C853] transition-colors"
               >
                 <XIcon className="w-3.5 h-3.5" />
               </button>
@@ -317,7 +317,7 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
                 value={plan}
                 onChange={(e) => handlePlanChange(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full px-3 py-2 bg-[#111411] border border-[#283228] rounded-lg text-[#E8F5E9] focus:outline-none focus:border-[#00C853] transition-colors text-sm disabled:opacity-50"
+                className="w-full px-3 py-2 bg-[#111411] border border-[#283228] rounded-[8px] text-[#E8F5E9] focus:outline-none focus:border-[#00C853] transition-colors text-sm disabled:opacity-50"
               >
                 <option value="free">Free</option>
                 <option value="pro">Pro</option>
@@ -331,21 +331,21 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
             <div>
               <h3 className="text-xs uppercase tracking-wider text-[#4D6B4D] font-semibold mb-3">Credit Balance</h3>
               <div className="flex items-center gap-3">
-                <div className="flex-1 px-3 py-2 bg-[#111411] border border-[#283228] rounded-lg">
+                <div className="flex-1 px-3 py-2 bg-[#111411] border border-[#283228] rounded-[8px]">
                   <p className="text-2xl font-semibold text-[#00C853]">{credits.toLocaleString()}</p>
                   <p className="text-xs text-[#8BAD8B]">credits available</p>
                 </div>
                 <button
                   onClick={handleAddCredits}
                   disabled={isSubmitting}
-                  className="h-10 px-4 rounded-lg bg-[#00C853] text-black text-sm font-medium hover:bg-[#00E676] transition-colors disabled:opacity-50"
+                  className="h-10 px-4 rounded-[8px] bg-[#00C853] text-black text-sm font-medium hover:bg-[#00E676] transition-colors disabled:opacity-50"
                 >
                   + Add
                 </button>
                 <button
                   onClick={handleDeductCredits}
                   disabled={isSubmitting}
-                  className="h-10 px-4 rounded-lg bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#FF5252] hover:text-[#FF5252] transition-all text-sm font-medium disabled:opacity-50"
+                  className="h-10 px-4 rounded-[8px] bg-transparent text-[#E8F5E9] border border-[#283228] hover:border-[#FF5252] hover:text-[#FF5252] transition-all text-sm font-medium disabled:opacity-50"
                 >
                   - Deduct
                 </button>
@@ -356,7 +356,7 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
             <div>
               <h3 className="text-xs uppercase tracking-wider text-[#4D6B4D] font-semibold mb-3">Permissions & Settings</h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-[#171C17] rounded-lg border border-[#1F2B1F]">
+                <div className="flex items-center justify-between p-3 bg-[#171C17] rounded-[8px] border border-[#1F2B1F]">
                   <div>
                     <p className="text-sm font-medium text-[#E8F5E9]">Admin Access</p>
                     <p className="text-xs text-[#8BAD8B]">Full system administration</p>
@@ -376,7 +376,7 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-[#171C17] rounded-lg border border-[#1F2B1F]">
+                <div className="flex items-center justify-between p-3 bg-[#171C17] rounded-[8px] border border-[#1F2B1F]">
                   <div>
                     <p className="text-sm font-medium text-[#E8F5E9]">Zero Knowledge Mode</p>
                     <p className="text-xs text-[#8BAD8B]">Enhanced privacy mode</p>
@@ -399,7 +399,7 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
             </div>
 
             {/* Danger Zone */}
-            <div className="rounded-lg border p-4 bg-[#FF5252]/5 border-[#FF5252]/30">
+            <div className="rounded-[8px] border p-4 bg-[#FF5252]/5 border-[#FF5252]/30">
               <h3 className="text-xs uppercase tracking-wider text-[#FF5252] font-semibold mb-3">Danger Zone</h3>
               <p className="text-xs text-[#FF5252]/80 mb-4">
                 These actions are irreversible. Please be certain.
@@ -408,7 +408,7 @@ export function UserDetailSlideOver({ user, wallet, onClose, onUpdate }: UserDet
                 <button
                   onClick={handleBanUser}
                   disabled={isSubmitting}
-                  className="flex-1 h-10 px-4 rounded-lg bg-transparent text-[#FF5252] border border-[#FF5252]/35 hover:bg-[#FF5252]/10 transition-all text-sm font-medium disabled:opacity-50"
+                  className="flex-1 h-10 px-4 rounded-[8px] bg-transparent text-[#FF5252] border border-[#FF5252]/35 hover:bg-[#FF5252]/10 transition-all text-sm font-medium disabled:opacity-50"
                 >
                   Ban Account
                 </button>

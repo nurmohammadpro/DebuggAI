@@ -2,14 +2,12 @@
 
 import { Plus, FolderKanban } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 
 export function NewSplitButton({
   collapsed,
@@ -24,21 +22,20 @@ export function NewSplitButton({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            className="w-full justify-center px-2 h-10 rounded-lg bg-foreground hover:bg-foreground/90 text-background"
-            size="icon"
+          <button
+            className="w-full flex justify-center px-2 h-10 rounded-[8px] bg-[var(--app-accent)] hover:opacity-90 text-black transition-colors"
             title="New"
             aria-label="New"
           >
             <Plus className="h-4 w-4" />
-          </Button>
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-52">
-          <DropdownMenuItem onClick={onNewChat} className="cursor-pointer gap-2">
+        <DropdownMenuContent align="start" className="w-52 rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+          <DropdownMenuItem onClick={onNewChat} className="cursor-pointer gap-2 text-[13px]">
             <Plus className="h-4 w-4" />
             New Chat
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer gap-2">
+          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer gap-2 text-[13px]">
             <FolderKanban className="h-4 w-4" />
             New Project
           </DropdownMenuItem>
@@ -49,25 +46,25 @@ export function NewSplitButton({
 
   return (
     <div className="flex gap-1.5">
-      <Button
-        className="flex-1 justify-start gap-2.5 h-10 rounded-lg bg-foreground hover:bg-foreground/90 text-background active:scale-[0.98] transition-all duration-200"
+      <button
+        className="flex-1 flex justify-start items-center gap-2.5 h-10 rounded-[8px] bg-[var(--app-accent)] hover:opacity-90 text-black transition-colors px-4"
         onClick={onNewChat}
       >
         <Plus className="h-4 w-4 shrink-0" />
-        <span className="truncate font-medium">New Chat</span>
-      </Button>
+        <span className="truncate text-[13px] font-medium">New Chat</span>
+      </button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            className="h-10 w-10 px-0 rounded-lg bg-foreground hover:bg-foreground/90 text-background shrink-0"
+          <button
+            className="h-10 w-10 rounded-[8px] flex items-center justify-center bg-[var(--app-accent)] hover:opacity-90 text-black shrink-0 transition-colors"
             aria-label="More new options"
             title="More new options"
           >
             <FolderKanban className="h-4 w-4" />
-          </Button>
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-52">
-          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer gap-2">
+        <DropdownMenuContent align="start" className="w-52 rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+          <DropdownMenuItem onClick={onNewProject} className="cursor-pointer gap-2 text-[13px]">
             <FolderKanban className="h-4 w-4" />
             New Project
           </DropdownMenuItem>

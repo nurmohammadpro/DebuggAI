@@ -1,19 +1,9 @@
-/**
- * Error Console Component
- *
- * Displays runtime errors from iframe with "Debug this" button.
- * Integrates with the debug endpoint to fix errors.
- */
-
 'use client';
 
 import { useGenerationStore } from '@/store/generation-store';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, X, Bug, Loader2 } from 'lucide-react';
 import { useDebugStore } from '@/store/debug-store';
-import { useState, type ElementType } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { useGeneration } from '@/hooks/use-generation';
 
@@ -46,7 +36,6 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
     try {
       await debug(currentCode, lastError.message);
     } catch (error) {
-      // Error handled in callbacks
       console.error('Debug error:', error);
     }
   };
@@ -55,46 +44,44 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
     setLastError(null);
   };
 
-  const Container: ElementType = chromeless ? 'div' : Card;
-
   if (!lastError) {
     return (
-      <Container className={className}>
-        <div className="p-6 text-center text-muted-foreground">
-          <Bug className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No errors detected</p>
+      <div className={`rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] ${className || ''}`}>
+        <div className="p-6 text-center">
+          <Bug className="h-8 w-8 mx-auto mb-2 text-[var(--app-text-dim)]" />
+          <p className="text-[13px] text-[var(--app-text-muted)]">No errors detected</p>
         </div>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container className={className}>
+    <div className={`rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] ${className || ''}`}>
       <div className="p-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <h3 className="font-medium">Runtime Error</h3>
-            <Badge variant="red">Error</Badge>
+            <AlertTriangle className="h-5 w-5 text-[var(--app-danger)]" />
+            <h3 className="text-[13px] font-medium text-[var(--app-text)]">Runtime Error</h3>
+            <span className="inline-flex rounded-[6px] bg-[var(--app-danger-soft)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-danger)]">
+              Error
+            </span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={handleClear}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
           >
             <X className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
 
         {/* Error Message */}
-        <div className="bg-destructive/10 rounded-lg p-3 border border-destructive/20">
-          <p className="text-sm text-destructive font-medium">
+        <div className="bg-[var(--app-danger-soft)] rounded-[6px] p-3 border border-[var(--app-danger)]/20">
+          <p className="text-[13px] text-[var(--app-danger)] font-medium">
             {lastError.message}
           </p>
           {(lastError.lineno || lastError.source) && (
-            <div className="mt-2 text-xs text-muted-foreground space-y-1">
+            <div className="mt-2 text-xs text-[var(--app-text-muted)] space-y-1">
               {lastError.source && (
                 <p>
                   <span className="font-medium">Source:</span> {lastError.source}
@@ -112,40 +99,40 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button
+          <button
             onClick={handleDebug}
             disabled={debugging || isDebugging}
-            className="flex-1"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50"
           >
             {debugging || isDebugging ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Debugging...
               </>
             ) : (
               <>
-                <Bug className="mr-2 h-4 w-4" />
+                <Bug className="h-4 w-4" />
                 Debug This
               </>
             )}
-          </Button>
-          <Button
-            variant="outline"
+          </button>
+          <button
             onClick={handleClear}
             disabled={debugging || isDebugging}
+            className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
           >
             Clear
-          </Button>
+          </button>
         </div>
 
         {/* Instructions */}
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-[var(--app-text-muted)]">
           <p>
             Click <strong>Debug This</strong> to automatically fix this error using AI.
             The error and your code will be analyzed, and a corrected version will be generated.
           </p>
         </div>
       </div>
-    </Container>
+    </div>
   );
 }

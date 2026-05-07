@@ -1,3 +1,5 @@
+'use client';
+
 export function PlanBar({
   label,
   count,
@@ -13,22 +15,21 @@ export function PlanBar({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">{count}</span>
-          <span className="text-muted-foreground">
-            ({percentage.toFixed(1)}%)
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-normal text-[var(--app-text)]">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-[var(--app-text)]">{count}</span>
+          <span className="text-xs text-[var(--app-text-dim)]">
+            {percentage.toFixed(1)}%
           </span>
         </div>
       </div>
-      <div className="h-3 bg-muted rounded-full overflow-hidden">
+      <div className="h-2 rounded-full bg-[var(--app-surface)] overflow-hidden">
         <div
-          className={`h-full ${color} transition-all duration-500 rounded-full`}
-          style={{ width: `${percentage}%` }}
+          className={`h-full rounded-full transition-all duration-500 ${color}`}
+          style={{ width: `${Math.max(2, percentage)}%` }}
         />
       </div>
     </div>
   );
 }
-
