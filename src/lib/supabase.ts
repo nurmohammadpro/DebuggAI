@@ -1,10 +1,11 @@
 /**
  * Supabase Client Setup
  *
- * Initialized Supabase client with environment variables.
+ * Uses @supabase/ssr for cookie-based session management to avoid
+ * localStorage lock contention (the "lock was not released" error).
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -23,7 +24,7 @@ function createMissingEnvProxy() {
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey)
   : createMissingEnvProxy();
 
 /**

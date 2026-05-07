@@ -1,12 +1,12 @@
 /**
  * Centralized Session Hook
  *
- * Prevents multiple simultaneous getSession calls that cause auth lock errors
+ * Reads from the module-level session cache populated by SessionBootstrapper.
+ * Never calls getSession() directly — avoids lock contention from concurrent calls.
  */
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 
 interface SessionState {
   user: User | null;
@@ -14,98 +14,67 @@ interface SessionState {
   error: Error | null;
 }
 
-let globalSessionState: SessionState | null = null;
-let sessionListeners: Set<(state: SessionState) => void> = new Set();
-let sessionPromise: Promise<SessionState> | null = null;
+// Module-level session cache — set by SessionBootstrapper's onAuthStateChange
+let cachedSession: Session | null = null;
+let cachedSessionError: Error | null = null;
+const listeners: Set<(state: SessionState) => void> = new Set();
 
-function updateSessionState(state: SessionState) {
-  globalSessionState = state;
-  sessionListeners.forEach(listener => listener(state));
+function deriveState(): SessionState {
+  return {
+    user: cachedSession?.user || null,
+    isLoading: false,
+    error: cachedSessionError,
+  };
 }
 
-async function fetchSession(): Promise<SessionState> {
-  try {
-    const { data, error } = await supabase.auth.getSession();
+function notifyListeners() {
+  const state = deriveState();
+  listeners.forEach((fn) => fn(state));
+}
 
-    if (error) {
-      const state: SessionState = { user: null, isLoading: false, error };
-      updateSessionState(state);
-      return state;
-    }
-
-    const state: SessionState = {
-      user: data.session?.user || null,
-      isLoading: false,
-      error: null
-    };
-    updateSessionState(state);
-    return state;
-  } catch (error) {
-    const state: SessionState = {
-      user: null,
-      isLoading: false,
-      error: error instanceof Error ? error : new Error('Failed to get session')
-    };
-    updateSessionState(state);
-    return state;
-  }
+/** Called by SessionBootstrapper when auth state changes */
+export function setCachedSession(session: Session | null, error?: Error | null) {
+  cachedSession = session;
+  cachedSessionError = error ?? null;
+  notifyListeners();
 }
 
 export function useSession() {
-  const [sessionState, setSessionState] = useState<SessionState>(() => {
-    // Return cached state if available, otherwise start with loading
-    return globalSessionState || { user: null, isLoading: true, error: null };
-  });
+  const [state, setState] = useState<SessionState>(deriveState);
 
   useEffect(() => {
-    // Add listener
-    sessionListeners.add(setSessionState);
-
-    // Set current state
-    if (globalSessionState) {
-      setSessionState(globalSessionState);
-    }
-
-    // Fetch session if not already loading or loaded
-    if (!sessionPromise && (!globalSessionState || globalSessionState.isLoading)) {
-      sessionPromise = fetchSession().finally(() => {
-        sessionPromise = null;
-      });
-    }
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-      const state: SessionState = {
-        user: session?.user || null,
-        isLoading: false,
-        error: null
-      };
-      updateSessionState(state);
-      }
-    );
-
+    listeners.add(setState);
+    // Sync immediately in case cache was populated before this component mounted
+    setState(deriveState());
     return () => {
-      sessionListeners.delete(setSessionState);
-      subscription.unsubscribe();
+      listeners.delete(setState);
     };
   }, []);
 
-  return sessionState;
+  return state;
 }
 
-export async function getSession(): Promise<SessionState> {
-  if (sessionPromise) {
-    return sessionPromise;
+/**
+ * Returns the cached session state synchronously when available.
+ * Components that need the Supabase Session object (for access_token) should
+ * use getSession() which returns the session from cache — no network call.
+ */
+export async function getSession(): Promise<SessionState & { session?: Session | null }> {
+  // Already cached from SessionBootstrapper's onAuthStateChange
+  if (cachedSession || cachedSessionError) {
+    return { ...deriveState(), session: cachedSession };
   }
 
-  if (globalSessionState && !globalSessionState.isLoading) {
-    return globalSessionState;
-  }
-
-  sessionPromise = fetchSession().finally(() => {
-    sessionPromise = null;
+  // Fallback: wait for the bootstrapper to populate the cache.
+  // onAuthStateChange fires synchronously on subscribe, so this race is rare.
+  return new Promise((resolve) => {
+    const check = () => {
+      if (cachedSession || cachedSessionError) {
+        resolve({ ...deriveState(), session: cachedSession });
+        return;
+      }
+      setTimeout(check, 50);
+    };
+    check();
   });
-
-  return sessionPromise;
 }

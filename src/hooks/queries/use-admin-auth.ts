@@ -1,11 +1,9 @@
 'use client';
 
-import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 export async function getAdminAuthHeaders() {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { session } = await getSession();
 
   if (!session?.access_token) {
     throw new Error('Unauthorized');

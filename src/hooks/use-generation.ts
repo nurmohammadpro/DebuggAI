@@ -12,6 +12,7 @@ import { useGenerationStore } from '@/store/generation-store';
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 import { extractCode } from '@/lib/extract-code';
 import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 interface UseGenerationOptions {
   onChunk?: (chunk: string) => void;
@@ -49,9 +50,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
   } = useGenerationStore();
 
   const getAuthHeaders = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { session } = await getSession();
     if (!session?.access_token) return null;
     return { Authorization: `Bearer ${session.access_token}` };
   };

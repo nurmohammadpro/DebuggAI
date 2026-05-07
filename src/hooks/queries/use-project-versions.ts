@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
@@ -17,9 +18,7 @@ export function useProjectVersions(
     enabled: enabled && !!projectKey,
     queryFn: async (): Promise<GenerationRow[]> => {
       if (!projectKey) return [];
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { session } = await getSession();
       if (!session?.user) return [];
 
       const { data: keyVersions, error } = await supabase
