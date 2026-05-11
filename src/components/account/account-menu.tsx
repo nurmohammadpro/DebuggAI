@@ -170,17 +170,6 @@ export function AccountMenu({
         <DropdownMenuSeparator />
 
         <div className="py-1">
-          {user?.isAdmin && (
-            <>
-              <DropdownMenuItem
-                onClick={() => router.push('/dashboard/admin')}
-                className="cursor-pointer px-4 text-[13px]"
-              >
-                Admin Panel
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer px-4 text-[13px]">
             <LogOut className="mr-3 h-4 w-4" />
             Sign out

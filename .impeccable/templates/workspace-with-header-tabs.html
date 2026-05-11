@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace IDE - Tool Tabs in Header Demo</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #fafafa;
+      --bg-tertiary: #f5f5f5;
+      --border-default: #e5e5e5;
+      --border-hover: #d4d4d4;
+      --text-primary: #171717;
+      --text-secondary: #737373;
+      --text-tertiary: #a3a3a3;
+      --accent: #171717;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+
+    /* Layout */
+    .workspace {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .sidebar-logo {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .sidebar-section {
+      padding: 12px 0;
+    }
+
+    .sidebar-section-title {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 16px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .sidebar-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .sidebar-item.active {
+      background: var(--bg-tertiary);
+      font-weight: 500;
+    }
+
+    .sidebar-item-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .sidebar-item-meta {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* Header */
+    .header {
+      height: 48px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      background: var(--bg-secondary);
+      gap: 16px;
+    }
+
+    .header-logo {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .header-project {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+    }
+
+    .header-project-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .header-project-id {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: 'SF Mono', monospace;
+    }
+
+    /* Tool Tabs */
+    .tool-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .tool-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .tool-tab:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .tool-tab.active {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .tool-tab-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-secondary);
+    }
+
+    .tool-tab.active .tool-tab-icon {
+      color: var(--text-primary);
+    }
+
+    .tool-tab-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      min-width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 500;
+      padding: 0 4px;
+      border-radius: 10px;
+      background: var(--error);
+      color: white;
+    }
+
+    .tool-tab-badge.success {
+      background: var(--success);
+    }
+
+    .tool-tab-badge.warning {
+      background: var(--warning);
+    }
+
+    /* Header Actions */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .header-action:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-secondary);
+    }
+
+    .header-action.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .header-action.primary:hover {
+      background: #262626;
+    }
+
+    .credits-display {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+    }
+
+    .credits-icon {
+      color: var(--accent);
+    }
+
+    .credits-value {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Workspace Content */
+    .workspace-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* File Tree */
+    .file-tree {
+      width: 200px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+
+    .file-tree-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .file-tree-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+    }
+
+    .file-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .file-item.active {
+      background: var(--bg-tertiary);
+      font-weight: 500;
+    }
+
+    .file-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Editor */
+    .editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-default);
+      min-width: 0;
+    }
+
+    .editor-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-default);
+      background: var(--bg-secondary);
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border-default);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+      transition: background 0.15s;
+    }
+
+    .tab:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .tab.active {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .tab-close {
+      opacity: 0.4;
+      cursor: pointer;
+    }
+
+    .tab-close:hover {
+      opacity: 1;
+    }
+
+    .editor-content {
+      flex: 1;
+      padding: 20px;
+      font-family: 'SF Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-y: auto;
+      background: var(--bg-primary);
+    }
+
+    .code-line {
+      display: flex;
+      gap: 16px;
+    }
+
+    .line-number {
+      color: var(--text-tertiary);
+      min-width: 24px;
+      text-align: right;
+      user-select: none;
+    }
+
+    .line-content {
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .keyword { color: #d73a49; }
+    .string { color: #032f62; }
+    .function { color: #6f42c1; }
+    .comment { color: #6a737d; }
+
+    /* Tool Panel */
+    .tool-panel {
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border-default);
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+
+    .tool-panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 12px;
+      font-weight:  500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tool-panel-close {
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.15s;
+    }
+
+    .tool-panel-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .tool-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    /* Chat Messages */
+    .message {
+      margin-bottom: 16px;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .message-role {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .message-content {
+      font-size: 12px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .message.user .message-content {
+      background: var(--bg-tertiary);
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+    }
+
+    /* Console */
+    .console-item {
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      font-family: 'SF Mono', monospace;
+      font-size: 11px;
+      border: 1px solid var(--border-default);
+    }
+
+    .console-item.error {
+      background: rgba(239, 68, 68, 0.05);
+      border-color: var(--error);
+    }
+
+    .console-item.warning {
+      background: rgba(245, 158, 11, 0.05);
+      border-color: var(--warning);
+    }
+
+    /* Git */
+    .git-file {
+      padding: 8px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+
+    .git-file-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .git-file-name {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .git-file-status {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    /* Env */
+    .env-var {
+      padding: 8px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+
+    .env-var-name {
+      font-size: 11px;
+      font-family: 'SF Mono', monospace;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+
+    .env-var-value {
+      font-size: 11px;
+      font-family: 'SF Mono', monospace;
+      color: var(--text-secondary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .file-tree {
+        display: none;
+      }
+
+      .tool-panel {
+        position: fixed;
+        top: 48px;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 50;
+      }
+
+      .mobile-tabs {
+        display: flex;
+        border-top: 1px solid var(--border-default);
+        background: var(--bg-secondary);
+      }
+
+      .mobile-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        gap: 2px;
+        font-size: 10px;
+        color: var(--text-secondary);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .mobile-tab.active {
+        color: var(--accent);
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="workspace">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">DeBuggAI</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Workspace</div>
+        <div class="sidebar-item active">
+          <i data-lucide="home" class="sidebar-item-icon"></i>
+          <span>Dashboard</span>
+        </div>
+        <div class="sidebar-item">
+          <i data-lucide="zap" class="sidebar-item-icon"></i>
+          <span>Web Builder</span>
+        </div>
+        <div class="sidebar-item">
+          <i data-lucide="bug" class="sidebar-item-icon"></i>
+          <span>Debug Session</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Recent Projects</div>
+        <div class="sidebar-item">
+          <i data-lucide="bar-chart-2" class="sidebar-item-icon"></i>
+          <span>API Dashboard</span>
+          <span class="sidebar-item-meta">2h</span>
+        </div>
+        <div class="sidebar-item">
+          <i data-lucide="line-chart" class="sidebar-item-icon"></i>
+          <span>Analytics Tool</span>
+          <span class="sidebar-item-meta">5h</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Debug Sessions</div>
+        <div class="sidebar-item">
+          <i data-lucide="message-square" class="sidebar-item-icon"></i>
+          <span>TypeError fix</span>
+          <span class="sidebar-item-meta">3m</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-project">
+          <span class="header-project-name">API Dashboard</span>
+          <span class="header-project-id">0cd11c1a</span>
+        </div>
+
+        <!-- Tool Tabs -->
+        <div class="tool-tabs">
+          <div class="tool-tab active" data-tool="chat" onclick="selectTool('chat')">
+            <i data-lucide="message-square" class="tool-tab-icon"></i>
+            <span>Chat</span>
+            <span class="tool-tab-badge">5</span>
+          </div>
+          <div class="tool-tab" data-tool="console" onclick="selectTool('console')">
+            <i data-lucide="terminal" class="tool-tab-icon"></i>
+            <span>Console</span>
+            <span class="tool-tab-badge error">2</span>
+          </div>
+          <div class="tool-tab" data-tool="git" onclick="selectTool('git')">
+            <i data-lucide="git-branch" class="tool-tab-icon"></i>
+            <span>Git</span>
+            <span class="tool-tab-badge warning">3</span>
+          </div>
+          <div class="tool-tab" data-tool="env" onclick="selectTool('env')">
+            <i data-lucide="settings" class="tool-tab-icon"></i>
+            <span>Env</span>
+          </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="header-actions">
+          <div class="credits-display">
+            <i data-lucide="zap" class="credits-icon"></i>
+            <span class="credits-value">2.4k</span>
+          </div>
+          <button class="header-action">
+            <i data-lucide="save" style="width: 14px; height: 14px;"></i>
+            <span>Save</span>
+          </button>
+          <button class="header-action">Share</button>
+          <button class="header-action primary">
+            <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+            <span>Run</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Workspace Content -->
+      <div class="workspace-content">
+        <!-- File Tree -->
+        <div class="file-tree">
+          <div class="file-tree-header">Explorer</div>
+          <div class="file-tree-content">
+            <div class="file-item">
+              <i data-lucide="folder" class="file-icon"></i>
+              <span>src</span>
+            </div>
+            <div class="file-item" style="padding-left: 24px;">
+              <i data-lucide="folder" class="file-icon"></i>
+              <span>components</span>
+            </div>
+            <div class="file-item active" style="padding-left: 40px;">
+              <i data-lucide="file-code" class="file-icon"></i>
+              <span>Dashboard.tsx</span>
+            </div>
+            <div class="file-item" style="padding-left: 40px;">
+              <i data-lucide="file-code" class="file-icon"></i>
+              <span>Chart.tsx</span>
+            </div>
+            <div class="file-item" style="padding-left: 24px;">
+              <i data-lucide="file" class="file-icon"></i>
+              <span>App.tsx</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor">
+          <div class="editor-tabs">
+            <div class="tab active">
+              <span>Dashboard.tsx</span>
+              <span class="tab-close">×</span>
+            </div>
+            <div class="tab">
+              <span>Chart.tsx</span>
+              <span class="tab-close">×</span>
+            </div>
+          </div>
+          <div class="editor-content">
+            <div class="code-line">
+              <span class="line-number">1</span>
+              <span class="line-content"><span class="keyword">import</span> React, { useState } <span class="keyword">from</span> <span class="string">'react'</span>;</span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">2</span>
+              <span class="line-content"></span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">3</span>
+              <span class="line-content"><span class="keyword">export function</span> <span class="function">Dashboard</span>() {</span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">4</span>
+              <span class="line-content">  <span class="keyword">const</span> [data, setData] = <span class="function">useState</span>([]);</span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">5</span>
+              <span class="line-content"></span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">6</span>
+              <span class="line-content">  <span class="keyword">return</span> (</span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">7</span>
+              <span class="line-content">    &lt;div&gt;Hello World&lt;/div&gt;</span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">8</span>
+              <span class="line-content">  );</span>
+            </div>
+            <div class="code-line">
+              <span class="line-number">9</span>
+              <span class="line-content">}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tool Panel -->
+        <div class="tool-panel" id="toolPanel">
+          <div class="tool-panel-header">
+            <span id="toolPanelTitle">Chat</span>
+            <span class="tool-panel-close" onclick="closeToolPanel()">
+              <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+            </span>
+          </div>
+          <div class="tool-panel-content" id="toolPanelContent">
+            <!-- Chat Content (shown by default) -->
+            <div id="chatContent">
+              <div class="message">
+                <div class="message-header">
+                  <span class="message-role">AI</span>
+                  <span class="message-time">2m ago</span>
+                </div>
+                <div class="message-content">
+                  I can help you debug this code. What would you like to work on?
+                </div>
+              </div>
+              <div class="message user">
+                <div class="message-header">
+                  <span class="message-role">You</span>
+                  <span class="message-time">1m ago</span>
+                </div>
+                <div class="message-content">
+                  Add error handling to the fetchData function
+                </div>
+              </div>
+            </div>
+
+            <!-- Console Content -->
+            <div id="consoleContent" class="hidden">
+              <div class="console-item error">
+                <div style="color: var(--error); margin-bottom: 4px;">✖ Error: Cannot read property 'map' of undefined</div>
+                <div style="color: var(--text-tertiary);">Dashboard.tsx:13:45</div>
+              </div>
+              <div class="console-item warning">
+                <div style="color: var(--warning); margin-bottom: 4px;">⚠ Warning: Unused variable 'data'</div>
+                <div style="color: var(--text-tertiary);">Dashboard.tsx:5:12</div>
+              </div>
+            </div>
+
+            <!-- Git Content -->
+            <div id="gitContent" class="hidden">
+              <div class="git-file">
+                <div class="git-file-header">
+                  <span class="git-file-name">Dashboard.tsx</span>
+                  <span class="git-file-status">Modified</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary);">+3 lines, -1 line</div>
+              </div>
+              <div class="git-file">
+                <div class="git-file-header">
+                  <span class="git-file-name">Chart.tsx</span>
+                  <span class="git-file-status">Added</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary);">New file</div>
+              </div>
+            </div>
+
+            <!-- Env Content -->
+            <div id="envContent" class="hidden">
+              <div class="env-var">
+                <div class="env-var-name">API_KEY</div>
+                <div class="env-var-value">••••••••••••••••••</div>
+              </div>
+              <div class="env-var">
+                <div class="env-var-name">DATABASE_URL</div>
+                <div class="env-var-value">postgresql://...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Tabs -->
+  <div class="mobile-tabs hidden" id="mobileTabs">
+    <button class="mobile-tab active" onclick="selectTool('chat')">
+      <i data-lucide="message-square" class="mobile-tab-icon"></i>
+      <span>Chat</span>
+      <span class="tab-badge">5</span>
+    </button>
+    <button class="mobile-tab" onclick="selectTool('console')">
+      <i data-lucide="terminal" class="mobile-tab-icon"></i>
+      <span>Console</span>
+      <span class="tab-badge error">2</span>
+    </button>
+    <button class="mobile-tab" onclick="selectTool('git')">
+      <i data-lucide="git-branch" class="mobile-tab-icon"></i>
+      <span>Git</span>
+      <span class="tab-badge warning">3</span>
+    </button>
+    <button class="mobile-tab" onclick="selectTool('env')">
+      <i data-lucide="settings" class="mobile-tab-icon"></i>
+      <span>Env</span>
+    </button>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    function selectTool(tool) {
+      // Update tab active states
+      document.querySelectorAll('.tool-tab, .mobile-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.tool === tool || tab.textContent.toLowerCase().includes(tool)) {
+          tab.classList.add('active');
+        }
+      });
+
+      // Update panel title and content
+      const titles = {
+        chat: 'Chat',
+        console: 'Console',
+        git: 'Git',
+        env: 'Environment'
+      };
+
+      document.getElementById('toolPanelTitle').textContent = titles[tool];
+
+      // Hide all content, show selected
+      document.getElementById('chatContent').classList.add('hidden');
+      document.getElementById('consoleContent').classList.add('hidden');
+      document.getElementById('gitContent').classList.add('hidden');
+      document.getElementById('envContent').classList.add('hidden');
+
+      document.getElementById(tool + 'Content').classList.remove('hidden');
+
+      // Show panel if it was closed
+      const panel = document.getElementById('toolPanel');
+      panel.style.display = 'flex';
+    }
+
+    function closeToolPanel() {
+      document.getElementById('toolPanel').style.display = 'none';
+    }
+
+    // Handle responsive
+    function handleResize() {
+      const mobileTabs = document.getElementById('mobileTabs');
+      const toolPanel = document.getElementById('toolPanel');
+
+      if (window.innerWidth <= 768) {
+        mobileTabs.classList.remove('hidden');
+        toolPanel.style.position = 'fixed';
+        toolPanel.style.top = '48px';
+        toolPanel.style.bottom = '0';
+      } else {
+        mobileTabs.classList.add('hidden');
+        toolPanel.style.position = '';
+        toolPanel.style.top = '';
+        toolPanel.style.bottom = '';
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+  </script>
+</body>
+</html>

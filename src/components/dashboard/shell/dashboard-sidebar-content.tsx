@@ -15,7 +15,8 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-
+import { useShellStore } from '@/store/shell-store';
+import { useSessionStore } from '@/store/session-store';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -27,14 +28,13 @@ import { dashboardMoreNav, dashboardPrimaryNav } from '@/components/dashboard/sh
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import { SidebarItem } from '@/components/dashboard/shell/sidebar/sidebar-item';
-import { useShellStore } from '@/store/shell-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { DeleteProjectDialog } from '@/components/dashboard/projects/delete-project-dialog';
 import { RenameProjectDialog } from '@/components/dashboard/projects/rename-project-dialog';
 import { DeleteSessionDialog } from '@/components/dashboard/debug/delete-session-dialog';
 import { RenameItemDialog } from '@/components/dashboard/shell/sidebar/rename-item-dialog';
 import { NewSplitButton } from '@/components/dashboard/shell/sidebar/new-split-button';
-import { useSessionStore } from '@/store/session-store';
+import { UserModal } from '@/components/dashboard/shell/user-modal';
 
 type DialogState =
   | { type: 'none' }
@@ -230,6 +230,7 @@ export function DashboardSidebarContent({
   const [query, setQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
   const [dialog, dispatchDialog] = useReducer(dialogReducer, { type: 'none' as const });
+  const [userModalOpen, setUserModalOpen] = useState(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -327,8 +328,8 @@ export function DashboardSidebarContent({
   // ── render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col flex-1 w-full min-h-0">
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4">
+    <div className="flex flex-col flex-1 w-full h-full min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
       {/* ── New Chat / Search ──────────────────────────────────────── */}
       <div className={cn('px-3 pt-3 pb-2 space-y-2', collapsed && 'px-2')}>
         <NewSplitButton
@@ -547,8 +548,9 @@ export function DashboardSidebarContent({
       </div>
 
       {/* ── User Footer ────────────────────────────────────────────── */}
-      <div className="shrink-0 p-2">
+      <div className="shrink-0 mt-auto p-2 border-t border-[var(--app-border)]">
         <button
+          onClick={() => setUserModalOpen(true)}
           className={cn(
             'flex w-full items-center gap-2.5 px-3 py-2 rounded-[8px] text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]',
             collapsed && 'justify-center px-2',
@@ -576,6 +578,8 @@ export function DashboardSidebarContent({
           )}
         </button>
       </div>
+
+      <UserModal open={userModalOpen} onOpenChange={setUserModalOpen} collapsed={collapsed} />
 
       {/* ── Dialogs ────────────────────────────────────────────────── */}
       <RenameItemDialog

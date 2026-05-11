@@ -41,9 +41,9 @@ export function SessionBootstrapper() {
             const newBalance = payload.new.balance;
             setCredits(newBalance);
           }
-        )
-        .subscribe();
+        );
 
+      channel.subscribe();
       channelRef.current = channel;
     },
     [setCredits, unsubscribeCredits]

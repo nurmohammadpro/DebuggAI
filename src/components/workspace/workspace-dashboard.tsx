@@ -10,25 +10,23 @@ import { useProject } from '@/hooks/queries/use-project';
 import { useGenerationStore } from '@/store/generation-store';
 import { useMemo } from 'react';
 import { getProjectKey } from '@/lib/project/project-key';
-import {
-  WorkspaceIconSidebar,
-  type WorkspaceLeftView,
-  type WorkspaceRightTab,
-} from '@/components/workspace/workspace-icon-sidebar';
 import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import type { EditorView } from '@/components/workspace/workspace-editor';
 import { WorkspaceRightPanel } from '@/components/workspace/workspace-right-panel';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
+import { WorkspaceMobileTabs } from '@/components/workspace/workspace-mobile-tabs';
 import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
-import { Play, Share2, Zap } from 'lucide-react';
+import { Play, Share2, Zap, MessageSquare, Terminal, GitBranch, Settings, Plug, Menu } from 'lucide-react';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
+import type { WorkspaceRightTab } from '@/components/workspace/workspace-right-panel';
+import type { WorkspaceLeftView } from '@/components/workspace/workspace-icon-sidebar';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -41,6 +39,8 @@ export function WorkspaceDashboard() {
   const [leftView, setLeftView] = useState<WorkspaceLeftView>('explorer');
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('chat');
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [explorerWidth, setExplorerWidth] = useState(288);
   const [rightWidth, setRightWidth] = useState(420);
   const [editorView, setEditorView] = useState<EditorView>('code');
@@ -186,14 +186,42 @@ export function WorkspaceDashboard() {
     </>
   );
 
+  const toolTabs = [
+    { id: 'chat' as const, label: 'Chat', icon: MessageSquare },
+    { id: 'console' as const, label: 'Console', icon: Terminal },
+    { id: 'git' as const, label: 'Git', icon: GitBranch },
+    { id: 'env' as const, label: 'Env', icon: Settings },
+    { id: 'connections' as const, label: 'Connect', icon: Plug },
+  ];
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex">
-      {/* Unified Sidebar */}
-      <UnifiedSidebar
-        recentChats={recentChats}
-        recentProjects={recentProjects}
-        collapsed={false}
-      />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <UnifiedSidebar
+          recentChats={recentChats}
+          recentProjects={recentProjects}
+          collapsed={false}
+        />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] z-50 md:hidden overflow-y-auto">
+            <UnifiedSidebar
+              recentChats={recentChats}
+              recentProjects={recentProjects}
+              collapsed={false}
+              mobile
+            />
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
@@ -202,22 +230,26 @@ export function WorkspaceDashboard() {
           title={project?.description || project?.prompt || 'Untitled Project'}
           subtitle={effectiveProjectId}
           actions={headerActions}
+          toolTabs={toolTabs}
+          activeToolTab={rightTab}
+          onToolTabChange={(tab) => {
+            setRightCollapsed(false);
+            setRightTab(tab);
+            setMobilePanelOpen(true);
+          }}
+          mobileMenuButton={
+            <button
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          }
         />
 
         {/* IDE Workspace */}
         <div className="flex-1 min-h-0 flex min-w-0">
-          {/* Icon Sidebar */}
-          <div className="w-12 shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-secondary)]">
-            <WorkspaceIconSidebar
-              leftView={leftView}
-              onLeftViewChange={setLeftView}
-              onRightTabChange={(tab) => {
-                setRightCollapsed(false);
-                setRightTab(tab);
-              }}
-            />
-          </div>
-
           {/* File Tree */}
           <WorkspaceFileTree
             view={leftView}
@@ -241,15 +273,40 @@ export function WorkspaceDashboard() {
             }
           />
 
-          {/* Right Panel */}
+          {/* Right Panel - Hidden on mobile, shown on desktop */}
+          <div className="hidden sm:block">
+            <WorkspaceRightPanel
+              activeTab={rightTab}
+              onTabChange={setRightTab}
+              collapsed={rightCollapsed}
+              onToggleCollapsed={() => setRightCollapsed((v) => !v)}
+              width={clamp(rightWidth, 320, 720)}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Bottom Tabs */}
+        <WorkspaceMobileTabs
+          activeTab={rightTab}
+          onTabChange={(tab) => {
+            setRightCollapsed(false);
+            setRightTab(tab);
+            setMobilePanelOpen(true);
+          }}
+        />
+
+        {/* Mobile Panel Overlay */}
+        {mobilePanelOpen && (
           <WorkspaceRightPanel
             activeTab={rightTab}
             onTabChange={setRightTab}
-            collapsed={rightCollapsed}
-            onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-            width={clamp(rightWidth, 320, 720)}
+            collapsed={false}
+            onToggleCollapsed={() => {}}
+            width={0}
+            mobile
+            onMobileClose={() => setMobilePanelOpen(false)}
           />
-        </div>
+        )}
       </main>
     </div>
   );

@@ -11,6 +11,7 @@ interface UnifiedSidebarProps {
   recentProjects?: GenerationRow[];
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  mobile?: boolean;
 }
 
 export function UnifiedSidebar({
@@ -18,6 +19,7 @@ export function UnifiedSidebar({
   recentProjects = [],
   collapsed = false,
   onToggleCollapsed,
+  mobile = false,
 }: UnifiedSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -30,89 +32,92 @@ export function UnifiedSidebar({
 
   return (
     <aside
-      className={`hidden md:flex shrink-0 flex-col bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transition-all duration-200 ${
+      className={`${mobile ? 'flex' : 'hidden md:flex'} shrink-0 flex-col h-full bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transition-all duration-200 ${
         collapsed ? 'w-[68px]' : 'w-[280px]'
       }`}
     >
-      {/* Header */}
-      <div className="h-14 border-b border-[var(--border-default)] flex items-center justify-between px-4">
-        {!collapsed && (
-          <Link href="/dashboard" className="font-semibold text-[14px] text-[var(--text-primary)]">
-            DeBuggAI
-          </Link>
-        )}
-        {onToggleCollapsed && (
-          <button
-            onClick={onToggleCollapsed}
-            className="p-1 rounded-[var(--radius-sm)] text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-secondary)] transition-all"
-            aria-label="Toggle sidebar"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <path d="M9 3v18"/>
-            </svg>
-          </button>
-        )}
+      {/* Top Content - Navigation and Recent Items */}
+      <div className="flex-1 overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="h-14 border-b border-[var(--border-default)] flex items-center justify-between px-4 shrink-0">
+          {!collapsed && (
+            <Link href="/dashboard" className="font-semibold text-[14px] text-[var(--text-primary)]">
+              DeBuggAI
+            </Link>
+          )}
+          {onToggleCollapsed && (
+            <button
+              onClick={onToggleCollapsed}
+              className="p-1 rounded-[var(--radius-sm)] text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-secondary)] transition-all"
+              aria-label="Toggle sidebar"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M9 3v18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex-1 py-3 overflow-y-auto">
+          {/* Main Navigation */}
+          {!collapsed && (
+            <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+              Workspace
+            </div>
+          )}
+
+          <NavItem
+            collapsed={collapsed}
+            active={isDashboardHome}
+            icon="⌂"
+            label="Dashboard"
+            href="/dashboard"
+          />
+          <NavItem
+            collapsed={collapsed}
+            active={isWebBuilder}
+            icon="⚡"
+            label="Web Builder"
+            href="/dashboard/web-builder"
+          />
+          <NavItem
+            collapsed={collapsed}
+            active={isDebug}
+            icon="🐛"
+            label="Debug Session"
+            href="/dashboard/debug"
+          />
+
+          {/* Recent Projects */}
+          {!collapsed && recentProjects.length > 0 && (
+            <div className="mt-4">
+              <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                Recent Projects
+              </div>
+              {recentProjects.slice(0, 5).map((project) => (
+                <RecentProjectItem key={project.id} project={project} />
+              ))}
+            </div>
+          )}
+
+          {/* Debug Sessions */}
+          {!collapsed && recentChats.length > 0 && (
+            <div className="mt-4">
+              <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                Debug Sessions
+              </div>
+              {recentChats.slice(0, 5).map((chat) => (
+                <RecentChatItem key={chat.id} chat={chat} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-3">
-        {/* Main Navigation */}
-        {!collapsed && (
-          <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-            Workspace
-          </div>
-        )}
-
-        <NavItem
-          collapsed={collapsed}
-          active={isDashboardHome}
-          icon="⌂"
-          label="Dashboard"
-          href="/dashboard"
-        />
-        <NavItem
-          collapsed={collapsed}
-          active={isWebBuilder}
-          icon="⚡"
-          label="Web Builder"
-          href="/dashboard/web-builder"
-        />
-        <NavItem
-          collapsed={collapsed}
-          active={isDebug}
-          icon="🐛"
-          label="Debug Session"
-          href="/dashboard/debug"
-        />
-
-        {/* Recent Projects */}
-        {!collapsed && recentProjects.length > 0 && (
-          <div className="mt-4">
-            <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-              Recent Projects
-            </div>
-            {recentProjects.slice(0, 5).map((project) => (
-              <RecentProjectItem key={project.id} project={project} />
-            ))}
-          </div>
-        )}
-
-        {/* Debug Sessions */}
-        {!collapsed && recentChats.length > 0 && (
-          <div className="mt-4">
-            <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-              Debug Sessions
-            </div>
-            {recentChats.slice(0, 5).map((chat) => (
-              <RecentChatItem key={chat.id} chat={chat} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="p-3 border-t border-[var(--border-default)]">
+      {/* Bottom Content - User Profile */}
+      <div className="p-3 border-t border-[var(--border-default)] shrink-0">
         {collapsed ? (
           <Link
             href="/dashboard/settings"

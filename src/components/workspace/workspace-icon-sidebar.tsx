@@ -9,13 +9,9 @@ import {
   Settings,
 } from 'lucide-react';
 
+import type { WorkspaceRightTab } from './workspace-right-panel';
+
 export type WorkspaceLeftView = 'explorer' | 'search';
-export type WorkspaceRightTab =
-  | 'chat'
-  | 'console'
-  | 'git'
-  | 'env'
-  | 'connections';
 
 export function WorkspaceIconSidebar({
   leftView,
