@@ -103,6 +103,23 @@
   --ds-blue: #2563EB;
   --ds-purple: #7C3AED;
 
+  /* Minimal client dashboard design tokens */
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f5f5f5;
+  --border-default: #e5e5e5;
+  --border-hover: #d4d4d4;
+  --text-primary: #171717;
+  --text-secondary: #737373;
+  --text-tertiary: #a3a3a3;
+  --accent: #171717;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
   /* V03-style app variables (light) — mapped to DeBuggAI palette */
   --app-bg: #F6FAF6;
   --app-panel: #FFFFFF;
@@ -184,6 +201,20 @@
   --ds-amber: #FFAB00;
   --ds-blue: #40C4FF;
   --ds-purple: #CE93D8;
+
+  /* Minimal client dashboard design tokens (dark) */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-tertiary: #262626;
+  --border-default: #333333;
+  --border-hover: #404040;
+  --text-primary: #fafafa;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+  --accent: #fafafa;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
 
   /* V03-style app variables (dark) — mapped to DeBuggAI palette */
   --app-bg: #0A0D0A;

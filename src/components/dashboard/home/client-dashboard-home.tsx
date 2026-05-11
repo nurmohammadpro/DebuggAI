@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 import { supabase } from '@/lib/supabase';
 import { createProjectFromGeneration } from '@/lib/projects/create-project';
 import { toast } from 'sonner';
@@ -14,7 +13,7 @@ import { DashboardDebugIssues } from '@/components/dashboard/home/dashboard-debu
 import { CommandPalette } from '@/components/dashboard/command-palette';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 
-export function DashboardHome() {
+export function ClientDashboardHome() {
   const router = useRouter();
   const {
     recentChats,
