@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBuggAI - Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #fafafa;
+      --bg-tertiary: #f5f5f5;
+      --border-default: #e5e5e5;
+      --border-hover: #d4d4d4;
+      --text-primary: #171717;
+      --text-secondary: #737373;
+      --text-tertiary: #a3a3a3;
+      --accent: #171717;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+
+    /* Buttons */
+    .btn {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-secondary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #262626;
+      border-color: #262626;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-secondary);
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .btn-danger {
+      color: var(--error);
+      border-color: rgba(239,68,68,0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: var(--error);
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: rgba(34,197,94,0.1);
+      color: var(--success);
+    }
+
+    .badge-warning {
+      background: rgba(245,158,11,0.1);
+      color: var(--warning);
+    }
+
+    .badge-error {
+      background: rgba(239,68,68,0.1);
+      color: var(--error);
+    }
+
+    /* Layout */
+    .admin-container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .admin-sidebar {
+      width: 240px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+
+    .admin-sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .admin-sidebar-logo {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .admin-sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .admin-sidebar-section {
+      margin-bottom: 16px;
+    }
+
+    .admin-sidebar-title {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 16px;
+      margin-bottom: 8px;
+    }
+
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .admin-nav-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .admin-nav-item.active {
+      background: var(--bg-tertiary);
+      font-weight: 500;
+    }
+
+    .admin-nav-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .admin-sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border-default);
+    }
+
+    .admin-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: var(--radius-md);
+    }
+
+    .admin-user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .admin-user-details {
+      flex: 1;
+    }
+
+    .admin-user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .admin-user-role {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* Main Content */
+    .admin-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .admin-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .admin-title-section h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .admin-title-section p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .admin-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .admin-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+    }
+
+    /* Admin Sections */
+    .admin-section {
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Quick Actions */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .action-card {
+      padding: 20px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-secondary);
+    }
+
+    .action-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .action-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .action-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .data-table thead {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .data-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: var(--bg-secondary);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-default);
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      color: var(--text-primary);
+      font-weight: 500;
+      border-bottom-color: var(--accent);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Status Indicator */
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .status-dot.online {
+      background: var(--success);
+    }
+
+    .status-dot.offline {
+      background: var(--text-tertiary);
+    }
+
+    .status-dot.busy {
+      background: var(--warning);
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .activity-description {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .activity-time {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* Search */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 6px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--text-tertiary);
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      padding: 4px 12px;
+      font-size: 11px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-btn:hover {
+      background: var(--bg-secondary);
+    }
+
+    .filter-btn.active {
+      background: var(--bg-tertiary);
+      font-weight: 500;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      padding: 16px 0;
+    }
+
+    .pagination-btn {
+      padding: 4px 8px;
+      font-size: 11px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      cursor: pointer;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--bg-secondary);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-info {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-sidebar-logo">DeBuggAI Admin</div>
+      </div>
+
+      <div class="admin-sidebar-content">
+        <div class="admin-sidebar-section">
+          <div class="admin-sidebar-title">Overview</div>
+          <div class="admin-nav-item active" data-section="overview">
+            <span class="admin-nav-icon">📊</span>
+            <span>Dashboard</span>
+          </div>
+        </div>
+
+        <div class="admin-sidebar-section">
+          <div class="admin-sidebar-title">Management</div>
+          <div class="admin-nav-item" data-section="users">
+            <span class="admin-nav-icon">👥</span>
+            <span>Users</span>
+          </div>
+          <div class="admin-nav-item" data-section="credits">
+            <span class="admin-nav-icon">💳</span>
+            <span>Credits</span>
+          </div>
+          <div class="admin-nav-item" data-section="projects">
+            <span class="admin-nav-icon">📁</span>
+            <span>Projects</span>
+          </div>
+        </div>
+
+        <div class="admin-sidebar-section">
+          <div class="admin-sidebar-title">Monitoring</div>
+          <div class="admin-nav-item" data-section="activity">
+            <span class="admin-nav-icon">📋</span>
+            <span>Activity Log</span>
+          </div>
+          <div class="admin-nav-item" data-section="analytics">
+            <span class="admin-nav-icon">📈</span>
+            <span>Analytics</span>
+          </div>
+        </div>
+
+        <div class="admin-sidebar-section">
+          <div class="admin-sidebar-title">System</div>
+          <div class="admin-nav-item" data-section="settings">
+            <span class="admin-nav-icon">⚙️</span>
+            <span>Settings</span>
+          </div>
+          <div class="admin-nav-item" data-section="security">
+            <span class="admin-nav-icon">🔒</span>
+            <span>Security</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-sidebar-footer">
+        <div class="admin-user-info">
+          <div class="admin-user-avatar">A</div>
+          <div class="admin-user-details">
+            <div class="admin-user-name">Admin User</div>
+            <div class="admin-user-role">Super Admin</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Admin Main Content -->
+    <main class="admin-main">
+      <div class="admin-header">
+        <div class="admin-title-section">
+          <h1>Admin Dashboard</h1>
+          <p>Manage users, credits, and system operations</p>
+        </div>
+        <div class="admin-header-actions">
+          <button class="btn btn-sm">Export Data</button>
+          <button class="btn btn-sm btn-primary">System Status</button>
+        </div>
+      </div>
+
+      <div class="admin-content">
+        <!-- Overview Section -->
+        <div class="admin-section active" id="section-overview">
+          <!-- Stats -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">1,234</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">45.6k</div>
+              <div class="stat-label">Credits Used</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">892</div>
+              <div class="stat-label">Active Projects</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">12</div>
+              <div class="stat-label">Pending Reviews</div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="section-header">
+            <h2 class="section-title">Quick Actions</h2>
+          </div>
+          <div class="quick-actions-grid">
+            <div class="action-card" onclick="showSection('users')">
+              <div class="action-icon">👥</div>
+              <div class="action-title">User Management</div>
+              <div class="action-description">Manage accounts and permissions</div>
+            </div>
+            <div class="action-card" onclick="showSection('credits')">
+              <div class="action-icon">💳</div>
+              <div class="action-title">Credit System</div>
+              <div class="action-description">Allocate and monitor usage</div>
+            </div>
+            <div class="action-card" onclick="showSection('activity')">
+              <div class="action-icon">📋</div>
+              <div class="action-title">Activity Log</div>
+              <div class="action-description">View system activity</div>
+            </div>
+            <div class="action-card">
+              <div class="action-icon">🔒</div>
+              <div class="action-title">Security</div>
+              <div class="action-description">Audit logs and reports</div>
+            </div>
+            <div class="action-card">
+              <div class="action-icon">⚙️</div>
+              <div class="action-title">Settings</div>
+              <div class="action-description">Configure system</div>
+            </div>
+            <div class="action-card">
+              <div class="action-icon">📊</div>
+              <div class="action-title">Analytics</div>
+              <div class="action-description">Usage insights</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="section-header">
+            <h2 class="section-title">Recent Activity</h2>
+          </div>
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon">👤</div>
+              <div class="activity-content">
+                <div class="activity-title">New user registered</div>
+                <div class="activity-description">john@example.com created a new account</div>
+                <div class="activity-time">2 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💳</div>
+              <div class="activity-content">
+                <div class="activity-title">Credits allocated</div>
+                <div class="activity-description">500 credits added to user #1234</div>
+                <div class="activity-time">15 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">📁</div>
+              <div class="activity-content">
+                <div class="activity-title">Project created</div>
+                <div class="activity-description">API Dashboard project created by user #5678</div>
+                <div class="activity-time">1 hour ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Section -->
+        <div class="admin-section" id="section-users" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">User Management</h2>
+            <button class="btn btn-sm btn-primary">Add User</button>
+          </div>
+
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Search users by email or name...">
+            <select class="filter-btn">
+              <option>All Plans</option>
+              <option>Free</option>
+              <option>Pro</option>
+              <option>Enterprise</option>
+            </select>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Plan</th>
+                <th>Credits</th>
+                <th>Projects</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>john@example.com</td>
+                <td>Pro</td>
+                <td>2,340</td>
+                <td>5</td>
+                <td><span class="status-dot online"></span>Active</td>
+                <td>2 days ago</td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                  <button class="btn btn-sm btn-danger">Ban</button>
+                </td>
+              </tr>
+              <tr>
+                <td>sarah@example.com</td>
+                <td>Free</td>
+                <td>120</td>
+                <td>1</td>
+                <td><span class="status-dot online"></span>Active</td>
+                <td>1 week ago</td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                  <button class="btn btn-sm btn-danger">Ban</button>
+                </td>
+              </tr>
+              <tr>
+                <td>mike@example.com</td>
+                <td>Enterprise</td>
+                <td>15,600</td>
+                <td>12</td>
+                <td><span class="status-dot busy"></span>Pending</td>
+                <td>3 days ago</td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                  <button class="btn btn-sm btn-danger">Ban</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="pagination">
+            <button class="pagination-btn" disabled>←</button>
+            <span class="pagination-info">Page 1 of 50</span>
+            <button class="pagination-btn">→</button>
+          </div>
+        </div>
+
+        <!-- Credits Section -->
+        <div class="admin-section" id="section-credits" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">Credit Management</h2>
+            <button class="btn btn-sm btn-primary">Allocate Credits</button>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active" data-tab="transactions">Transactions</div>
+            <div class="tab" data-tab="allocations">Allocations</div>
+            <div class="tab" data-tab="packages">Packages</div>
+          </div>
+
+          <div class="tab-content active" id="tab-transactions">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Balance</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>john@example.com</td>
+                  <td>Usage</td>
+                  <td>-50</td>
+                  <td>2,290</td>
+                  <td>2 minutes ago</td>
+                </tr>
+                <tr>
+                  <td>sarah@example.com</td>
+                  <td>Purchase</td>
+                  <td>+500</td>
+                  <td>620</td>
+                  <td>1 hour ago</td>
+                </tr>
+                <tr>
+                  <td>mike@example.com</td>
+                  <td>Allocation</td>
+                  <td>+1000</td>
+                  <td>16,600</td>
+                  <td>3 hours ago</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="admin-section" id="section-projects" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">Project Management</h2>
+          </div>
+
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Search projects...">
+            <select class="filter-btn">
+              <option>All Status</option>
+              <option>Active</option>
+              <option>Archived</option>
+            </select>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Owner</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>API Dashboard</td>
+                <td>john@example.com</td>
+                <td>Web Builder</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>2 days ago</td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">View</button>
+                  <button class="btn btn-sm btn-danger">Archive</button>
+                </td>
+              </tr>
+              <tr>
+                <td>Analytics Tool</td>
+                <td>john@example.com</td>
+                <td>Debug Session</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>5 hours ago</td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">View</button>
+                  <button class="btn btn-sm btn-danger">Archive</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Activity Log Section -->
+        <div class="admin-section" id="section-activity" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">Activity Log</h2>
+            <button class="btn btn-sm">Export Log</button>
+          </div>
+
+          <div class="filters">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">Users</button>
+            <button class="filter-btn">System</button>
+            <button class="filter-btn">Security</button>
+          </div>
+
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon">👤</div>
+              <div class="activity-content">
+                <div class="activity-title">User login</div>
+                <div class="activity-description">john@example.com logged in from 192.168.1.1</div>
+                <div class="activity-time">2 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🔒</div>
+              <div class="activity-content">
+                <div class="activity-title">Security event</div>
+                <div class="activity-description">Failed login attempt for admin@example.com</div>
+                <div class="activity-time">5 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">⚙️</div>
+              <div class="activity-content">
+                <div class="activity-title">System update</div>
+                <div class="activity-description">Configuration changed by admin user</div>
+                <div class="activity-time">1 hour ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="admin-section" id="section-analytics" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">Analytics</h2>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active" data-tab="overview">Overview</div>
+            <div class="tab" data-tab="usage">Usage</div>
+            <div class="tab" data-tab="revenue">Revenue</div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">2,345</div>
+              <div class="stat-label">Daily Active Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">12.5k</div>
+              <div class="stat-label">Projects Created</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">89.2%</div>
+              <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">$4,521</div>
+              <div class="stat-label">Revenue (MTD)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="admin-section" id="section-settings" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">System Settings</h2>
+            <button class="btn btn-sm btn-primary">Save Changes</button>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active" data-tab="general">General</div>
+            <div class="tab" data-tab="features">Features</div>
+            <div class="tab" data-tab="integrations">Integrations</div>
+          </div>
+
+          <div class="tab-content active" id="tab-general">
+            <table class="data-table">
+              <tbody>
+                <tr>
+                  <td style="width: 200px;">Site Name</td>
+                  <td><input type="text" class="search-input" value="DeBuggAI"></td>
+                </tr>
+                <tr>
+                  <td>Support Email</td>
+                  <td><input type="email" class="search-input" value="support@debuggai.com"></td>
+                </tr>
+                <tr>
+                  <td>Default Credits</td>
+                  <td><input type="number" class="search-input" value="100"></td>
+                </tr>
+                <tr>
+                  <td>Maintenance Mode</td>
+                  <td>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                      <input type="checkbox">
+                      <span>Enable maintenance mode</span>
+                    </label>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Security Section -->
+        <div class="admin-section" id="section-security" style="display: none;">
+          <div class="section-header">
+            <h2 class="section-title">Security</h2>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active" data-tab="audit">Audit Log</div>
+            <div class="tab" data-tab="abuse">Abuse Reports</div>
+            <div class="tab" data-tab="api">API Keys</div>
+          </div>
+
+          <div class="tab-content active" id="tab-audit">
+            <div class="activity-feed">
+              <div class="activity-item">
+                <div class="activity-icon">🔒</div>
+                <div class="activity-content">
+                  <div class="activity-title">Admin login</div>
+                  <div class="activity-description">admin@example.com logged in</div>
+                  <div class="activity-time">5 minutes ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">⚠️</div>
+                <div class="activity-content">
+                  <div class="activity-title">Suspicious activity</div>
+                  <div class="activity-description">Multiple failed login attempts from 192.168.1.100</div>
+                  <div class="activity-time">1 hour ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Navigation
+    document.querySelectorAll('.admin-nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const section = item.dataset.section;
+        showSection(section);
+      });
+    });
+
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.admin-section').forEach(section => {
+        section.style.display = 'none';
+      });
+
+      // Show target section
+      const targetSection = document.getElementById('section-' + sectionId);
+      if (targetSection) {
+        targetSection.style.display = 'block';
+      }
+
+      // Update nav active state
+      document.querySelectorAll('.admin-nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === sectionId) {
+          item.classList.add('active');
+        }
+      });
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.dataset.tab;
+        const container = tab.closest('.admin-section');
+
+        // Update tab active state
+        container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Show tab content
+        container.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        const targetContent = container.querySelector('#tab-' + tabId);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBuggAI - Refined Dashboard & Workspace</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #fafafa;
+      --bg-tertiary: #f5f5f5;
+      --border-default: #e5e5e5;
+      --border-hover: #d4d4d4;
+      --text-primary: #171717;
+      --text-secondary: #737373;
+      --text-tertiary: #a3a3a3;
+      --accent: #171717;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+
+    /* Buttons */
+    .btn {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-secondary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #262626;
+      border-color: #262626;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-secondary);
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .btn-icon {
+      padding: 6px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .badge-error {
+      background: rgba(239,68,68,0.1);
+      color: var(--error);
+    }
+
+    .badge-warning {
+      background: rgba(245,158,11,0.1);
+      color: var(--warning);
+    }
+
+    .badge-success {
+      background: rgba(34,197,94,0.1);
+      color: var(--success);
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed {
+      width: 68px;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-logo {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .sidebar-toggle {
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.15s;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .sidebar-section {
+      margin-bottom: 16px;
+    }
+
+    .sidebar-section-title {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 16px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .sidebar-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .sidebar-item.active {
+      background: var(--bg-tertiary);
+      font-weight: 500;
+    }
+
+    .sidebar-item-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-item-text {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-item-meta {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .sidebar-item-menu {
+      width: 20px;
+      height: 20px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .sidebar-item:hover .sidebar-item-menu {
+      opacity: 1;
+    }
+
+    .sidebar-item-menu:hover {
+      background: var(--bg-secondary);
+    }
+
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border-default);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .user-info:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .user-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-plan {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Pages */
+    .page {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .page.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dashboard Page (Client) */
+    .dashboard-page {
+      overflow-y: auto;
+    }
+
+    .dashboard-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .dashboard-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .dashboard-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .dashboard-content {
+      padding: 32px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Debug Issues */
+    .debug-section {
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .issues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .issue-card {
+      padding: 12px 16px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .issue-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .issue-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .issue-icon.error {
+      background: rgba(239,68,68,0.1);
+    }
+
+    .issue-icon.warning {
+      background: rgba(245,158,11,0.1);
+    }
+
+    .issue-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .issue-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .issue-message {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .issue-location {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .issue-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Web Builder Page */
+    .builder-page {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .builder-page.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .builder-header {
+      height: 48px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--bg-secondary);
+    }
+
+    .builder-breadcrumb {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .builder-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .builder-sidebar {
+      width: 240px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+    }
+
+    .builder-sidebar-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .builder-tool {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .builder-tool:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .builder-canvas {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .builder-toolbar {
+      height: 40px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+    }
+
+    .builder-workspace {
+      flex: 1;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .builder-placeholder {
+      text-align: center;
+      color: var(--text-tertiary);
+    }
+
+    .builder-preview {
+      width: 400px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      padding: 16px;
+    }
+
+    /* Debug Session Page */
+    .debug-page {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .debug-page.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .debug-header {
+      height: 48px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--bg-secondary);
+    }
+
+    .debug-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .debug-panel {
+      width: 320px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+    }
+
+    .debug-panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .debug-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .debug-input-area {
+      padding: 12px;
+      border-top: 1px solid var(--border-default);
+    }
+
+    .debug-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      resize: vertical;
+    }
+
+    .debug-textarea:focus {
+      outline: none;
+      border-color: var(--text-tertiary);
+    }
+
+    .debug-output {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .debug-output-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+    }
+
+    .debug-output-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      font-size: 11px;
+      background: var(--bg-primary);
+    }
+
+    .debug-result {
+      padding: 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+    }
+
+    .debug-result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .debug-result-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .debug-result-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .debug-result-content {
+      font-size: 11px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .debug-result-success {
+      border-color: rgba(34,197,94,0.3);
+      background: rgba(34,197,94,0.05);
+    }
+
+    .debug-result-error {
+      border-color: rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.05);
+    }
+
+    /* Admin Page (Separate for Admins) */
+    .admin-page {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .admin-page.active {
+      display: block;
+    }
+
+    .admin-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .admin-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .admin-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .admin-content {
+      padding: 32px;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .admin-nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .admin-nav-card {
+      padding: 20px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .admin-nav-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-secondary);
+    }
+
+    .admin-nav-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+
+    .admin-nav-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .admin-nav-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .data-table {
+      width: 100%;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .data-table thead {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .data-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: var(--bg-secondary);
+    }
+
+    /* Hidden utilities */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">DeBuggAI</div>
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M9 3v18"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Navigation -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Workspace</div>
+          <div class="sidebar-item active" data-page="dashboard">
+            <span class="sidebar-item-icon">⌂</span>
+            <span class="sidebar-item-text">Dashboard</span>
+          </div>
+          <div class="sidebar-item" data-page="builder">
+            <span class="sidebar-item-icon">⚡</span>
+            <span class="sidebar-item-text">Web Builder</span>
+          </div>
+          <div class="sidebar-item" data-page="debug">
+            <span class="sidebar-item-icon">🐛</span>
+            <span class="sidebar-item-text">Debug Session</span>
+          </div>
+        </div>
+
+        <!-- Recent Projects -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Recent Projects</div>
+          <div class="sidebar-item" onclick="openProject('p1')">
+            <span class="sidebar-item-icon">📊</span>
+            <span class="sidebar-item-text">API Dashboard</span>
+            <span class="sidebar-item-meta">2h</span>
+            <div class="sidebar-item-menu">⋮</div>
+          </div>
+          <div class="sidebar-item" onclick="openProject('p2')">
+            <span class="sidebar-item-icon">📈</span>
+            <span class="sidebar-item-text">Analytics Tool</span>
+            <span class="sidebar-item-meta">5h</span>
+            <div class="sidebar-item-menu">⋮</div>
+          </div>
+          <div class="sidebar-item" onclick="openProject('p3')">
+            <span class="sidebar-item-icon">🔧</span>
+            <span class="sidebar-item-text">Config Manager</span>
+            <span class="sidebar-item-meta">1d</span>
+            <div class="sidebar-item-menu">⋮</div>
+          </div>
+        </div>
+
+        <!-- Debug Sessions -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Debug Sessions</div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">●</span>
+            <span class="sidebar-item-text">TypeError fix</span>
+            <span class="sidebar-item-meta">3m</span>
+            <div class="sidebar-item-menu">⋮</div>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">●</span>
+            <span class="sidebar-item-text">API integration</span>
+            <span class="sidebar-item-meta">1h</span>
+            <div class="sidebar-item-menu">⋮</div>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">●</span>
+            <span class="sidebar-item-text">State management</span>
+            <span class="sidebar-item-meta">2d</span>
+            <div class="sidebar-item-menu">⋮</div>
+          </div>
+        </div>
+
+        <!-- Admin (Only visible to admins) -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Admin</div>
+          <div class="sidebar-item" data-page="admin">
+            <span class="sidebar-item-icon">⚙</span>
+            <span class="sidebar-item-text">Admin Panel</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">N</div>
+          <div class="user-details">
+            <div class="user-name">Nur Mohammad</div>
+            <div class="user-plan">Pro Plan</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Page (Client) -->
+      <div class="page dashboard-page active" id="dashboard-page">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Dashboard</h1>
+          <p class="dashboard-subtitle">Overview of your projects and debug sessions</p>
+        </div>
+
+        <div class="dashboard-content">
+          <!-- Stats -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">12</div>
+              <div class="stat-label">Active Projects</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">3</div>
+              <div class="stat-label">Open Issues</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">847</div>
+              <div class="stat-label">Total Edits</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">2.4k</div>
+              <div class="stat-label">Credits Left</div>
+            </div>
+          </div>
+
+          <!-- Debug Issues -->
+          <div class="debug-section">
+            <div class="section-header">
+              <h2 class="section-title">Debug Issues</h2>
+              <button class="btn btn-sm">View All</button>
+            </div>
+            <div class="issues-list">
+              <div class="issue-card">
+                <div class="issue-icon error">⚠</div>
+                <div class="issue-content">
+                  <div class="issue-title">Missing dependency</div>
+                  <div class="issue-message">React must be in scope when using JSX</div>
+                  <div class="issue-location">Dashboard.tsx:1</div>
+                </div>
+                <div class="issue-actions">
+                  <button class="btn btn-sm">Fix</button>
+                </div>
+              </div>
+              <div class="issue-card">
+                <div class="issue-icon warning">⚠</div>
+                <div class="issue-content">
+                  <div class="issue-title">Unresolved function</div>
+                  <div class="issue-message">fetchData is not defined</div>
+                  <div class="issue-location">Dashboard.tsx:8</div>
+                </div>
+                <div class="issue-actions">
+                  <button class="btn btn-sm">Create</button>
+                </div>
+              </div>
+              <div class="issue-card">
+                <div class="issue-icon warning">⚠</div>
+                <div class="issue-content">
+                  <div class="issue-title">Missing error handling</div>
+                  <div class="issue-message">useEffect callback should handle errors</div>
+                  <div class="issue-location">Dashboard.tsx:7-9</div>
+                </div>
+                <div class="issue-actions">
+                  <button class="btn btn-sm">Add try-catch</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Web Builder Page -->
+      <div class="builder-page page" id="builder-page">
+        <div class="builder-header">
+          <div class="builder-breadcrumb">Web Builder <span>/</span> New Project</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm">Save</button>
+            <button class="btn btn-sm btn-primary">Publish</button>
+          </div>
+        </div>
+        <div class="builder-content">
+          <div class="builder-sidebar">
+            <div class="builder-sidebar-header">Components</div>
+            <div class="builder-tool">Button</div>
+            <div class="builder-tool">Input</div>
+            <div class="builder-tool">Card</div>
+            <div class="builder-tool">List</div>
+            <div class="builder-tool">Form</div>
+            <div class="builder-sidebar-header">Layout</div>
+            <div class="builder-tool">Container</div>
+            <div class="builder-tool">Grid</div>
+            <div class="builder-tool">Flex</div>
+          </div>
+          <div class="builder-canvas">
+            <div class="builder-toolbar">
+              <button class="btn btn-sm btn-icon">←</button>
+              <button class="btn btn-sm btn-icon">→</button>
+              <div style="width: 1px; height: 20px; background: var(--border-default); margin: 0 8px;"></div>
+              <button class="btn btn-sm btn-icon">↑</button>
+              <button class="btn btn-sm btn-icon">↓</button>
+            </div>
+            <div class="builder-workspace">
+              <div class="builder-placeholder">
+                <div class="builder-preview">
+                  <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 24px; margin-bottom: 8px;">⚡</div>
+                    <div style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">Start Building</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                      Describe your app or drag components to get started
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug Session Page (Client) -->
+      <div class="debug-page page" id="debug-page">
+        <div class="debug-header">
+          <div class="builder-breadcrumb">Debug Session <span>/</span> New Session</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm">History</button>
+            <button class="btn btn-sm btn-primary">New Session</button>
+          </div>
+        </div>
+        <div class="debug-content">
+          <div class="debug-panel">
+            <div class="debug-panel-header">AI Debug Assistant</div>
+            <div class="debug-panel-content">
+              <div style="margin-bottom: 16px;">
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">Recent Sessions</div>
+                <div class="sidebar-item" style="padding: 6px 12px;">
+                  <span class="sidebar-item-text">TypeError fix</span>
+                  <span class="sidebar-item-meta">3m</span>
+                </div>
+                <div class="sidebar-item" style="padding: 6px 12px;">
+                  <span class="sidebar-item-text">API integration</span>
+                  <span class="sidebar-item-meta">1h</span>
+                </div>
+                <div class="sidebar-item" style="padding: 6px 12px;">
+                  <span class="sidebar-item-text">State management</span>
+                  <span class="sidebar-item-meta">2d</span>
+                </div>
+              </div>
+            </div>
+            <div class="debug-input-area">
+              <textarea class="debug-textarea" placeholder="Paste your code or describe the bug..."></textarea>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="btn btn-sm" style="flex: 1;">Analyze</button>
+                <button class="btn btn-sm btn-primary">Debug</button>
+              </div>
+            </div>
+          </div>
+          <div class="debug-output">
+            <div class="debug-output-header">Debug Results</div>
+            <div class="debug-output-content">
+              <div class="debug-result debug-result-success">
+                <div class="debug-result-header">
+                  <span class="debug-result-title">Analysis Complete</span>
+                  <div class="debug-result-actions">
+                    <button class="btn btn-sm">Copy</button>
+                    <button class="btn btn-sm">Apply Fix</button>
+                  </div>
+                </div>
+                <div class="debug-result-content">
+                  <strong>Issue Found:</strong> Missing error handling in useEffect<br><br>
+                  <strong>Solution:</strong> Add try-catch block around async operations<br><br>
+                  <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 2px;">
+                    useEffect(() => {<br>
+                    &nbsp;&nbsp;const fetchData = async () => {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;try {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const result = await api.getData();<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setData(result);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;} catch (error) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.error(error);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;};<br>
+                    &nbsp;&nbsp;fetchData();<br>
+                    }, []);
+                  </code>
+                </div>
+              </div>
+              <div class="debug-result debug-result-error">
+                <div class="debug-result-header">
+                  <span class="debug-result-title">Runtime Error</span>
+                  <div class="debug-result-actions">
+                    <button class="btn btn-sm">Stack Trace</button>
+                  </div>
+                </div>
+                <div class="debug-result-content">
+                  <strong>Error:</strong> TypeError: Cannot read property 'map' of undefined<br><br>
+                  <strong>Location:</strong> Dashboard.tsx:13<br><br>
+                  <strong>Fix:</strong> Add optional chaining or default value for data prop
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Page (Separate for Admins) -->
+      <div class="admin-page page" id="admin-page">
+        <div class="admin-header">
+          <div>
+            <h1 class="admin-title">Admin Panel</h1>
+            <p class="admin-subtitle">Manage users, credits, and system operations</p>
+          </div>
+          <div class="admin-actions">
+            <button class="btn btn-sm">Export Data</button>
+            <button class="btn btn-sm btn-primary">System Status</button>
+          </div>
+        </div>
+
+        <div class="admin-content">
+          <!-- Admin Stats -->
+          <div class="admin-grid">
+            <div class="stat-card">
+              <div class="stat-value">1,234</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">45.6k</div>
+              <div class="stat-label">Credits Used</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">892</div>
+              <div class="stat-label">Active Sessions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">12</div>
+              <div class="stat-label">Pending Reviews</div>
+            </div>
+          </div>
+
+          <!-- Admin Navigation -->
+          <div class="section-header">
+            <h2 class="section-title">Quick Actions</h2>
+          </div>
+          <div class="admin-nav">
+            <div class="admin-nav-card">
+              <div class="admin-nav-icon">👥</div>
+              <div class="admin-nav-title">User Management</div>
+              <div class="admin-nav-description">Manage user accounts and permissions</div>
+            </div>
+            <div class="admin-nav-card">
+              <div class="admin-nav-icon">💳</div>
+              <div class="admin-nav-title">Credit System</div>
+              <div class="admin-nav-description">Allocate and monitor credit usage</div>
+            </div>
+            <div class="admin-nav-card">
+              <div class="admin-nav-icon">📊</div>
+              <div class="admin-nav-title">Analytics</div>
+              <div class="admin-nav-description">View system usage and trends</div>
+            </div>
+            <div class="admin-nav-card">
+              <div class="admin-nav-icon">🔒</div>
+              <div class="admin-nav-title">Security</div>
+              <div class="admin-nav-description">Audit logs and abuse reports</div>
+            </div>
+            <div class="admin-nav-card">
+              <div class="admin-nav-icon">⚙️</div>
+              <div class="admin-nav-title">Settings</div>
+              <div class="admin-nav-description">Configure system parameters</div>
+            </div>
+            <div class="admin-nav-card">
+              <div class="admin-nav-icon">📝</div>
+              <div class="admin-nav-title">Content</div>
+              <div class="admin-nav-description">Manage templates and docs</div>
+            </div>
+          </div>
+
+          <!-- Users Table -->
+          <div class="section-header">
+            <h2 class="section-title">Recent Users</h2>
+            <button class="btn btn-sm">View All</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Plan</th>
+                <th>Credits</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>john@example.com</td>
+                <td>Pro</td>
+                <td>2,340</td>
+                <td>2 days ago</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                </td>
+              </tr>
+              <tr>
+                <td>sarah@example.com</td>
+                <td>Free</td>
+                <td>120</td>
+                <td>1 week ago</td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                </td>
+              </tr>
+              <tr>
+                <td>mike@example.com</td>
+                <td>Enterprise</td>
+                <td>15,600</td>
+                <td>3 days ago</td>
+                <td><span class="badge badge-warning">Pending</span></td>
+                <td>
+                  <button class="btn btn-sm btn-ghost">Edit</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Page navigation
+    function navigateTo(pageId) {
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+
+      // Show target page
+      const targetPage = document.getElementById(pageId + '-page');
+      if (targetPage) {
+        targetPage.classList.add('active');
+      }
+
+      // Update sidebar active state
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.page === pageId) {
+          item.classList.add('active');
+        }
+      });
+    }
+
+    // Sidebar navigation
+    document.querySelectorAll('.sidebar-item[data-page]').forEach(item => {
+      item.addEventListener('click', () => {
+        const pageId = item.dataset.page;
+        navigateTo(pageId);
+      });
+    });
+
+    // Toggle sidebar
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.classList.toggle('collapsed');
+    }
+
+    // Open project
+    function openProject(projectId) {
+      navigateTo('builder');
+    }
+
+    // Initialize
+    navigateTo('dashboard');
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
 import { cn } from '@/lib/utils';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
@@ -25,6 +25,7 @@ export function DashboardSidebar({
   onToggleCollapsed,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useSessionStore();
 
   return (
@@ -65,7 +66,7 @@ export function DashboardSidebar({
 
           <NavItem
             collapsed={collapsed}
-            active={pathname === '/dashboard'}
+            active={pathname === '/dashboard' && !searchParams?.has('project')}
             icon="⌂"
             label="Dashboard"
             href="/dashboard"

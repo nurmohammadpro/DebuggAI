@@ -1,6 +1,11 @@
-import WebBuilderPage from '@/components/dashboard/web-builder/web-builder-page';
+import { MinimalWebBuilderLayout } from '@/components/dashboard/web-builder/minimal-web-builder-layout';
+import { MinimalWebBuilderContent } from '@/components/dashboard/web-builder/minimal-web-builder-content';
 
 export default function DashboardWebBuilderPage() {
-  return <WebBuilderPage />;
+  return (
+    <MinimalWebBuilderLayout>
+      <MinimalWebBuilderContent />
+    </MinimalWebBuilderLayout>
+  );
 }
 

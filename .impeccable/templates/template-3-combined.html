@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBuggAI - Combined Dashboard & Workspace</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #fafafa;
+      --bg-tertiary: #f5f5f5;
+      --border-default: #e5e5e5;
+      --border-hover: #d4d4d4;
+      --text-primary: #171717;
+      --text-secondary: #737373;
+      --text-tertiary: #a3a3a3;
+      --accent: #171717;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    nav {
+      border-bottom: 1px solid var(--border-default);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .logo {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s;
+      cursor: pointer;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-secondary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #262626;
+      border-color: #262626;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-secondary);
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .btn-danger {
+      color: var(--error);
+      border-color: rgba(239,68,68,0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: var(--error);
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 2px;
+      border: 1px solid var(--border-default);
+    }
+
+    .view-toggle-item {
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
+    }
+
+    .view-toggle-item:hover {
+      color: var(--text-primary);
+    }
+
+    .view-toggle-item.active {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* Dashboard Section */
+    .dashboard-view {
+      display: none;
+    }
+
+    .dashboard-view.active {
+      display: block;
+    }
+
+    .hero {
+      padding: 64px 0;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto 24px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    /* Stats Grid */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .stat-card {
+      padding: 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Projects Grid */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 0 12px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding-bottom: 32px;
+    }
+
+    .project-card {
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .project-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .project-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .project-menu {
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .project-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .project-description {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .project-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .project-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .badge-error {
+      background: rgba(239,68,68,0.1);
+      color: var(--error);
+    }
+
+    .badge-warning {
+      background: rgba(245,158,11,0.1);
+      color: var(--warning);
+    }
+
+    .badge-success {
+      background: rgba(34,197,94,0.1);
+      color: var(--success);
+    }
+
+    /* Workspace Section */
+    .workspace-view {
+      display: none;
+      height: calc(100vh - 57px);
+    }
+
+    .workspace-view.active {
+      display: flex;
+    }
+
+    .workspace-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 200px;
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+    }
+
+    .sidebar-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .sidebar-title {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      font-size: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+    }
+
+    .sidebar-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .sidebar-item.active {
+      background: var(--bg-tertiary);
+      font-weight: 500;
+    }
+
+    .sidebar-item-icon {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .sidebar-item-error {
+      position: relative;
+    }
+
+    .sidebar-item-error::after {
+      content: '';
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--error);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-default);
+    }
+
+    /* Mode Tabs */
+    .mode-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-default);
+      background: var(--bg-secondary);
+      padding: 0 16px;
+    }
+
+    .mode-tab {
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .mode-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .mode-tab.active {
+      color: var(--text-primary);
+      font-weight: 500;
+      border-bottom-color: var(--accent);
+    }
+
+    /* Content Panels */
+    .content-panel {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .content-panel.active {
+      display: flex;
+    }
+
+    /* Editor/Preview Split */
+    .editor-preview-split {
+      flex: 1;
+      display: flex;
+    }
+
+    .editor-panel, .preview-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .editor-panel {
+      border-right: 1px solid var(--border-default);
+    }
+
+    .panel-header {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-secondary);
+    }
+
+    .editor-tabs {
+      display: flex;
+      gap: 2px;
+    }
+
+    .tab {
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+    }
+
+    .tab:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .tab.active {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-weight: 500;
+      border-color: var(--border-default);
+    }
+
+    .tab-error {
+      position: relative;
+    }
+
+    .tab-error::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--error);
+    }
+
+    .tab-close {
+      opacity: 0.4;
+      cursor: pointer;
+    }
+
+    .tab-close:hover {
+      opacity: 1;
+    }
+
+    .editor-content {
+      flex: 1;
+      padding: 16px;
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      font-size: 11px;
+      line-height: 1.7;
+      overflow-y: auto;
+      background: var(--bg-primary);
+    }
+
+    .code-line {
+      display: flex;
+      gap: 12px;
+    }
+
+    .code-line.error {
+      background: rgba(239,68,68,0.05);
+    }
+
+    .line-number {
+      color: var(--text-tertiary);
+      min-width: 20px;
+      text-align: right;
+      user-select: none;
+      font-size: 10px;
+    }
+
+    .line-content {
+      flex: 1;
+      color: var(--text-primary);
+    }
+
+    .error-indicator {
+      color: var(--error);
+      cursor: pointer;
+    }
+
+    .keyword { color: #d73a49; }
+    .string { color: #032f62; }
+    .function { color: #6f42c1; }
+    .comment { color: #6a737d; }
+
+    /* Preview Panel */
+    .preview-content {
+      flex: 1;
+      background: var(--bg-secondary);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .preview-frame {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      min-height: 200px;
+      padding: 16px;
+    }
+
+    .preview-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+
+    .preview-running {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .preview-component {
+      padding: 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-primary);
+    }
+
+    .preview-component-header {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .preview-component-content {
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    /* Debug Panel */
+    .debug-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .debug-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-secondary);
+    }
+
+    .debug-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-dot.active {
+      background: var(--success);
+    }
+
+    .status-dot.error {
+      background: var(--error);
+    }
+
+    .status-dot.warning {
+      background: var(--warning);
+    }
+
+    .debug-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .debug-section {
+      margin-bottom: 16px;
+    }
+
+    .debug-section-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .debug-item {
+      padding: 10px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .debug-item:hover {
+      border-color: var(--border-hover);
+    }
+
+    .debug-item-error {
+      border-color: rgba(239,68,68,0.3);
+      background: rgba(239,68,68,0.05);
+    }
+
+    .debug-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .debug-item-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .debug-item-title.error {
+      color: var(--error);
+    }
+
+    .debug-item-location {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .debug-item-message {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .debug-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    /* Console Panel */
+    .console-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .console-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      font-size: 10px;
+    }
+
+    .console-line {
+      padding: 4px 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .console-time {
+      color: var(--text-tertiary);
+      min-width: 60px;
+    }
+
+    .console-message {
+      flex: 1;
+    }
+
+    .console-message.error {
+      color: var(--error);
+    }
+
+    .console-message.warning {
+      color: var(--warning);
+    }
+
+    .console-message.success {
+      color: var(--success);
+    }
+
+    .console-input {
+      padding: 12px;
+      border-top: 1px solid var(--border-default);
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-field {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: var(--text-tertiary);
+    }
+
+    .input-field::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    /* Chat Panel */
+    .chat-panel {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      padding: 10px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+    }
+
+    .message-role {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .message-content {
+      font-size: 11px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .chat-input {
+      padding: 12px;
+      border-top: 1px solid var(--border-default);
+    }
+
+    /* Tool Bar */
+    .toolbar {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-secondary);
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border-default);
+      margin: 0 4px;
+    }
+
+    /* Empty State */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      padding: 32px;
+    }
+
+    .empty-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-left">
+      <div class="logo">DeBuggAI</div>
+      <div class="nav-links">
+        <div class="nav-link active">Dashboard</div>
+        <div class="nav-link">Projects</div>
+        <div class="nav-link">Settings</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="view-toggle">
+        <div class="view-toggle-item active" data-view="dashboard">Dashboard</div>
+        <div class="view-toggle-item" data-view="workspace">Workspace</div>
+      </div>
+      <button class="btn btn-ghost btn-sm">Docs</button>
+      <button class="btn btn-ghost btn-sm">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- Dashboard View -->
+  <div class="dashboard-view active">
+    <div class="container">
+      <section class="hero">
+        <h1>Debug and build with AI</h1>
+        <p>Create new projects or continue working on existing ones. Your workspace is ready.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" onclick="switchView('workspace')">Open Workspace</button>
+          <button class="btn">New Project</button>
+        </div>
+      </section>
+
+      <section class="stats">
+        <div class="stat-card">
+          <div class="stat-value">12</div>
+          <div class="stat-label">Active Projects</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Open Issues</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">847</div>
+          <div class="stat-label">Total Edits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">2.4k</div>
+          <div class="stat-label">Credits Left</div>
+        </div>
+      </section>
+
+      <div class="section-header">
+        <h2 class="section-title">Recent Projects</h2>
+        <button class="btn btn-ghost btn-sm">View All</button>
+      </div>
+
+      <section class="projects-grid">
+        <div class="project-card" onclick="switchView('workspace')">
+          <div class="project-header">
+            <div class="project-icon">⚡</div>
+            <div class="project-menu">⋮</div>
+          </div>
+          <div class="project-name">API Dashboard</div>
+          <div class="project-description">React dashboard for API monitoring and analytics</div>
+          <div class="project-meta">
+            <span>● 2h ago</span>
+            <span>● 243 edits</span>
+          </div>
+          <div class="project-badges">
+            <span class="badge badge-error">2 errors</span>
+            <span class="badge badge-warning">1 warning</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <div class="project-icon">📊</div>
+            <div class="project-menu">⋮</div>
+          </div>
+          <div class="project-name">Analytics Tool</div>
+          <div class="project-description">Data visualization and reporting system</div>
+          <div class="project-meta">
+            <span>● 5h ago</span>
+            <span>● 187 edits</span>
+          </div>
+          <div class="project-badges">
+            <span class="badge badge-success">Clean</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-header">
+            <div class="project-icon">🔧</div>
+            <div class="project-menu">⋮</div>
+          </div>
+          <div class="project-name">Config Manager</div>
+          <div class="project-description">Configuration management interface</div>
+          <div class="project-meta">
+            <span>● 1d ago</span>
+            <span>● 96 edits</span>
+          </div>
+          <div class="project-badges">
+            <span class="badge badge-error">1 error</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Workspace View -->
+  <div class="workspace-view">
+    <div class="workspace-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Files</div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">📁</span>
+            <span>src</span>
+          </div>
+          <div class="sidebar-item" style="padding-left: 20px;">
+            <span class="sidebar-item-icon">📁</span>
+            <span>components</span>
+          </div>
+          <div class="sidebar-item active sidebar-item-error" style="padding-left: 36px;">
+            <span class="sidebar-item-icon">⚛️</span>
+            <span>Dashboard.tsx</span>
+          </div>
+          <div class="sidebar-item" style="padding-left: 36px;">
+            <span class="sidebar-item-icon">⚛️</span>
+            <span>Chart.tsx</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Debug</div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">●</span>
+            <span>Issues (3)</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">⚠</span>
+            <span>Warnings (1)</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-item-icon">📋</span>
+            <span>Console</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+          <div class="mode-tab active" data-mode="code">Code</div>
+          <div class="mode-tab" data-mode="debug">Debug</div>
+          <div class="mode-tab" data-mode="preview">Preview</div>
+        </div>
+
+        <!-- Code Panel -->
+        <div class="content-panel active" data-panel="code">
+          <div class="toolbar">
+            <button class="btn btn-sm">▶ Run</button>
+            <button class="btn btn-sm">🐛 Debug</button>
+            <div class="toolbar-divider"></div>
+            <button class="btn btn-sm">⚡ Format</button>
+            <button class="btn btn-sm">↻ Refresh</button>
+            <div class="toolbar-divider"></div>
+            <button class="btn btn-sm btn-primary">Deploy</button>
+          </div>
+
+          <div class="editor-preview-split">
+            <!-- Editor -->
+            <div class="editor-panel">
+              <div class="panel-header">
+                <div class="editor-tabs">
+                  <div class="tab tab-error active">
+                    <span>Dashboard.tsx</span>
+                    <span class="tab-close">×</span>
+                  </div>
+                  <div class="tab">
+                    <span>Chart.tsx</span>
+                    <span class="tab-close">×</span>
+                  </div>
+                </div>
+              </div>
+              <div class="editor-content">
+                <div class="code-line error">
+                  <span class="line-number">1</span>
+                  <span class="line-content"><span class="keyword">import</span> React, { useState, useEffect } <span class="keyword">from</span> <span class="string">'react'</span>;</span>
+                  <span class="error-indicator">●</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">2</span>
+                  <span class="line-content"><span class="keyword">import</span> { LineChart } <span class="keyword">from</span> <span class="string">'./Chart'</span>;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">3</span>
+                  <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">4</span>
+                  <span class="line-content"><span class="keyword">export function</span> <span class="function">Dashboard</span>() {</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">5</span>
+                  <span class="line-content">  <span class="keyword">const</span> [data, setData] = useState([]);</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">6</span>
+                  <span class="line-content"></span>
+                </div>
+                <div class="code-line error">
+                  <span class="line-number">7</span>
+                  <span class="line-content">  <span class="function">useEffect</span>(() => {</span>
+                  <span class="error-indicator">●</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">8</span>
+                  <span class="line-content">    <span class="function">fetchData</span>().then(setData);</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">9</span>
+                  <span class="line-content">  }, []);</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">10</span>
+                  <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">11</span>
+                  <span class="line-content">  <span class="keyword">return</span> (</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">12</span>
+                  <span class="line-content">    &lt;div className=<span class="string">"dashboard"</span>&gt;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">13</span>
+                  <span class="line-content">      &lt;LineChart data={data} /&gt;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">14</span>
+                  <span class="line-content">    &lt;/div&gt;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">15</span>
+                  <span class="line-content">  );</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-number">16</span>
+                  <span class="line-content">}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-panel">
+              <div class="panel-header">
+                <span class="panel-title">Preview</span>
+                <button class="btn btn-sm btn-icon">↻</button>
+              </div>
+              <div class="preview-content">
+                <div class="preview-running">
+                  <div class="preview-component">
+                    <div class="preview-component-header">Dashboard</div>
+                    <div class="preview-component-content">
+                      <div style="width: 200px; height: 100px; background: var(--bg-tertiary); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span style="color: var(--text-tertiary);">Line Chart</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="content-panel" data-panel="debug">
+          <div class="debug-panel">
+            <div class="debug-header">
+              <div class="debug-status">
+                <span class="status-dot error"></span>
+                <span style="font-size: 12px; font-weight: 500;">3 issues found</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm">Auto-fix</button>
+                <button class="btn btn-sm btn-danger">Ignore All</button>
+              </div>
+            </div>
+            <div class="debug-content">
+              <div class="debug-section">
+                <div class="debug-section-title">Errors (2)</div>
+                <div class="debug-item debug-item-error">
+                  <div class="debug-item-header">
+                    <span class="debug-item-title error">Missing dependency</span>
+                    <span class="debug-item-location">Dashboard.tsx:1</span>
+                  </div>
+                  <div class="debug-item-message">React must be in scope when using JSX</div>
+                  <div class="debug-actions">
+                    <button class="btn btn-sm">Fix</button>
+                    <button class="btn btn-sm">Dismiss</button>
+                  </div>
+                </div>
+                <div class="debug-item debug-item-error">
+                  <div class="debug-item-header">
+                    <span class="debug-item-title error">Unresolved function</span>
+                    <span class="debug-item-location">Dashboard.tsx:8</span>
+                  </div>
+                  <div class="debug-item-message">fetchData is not defined</div>
+                  <div class="debug-actions">
+                    <button class="btn btn-sm">Create</button>
+                    <button class="btn btn-sm">Import</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="debug-section">
+                <div class="debug-section-title">Warnings (1)</div>
+                <div class="debug-item">
+                  <div class="debug-item-header">
+                    <span class="debug-item-title">Missing error handling</span>
+                    <span class="debug-item-location">Dashboard.tsx:7-9</span>
+                  </div>
+                  <div class="debug-item-message">useEffect callback should handle errors</div>
+                  <div class="debug-actions">
+                    <button class="btn btn-sm">Add try-catch</button>
+                    <button class="btn btn-sm">Dismiss</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Panel (Full) -->
+        <div class="content-panel" data-panel="preview">
+          <div class="preview-panel" style="border-right: none;">
+            <div class="panel-header">
+              <span class="panel-title">Live Preview</span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm">Desktop</button>
+                <button class="btn btn-sm">Tablet</button>
+                <button class="btn btn-sm">Mobile</button>
+              </div>
+            </div>
+            <div class="preview-content">
+              <div class="preview-running">
+                <div class="preview-component">
+                  <div class="preview-component-header">Dashboard Component</div>
+                  <div class="preview-component-content">
+                    <div style="padding: 16px; border: 1px solid var(--border-default); border-radius: 4px;">
+                      <div style="margin-bottom: 12px;">
+                        <strong>API Analytics Dashboard</strong>
+                      </div>
+                      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                        <div style="padding: 8px; background: var(--bg-tertiary); border-radius: 4px; text-align: center;">
+                          <div style="font-size: 16px; font-weight: 600;">1,234</div>
+                          <div style="font-size: 10px; color: var(--text-secondary);">Requests</div>
+                        </div>
+                        <div style="padding: 8px; background: var(--bg-tertiary); border-radius: 4px; text-align: center;">
+                          <div style="font-size: 16px; font-weight: 600;">98.5%</div>
+                          <div style="font-size: 10px; color: var(--text-secondary);">Uptime</div>
+                        </div>
+                        <div style="padding: 8px; background: var(--bg-tertiary); border-radius: 4px; text-align: center;">
+                          <div style="font-size: 16px; font-weight: 600;">42ms</div>
+                          <div style="font-size: 10px; color: var(--text-secondary);">Avg Latency</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Panel -->
+      <aside class="chat-panel">
+        <div class="panel-header">
+          <span class="panel-title">AI Assistant</span>
+        </div>
+        <div class="chat-messages">
+          <div class="message">
+            <div class="message-role">AI</div>
+            <div class="message-content">
+              I found 2 errors and 1 warning in your code. Would you like me to fix them?
+            </div>
+          </div>
+          <div class="message">
+            <div class="message-role">You</div>
+            <div class="message-content">
+              Yes, fix the missing dependency first
+            </div>
+          </div>
+        </div>
+        <div class="chat-input">
+          <div class="input-wrapper">
+            <input type="text" class="input-field" placeholder="Ask AI to fix issues...">
+            <button class="btn btn-sm">→</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    function switchView(view) {
+      document.querySelectorAll('.view-toggle-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.view === view) {
+          item.classList.add('active');
+        }
+      });
+
+      document.querySelectorAll('.dashboard-view, .workspace-view').forEach(v => {
+        v.classList.remove('active');
+      });
+
+      if (view === 'dashboard') {
+        document.querySelector('.dashboard-view').classList.add('active');
+      } else {
+        document.querySelector('.workspace-view').classList.add('active');
+      }
+    }
+
+    function switchMode(mode) {
+      document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.mode === mode) {
+          tab.classList.add('active');
+        }
+      });
+
+      document.querySelectorAll('.content-panel').forEach(panel => {
+        panel.classList.remove('active');
+        if (panel.dataset.panel === mode) {
+          panel.classList.add('active');
+        }
+      });
+    }
+
+    // Attach click handlers
+    document.querySelectorAll('.view-toggle-item').forEach(item => {
+      item.addEventListener('click', () => switchView(item.dataset.view));
+    });
+
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+    });
+  </script>
+</body>
+</html>

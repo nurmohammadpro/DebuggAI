@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-07T00:00:00.000Z",
+  "title": "Design System: DeBuggAI",
+  "extensions": {
+    "colorMeta": {
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Workspace Black",
+        "canonical": "oklch(6% 0.005 150)",
+        "tonalRamp": ["oklch(15% 0.008 150)", "oklch(25% 0.01 150)", "oklch(35% 0.012 150)", "oklch(45% 0.014 150)", "oklch(55% 0.016 150)", "oklch(65% 0.018 150)", "oklch(75% 0.015 150)", "oklch(90% 0.01 150)"]
+      },
+      "neutral-surface": {
+        "role": "neutral",
+        "displayName": "Cast Iron",
+        "canonical": "oklch(10% 0.006 150)",
+        "tonalRamp": ["oklch(15% 0.008 150)", "oklch(25% 0.01 150)", "oklch(35% 0.012 150)", "oklch(45% 0.014 150)", "oklch(55% 0.016 150)", "oklch(65% 0.018 150)", "oklch(75% 0.015 150)", "oklch(90% 0.01 150)"]
+      },
+      "neutral-surface2": {
+        "role": "neutral",
+        "displayName": "Ash",
+        "canonical": "oklch(14% 0.008 150)",
+        "tonalRamp": ["oklch(15% 0.008 150)", "oklch(25% 0.01 150)", "oklch(35% 0.012 150)", "oklch(45% 0.014 150)", "oklch(55% 0.016 150)", "oklch(65% 0.018 150)", "oklch(75% 0.015 150)", "oklch(90% 0.01 150)"]
+      },
+      "accent-green": {
+        "role": "primary",
+        "displayName": "Terminal Green",
+        "canonical": "oklch(65% 0.2 150)",
+        "tonalRamp": ["oklch(20% 0.08 150)", "oklch(30% 0.12 150)", "oklch(40% 0.16 150)", "oklch(50% 0.18 150)", "oklch(60% 0.2 150)", "oklch(70% 0.19 150)", "oklch(80% 0.15 150)", "oklch(90% 0.08 150)"]
+      },
+      "accent-red": {
+        "role": "neutral",
+        "displayName": "Alert Red",
+        "canonical": "oklch(55% 0.22 30)",
+        "tonalRamp": ["oklch(20% 0.1 30)", "oklch(30% 0.14 30)", "oklch(40% 0.18 30)", "oklch(50% 0.2 30)", "oklch(60% 0.22 30)", "oklch(70% 0.2 30)", "oklch(80% 0.14 30)", "oklch(90% 0.08 30)"]
+      },
+      "accent-amber": {
+        "role": "neutral",
+        "displayName": "Signal Amber",
+        "canonical": "oklch(70% 0.18 85)",
+        "tonalRamp": ["oklch(20% 0.08 85)", "oklch(30% 0.1 85)", "oklch(40% 0.12 85)", "oklch(50% 0.14 85)", "oklch(60% 0.16 85)", "oklch(70% 0.18 85)", "oklch(80% 0.14 85)", "oklch(90% 0.07 85)"]
+      },
+      "accent-blue": {
+        "role": "neutral",
+        "displayName": "Link Blue",
+        "canonical": "oklch(60% 0.18 240)",
+        "tonalRamp": ["oklch(20% 0.08 240)", "oklch(30% 0.1 240)", "oklch(40% 0.14 240)", "oklch(50% 0.16 240)", "oklch(60% 0.18 240)", "oklch(70% 0.16 240)", "oklch(80% 0.12 240)", "oklch(90% 0.06 240)"]
+      },
+      "accent-purple": {
+        "role": "neutral",
+        "displayName": "Accent Purple",
+        "canonical": "oklch(62% 0.15 330)",
+        "tonalRamp": ["oklch(20% 0.06 330)", "oklch(30% 0.08 330)", "oklch(40% 0.1 330)", "oklch(50% 0.12 330)", "oklch(60% 0.14 330)", "oklch(70% 0.12 330)", "oklch(80% 0.09 330)", "oklch(90% 0.05 330)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles, hero sections. Large and bold." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers, dashboard page titles." },
+      "title": { "displayName": "Title", "purpose": "Card titles, panel headings, feature names." },
+      "body": { "displayName": "Body", "purpose": "Primary reading text, descriptions, paragraph content." },
+      "label": { "displayName": "Label", "purpose": "Form labels, metadata, timestamps, helper text." },
+      "stat": { "displayName": "Stat", "purpose": "Numeric values, metrics, key figures on dashboards." }
+    },
+    "shadows": [
+      { "name": "floating", "value": "0 4px 16px rgba(0,0,0,0.4)", "purpose": "Modals, dropdowns, tooltips — floating elements only." },
+      { "name": "focus", "value": "0 0 0 3px rgba(0,200,83,0.14)", "purpose": "Focus ring for interactive elements." }
+    ],
+    "motion": [
+      { "name": "interactive", "value": "150ms", "purpose": "Default transition duration for all interactive states." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary call-to-action. Terminal Green fill with black text.",
+      "html": "<button class=\"ds-btn-primary\">Create Project</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 40px; padding: 0 20px; background: #00C853; color: #000; border: none; border-radius: 999px; font-family: Inter, sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; } .ds-btn-primary:hover { background: #00E676; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,200,83,0.14); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action. Transparent with subtle border.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 40px; padding: 0 20px; background: transparent; color: var(--ds-text, #E8F5E9); border: 1px solid var(--ds-border2, #283228); border-radius: 999px; font-family: Inter, sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; } .ds-btn-ghost:hover { border-color: #00C853; color: #00C853; background: var(--ds-surface2, #171C17); } .ds-btn-ghost:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Default Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard text input with green focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Enter value...\" />",
+      "css": ".ds-input { width: 100%; height: 38px; padding: 0 12px; background: var(--ds-surface2, #171C17); border: 1px solid var(--ds-border2, #283228); border-radius: 8px; color: var(--ds-text, #E8F5E9); font-family: Inter, sans-serif; font-size: 13px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--ds-text3, #4D6B4D); } .ds-input:focus { border-color: #00C853; box-shadow: 0 0 0 3px rgba(0,200,83,0.14); }"
+    },
+    {
+      "name": "Default Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Flat card container with subtle border.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Project Name</div><div class=\"ds-card-body\">Card content goes here.</div></div>",
+      "css": ".ds-card { background: var(--ds-surface, #111411); border: 1px solid var(--ds-border, #1F2B1F); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; } .ds-card-title { font-size: 14px; line-height: 1.5; font-weight: 500; color: var(--ds-text, #E8F5E9); } .ds-card-body { font-size: 13px; line-height: 1.6; color: var(--ds-text2, #8BAD8B); }"
+    },
+    {
+      "name": "Green Badge",
+      "kind": "custom",
+      "refersTo": "badge-default",
+      "description": "Compact informational badge in Terminal Green.",
+      "html": "<span class=\"ds-badge\">Active</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; border-radius: 4px; padding: 2px 8px; letter-spacing: 0.01em; font-family: 'JetBrains Mono', monospace; background: rgba(0,200,83,0.15); color: #00E676; white-space: nowrap; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar navigation item with green active state.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\">Projects</a><a class=\"ds-nav-item ds-nav-item-active\" href=\"#\">Settings</a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 6px; font-size: 13px; color: var(--ds-text2, #8BAD8B); cursor: pointer; transition: all 0.15s; text-decoration: none; font-family: Inter, sans-serif; background: transparent; border: none; } .ds-nav-item:hover { color: var(--ds-text, #E8F5E9); background: var(--ds-surface2, #171C17); } .ds-nav-item-active { color: #00C853; background: rgba(0,200,83,0.12); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Workbench",
+    "overview": "A physical toolbench — flat surfaces, crisp edges, everything in reach. No ornament, no clutter. Every surface exists because a tool needs a place to rest. The aesthetic is a well-organized workshop: precise alignment, clean separation of work areas, and a quiet confidence that comes from purpose-built design. This system explicitly rejects trendy SaaS clichés: no gradient accents, no glassmorphism, no heavy shadows, no animated flourishes. It leans into its developer-tool DNA — dark by default, type-driven, with green as the sole accent signal. The user is here to work; the interface steps aside.",
+    "keyCharacteristics": [
+      "Dark-first, flat surfaces with tonal layering for depth",
+      "Green (#00C853) as the single focus color — used for primary actions, active states, and indicators only",
+      "Type-driven hierarchy: large headings, clean sans, generous letter-spacing",
+      "Subtle rounded corners (4px–12px range), never exaggerated",
+      "Sparse borders, relying on surface contrast for separation"
+    ],
+    "rules": [
+      { "name": "The Single-Accent Rule", "body": "Green is used on ≤10% of any given screen. Its rarity is the point. If green appears more than once per viewport (aside from the primary CTA), check whether the second instance can use a neutral treatment.", "section": "colors" },
+      { "name": "The Flat Scale Rule", "body": "Type hierarchy comes from weight (500/600 vs 400) and size ratio (≥1.25 between display-headline-body). Never add underlines, colored backgrounds, or decorative rules to headings.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "No drop shadows, no box-shadow elevation. Depth is conveyed exclusively through tonal layering: surfaces get progressively lighter (darker in dark mode) as they move toward the user.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use green only for interactive elements and state indicators. Never for decoration.",
+      "Do rely on surface contrast (tonal layers) for separation. Add borders only when layers don’t provide enough distinction.",
+      "Do use large type as the primary hierarchical signal. Headings at 22px+, body at 13px.",
+      "Do keep cards flat. No shadows, no hover lift.",
+      "Do use JetBrains Mono for code, data values, timestamps, and labels.",
+      "Do use 150ms transitions for interactive elements.",
+      "Do use the single pill-shape for all buttons (999px radius).",
+      "Do keep inputs simple: Ash background, Thicker Vine border, green focus ring."
+    ],
+    "donts": [
+      "Don’t use gradient text, glassmorphism, or decorative blur effects.",
+      "Don’t use box-shadow on cards or static surfaces. Shadows are for floating elements only.",
+      "Don’t add side-stripe borders (border-left/right > 1px as accent).",
+      "Don’t use em dashes.",
+      "Don’t animate layout properties (width, height, top, left).",
+      "Don’t add decorative illustrations, branded graphics, or animated mascots.",
+      "Don’t use rounded corners larger than 12px on containers.",
+      "Don’t use display fonts or font pairings.",
+      "Don’t repeat the hero-metric pattern (big number, small label, gradient accent).",
+      "Don’t overlay green on green surfaces. Green needs dark or black backing for readability."
+    ]
+  }
+}
