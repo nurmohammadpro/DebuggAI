@@ -248,7 +248,6 @@ export function WorkspaceDashboard() {
             collapsed={rightCollapsed}
             onToggleCollapsed={() => setRightCollapsed((v) => !v)}
             width={clamp(rightWidth, 320, 720)}
-            mode={mode}
           />
         </div>
       </main>

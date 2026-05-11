@@ -7,7 +7,6 @@ import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspaceGitPanel } from '@/components/workspace/workspace-git-panel';
 import { WorkspaceEnvPanel } from '@/components/workspace/workspace-env-panel';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
-import type { WorkspaceMode } from '@/store/workspace-store';
 
 import type { WorkspaceRightTab } from './workspace-icon-sidebar';
 
@@ -17,14 +16,12 @@ export function WorkspaceRightPanel({
   collapsed,
   onToggleCollapsed,
   width,
-  mode,
 }: {
   activeTab: WorkspaceRightTab;
   onTabChange: (tab: WorkspaceRightTab) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   width: number;
-  mode: WorkspaceMode;
 }) {
   const tabs = useMemo(
     () => [
@@ -89,7 +86,7 @@ export function WorkspaceRightPanel({
             <ChatPanel
               height="100%"
               chromeless
-              mode={mode}
+              mode="build"
               className="h-full bg-transparent"
             />
           </div>
