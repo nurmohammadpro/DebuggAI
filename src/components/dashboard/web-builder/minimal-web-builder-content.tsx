@@ -75,14 +75,14 @@ export function MinimalWebBuilderContent() {
   const showTerminal = isBuilding || isRunning || sandbox.status === 'error';
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden flex">
+    <div className="h-full flex">
       {/* Left Panel: Chat & AI interaction */}
-      <div className="w-[380px] shrink-0 min-h-0 bg-[var(--bg-primary)] border-r border-[var(--border-default)]">
+      <div className="w-[380px] shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-secondary)]">
         <ChatPanel height="100%" chromeless />
       </div>
 
       {/* Right Panel: Codebase & Preview */}
-      <div className="flex-1 min-h-0 flex flex-col bg-[var(--bg-secondary)] overflow-hidden">
+      <div className="flex-1 min-w-0 flex flex-col bg-[var(--bg-primary)]">
         {/* Main Toolbar */}
         <div className="h-12 border-b border-[var(--border-default)] flex items-center px-4 shrink-0 bg-[var(--bg-secondary)] justify-between">
           <div className="flex items-center gap-3">
@@ -195,13 +195,13 @@ export function MinimalWebBuilderContent() {
           </div>
         </div>
 
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 min-h-0 flex">
           {view === 'code' && !showTerminal && (
             <FileTree
               files={files}
               activePath={activeFilePath}
               onSelect={setActiveFilePath}
-              className="w-64 bg-[var(--bg-primary)] border-r border-[var(--border-default)]"
+              className="w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]"
             />
           )}
           {view === 'code' && showTerminal && (
@@ -209,7 +209,7 @@ export function MinimalWebBuilderContent() {
               logs={sandbox.logs}
               isBuilding={isBuilding}
               error={sandbox.error}
-              className="w-80 bg-[var(--bg-primary)] border-r border-[var(--border-default)]"
+              className="w-80 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]"
             />
           )}
 

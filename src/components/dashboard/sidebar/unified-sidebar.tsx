@@ -3,116 +3,109 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
-import { cn } from '@/lib/utils';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
-interface DashboardSidebarProps {
-  activeHref: string;
-  recentChats: DebugSessionRow[];
-  recentProjects: GenerationRow[];
-  onNewChatClick: () => void;
-  collapsed: boolean;
-  onToggleCollapsed: () => void;
+interface UnifiedSidebarProps {
+  recentChats?: DebugSessionRow[];
+  recentProjects?: GenerationRow[];
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
-export function DashboardSidebar({
-  activeHref,
-  recentChats,
-  recentProjects,
-  onNewChatClick,
-  collapsed,
+export function UnifiedSidebar({
+  recentChats = [],
+  recentProjects = [],
+  collapsed = false,
   onToggleCollapsed,
-}: DashboardSidebarProps) {
+}: UnifiedSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useSessionStore();
 
+  // Check if we're on the dashboard home (not viewing a project)
+  const isDashboardHome = pathname === '/dashboard' && !searchParams?.has('project');
+  const isWebBuilder = pathname === '/dashboard/web-builder';
+  const isDebug = pathname === '/dashboard/debug' || pathname.startsWith('/dashboard/debug/');
+
   return (
     <aside
-      className={cn(
-        'border-r border-[var(--border-default)] bg-[var(--bg-secondary)] flex flex-col shrink-0 transition-all duration-200',
+      className={`hidden md:flex shrink-0 flex-col bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transition-all duration-200 ${
         collapsed ? 'w-[68px]' : 'w-[280px]'
-      )}
+      }`}
     >
       {/* Header */}
       <div className="h-14 border-b border-[var(--border-default)] flex items-center justify-between px-4">
         {!collapsed && (
-          <div className="font-semibold text-[14px] text-[var(--text-primary)]">
+          <Link href="/dashboard" className="font-semibold text-[14px] text-[var(--text-primary)]">
             DeBuggAI
-          </div>
+          </Link>
         )}
-        <button
-          onClick={onToggleCollapsed}
-          className="p-1 rounded-[var(--radius-sm)] text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-secondary)] transition-all"
-          aria-label="Toggle sidebar"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <path d="M9 3v18"/>
-          </svg>
-        </button>
+        {onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            className="p-1 rounded-[var(--radius-sm)] text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-secondary)] transition-all"
+            aria-label="Toggle sidebar"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+            </svg>
+          </button>
+        )}
       </div>
 
-      {/* Content */}
+      {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-3">
-        {/* Navigation */}
-        <div className="mb-4">
-          {!collapsed && (
-            <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-              Workspace
-            </div>
-          )}
+        {/* Main Navigation */}
+        {!collapsed && (
+          <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+            Workspace
+          </div>
+        )}
 
-          <NavItem
-            collapsed={collapsed}
-            active={pathname === '/dashboard' && !searchParams?.has('project')}
-            icon="⌂"
-            label="Dashboard"
-            href="/dashboard"
-          />
-          <NavItem
-            collapsed={collapsed}
-            active={pathname === '/dashboard/web-builder'}
-            icon="⚡"
-            label="Web Builder"
-            href="/dashboard/web-builder"
-          />
-          <NavItem
-            collapsed={collapsed}
-            active={pathname === '/dashboard/debug'}
-            icon="🐛"
-            label="Debug Session"
-            href="/dashboard/debug"
-          />
-        </div>
+        <NavItem
+          collapsed={collapsed}
+          active={isDashboardHome}
+          icon="⌂"
+          label="Dashboard"
+          href="/dashboard"
+        />
+        <NavItem
+          collapsed={collapsed}
+          active={isWebBuilder}
+          icon="⚡"
+          label="Web Builder"
+          href="/dashboard/web-builder"
+        />
+        <NavItem
+          collapsed={collapsed}
+          active={isDebug}
+          icon="🐛"
+          label="Debug Session"
+          href="/dashboard/debug"
+        />
 
         {/* Recent Projects */}
         {!collapsed && recentProjects.length > 0 && (
-          <div className="mb-4">
+          <div className="mt-4">
             <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
               Recent Projects
             </div>
             {recentProjects.slice(0, 5).map((project) => (
-              <RecentProjectItem
-                key={project.id}
-                project={project}
-              />
+              <RecentProjectItem key={project.id} project={project} />
             ))}
           </div>
         )}
 
         {/* Debug Sessions */}
         {!collapsed && recentChats.length > 0 && (
-          <div className="mb-4">
+          <div className="mt-4">
             <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
               Debug Sessions
             </div>
             {recentChats.slice(0, 5).map((chat) => (
-              <RecentChatItem
-                key={chat.id}
-                chat={chat}
-              />
+              <RecentChatItem key={chat.id} chat={chat} />
             ))}
           </div>
         )}
@@ -121,9 +114,12 @@ export function DashboardSidebar({
       {/* Footer */}
       <div className="p-3 border-t border-[var(--border-default)]">
         {collapsed ? (
-          <div className="w-7 h-7 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] flex items-center justify-center text-[12px] font-medium">
+          <Link
+            href="/dashboard/settings"
+            className="w-7 h-7 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] flex items-center justify-center text-[12px] font-medium"
+          >
             {user?.email?.[0].toUpperCase() || 'U'}
-          </div>
+          </Link>
         ) : (
           <Link
             href="/dashboard/settings"
@@ -159,12 +155,11 @@ function NavItem({ collapsed, active, icon, label, href }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={cn(
-        'flex items-center gap-2.5 px-4 py-1.5 text-[13px] rounded-[var(--radius-sm)] transition-all',
+      className={`flex items-center gap-2.5 px-4 py-1.5 text-[13px] rounded-[var(--radius-sm)] transition-all ${
         active
           ? 'bg-[var(--bg-tertiary)] font-medium text-[var(--text-primary)]'
           : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
-      )}
+      }`}
     >
       <span className="w-4 h-4 flex items-center justify-center text-[12px] shrink-0">
         {icon}
@@ -184,7 +179,7 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
   return (
     <Link
       href={`/dashboard?project=${project.id}`}
-      className="flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--bg-tertiary)] transition-all relative group"
+      className="flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--bg-tertiary)] transition-all group"
     >
       <span className="w-4 h-4 flex items-center justify-center text-[12px] shrink-0">
         📊
@@ -195,9 +190,6 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
       <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
         {timeAgo}
       </span>
-      <div className="w-5 h-5 rounded-[var(--radius-sm)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--bg-secondary)]">
-        ⋮
-      </div>
     </Link>
   );
 }
@@ -212,8 +204,8 @@ function RecentChatItem({ chat }: RecentChatItemProps) {
 
   return (
     <Link
-      href={`/dashboard?chat=${chat.id}`}
-      className="flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--bg-tertiary)] transition-all relative group"
+      href={`/dashboard/debug/history?session=${chat.id}`}
+      className="flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--bg-tertiary)] transition-all group"
     >
       <span className="w-4 h-4 flex items-center justify-center text-[12px] shrink-0">
         ●
@@ -224,9 +216,6 @@ function RecentChatItem({ chat }: RecentChatItemProps) {
       <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
         {timeAgo}
       </span>
-      <div className="w-5 h-5 rounded-[var(--radius-sm)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--bg-secondary)]">
-        ⋮
-      </div>
     </Link>
   );
 }

@@ -72,15 +72,10 @@ export function WorkspaceDashboard() {
   }, [project, setProjectKey]);
 
   useEffect(() => {
-    // Default panel emphasis per mode
-    if (mode === 'debug') {
-      setRightCollapsed(false);
-      setRightTab('console');
-    } else {
-      setRightCollapsed(false);
-      setRightTab('chat');
-    }
-  }, [mode]);
+    // Default right panel to chat
+    setRightCollapsed(false);
+    setRightTab('chat');
+  }, []);
 
   useEffect(() => {
     try {
@@ -141,8 +136,6 @@ export function WorkspaceDashboard() {
         projectId={effectiveProjectId}
         branchName="main"
         unsavedCount={unsavedCount}
-        mode={mode}
-        onModeChange={setMode}
         onRun={() => {
           setEditorView('preview');
           bumpPreviewNonce();

@@ -5,8 +5,6 @@ import { Zap, Share2, Play } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
-import { WorkspaceModeToggle } from '@/components/workspace/workspace-mode-toggle';
-import type { WorkspaceMode } from '@/store/workspace-store';
 import { WorkspaceProjectSwitcher } from '@/components/workspace/workspace-project-switcher';
 import { Logo } from '@/components/logo';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
@@ -15,16 +13,12 @@ export function WorkspaceTopbar({
   projectId,
   branchName,
   unsavedCount,
-  mode,
-  onModeChange,
   onRun,
   onShare,
 }: {
   projectId: string | null;
   branchName: string;
   unsavedCount: number;
-  mode: WorkspaceMode;
-  onModeChange: (mode: WorkspaceMode) => void;
   onRun: () => void;
   onShare: () => void;
 }) {
@@ -41,12 +35,11 @@ export function WorkspaceTopbar({
 
       <div className="px-3 flex items-center gap-2 min-w-0">
         <WorkspaceProjectSwitcher selectedProjectId={projectId} />
-        <WorkspaceModeToggle mode={mode} onModeChange={onModeChange} />
       </div>
 
       <div className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)] min-w-0">
         <Link
-          href="/dashboard/home"
+          href="/dashboard"
           className="text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors flex items-center gap-1"
         >
           Projects

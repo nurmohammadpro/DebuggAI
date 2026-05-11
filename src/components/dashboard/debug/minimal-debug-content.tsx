@@ -126,7 +126,7 @@ export function MinimalDebugContent() {
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="h-full flex">
       {/* Left Panel: Input */}
       <div className="w-[400px] border-r border-[var(--border-default)] flex flex-col bg-[var(--bg-secondary)]">
         <div className="p-4 border-b border-[var(--border-default)]">
