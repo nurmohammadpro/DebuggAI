@@ -2,8 +2,11 @@
  * Client Dashboard Shell
  *
  * Shared shell for client dashboard pages.
- * Note: `/dashboard` renders the IDE (when `?project=...`) or the dashboard home screen
- * internally, so we avoid wrapping it to prevent double shells.
+ * Note:
+ * - `/dashboard` renders its own layout (UnifiedLayout or IDE)
+ * - `/dashboard/web-builder` uses UnifiedLayout with its own sidebar
+ * - `/dashboard/debug` uses UnifiedLayout with its own sidebar
+ * So we avoid wrapping these to prevent double sidebars.
  */
 
 'use client';
@@ -18,6 +21,12 @@ interface ClientDashboardShellProps {
 export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
   const pathname = usePathname();
 
-  if (pathname === '/dashboard') return <>{children}</>;
+  // These routes handle their own layout with UnifiedLayout or WorkspaceDashboard
+  if (pathname === '/dashboard' ||
+      pathname === '/dashboard/web-builder' ||
+      pathname.startsWith('/dashboard/debug')) {
+    return <>{children}</>;
+  }
+
   return <DashboardShell>{children}</DashboardShell>;
 }
