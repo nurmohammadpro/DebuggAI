@@ -27,11 +27,11 @@ export function WorkspaceIconSidebar({
   onRightTabChange: (tab: WorkspaceRightTab) => void;
 }) {
   const itemBase =
-    'h-10 w-10 rounded-[8px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition';
-  const itemActive = 'bg-muted/50 text-foreground border border-border';
+    'h-10 w-10 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition';
+  const itemActive = 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-default)]';
 
   return (
-    <nav className="w-12 bg-card flex flex-col items-center py-2 gap-1">
+    <nav className="w-12 bg-[var(--bg-secondary)] flex flex-col items-center py-2 gap-1">
       <button
         className={`${itemBase} ${leftView === 'explorer' ? itemActive : ''}`}
         title="Explorer"
@@ -47,7 +47,7 @@ export function WorkspaceIconSidebar({
         <Search className="h-4 w-4" />
       </button>
 
-      <div className="my-1 h-px w-8 bg-border" />
+      <div className="my-1 h-px w-8 bg-[var(--border-default)]" />
 
       <button
         className={itemBase}
@@ -64,7 +64,7 @@ export function WorkspaceIconSidebar({
         <Bug className="h-4 w-4" />
       </button>
 
-      <div className="my-1 h-px w-8 bg-border" />
+      <div className="my-1 h-px w-8 bg-[var(--border-default)]" />
 
       <button
         className={itemBase}
