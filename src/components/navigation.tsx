@@ -96,7 +96,7 @@ export function Navigation() {
 
               <NotificationCenter />
 
-              <ThemeToggle className="nav-notif" />
+              <ThemeToggle />
 
               {/* User Dropdown */}
               <DropdownMenu>

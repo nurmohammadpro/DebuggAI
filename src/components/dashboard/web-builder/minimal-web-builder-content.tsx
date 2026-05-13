@@ -136,7 +136,7 @@ export function MinimalWebBuilderContent() {
               <>
                 <button
                   onClick={sandbox.exportZip}
-                  className="flex items-center gap-1 h-8 px-3 rounded-[6px] text-[10px] font-semibold uppercase tracking-tight transition-all border text-[var(--app-text-muted)] border-[var(--app-border)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                  className="flex items-center gap-1 h-8 px-3 rounded-[6px] text-[10px] font-semibold uppercase tracking-tight transition-all border text-[var(--app-text)] border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)]"
                 >
                   <Download className="h-3 w-3" />
                   Export
@@ -158,7 +158,7 @@ export function MinimalWebBuilderContent() {
                   "flex items-center gap-1 h-8 px-3 rounded-[6px] text-[10px] font-semibold uppercase tracking-tight transition-all border",
                   showDiff
                     ? "bg-[var(--app-warning-soft)] text-[var(--app-warning)] border-[var(--app-warning)]/35"
-                    : "text-[var(--app-text-muted)] border-[var(--app-border)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                    : "text-[var(--app-text)] border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)]"
                 )}
               >
                 <GitCompare className="h-3 w-3" />

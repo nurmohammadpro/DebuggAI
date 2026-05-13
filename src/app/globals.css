@@ -14,9 +14,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-heading: 'Inter', sans-serif;
+  /* Use local/system font stacks to keep builds offline-safe (no Google Fonts fetch). */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-heading: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 
   /* Design-system color aliases (used by `bg-surface2`, `text-text3`, etc.) */
   --color-surface: var(--ds-surface);
@@ -111,7 +112,8 @@
   --border-hover: #d1d5db;
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
+  /* Light-mode tertiary text was too faint on white for small UI labels/buttons. */
+  --text-tertiary: #64748b;
   --accent: #0f172a;
   --success: #22c55e;
   --error: #ef4444;
@@ -626,8 +628,8 @@
     justify-content: center;
     border-radius: 6px;
     cursor: pointer;
-    border: none;
-    background: transparent;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
     color: var(--app-text-muted);
     transition: all 0.15s;
     position: relative;
@@ -635,7 +637,7 @@
 
   .nav-notif:hover {
     color: var(--app-text);
-    background: var(--app-surface);
+    background: var(--app-panel-2);
   }
 
   .notif-dot {
