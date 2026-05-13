@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { RefreshCw, FilePlus, FolderPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { WorkspaceLeftView } from './workspace-icon-sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkspaceFileTreeView } from '@/components/workspace/workspace-file-tree-view';
 import { WorkspaceVersionsList } from '@/components/workspace/workspace-versions-list';
 import { useGenerationStore } from '@/store/generation-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
+
+type WorkspaceLeftView = 'explorer' | 'search';
 
 export function WorkspaceFileTree({
   view,
@@ -19,7 +20,7 @@ export function WorkspaceFileTree({
   width: number;
 }) {
   const [query, setQuery] = useState('');
-  const { selectedProjectId, projectKey } = useWorkspaceStore();
+  const { selectedProjectId } = useWorkspaceStore();
 
   const handleNewFile = () => {
     const name = window.prompt('File name:');

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
-import { dashboardPrimaryNav, dashboardMoreNav } from '@/components/dashboard/shell/dashboard-nav';
+import { dashboardPrimaryNav, dashboardMoreNav } from '@/components/dashboard/dashboard-nav';
 
 interface CommandItem {
   id: string;
@@ -40,8 +40,6 @@ export function CommandPalette({
 
   useEffect(() => {
     if (open) {
-      setQuery('');
-      setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
@@ -118,10 +116,6 @@ export function CommandPalette({
 
   const flatFiltered = useMemo(() => filtered, [filtered]);
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
   const navigate = useCallback(
     (item: CommandItem) => {
       onOpenChange(false);
@@ -146,8 +140,19 @@ export function CommandPalette({
     [flatFiltered, selectedIndex, navigate],
   );
 
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setQuery('');
+        setSelectedIndex(0);
+      }
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange],
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent showCloseButton={false} className="p-0 max-w-lg rounded-[10px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
         <DialogTitle className="sr-only">Command Palette</DialogTitle>
         <div className="flex items-center border-b border-[var(--app-border)] px-4">
@@ -157,7 +162,10 @@ export function CommandPalette({
             className="w-full border-0 bg-transparent h-12 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none"
             placeholder="Type a command or search..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+            }}
             onKeyDown={onKeyDown}
           />
           <kbd className="text-[10px] text-[var(--app-text-dim)] shrink-0 ml-2">esc</kbd>

@@ -1,8 +1,8 @@
 import {
-  Home,
-  LayoutGrid,
   Bug,
   Code2,
+  Home,
+  LayoutGrid,
 } from 'lucide-react';
 
 export const dashboardPrimaryNav = [
