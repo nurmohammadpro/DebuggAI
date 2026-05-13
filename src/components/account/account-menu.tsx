@@ -59,32 +59,28 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          'h-8 w-8 p-0 inline-flex items-center justify-center rounded text-sm font-medium outline-none',
+          'h-8 w-8 p-0 inline-flex items-center justify-center rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] text-sm font-medium text-[var(--app-text)] outline-none transition-colors hover:bg-[var(--app-panel-2)]',
           className
         )}
-        style={{
-          background: 'var(--bg-tertiary)',
-          color: 'var(--text-primary)',
-        }}
         aria-label="Account menu"
         title="Account"
       >
         {initial}
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align={align} className="w-[320px] p-0 rounded border border-gray-200 bg-white">
+      <DropdownMenuContent align={align} className="w-[320px] p-0 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text)]">
         <DropdownMenuLabel className="font-normal p-4">
           <div className="flex items-center gap-3">
             <div
-              className="h-9 w-9 inline-flex items-center justify-center rounded text-sm font-semibold bg-gray-100 text-gray-700"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] text-sm font-semibold text-[var(--app-text)]"
             >
               {initial}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-none truncate text-gray-900">
+              <p className="text-sm font-medium leading-none truncate text-[var(--app-text)]">
                 {user?.displayName || 'Developer'}
               </p>
-              <p className="text-xs leading-none text-gray-500 truncate mt-1">
+              <p className="text-xs leading-none text-[var(--app-text-muted)] truncate mt-1">
                 {user?.email}
               </p>
             </div>

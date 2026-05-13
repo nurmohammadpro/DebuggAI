@@ -129,8 +129,8 @@
   --app-text: var(--text-primary);
   --app-text-muted: var(--text-secondary);
   --app-text-dim: var(--text-tertiary);
-  --app-accent: var(--accent);
-  --app-accent-soft: rgba(15, 23, 42, 0.08);
+  --app-accent: var(--ds-green);
+  --app-accent-soft: var(--ds-green-muted);
   --app-border: var(--border-default);
   --app-border-strong: var(--border-hover);
   --app-success: var(--success);
@@ -225,8 +225,8 @@
   --app-text: var(--text-primary);
   --app-text-muted: var(--text-secondary);
   --app-text-dim: var(--text-tertiary);
-  --app-accent: var(--accent);
-  --app-accent-soft: rgba(241, 245, 249, 0.12);
+  --app-accent: var(--ds-green);
+  --app-accent-soft: var(--ds-green-muted);
   --app-border: var(--border-default);
   --app-border-strong: var(--border-hover);
   --app-success: var(--success);
@@ -460,7 +460,7 @@
   /* Input - DeBuggAI (Rounded edges) */
   .inp {
     width: 100%;
-    border-radius: 8px;
+    border-radius: 6px;
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     height: 44px;
@@ -485,7 +485,7 @@
     @apply inline-flex items-center gap-1;
     font-size: 11px;
     font-weight: 500;
-    border-radius: 20px;
+    border-radius: 6px;
     padding: 2px 10px;
   }
 
@@ -526,13 +526,13 @@
   /* Card - DeBuggAI (Rounded edges) */
   .card {
     background: var(--app-panel);
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--app-border);
   }
 
   .card-sm {
     background: var(--app-panel);
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--app-border);
   }
 
@@ -569,7 +569,7 @@
     border: none;
     background: transparent;
     font-family: 'Inter', sans-serif;
-    border-radius: 8px;
+    border-radius: 6px;
     text-decoration: none;
   }
 
@@ -595,7 +595,7 @@
     font-size: 15px;
     background: var(--app-surface);
     color: var(--app-text-muted);
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .btn-icon:hover {
@@ -609,7 +609,7 @@
     gap: 4px;
     height: 30px;
     padding: 0 10px;
-    border-radius: 8px;
+    border-radius: 6px;
     background: var(--app-accent-soft);
     color: var(--app-accent);
     font-size: 12px;
@@ -624,7 +624,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     border: none;
     background: transparent;
@@ -659,7 +659,7 @@
   color: var(--app-text-muted);
   text-decoration: none;
   transition: all 0.15s;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .mobile-menu-item:hover {
@@ -811,7 +811,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--app-border);
   background: var(--app-panel);
   cursor: default;
@@ -838,7 +838,7 @@
 .terminal {
   background: #0C0F0C;
   border: 1px solid var(--app-border);
-  border-radius: 10px;
+  border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
@@ -901,7 +901,7 @@
 .code-window {
   background: var(--app-panel);
   border: 1px solid var(--app-border);
-  border-radius: 10px;
+  border-radius: 6px;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
 }

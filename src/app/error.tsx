@@ -33,7 +33,7 @@ export default function ErrorPage({
         )}
         <button
           onClick={reset}
-          className="inline-flex items-center gap-2 h-9 px-5 rounded-[8px] bg-[var(--app-accent)] text-black text-[13px] font-medium hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 h-9 px-5 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-[13px] font-medium hover:opacity-90 transition-opacity"
         >
           <RefreshCw className="h-3.5 w-3.5" />
           Try again

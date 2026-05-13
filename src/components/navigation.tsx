@@ -102,12 +102,7 @@ export function Navigation() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="w-[30px] h-[30px] p-0 rounded-full flex items-center justify-center text-[12px] font-semibold cursor-pointer border-0 outline-none"
-                    style={{
-                      background: 'var(--app-accent-soft)',
-                      border: '2px solid rgba(0,200,83,0.3)',
-                      color: 'var(--app-accent)',
-                    }}
+                    className="w-[30px] h-[30px] p-0 rounded-[6px] flex items-center justify-center text-[12px] font-semibold cursor-pointer border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] outline-none hover:bg-[var(--app-panel-2)] transition-colors"
                   >
                     {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
                   </button>
@@ -156,7 +151,7 @@ export function Navigation() {
             </>
           ) : (
             <Link href="/login">
-              <button className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-[13px] font-medium bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity">
+              <button className="inline-flex items-center rounded-[6px] px-4 py-1.5 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
                 Sign In
               </button>
             </Link>
@@ -180,7 +175,7 @@ export function Navigation() {
                 style={{
                   background: 'var(--app-panel)',
                   border: '1px solid var(--app-border-strong)',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
                 }}
               >

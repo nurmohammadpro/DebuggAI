@@ -75,7 +75,7 @@ export function StackSelector({ children }: StackSelectorProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text)] backdrop-blur-xl">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text)]">
         <DialogHeader className="text-left">
           <DialogTitle className="flex items-center gap-2 text-[16px] font-medium text-[var(--app-text)]">
             <Code2 className="h-5 w-5" />
@@ -95,7 +95,7 @@ export function StackSelector({ children }: StackSelectorProps) {
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="my-app"
-              className="w-full h-9 font-mono rounded-[8px] border-0 bg-[var(--app-panel)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+              className="w-full h-9 font-mono rounded-[6px] border-0 bg-[var(--app-panel)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
             />
           </div>
 
@@ -106,7 +106,7 @@ export function StackSelector({ children }: StackSelectorProps) {
               {WEB_BUILDER_STACKS.map((stack) => (
                 <div
                   key={stack.id}
-                  className={`cursor-pointer transition-all rounded-[8px] bg-[var(--app-panel)] p-4 ${
+                  className={`cursor-pointer transition-all rounded-[6px] bg-[var(--app-panel)] p-4 ${
                     selectedStack === stack.id ? 'ring-2 ring-[var(--app-accent)]' : ''
                   }`}
                   onClick={() => setSelectedStack(stack.id)}
@@ -133,7 +133,7 @@ export function StackSelector({ children }: StackSelectorProps) {
             <label className="text-[13px] font-medium text-[var(--app-text-muted)]">Select Features (Optional)</label>
             <div className="grid md:grid-cols-2 gap-4">
               {COMMON_FEATURES.map((feature) => (
-                <div key={feature.id} className="flex items-center space-x-3 p-3 border border-[var(--app-border)] rounded-[8px]">
+                <div key={feature.id} className="flex items-center space-x-3 p-3 border border-[var(--app-border)] rounded-[6px]">
                   <input
                     type="checkbox"
                     id={feature.id}
@@ -175,14 +175,14 @@ export function StackSelector({ children }: StackSelectorProps) {
             <div className="flex gap-2">
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-[8px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                className="rounded-[6px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerate}
                 disabled={!selectedStack || isGenerating}
-                className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-[6px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-[#071006] transition-colors hover:opacity-90 disabled:opacity-50"
               >
                 {isGenerating ? (
                   <>

@@ -86,7 +86,7 @@ export default function PricingPage() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className="relative flex flex-col p-6 transition-all duration-200 rounded-[10px]"
+              className="relative flex flex-col p-6 transition-all duration-200 rounded-[6px]"
               style={{
                 background: 'var(--app-panel)',
                 border: plan.popular
@@ -102,7 +102,7 @@ export default function PricingPage() {
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
                   <span
-                    className="font-medium tracking-wide text-[11px] bg-[var(--app-accent)] text-black px-4 py-1 rounded-[20px]"
+                    className="font-medium tracking-wide text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]"
                     style={{ boxShadow: '0 2px 8px rgba(0,200,83,0.3)' }}
                   >
                     Most Popular
@@ -149,10 +149,10 @@ export default function PricingPage() {
 
               <Link href={plan.href} className="w-full mt-auto">
                 <button
-                  className="w-full inline-flex items-center justify-center rounded-[8px] px-4 py-2.5 text-[13px] font-medium transition-colors hover:opacity-90"
+                  className="w-full inline-flex items-center justify-center rounded-[6px] px-4 py-2.5 text-[13px] font-medium transition-colors hover:opacity-90"
                   style={plan.popular ? {
                     background: 'var(--app-accent)',
-                    color: '#000000'
+                    color: '#071006'
                   } : {
                     background: 'transparent',
                     color: 'var(--app-text-muted)',
@@ -172,12 +172,12 @@ export default function PricingPage() {
               Compare Plans
             </h2>
             <p className="text-[13px] max-w-md mx-auto text-[var(--app-text-muted)]">
-              A detailed breakdown of what's included in each tier.
+              A detailed breakdown of what is included in each tier.
             </p>
           </div>
 
           <div
-            className="overflow-x-auto rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel)]"
+            className="overflow-x-auto rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)]"
           >
             <table className="w-full min-w-[640px]">
               <thead>
@@ -230,7 +230,7 @@ export default function PricingPage() {
             Our team is ready to help you find the perfect plan.
           </p>
           <Link href="/contact">
-            <button className="inline-flex items-center rounded-[8px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]">
+            <button className="inline-flex items-center rounded-[6px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]">
               Talk to Sales
             </button>
           </Link>

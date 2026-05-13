@@ -56,7 +56,7 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[radial-gradient(ellipse,rgba(0,200,83,0.06)_0%,transparent_70%)] -z-10 pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="fade-up inline-flex items-center gap-2 mb-5 rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)]">
+          <div className="fade-up inline-flex items-center gap-2 mb-5 rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" style={{ animation: 'dot-pulse 2s infinite' }} />
             AI-Powered Development Platform
           </div>
@@ -72,7 +72,7 @@ export default function LandingPage() {
 
           <div className="fade-up fade-up-delay-3 flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/signup" className="w-full sm:w-auto">
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-[8px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity">
+              <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
                 Start Debugging Now
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -135,7 +135,7 @@ export default function LandingPage() {
       <section id="features" className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               Features
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
@@ -175,7 +175,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-[16px] font-medium tracking-[-0.02em] mb-2 text-[var(--app-text)]">{feature.title}</h3>
                   <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed mb-3">{feature.desc}</p>
-                  <span className="inline-flex rounded-[20px] px-2.5 py-0.5 text-[10px] font-medium bg-[var(--app-surface)] text-[var(--app-text-dim)]">
+                  <span className="inline-flex rounded-[6px] px-2.5 py-0.5 text-[10px] font-medium bg-[var(--app-surface)] text-[var(--app-text-dim)]">
                     {feature.badge}
                   </span>
                 </div>
@@ -189,7 +189,7 @@ export default function LandingPage() {
       <section id="demo" className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               Live Demo
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
@@ -257,7 +257,7 @@ export default function LandingPage() {
                 ↻ Replay
               </button>
               <Link href="/signup">
-                <button className="inline-flex items-center rounded-[8px] px-3 py-1.5 text-[11px] font-medium bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity">
+                <button className="inline-flex items-center rounded-[6px] px-3 py-1.5 text-[11px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
                   Try It Yourself →
                 </button>
               </Link>
@@ -270,7 +270,7 @@ export default function LandingPage() {
       <section id="languages" className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               Languages
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
@@ -312,7 +312,7 @@ export default function LandingPage() {
       <section className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               How It Works
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight text-[var(--app-text)] fade-up">
@@ -373,7 +373,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="fade-up grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
             <div>
-              <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
+              <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
                 Before & After
               </div>
               <h2 className="text-[22px] font-semibold tracking-tight mb-3 text-[var(--app-text)]">
@@ -441,7 +441,7 @@ export default function LandingPage() {
       <section className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               Testimonials
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight text-[var(--app-text)] fade-up">
@@ -504,7 +504,7 @@ export default function LandingPage() {
       <section id="pricing" className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               Pricing
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
@@ -551,7 +551,7 @@ export default function LandingPage() {
               }}
             >
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                <span className="font-medium text-[11px] bg-[var(--app-accent)] text-black px-4 py-1 rounded-[20px]" style={{ boxShadow: '0 2px 8px rgba(0,200,83,0.3)' }}>
+                <span className="font-medium text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]" style={{ boxShadow: '0 2px 8px rgba(0,200,83,0.3)' }}>
                   Most Popular
                 </span>
               </div>
@@ -568,7 +568,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <Link href="/signup?plan=pro" className="block mt-auto">
-                <button className="w-full inline-flex items-center justify-center gap-2 rounded-[8px] px-4 py-2.5 text-[13px] font-medium bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity">
+                <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-4 py-2.5 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
                   Start Free Trial
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -603,7 +603,7 @@ export default function LandingPage() {
       <section id="faq" className="border-t border-[var(--app-border)] py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-14">
-            <div className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
+            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
               FAQ
             </div>
             <h2 className="text-[24px] font-semibold tracking-tight text-[var(--app-text)] fade-up">
@@ -704,7 +704,7 @@ export default function LandingPage() {
             >
               <div className="absolute -top-16 -right-16 w-48 h-48 bg-[radial-gradient(circle,rgba(0,200,83,0.06),transparent_70%)] pointer-events-none" />
               <div className="relative z-10">
-                <span className="inline-flex rounded-[20px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
+                <span className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
                   Ready?
                 </span>
                 <h2 className="text-[24px] font-semibold tracking-tight mb-2 text-[var(--app-text)]">
@@ -715,7 +715,7 @@ export default function LandingPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/signup">
-                    <button className="inline-flex items-center gap-2 rounded-[8px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity">
+                    <button className="inline-flex items-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
                       Start Free Trial
                       <ArrowRight className="h-5 w-5" />
                     </button>

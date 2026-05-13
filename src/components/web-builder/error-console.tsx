@@ -12,7 +12,7 @@ interface ErrorConsoleProps {
   chromeless?: boolean;
 }
 
-export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProps) {
+export function ErrorConsole({ className }: ErrorConsoleProps) {
   const { lastError, setLastError, currentCode } = useGenerationStore();
   const { isDebugging } = useDebugStore();
   const [debugging, setDebugging] = useState(false);
@@ -46,7 +46,7 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
 
   if (!lastError) {
     return (
-      <div className={`rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] ${className || ''}`}>
+      <div className={`rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] ${className || ''}`}>
         <div className="p-6 text-center">
           <Bug className="h-8 w-8 mx-auto mb-2 text-[var(--app-text-dim)]" />
           <p className="text-[13px] text-[var(--app-text-muted)]">No errors detected</p>
@@ -56,7 +56,7 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
   }
 
   return (
-    <div className={`rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] ${className || ''}`}>
+    <div className={`rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] ${className || ''}`}>
       <div className="p-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
           <button
             onClick={handleDebug}
             disabled={debugging || isDebugging}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-[6px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-[#071006] transition-colors hover:opacity-90 disabled:opacity-50"
           >
             {debugging || isDebugging ? (
               <>
@@ -119,7 +119,7 @@ export function ErrorConsole({ className, chromeless = false }: ErrorConsoleProp
           <button
             onClick={handleClear}
             disabled={debugging || isDebugging}
-            className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
           >
             Clear
           </button>

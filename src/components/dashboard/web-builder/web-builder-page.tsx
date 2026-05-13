@@ -122,7 +122,7 @@ export default function WebBuilderPage() {
                 className={cn(
                   "flex items-center gap-1.5 h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border",
                   files
-                    ? "bg-[var(--app-accent)] text-black border-[var(--app-accent)] hover:opacity-90"
+                    ? "bg-[var(--app-accent)] text-[#071006] border-[var(--app-accent)] hover:opacity-90"
                     : "text-[var(--app-text-dim)] border-[var(--app-border)] cursor-not-allowed"
                 )}
               >
@@ -181,7 +181,7 @@ export default function WebBuilderPage() {
                 className={cn(
                   "h-7 px-4 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-2",
                   view === 'code'
-                    ? 'bg-[var(--app-accent)] text-black'
+                    ? 'bg-[var(--app-accent)] text-[#071006]'
                     : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
                 )}
                 onClick={() => setView('code')}
@@ -193,7 +193,7 @@ export default function WebBuilderPage() {
                 className={cn(
                   "h-7 px-4 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-2",
                   view === 'preview'
-                    ? 'bg-[var(--app-accent)] text-black'
+                    ? 'bg-[var(--app-accent)] text-[#071006]'
                     : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
                 )}
                 onClick={() => setView('preview')}

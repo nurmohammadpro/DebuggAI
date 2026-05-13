@@ -121,7 +121,7 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)]",
+        "flex flex-col overflow-hidden rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)]",
         className
       )}
       style={{ height }}
@@ -161,7 +161,7 @@ export function ChatPanel({
                 <button
                   key={p}
                   onClick={() => setInput(p)}
-                  className="w-full text-left p-3 rounded-[8px] bg-[var(--app-panel-2)] border border-[var(--app-border)] hover:bg-[var(--app-surface)] transition-colors group"
+                  className="w-full text-left p-3 rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] hover:bg-[var(--app-surface)] transition-colors group"
                 >
                   <p className="text-[11px] text-[var(--app-text-muted)] group-hover:text-[var(--app-text)] transition-colors line-clamp-1">
                     {p}
@@ -182,9 +182,9 @@ export function ChatPanel({
           >
             <div
               className={cn(
-                "max-w-[85%] rounded-[10px] px-4 py-3",
+                "max-w-[85%] rounded-[6px] px-4 py-3",
                 message.role === 'user'
-                  ? 'bg-[var(--app-accent)] text-black'
+                  ? 'bg-[var(--app-accent)] text-[#071006]'
                   : 'bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]'
               )}
             >
@@ -201,7 +201,7 @@ export function ChatPanel({
         {/* Streaming response */}
         {isLoading && accumulatedResponse && (
           <div className="flex flex-col items-start animate-in fade-in duration-300">
-            <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]">
+            <div className="max-w-[85%] rounded-[6px] px-4 py-3 bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]">
               <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
                 {accumulatedResponse}
                 <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle" />
@@ -213,7 +213,7 @@ export function ChatPanel({
         {/* Loading indicator */}
         {isLoading && !accumulatedResponse && (
           <div className="flex justify-start animate-in fade-in duration-300">
-            <div className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[8px] px-4 py-2 flex items-center gap-2">
+            <div className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[6px] px-4 py-2 flex items-center gap-2">
               <div className="flex gap-1">
                 <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -229,7 +229,7 @@ export function ChatPanel({
 
       {/* Input */}
       <div className="p-3 shrink-0 bg-[var(--app-panel-2)] border-t border-[var(--app-border)]">
-        <div className="flex items-end gap-2 bg-[var(--app-surface)] rounded-[8px] border border-[var(--app-border)] transition-colors p-2">
+        <div className="flex items-end gap-2 bg-[var(--app-surface)] rounded-[6px] border border-[var(--app-border)] transition-colors p-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -242,7 +242,7 @@ export function ChatPanel({
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="h-7 w-7 p-0 rounded-[6px] shrink-0 bg-[var(--app-accent)] text-black hover:opacity-90 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+            className="h-7 w-7 p-0 rounded-[6px] shrink-0 bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
           >
             {isLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
