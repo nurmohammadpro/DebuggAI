@@ -35,35 +35,64 @@ const plans = [
     popular: true,
   },
   {
-    name: 'ENTERPRISE',
-    price: '$49',
-    description: 'For teams and organizations',
+    name: 'TEAM',
+    price: '$99',
+    description: 'For small teams',
     features: [
-      { text: 'Unlimited credits', included: true },
-      { text: 'Dedicated AI instances', included: true },
-      { text: 'Unlimited history', included: true },
-      { text: 'SLA guarantee', included: true },
-      { text: 'Priority support', included: true },
+      { text: '2,500 credits/month', included: true },
+      { text: '3 seats included', included: true },
+      { text: 'Shared team dashboard', included: true },
+      { text: 'Web Builder + Export', included: true },
+      { text: 'Priority queue', included: true },
     ],
     cta: 'Contact Sales',
-    href: '/contact',
+    href: '/contact?plan=team',
+    popular: false,
+  },
+  {
+    name: 'BUSINESS',
+    price: '$299',
+    description: 'For growing organizations',
+    features: [
+      { text: '10,000 credits/month', included: true },
+      { text: '10 seats included', included: true },
+      { text: 'Team analytics', included: true },
+      { text: 'Priority AI routing', included: true },
+      { text: 'Integrations (Git + Deploy)', included: true },
+    ],
+    cta: 'Contact Sales',
+    href: '/contact?plan=business',
+    popular: false,
+  },
+  {
+    name: 'ENTERPRISE',
+    price: '$999+',
+    description: 'For large orgs and security needs',
+    features: [
+      { text: 'Starts at 40,000 credits/month', included: true },
+      { text: 'Dedicated workspace', included: true },
+      { text: 'Admin controls + audit requirements', included: true },
+      { text: 'SLA support', included: true },
+      { text: 'Private deployment option', included: true },
+    ],
+    cta: 'Contact Sales',
+    href: '/contact?plan=enterprise',
     popular: false,
   },
 ];
 
 const comparisonFeatures = [
-  { name: 'Monthly Credits', free: '30', pro: '300', enterprise: 'Unlimited' },
-  { name: 'AI Response Speed', free: 'Standard', pro: 'Priority', enterprise: 'Dedicated' },
-  { name: 'History Retention', free: '7 days', pro: '90 days', enterprise: 'Unlimited' },
-  { name: 'Core Debugging Engine', free: true, pro: true, enterprise: true },
-  { name: 'Web Builder', free: false, pro: true, enterprise: true },
-  { name: 'Starter Templates', free: false, pro: true, enterprise: true },
-  { name: 'Zero-Knowledge Mode', free: false, pro: true, enterprise: true },
-  { name: 'Referral Program', free: false, pro: true, enterprise: true },
-  { name: 'API Access', free: false, pro: false, enterprise: true },
-  { name: 'Team Collaboration', free: false, pro: false, enterprise: true },
-  { name: 'SLA Guarantee', free: false, pro: false, enterprise: true },
-  { name: 'Priority Support', free: false, pro: false, enterprise: true },
+  { name: 'Monthly Credits', free: '30', pro: '300', team: '2,500', business: '10,000', enterprise: '40,000+' },
+  { name: 'AI Response Speed', free: 'Standard', pro: 'Priority', team: 'Priority', business: 'Priority routing', enterprise: 'Priority routing' },
+  { name: 'History Retention', free: '7 days', pro: '90 days', team: '180 days', business: '365 days', enterprise: '365 days+' },
+  { name: 'Core Debugging Engine', free: true, pro: true, team: true, business: true, enterprise: true },
+  { name: 'Web Builder', free: false, pro: true, team: true, business: true, enterprise: true },
+  { name: 'Starter Templates', free: false, pro: true, team: true, business: true, enterprise: true },
+  { name: 'Team Seats Included', free: '1', pro: '1', team: '3', business: '10', enterprise: 'Custom' },
+  { name: 'Team Analytics', free: false, pro: false, team: false, business: true, enterprise: true },
+  { name: 'Integrations', free: false, pro: false, team: false, business: true, enterprise: true },
+  { name: 'SLA Support', free: false, pro: false, team: false, business: true, enterprise: true },
+  { name: 'Private Deployment', free: false, pro: false, team: false, business: false, enterprise: true },
 ];
 
 export default function PricingPage() {
@@ -82,7 +111,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-start">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -92,10 +121,6 @@ export default function PricingPage() {
                 border: plan.popular
                   ? '1px solid var(--app-accent)'
                   : '1px solid var(--app-border)',
-                boxShadow: plan.popular
-                  ? '0 0 40px rgba(0,200,83,0.12)'
-                  : 'none',
-                transform: plan.popular ? 'scale(1.03)' : 'scale(1)',
                 zIndex: plan.popular ? 10 : 1,
               }}
             >
@@ -103,7 +128,6 @@ export default function PricingPage() {
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
                   <span
                     className="font-medium tracking-wide text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]"
-                    style={{ boxShadow: '0 2px 8px rgba(0,200,83,0.3)' }}
                   >
                     Most Popular
                   </span>
@@ -176,9 +200,7 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div
-            className="overflow-x-auto rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)]"
-          >
+          <div className="overflow-x-auto rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)]">
             <table className="w-full min-w-[640px]">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--app-border)' }}>
@@ -190,6 +212,12 @@ export default function PricingPage() {
                   </th>
                   <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-accent)]">
                     Pro
+                  </th>
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
+                    Team
+                  </th>
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
+                    Business
                   </th>
                   <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
                     Enterprise
@@ -212,6 +240,12 @@ export default function PricingPage() {
                     </td>
                     <td className="p-4 text-center" style={{ background: 'var(--app-accent-soft)' }}>
                       <PricingTableCell value={feature.pro} />
+                    </td>
+                    <td className="p-4 text-center">
+                      <PricingTableCell value={feature.team} />
+                    </td>
+                    <td className="p-4 text-center">
+                      <PricingTableCell value={feature.business} />
                     </td>
                     <td className="p-4 text-center">
                       <PricingTableCell value={feature.enterprise} />

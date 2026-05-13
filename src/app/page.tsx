@@ -54,21 +54,21 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="fade-up inline-flex items-center gap-2 mb-5 rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)]">
+          <div className="fade-up visible inline-flex items-center gap-2 mb-5 rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" style={{ animation: 'dot-pulse 2s infinite' }} />
             AI-Powered Development Platform
           </div>
 
-          <h1 className="fade-up fade-up-delay-1 mb-4 text-[40px] font-bold tracking-[-0.8px] leading-[1.1] text-[var(--app-text)]">
+          <h1 className="fade-up visible fade-up-delay-1 mb-4 text-[40px] font-bold tracking-[-0.8px] leading-[1.1] text-[var(--app-text)]">
             Debug Code & Build<br />
             <span className="text-[var(--app-accent)]">Apps with AI</span>
           </h1>
 
-          <p className="fade-up fade-up-delay-2 text-[15px] text-[var(--app-text-muted)] mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="fade-up visible fade-up-delay-2 text-[15px] text-[var(--app-text-muted)] mb-8 max-w-2xl mx-auto leading-relaxed">
             Instant debugging for 10+ languages and a visual web builder powered by AI. Ship faster with DeBuggAI.
           </p>
 
-          <div className="fade-up fade-up-delay-3 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="fade-up visible fade-up-delay-3 flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/signup" className="w-full sm:w-auto">
               <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
                 Start Debugging Now
@@ -81,7 +81,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div className="fade-up fade-up-delay-3 flex items-center justify-center gap-4 flex-wrap mt-5">
+          <div className="fade-up visible fade-up-delay-3 flex items-center justify-center gap-4 flex-wrap mt-5">
             <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
               <span className="text-[var(--app-accent)]">&#10003;</span> Free forever plan
             </span>
@@ -570,21 +570,21 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Enterprise */}
+            {/* Team */}
             <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
-              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">ENTERPRISE</div>
+              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">TEAM</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $49<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+                $99<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
               </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-5">For teams and organizations</p>
+              <p className="text-[13px] text-[var(--app-text-muted)] mb-5">For small teams</p>
               <div className="flex flex-col gap-2.5 mb-6">
-                {['Unlimited credits', 'Dedicated AI instances', 'Unlimited history', 'SLA guarantee', 'Priority support'].map((f) => (
+                {['2,500 credits/month', '3 seats included', 'Shared team dashboard', 'Web Builder + Export', 'Priority queue'].map((f) => (
                   <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
                     <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
                   </div>
                 ))}
               </div>
-              <Link href="/contact" className="block mt-auto">
+              <Link href="/contact?plan=team" className="block mt-auto">
                 <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
                   Contact Sales
                 </button>
@@ -610,11 +610,11 @@ export default function LandingPage() {
             {[
               {
                 q: 'What is Zero-Knowledge Mode?',
-                a: 'Your code and error logs are never stored on our servers. All analysis happens in-memory and is immediately discarded after the response. Available on Pro and Enterprise plans.',
+                a: 'Your code and error logs are never stored on our servers. All analysis happens in-memory and is immediately discarded after the response. Available on Pro and higher plans.',
               },
               {
                 q: 'How do credits work?',
-                a: 'Each debug analysis costs 1 credit. Web Builder generation costs 25 credits. Multi-target export costs 35 credits. Credits reset monthly with your subscription.',
+                a: 'Each debug analysis costs 1 credit. Web Builder runs start at 20 credits and scale by project size. Credits reset monthly with your subscription.',
               },
               {
                 q: 'Can I use DeBuggAI for proprietary code?',

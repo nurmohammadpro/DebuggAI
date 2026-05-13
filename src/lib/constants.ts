@@ -25,11 +25,25 @@ export const PLANS = {
     rateLimit: 30,
     historyDays: 90,
   },
+  TEAM: {
+    name: 'Team',
+    price: 99,
+    creditsPerMonth: 2500,
+    rateLimit: 60,
+    historyDays: 180,
+  },
+  BUSINESS: {
+    name: 'Business',
+    price: 299,
+    creditsPerMonth: 10000,
+    rateLimit: 120,
+    historyDays: 365,
+  },
   ENTERPRISE: {
     name: 'Enterprise',
-    price: 49,
-    creditsPerMonth: -1, // Unlimited
-    rateLimit: -1, // Unlimited
+    price: 999,
+    creditsPerMonth: 40000,
+    rateLimit: -1, // No rate limit
     historyDays: 365,
   },
 } as const;

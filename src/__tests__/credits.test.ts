@@ -15,9 +15,12 @@ describe('Credit Costs', () => {
   it('has valid plan definitions', () => {
     expect(PLANS.FREE).toBeDefined();
     expect(PLANS.PRO).toBeDefined();
+    expect(PLANS.TEAM).toBeDefined();
+    expect(PLANS.BUSINESS).toBeDefined();
     expect(PLANS.ENTERPRISE).toBeDefined();
     expect(PLANS.FREE.creditsPerMonth).toBe(30);
     expect(PLANS.PRO.price).toBeGreaterThan(0);
-    expect(PLANS.ENTERPRISE.creditsPerMonth).toBe(-1);
+    expect(PLANS.ENTERPRISE.price).toBeGreaterThan(0);
+    expect(PLANS.ENTERPRISE.creditsPerMonth).toBeGreaterThan(0);
   });
 });
