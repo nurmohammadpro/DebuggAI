@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { LucideIcon, ArrowRight } from 'lucide-react';
 
 const colorMap: Record<string, { bg: string; text: string }> = {
-  blue: { bg: 'bg-[var(--app-info-soft)]', text: 'text-[var(--app-info)]' },
-  green: { bg: 'bg-[var(--app-success-soft)]', text: 'text-[var(--app-success)]' },
-  purple: { bg: 'bg-[var(--app-purple-soft)]', text: 'text-[var(--app-purple)]' },
-  orange: { bg: 'bg-[var(--app-warning-soft)]', text: 'text-[var(--app-warning)]' },
+  blue: { bg: 'bg-blue-200', text: 'text-blue-800' },
+  green: { bg: 'bg-green-200', text: 'text-green-800' },
+  purple: { bg: 'bg-purple-200', text: 'text-purple-800' },
+  orange: { bg: 'bg-orange-200', text: 'text-orange-800' },
 };
 
 export function AdminQuickCard({
@@ -28,17 +28,17 @@ export function AdminQuickCard({
   return (
     <Link
       href={href}
-      className="group rounded-[8px] bg-[var(--app-panel)] p-5 backdrop-blur-xl transition-colors duration-200 hover:bg-[var(--app-panel-2)]"
+      className="group border border-[var(--border-default)] p-3"
     >
-      <div className="flex items-center gap-4">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-[8px] ${c.bg} ${c.text} transition-transform duration-200 group-hover:scale-105`}>
-          <Icon className="h-5 w-5" />
+      <div className="flex items-center gap-3">
+        <div className={`flex h-8 w-8 items-center justify-center rounded ${c.bg} ${c.text}`}>
+          <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-normal text-[var(--app-text)]">{title}</h3>
-          <p className="text-xs text-[var(--app-text-muted)] truncate">{description}</p>
+          <h3 className="text-xs font-medium text-[var(--text-primary)]">{title}</h3>
+          <p className="text-[10px] text-[var(--text-secondary)] truncate">{description}</p>
         </div>
-        <ArrowRight className="h-4 w-4 text-[var(--app-text-dim)] transition-all duration-200 group-hover:text-[var(--app-text)] group-hover:translate-x-0.5" />
+        <ArrowRight className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
       </div>
     </Link>
   );

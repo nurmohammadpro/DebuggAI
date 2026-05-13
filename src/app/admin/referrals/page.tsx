@@ -7,7 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrophyIcon, MedalIcon, AwardIcon, TrendingUpIcon, UsersIcon, CoinsIcon, RefreshCwIcon, DownloadIcon } from 'lucide-react';
+import { TrophyIcon, MedalIcon, AwardIcon, UsersIcon, CoinsIcon, RefreshCwIcon, DownloadIcon } from 'lucide-react';
 import { getReferralStats } from '@/lib/admin/auth';
 
 interface Ambassador {
@@ -124,11 +124,11 @@ export default function AdminReferralsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const getRankEmoji = (index: number) => {
-    if (index === 0) return '🥇';
-    if (index === 1) return '🥈';
-    if (index === 2) return '🥉';
-    return `#${index + 1}`;
+  const getRankBadge = (index: number) => {
+    if (index === 0) return <TrophyIcon className="w-4 h-4 text-yellow-500" />;
+    if (index === 1) return <MedalIcon className="w-4 h-4 text-gray-400" />;
+    if (index === 2) return <AwardIcon className="w-4 h-4 text-orange-600" />;
+    return <span className="text-xs text-gray-500">#{index + 1}</span>;
   };
 
   return (
@@ -260,7 +260,7 @@ export default function AdminReferralsPage() {
                   className="flex items-center gap-4 p-4 hover:bg-[#171C17] transition-colors"
                 >
                   <span className="font-mono text-lg w-12 text-center">
-                    {getRankEmoji(index)}
+                    {getRankBadge(index)}
                   </span>
 
                   <div className="w-10 h-10 rounded-full bg-[#1E261E] flex items-center justify-center text-[#8BAD8B] text-xs font-semibold flex-shrink-0 border border-[#1F2B1F]">

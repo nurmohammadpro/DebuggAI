@@ -152,7 +152,7 @@ const AVAILABLE_INTEGRATIONS: IntegrationConfig[] = [
     type: 'supabase',
     name: 'Supabase',
     description: 'Connect to Supabase for database and authentication',
-    icon: '⚡',
+    icon: 'zap',
     category: 'database',
     fields: [
       {

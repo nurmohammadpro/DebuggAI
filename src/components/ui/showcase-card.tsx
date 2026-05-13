@@ -8,6 +8,7 @@
 
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { Bug, Zap, Shield, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -124,9 +125,7 @@ export function ShowcaseCard({
           >
             <span className="flex items-center gap-2">
               Learn More
-              <span className="transition-transform duration-300 group-hover/btn:translate-x-1">
-                →
-              </span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
             </span>
           </Button>
         )}
@@ -166,21 +165,21 @@ export function FeatureShowcase() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <ShowcaseCard
-            icon={() => <span className="text-2xl">🐛</span>}
+            icon={() => <Bug className="w-6 h-6" />}
             title="AI Debugging"
             description="Paste your error and get instant fixes with explanations. Supports JavaScript, Python, PHP, Go, Ruby, and more."
             gradient="blue"
           />
 
           <ShowcaseCard
-            icon={() => <span className="text-2xl">⚡</span>}
+            icon={() => <Zap className="w-6 h-6" />}
             title="Web Builder"
             description="Describe what you want to build and watch AI create it in real-time. Live preview with instant hot reload."
             gradient="purple"
           />
 
           <ShowcaseCard
-            icon={() => <span className="text-2xl">🛡️</span>}
+            icon={() => <Shield className="w-6 h-6" />}
             title="Multi-Language"
             description="Automatic language detection and support for 10+ programming languages and frameworks."
             gradient="green"

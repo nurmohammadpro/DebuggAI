@@ -58,15 +58,15 @@ export function AdminDashboard() {
         title="Admin Dashboard"
         description="Monitor and manage your DeBuggAI platform"
         right={
-          <div className="flex gap-0.5 rounded-[8px] bg-[var(--app-panel)] p-1">
+          <div className="flex gap-0.5 rounded bg-[var(--bg-tertiary)] p-0.5">
             {(['7d', '30d', '90d'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setPeriod(range)}
-                className={`rounded-[6px] px-3 py-1.5 text-xs font-normal transition-colors ${
+                className={`rounded px-2 py-1 text-[11px] font-normal transition-colors ${
                   period === range
-                    ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
-                    : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
+                    ? 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 {range}
@@ -77,68 +77,68 @@ export function AdminDashboard() {
       />
 
       {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <AdminStatCard
           title="Total Users"
           value={String(data.summary.totalUsers)}
           change={data.summary.totalUsers > 0 ? Math.round((data.summary.newUsers / data.summary.totalUsers) * 100) : 0}
-          icon={<Users className="h-4 w-4" />}
+          icon={<Users className="h-3.5 w-3.5" />}
         />
         <AdminStatCard
           title="Active Users"
           value={String(data.summary.activeUsers)}
-          icon={<Activity className="h-4 w-4" />}
+          icon={<Activity className="h-3.5 w-3.5" />}
         />
         <AdminStatCard
           title="Credits Spent"
           value={String(data.summary.totalCreditsSpent)}
-          icon={<CreditCard className="h-4 w-4" />}
+          icon={<CreditCard className="h-3.5 w-3.5" />}
         />
         <AdminStatCard
           title="Total Generations"
           value={String(data.summary.totalGenerations)}
-          icon={<TrendingUp className="h-4 w-4" />}
+          icon={<TrendingUp className="h-3.5 w-3.5" />}
         />
       </div>
 
       {/* Plan Distribution */}
-      <div className="rounded-[8px] bg-[var(--app-panel)] p-5 backdrop-blur-xl mb-8">
-        <h3 className="text-sm font-normal text-[var(--app-text)] mb-4">Plan Distribution</h3>
-        <div className="space-y-6">
+      <div className="border border-[var(--border-default)] p-4 mb-6">
+        <h3 className="text-xs font-medium text-[var(--text-primary)] mb-3">Plan Distribution</h3>
+        <div className="space-y-4">
           <PlanBar
             label="Free"
             count={data.planDistribution.free}
             total={data.summary.totalUsers}
-            color="bg-[var(--app-text-dim)]"
+            color="bg-gray-400"
           />
           <PlanBar
             label="Pro"
             count={data.planDistribution.pro}
             total={data.summary.totalUsers}
-            color="bg-[var(--app-accent)]"
+            color="bg-gray-900"
           />
           <PlanBar
             label="Enterprise"
             count={data.planDistribution.enterprise}
             total={data.summary.totalUsers}
-            color="bg-[var(--app-purple)]"
+            color="bg-purple-600"
           />
         </div>
       </div>
 
       {/* Daily Activity Chart */}
-      <div className="rounded-[8px] bg-[var(--app-panel)] p-5 backdrop-blur-xl mb-8">
-        <h3 className="text-sm font-normal text-[var(--app-text)] mb-4">Daily Activity</h3>
-        <div className="h-48 flex items-end gap-1">
+      <div className="border border-[var(--border-default)] p-4 mb-6">
+        <h3 className="text-xs font-medium text-[var(--text-primary)] mb-3">Daily Activity</h3>
+        <div className="h-40 flex items-end gap-1">
           {data.dailyStats.map((stat) => (
             <div
               key={stat.date}
-              className="flex-1 bg-[var(--app-accent-soft)] hover:bg-[var(--app-accent)]/20 transition-colors rounded-t relative group"
+              className="flex-1 bg-gray-100 hover:bg-gray-200 transition-colors rounded-t relative group"
               style={{
                 height: `${Math.max(5, (stat.newUsers / maxNewUsers) * 100)}%`,
               }}
             >
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-[var(--app-panel-2)] text-[var(--app-text)] text-xs p-2 rounded-[8px] shadow-[var(--shadow-lg)] whitespace-nowrap z-[90] border border-[var(--app-border)]">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[10px] p-2 rounded whitespace-nowrap z-[90] border border-[var(--border-default)] shadow-lg">
                 <div>{stat.date}</div>
                 <div>{stat.newUsers} new users</div>
                 <div>{stat.creditsSpent} credits spent</div>
@@ -146,14 +146,14 @@ export function AdminDashboard() {
             </div>
           ))}
         </div>
-        <div className="mt-4 flex justify-between text-xs text-[var(--app-text-dim)]">
+        <div className="mt-3 flex justify-between text-[10px] text-[var(--text-tertiary)]">
           <span>{data.dailyStats[0]?.date}</span>
           <span>{data.dailyStats[data.dailyStats.length - 1]?.date}</span>
         </div>
       </div>
 
       {/* Quick Link Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <AdminQuickCard
           href="/dashboard/admin/monitoring"
           icon={Activity}

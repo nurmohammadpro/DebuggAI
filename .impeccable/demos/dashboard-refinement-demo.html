@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refined Dashboard - Design Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Subtle animations */
+        .card-hover {
+            transition: all 0.15s ease;
+        }
+
+        .card-hover:hover {
+            background-color: #fafafa;
+        }
+
+        /* Pulse for live indicators */
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+    <!-- Main Container -->
+    <div class="min-h-screen flex">
+
+        <!-- Sidebar -->
+        <aside class="w-56 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Logo -->
+            <div class="h-14 flex items-center px-4 border-b border-gray-200">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded bg-gray-900 flex items-center justify-center">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <span class="font-semibold text-sm">DeBuggAI</span>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-3 space-y-0.5">
+                <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded bg-gray-100 text-gray-900 text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded text-gray-600 hover:bg-gray-50 text-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Web Builder
+                </a>
+                <a href="#" class="flex items-center gap-2 px-3 py-1.5 rounded text-gray-600 hover:bg-gray-50 text-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Debug Session
+                </a>
+
+                <div class="pt-4 mt-4 border-t border-gray-200">
+                    <p class="px-3 mb-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Recent</p>
+                    <a href="#" class="flex items-center gap-2 px-3 py-1 rounded text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                        <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                        <span class="truncate">E-commerce Site</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-2 px-3 py-1 rounded text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+                        <div class="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                        <span class="truncate">Portfolio V2</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User -->
+            <div class="p-3 border-t border-gray-200">
+                <div class="flex items-center gap-2 px-2 py-1.5">
+                    <div class="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+                        JD
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-medium text-gray-900 truncate">John Doe</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <!-- Header -->
+            <header class="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-base font-semibold text-gray-900">Dashboard</h1>
+                        <p class="text-xs text-gray-500 mt-0.5">Welcome back! Here's what's happening.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="px-3 py-1.5 rounded bg-gray-900 text-xs font-medium text-white hover:bg-gray-800 transition-colors">
+                            New Project
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="p-6">
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <!-- Stat 1 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Total Credits</p>
+                        <p class="text-2xl font-semibold text-gray-900 mb-1">2,847</p>
+                        <p class="text-xs text-gray-500">+12% vs last month</p>
+                    </div>
+
+                    <!-- Stat 2 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Active Projects</p>
+                        <p class="text-2xl font-semibold text-gray-900 mb-1">24</p>
+                        <div class="flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 rounded-full bg-green-500 pulse-subtle"></div>
+                            <p class="text-xs text-gray-500">3 active now</p>
+                        </div>
+                    </div>
+
+                    <!-- Stat 3 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Debug Sessions</p>
+                        <p class="text-2xl font-semibold text-gray-900 mb-1">156</p>
+                        <p class="text-xs text-green-600">+8 this week</p>
+                    </div>
+
+                    <!-- Stat 4 -->
+                    <div class="p-4 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-xs font-medium text-gray-500 mb-1">Success Rate</p>
+                        <p class="text-2xl font-semibold text-gray-900 mb-1">94.2%</p>
+                        <p class="text-xs text-gray-500">Last 30 days</p>
+                    </div>
+                </div>
+
+                <!-- Recent Projects -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-semibold text-gray-900">Recent Projects</h2>
+                        <a href="#" class="text-xs text-gray-500 hover:text-gray-900">View all →</a>
+                    </div>
+
+                    <div class="border border-gray-200 rounded divide-y divide-gray-200">
+                        <!-- Project 1 -->
+                        <div class="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded bg-blue-50 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900">E-commerce Platform</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Full-stack shopping cart with Stripe integration</p>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <span class="px-1.5 py-0.5 rounded bg-gray-100 text-xs text-gray-600">React</span>
+                                            <span class="text-xs text-gray-400">Updated 2h ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Project 2 -->
+                        <div class="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded bg-purple-50 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900">Portfolio Website</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Personal portfolio with blog and case studies</p>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <span class="px-1.5 py-0.5 rounded bg-gray-100 text-xs text-gray-600">Next.js</span>
+                                            <span class="text-xs text-gray-400">Updated 1d ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Project 3 -->
+                        <div class="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded bg-green-50 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900">Analytics Dashboard</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Real-time analytics with data visualization</p>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <span class="px-1.5 py-0.5 rounded bg-gray-100 text-xs text-gray-600">Python</span>
+                                            <span class="text-xs text-gray-400">Updated 3d ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="border border-gray-200 rounded p-4">
+                    <h2 class="text-sm font-semibold text-gray-900 mb-4">Recent Activity</h2>
+
+                    <div class="space-y-4">
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded bg-green-100 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900"><span class="font-medium">Project deployed</span> — E-commerce Platform is now live</p>
+                                <p class="text-xs text-gray-500 mt-0.5">2 hours ago</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900"><span class="font-medium">Credits purchased</span> — 500 credits added to your account</p>
+                                <p class="text-xs text-gray-500 mt-0.5">5 hours ago</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded bg-purple-100 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900"><span class="font-medium">Debug session completed</span> — Fixed 3 issues in Portfolio Website</p>
+                                <p class="text-xs text-gray-500 mt-0.5">1 day ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

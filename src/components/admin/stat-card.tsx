@@ -14,8 +14,8 @@ interface StatCardProps {
 function TrendBadge({ change }: { change: number }) {
   if (change === 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-[6px] bg-[var(--app-surface)] px-2.5 py-1 text-[11px] font-normal text-[var(--app-text-muted)]">
-        <Minus className="w-3 h-3" />
+      <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium text-gray-500">
+        <Minus className="w-2.5 h-2.5" />
         Flat
       </span>
     );
@@ -23,13 +23,13 @@ function TrendBadge({ change }: { change: number }) {
   const isUp = change > 0;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-[6px] px-2.5 py-1 text-[11px] font-normal ${
+      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium ${
         isUp
-          ? 'bg-[var(--app-success-soft)] text-[var(--app-success)]'
-          : 'bg-[var(--app-danger-soft)] text-[var(--app-danger)]'
+          ? 'bg-green-200 text-green-800'
+          : 'bg-red-200 text-red-800'
       }`}
     >
-      {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+      {isUp ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
       {isUp ? '+' : ''}{change}%
     </span>
   );
@@ -38,29 +38,29 @@ function TrendBadge({ change }: { change: number }) {
 export function AdminStatCard({ title, value, change, icon, loading, className }: StatCardProps) {
   if (loading) {
     return (
-      <div className={`animate-pulse rounded-[8px] bg-[var(--app-panel)] p-5 backdrop-blur-xl ${className ?? ''}`}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="h-10 w-10 rounded-[7px] bg-[var(--app-surface)]" />
-          <div className="h-6 w-16 rounded-[6px] bg-[var(--app-surface)]" />
+      <div className={`animate-pulse bg-[var(--bg-tertiary)] p-4 ${className ?? ''}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="h-8 w-8 rounded bg-[var(--bg-secondary)]" />
+          <div className="h-5 w-14 rounded bg-[var(--bg-secondary)]" />
         </div>
-        <div className="mb-2 h-7 w-24 rounded bg-[var(--app-surface)]" />
-        <div className="h-4 w-20 rounded bg-[var(--app-surface)]" />
+        <div className="mb-2 h-6 w-20 rounded bg-[var(--bg-secondary)]" />
+        <div className="h-3.5 w-16 rounded bg-[var(--bg-secondary)]" />
       </div>
     );
   }
 
   return (
     <div
-      className={`rounded-[8px] bg-[var(--app-panel)] p-5 backdrop-blur-xl transition-colors duration-200 hover:bg-[var(--app-panel-2)] ${className ?? ''}`}
+      className={`bg-[var(--bg-tertiary)] p-4 ${className ?? ''}`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-[var(--app-accent-soft)] text-[var(--app-accent)]">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded bg-gray-200 text-gray-800">
           {icon}
         </div>
         {change !== undefined && <TrendBadge change={change} />}
       </div>
-      <p className="text-[22px] font-medium tracking-[-0.03em] text-[var(--app-text)]">{value}</p>
-      <p className="mt-1 text-sm font-normal text-[var(--app-text-muted)]">{title}</p>
+      <p className="text-xl font-medium text-[var(--text-primary)]">{value}</p>
+      <p className="mt-1 text-xs text-[var(--text-secondary)]">{title}</p>
     </div>
   );
 }

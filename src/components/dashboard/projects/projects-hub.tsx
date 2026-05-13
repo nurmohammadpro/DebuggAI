@@ -75,18 +75,18 @@ export function ProjectsHub() {
   };
 
   return (
-    <div className="p-6 sm:p-8 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">Projects</div>
-          <div className="text-[13px] text-[var(--app-text-muted)] mt-1">
+          <div className="text-sm font-medium text-[var(--text-primary)]">Projects</div>
+          <div className="text-xs text-[var(--text-secondary)] mt-1">
             Open a project in the workspace, or generate a new one.
           </div>
         </div>
         <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen}>
-          <Plus className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">New Project</span>
-          <span className="sm:hidden">Create</span>
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          <span className="hidden sm:inline text-xs">New Project</span>
+          <span className="sm:hidden text-xs">Create</span>
         </CreateProjectDialog>
       </div>
 
@@ -97,18 +97,18 @@ export function ProjectsHub() {
         onStackChange={setStack}
       />
 
-      <div className="grid lg:grid-cols-[1fr,360px] gap-3 items-start">
-        <div className="space-y-4 order-2 lg:order-1">
+      <div className="grid lg:grid-cols-[1fr,280px] gap-4 items-start">
+        <div className="space-y-3 order-2 lg:order-1">
           {error && (
-            <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5">
-              <div className="text-[16px] font-medium text-[var(--app-text)]">Failed to load projects</div>
-              <div className="text-[13px] text-[var(--app-text-muted)] mt-1">
+            <div className="border border-[var(--border-default)] p-4">
+              <div className="text-sm font-medium text-[var(--text-primary)]">Failed to load projects</div>
+              <div className="text-xs text-[var(--text-secondary)] mt-1">
                 {error instanceof Error ? error.message : 'Unknown error'}
               </div>
-              <div className="mt-4">
+              <div className="mt-3">
                 <button
                   onClick={() => refetch()}
-                  className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--text-secondary)] border border-[var(--border-default)] hover:bg-[var(--bg-tertiary)] transition-colors"
                 >
                   Retry
                 </button>
@@ -117,25 +117,25 @@ export function ProjectsHub() {
           )}
 
           {isLoading && (
-            <div className="grid gap-3">
-              <div className="rounded-[8px] bg-[var(--app-panel)] p-4 h-16 sm:h-20 animate-pulse" />
-              <div className="rounded-[8px] bg-[var(--app-panel)] p-4 h-16 sm:h-20 animate-pulse" />
-              <div className="rounded-[8px] bg-[var(--app-panel)] p-4 h-16 sm:h-20 animate-pulse" />
+            <div className="space-y-2">
+              <div className="border border-[var(--border-default)] p-3 h-14 animate-pulse" />
+              <div className="border border-[var(--border-default)] p-3 h-14 animate-pulse" />
+              <div className="border border-[var(--border-default)] p-3 h-14 animate-pulse" />
             </div>
           )}
 
           {!isLoading && !error && projects.length === 0 && (
-            <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-8 text-center">
-              <div className="text-[16px] font-medium text-[var(--app-text)]">No projects yet</div>
-              <div className="text-[13px] text-[var(--app-text-muted)] mt-1">
+            <div className="border border-[var(--border-default)] p-6 text-center">
+              <div className="text-sm font-medium text-[var(--text-primary)]">No projects yet</div>
+              <div className="text-xs text-[var(--text-secondary)] mt-1">
                 Generate your first project to get started.
               </div>
             </div>
           )}
 
           {!isLoading && !error && projects.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-2 text-[13px] text-[var(--app-text-muted)]">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
                 <div>
                   {projects.length} projects
                 </div>
@@ -146,7 +146,7 @@ export function ProjectsHub() {
                   })}
                 </div>
               </div>
-              <div className="grid gap-3">
+              <div className="border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
                 {projects.map((p) => (
                   <ProjectCard
                     key={p.id}
@@ -161,7 +161,7 @@ export function ProjectsHub() {
           )}
         </div>
 
-        <div className="space-y-3 sm:space-y-4 order-1 lg:order-2">
+        <div className="space-y-3 order-1 lg:order-2">
           <RecentDebugSessions />
           <RecentTransactions />
         </div>

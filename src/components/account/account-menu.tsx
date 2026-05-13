@@ -59,12 +59,12 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          'h-8 w-8 p-0 inline-flex items-center justify-center rounded-[8px] text-[13px] font-medium outline-none',
+          'h-8 w-8 p-0 inline-flex items-center justify-center rounded text-sm font-medium outline-none',
           className
         )}
         style={{
-          background: 'var(--app-accent-soft)',
-          color: 'var(--app-accent)',
+          background: 'var(--bg-tertiary)',
+          color: 'var(--text-primary)',
         }}
         aria-label="Account menu"
         title="Account"
@@ -72,23 +72,19 @@ export function AccountMenu({
         {initial}
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align={align} className="w-[320px] p-0 rounded-[10px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+      <DropdownMenuContent align={align} className="w-[320px] p-0 rounded border border-gray-200 bg-white">
         <DropdownMenuLabel className="font-normal p-4">
           <div className="flex items-center gap-3">
             <div
-              className="h-9 w-9 inline-flex items-center justify-center rounded-[8px] text-[13px] font-medium"
-              style={{
-                background: 'var(--app-accent-soft)',
-                color: 'var(--app-accent)',
-              }}
+              className="h-9 w-9 inline-flex items-center justify-center rounded text-sm font-semibold bg-gray-100 text-gray-700"
             >
               {initial}
             </div>
             <div className="min-w-0">
-              <p className="text-[13px] font-medium leading-none truncate text-[var(--app-text)]">
+              <p className="text-sm font-medium leading-none truncate text-gray-900">
                 {user?.displayName || 'Developer'}
               </p>
-              <p className="text-xs leading-none text-[var(--app-text-muted)] truncate mt-1">
+              <p className="text-xs leading-none text-gray-500 truncate mt-1">
                 {user?.email}
               </p>
             </div>

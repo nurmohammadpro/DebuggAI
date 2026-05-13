@@ -566,8 +566,8 @@ export function DashboardSidebarContent({
               className="h-7 w-7 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[var(--app-surface)]">
-              <span className="text-xs font-medium text-[var(--app-text-muted)]">{userInitial}</span>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-gray-100">
+              <span className="text-xs font-semibold text-gray-700">{userInitial}</span>
             </div>
           )}
           {!collapsed && (

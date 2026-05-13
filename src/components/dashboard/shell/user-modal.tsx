@@ -58,8 +58,8 @@ export function UserModal({ open, onOpenChange, collapsed }: UserModalProps) {
                   className="h-10 w-10 rounded-[8px] object-cover shrink-0"
                 />
               ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-[var(--app-surface)]">
-                  <span className="text-sm font-medium text-[var(--app-text-muted)]">{userInitial}</span>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-gray-100">
+                  <span className="text-sm font-semibold text-gray-700">{userInitial}</span>
                 </div>
               )}
               <div className="flex flex-col min-w-0 flex-1">

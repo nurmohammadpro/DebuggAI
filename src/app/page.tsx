@@ -13,6 +13,7 @@ import {
   Play,
   ChevronDown,
   Star,
+  Zap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components/public-layout';
@@ -27,7 +28,6 @@ const featureColorVars: Record<string, string> = {
 };
 
 export default function LandingPage() {
-  const [activeSection, setActiveSection] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [terminalReplay, setTerminalReplay] = useState(0);
 
@@ -46,20 +46,7 @@ export default function LandingPage() {
 
     document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
 
-    const handleScroll = () => {
-      const sections = document.querySelectorAll('section[id]');
-      let current = '';
-      sections.forEach((section) => {
-        const el = section as HTMLElement;
-        if (window.scrollY >= el.offsetTop - 120) {
-          current = section.getAttribute('id') || '';
-        }
-      });
-      setActiveSection(current);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -163,7 +150,7 @@ export default function LandingPage() {
             {[
               { icon: '🐛', title: 'AI Debugging', desc: 'Paste your error and get instant fixes with explanations. Supports 10+ languages out of the box.', badge: 'Most Used', color: 'blue' },
               { icon: '⎘', title: 'Web Builder', desc: 'Describe what you want and watch AI create it live. Monaco editor + iframe preview.', badge: 'New', color: 'purple' },
-              { icon: '⚡', title: 'Instant Answers', desc: 'Code reviews, best practices, and explanations in seconds. No more Stack Overflow.', badge: 'Fast', color: 'amber' },
+              { icon: <Zap className="w-5 h-5" />, title: 'Instant Answers', desc: 'Code reviews, best practices, and explanations in seconds. No more Stack Overflow.', badge: 'Fast', color: 'amber' },
               { icon: '⟳', title: 'Project Templates', desc: 'Generate MERN, Laravel, Django, Flask, Rails, and Go stacks in seconds.', badge: '6 Stacks', color: 'purple' },
               { icon: '◎', title: 'Zero-Knowledge Mode', desc: 'Your code is never stored. All analysis happens in-memory and is discarded immediately.', badge: 'Pro', color: 'red' },
               { icon: '≡', title: 'SSE Streaming', desc: 'Watch the AI think in real-time with server-sent events. No loading spinners.', badge: 'Live', color: 'green' },
@@ -242,7 +229,7 @@ export default function LandingPage() {
                   <span className="text-[var(--app-text-muted)]">→ Analyzing stack trace...</span>
                 </div>
                 <div className="typing-line" style={{ animationDelay: '2.5s' }}>
-                  <span className="text-[var(--app-success)]">✓ Root cause found: str + int concatenation</span>
+                  <span className="text-[var(--app-success)] flex items-center gap-1"><Check className="w-3 h-3" /> Root cause found: str + int concatenation</span>
                 </div>
                 <div className="typing-line" style={{ animationDelay: '3.0s' }}>
                   <span className="text-[var(--app-text-muted)]">→ Generating fix...</span>
@@ -254,7 +241,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="typing-line" style={{ animationDelay: '4.2s' }}>
-                  <span className="text-[var(--app-success)]">✓ Fix applied · 1 credit used · 2.1s</span>
+                  <span className="text-[var(--app-success)] flex items-center gap-1"><Check className="w-3 h-3" /> Fix applied · 1 credit used · 2.1s</span>
                 </div>
                 <div className="mt-2">
                   <span className="text-[var(--app-accent)]">$ </span>
@@ -393,14 +380,14 @@ export default function LandingPage() {
                 See the difference
               </h2>
               <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed mb-5">
-                DeBuggAI doesn't just point out errors — it rewrites the code with best practices and explains every change.
+                DeBuggAI does not just point out errors, it rewrites the code with best practices and explains every change.
               </p>
               <div className="flex flex-col gap-2.5">
                 {[
                   { icon: '✕', color: 'var(--app-danger)', text: 'Removes dead code paths' },
-                  { icon: '✓', color: 'var(--app-success)', text: 'Adds proper error handling' },
-                  { icon: '✓', color: 'var(--app-success)', text: 'Follows language conventions' },
-                  { icon: '✓', color: 'var(--app-success)', text: 'Explains each change' },
+                  { icon: <Check className="w-4 h-4" />, color: 'var(--app-success)', text: 'Adds proper error handling' },
+                  { icon: <Check className="w-4 h-4" />, color: 'var(--app-success)', text: 'Follows language conventions' },
+                  { icon: <Check className="w-4 h-4" />, color: 'var(--app-success)', text: 'Explains each change' },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
                     <span style={{ color: item.color }}>{item.icon}</span>
@@ -431,7 +418,7 @@ export default function LandingPage() {
                 </div>
                 <div className="border-t border-[var(--app-border)] pt-3">
                   <div className="text-[10px] mb-1.5 flex items-center gap-1 text-[var(--app-success)]">
-                    <span>✓</span> After
+                    <Check className="w-4 h-4" /> After
                   </div>
                   <div>
                     <span className="text-[var(--app-info)]">def </span><span className="text-[var(--app-text)]">get_user</span><span className="text-[var(--app-text-dim)]">(user_id: int) -&gt; str:</span><br />

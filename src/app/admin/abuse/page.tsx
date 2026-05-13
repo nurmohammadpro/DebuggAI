@@ -4,7 +4,27 @@
  * Monitor rate limit violations and suspicious activity with real data.
  */
 
-import { RefreshCwIcon, BanIcon, AlertTriangleIcon } from 'lucide-react';
+import { AlertTriangle, Ban, BanIcon, Lock, RefreshCwIcon, TrendingUp } from 'lucide-react';
+
+interface AbuseEvent {
+  id: string;
+  ip_address?: string | null;
+  event_type?: string | null;
+  endpoint?: string | null;
+  profiles?: { email?: string | null } | null;
+  metadata?: { frequency?: string | null } | null;
+}
+
+interface AbuseViolation {
+  id: string;
+  ip: string;
+  type: string;
+  endpoint: string;
+  user: string;
+  frequency: string;
+  severity: 'critical' | 'warning';
+  canLift: boolean;
+}
 
 async function getAbuseData() {
   const { supabase } = await import('@/lib/supabase');
@@ -28,8 +48,9 @@ async function getAbuseData() {
   }
 
   // Calculate stats
-  const uniqueIPs = new Set((recentAbuse || []).map((e: any) => e.ip_address?.toString())).size;
-  const rateLimitHits = (recentAbuse || []).filter((e: any) => e.event_type === 'rate_limit_hit').length;
+  const events = (recentAbuse || []) as AbuseEvent[];
+  const uniqueIPs = new Set(events.map((e) => e.ip_address?.toString())).size;
+  const rateLimitHits = events.filter((e) => e.event_type === 'rate_limit_hit').length;
 
   const stats = {
     rate_limits_24h: rateLimitHits,
@@ -38,10 +59,10 @@ async function getAbuseData() {
     growth: 156, // Placeholder - would calculate from previous period
   };
 
-  const violations = (recentAbuse || []).map((event: any) => ({
+  const violations: AbuseViolation[] = events.map((event) => ({
     id: event.id,
     ip: event.ip_address || 'Unknown',
-    type: event.event_type,
+    type: event.event_type || 'unknown',
     endpoint: event.endpoint || 'N/A',
     user: event.profiles?.email || 'Unknown',
     frequency: event.metadata?.frequency || 'Single',
@@ -77,10 +98,10 @@ export default async function AdminAbusePage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { id: 'rate_limits', label: 'Rate Limits', value: stats.rate_limits_24h, unit: '(24h)', severity: 'critical', icon: '⚠️' },
-          { id: 'banned_ips', label: 'Unique IPs', value: stats.unique_ips_24h, unit: '(24h)', severity: 'normal', icon: '🚫' },
-          { id: 'active_bans', label: 'Active Bans', value: stats.active_bans, unit: '', severity: 'normal', icon: '🔒' },
-          { id: 'growth', label: 'vs Last Wk', value: stats.growth, unit: '%', severity: 'normal', icon: '📈' },
+          { id: 'rate_limits', label: 'Rate Limits', value: stats.rate_limits_24h, unit: '(24h)', severity: 'critical', icon: <AlertTriangle className="w-5 h-5" /> },
+          { id: 'banned_ips', label: 'Unique IPs', value: stats.unique_ips_24h, unit: '(24h)', severity: 'normal', icon: <Ban className="w-5 h-5" /> },
+          { id: 'active_bans', label: 'Active Bans', value: stats.active_bans, unit: '', severity: 'normal', icon: <Lock className="w-5 h-5" /> },
+          { id: 'growth', label: 'vs Last Wk', value: stats.growth, unit: '%', severity: 'normal', icon: <TrendingUp className="w-5 h-5" /> },
         ].map((stat) => (
           <div
             key={stat.id}
@@ -89,7 +110,7 @@ export default async function AdminAbusePage() {
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl">{stat.icon}</span>
+              <span className="text-2xl text-[var(--app-text)]">{stat.icon}</span>
               {stat.severity === 'critical' && (
                 <span className="inline-flex items-center gap-1 text-xs font-medium rounded-[8px] px-2 py-0.5 bg-[#FF5252]/15 text-[#FF5252] animate-pulse">
                   CRITICAL
@@ -113,7 +134,7 @@ export default async function AdminAbusePage() {
           {violations.length === 0 ? (
             <p className="text-sm text-[#4D6B4D] text-center py-8">No abuse events in the last 24 hours</p>
           ) : (
-            violations.map((violation: any) => (
+            violations.map((violation) => (
               <div
                 key={violation.id}
                 className={`bg-[#111411] border rounded-[8px] p-4 border-l-4 ${

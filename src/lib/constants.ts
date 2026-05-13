@@ -63,19 +63,19 @@ export const WEB_BUILDER_STACKS = [
     id: 'flask',
     name: 'Flask',
     description: 'Python, Flask, SQLAlchemy',
-    icon: '🌶️',
+    icon: 'pepper',
   },
   {
     id: 'rails',
     name: 'Rails',
     description: 'Ruby, Rails, PostgreSQL',
-    icon: '💎',
+    icon: 'gem',
   },
   {
     id: 'go',
     name: 'Go Stack',
     description: 'Go, Gin/Echo, PostgreSQL',
-    icon: '🔵',
+    icon: 'circle',
   },
 ] as const;
 

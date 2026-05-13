@@ -246,7 +246,7 @@ export default function PricingPage() {
                   <p className="text-[11px] text-muted-foreground">
                     {plan.period}
                     {plan.timeframe && (
-                      <span className="ml-1.5 text-[10px] text-amber bg-amber/10 px-1.5 py-0.5 rounded-full">
+                      <span className="ml-1.5 text-[10px] text-amber-800 bg-amber-200 px-1.5 py-0.5 rounded-full">
                         {plan.timeframe}
                       </span>
                     )}

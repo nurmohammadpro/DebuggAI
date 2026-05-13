@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, type ElementType } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useGeneration } from '@/hooks/use-generation';
 import { Send, Loader2, Sparkles, Layers } from 'lucide-react';
 import { toast } from 'sonner';
@@ -121,25 +121,25 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)] backdrop-blur-xl",
+        "flex flex-col overflow-hidden rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)]",
         className
       )}
       style={{ height }}
     >
       {/* Header */}
-      <div className="border-b border-[var(--app-border)] flex items-center justify-between px-4 h-10 shrink-0 bg-[var(--app-panel-2)]">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-[var(--app-text-muted)] uppercase tracking-[0.12em]">AI</span>
-        </div>
-        {!chromeless && (
+      {!chromeless && (
+        <div className="border-b border-[var(--app-border)] flex items-center justify-between px-4 h-10 shrink-0 bg-[var(--app-panel-2)]">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-[var(--app-text-muted)] uppercase tracking-[0.12em]">AI</span>
+          </div>
           <StackSelector>
             <button className="inline-flex items-center gap-1.5 rounded-[6px] h-7 px-2 text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
               <Layers className="h-3.5 w-3.5" />
               Templates
             </button>
           </StackSelector>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6">

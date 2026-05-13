@@ -1,14 +1,18 @@
 'use client';
 
 import { ChevronRight, X } from 'lucide-react';
-import { ChatPanel } from '@/components/web-builder/chat-panel';
 import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspaceGitPanel } from '@/components/workspace/workspace-git-panel';
 import { WorkspaceEnvPanel } from '@/components/workspace/workspace-env-panel';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
+import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
+import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
+import type { EditorView } from '@/components/workspace/workspace-editor';
 
 export type WorkspaceRightTab =
-  | 'chat'
+  | 'code'
+  | 'preview'
+  | 'files'
   | 'console'
   | 'git'
   | 'env'
@@ -22,27 +26,34 @@ interface WorkspaceRightPanelProps {
   width: number;
   mobile?: boolean;
   onMobileClose?: () => void;
+  onEditorViewChange?: (view: EditorView) => void;
 }
 
 export function WorkspaceRightPanel({
   activeTab,
-  onTabChange,
   collapsed,
   onToggleCollapsed,
   width,
   mobile = false,
   onMobileClose,
+  onEditorViewChange,
 }: WorkspaceRightPanelProps) {
+  const title = {
+    code: 'Code',
+    preview: 'Preview',
+    files: 'Files',
+    console: 'Console',
+    git: 'Git',
+    env: 'Environment',
+    connections: 'Connections',
+  }[activeTab];
+  const contentWidth = mobile ? 360 : width;
+
   const panelContent = (
     <>
-      {/* Panel Header with Title and Close Button */}
       <div className="h-11 border-b border-[var(--app-border)] flex items-center justify-between px-3 shrink-0">
         <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text)]">
-          {activeTab === 'chat' && 'Chat'}
-          {activeTab === 'console' && 'Console'}
-          {activeTab === 'git' && 'Git'}
-          {activeTab === 'env' && 'Environment'}
-          {activeTab === 'connections' && 'Connections'}
+          {title}
         </h2>
         <button
           className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
@@ -58,15 +69,22 @@ export function WorkspaceRightPanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === 'chat' && (
-          <div className="h-full">
-            <ChatPanel
-              height="100%"
-              chromeless
-              mode="build"
-              className="h-full bg-transparent"
-            />
-          </div>
+        {activeTab === 'code' && (
+          <WorkspaceEditor
+            editorView="code"
+            onEditorViewChange={onEditorViewChange}
+          />
+        )}
+
+        {activeTab === 'preview' && (
+          <WorkspaceEditor
+            editorView="preview"
+            onEditorViewChange={onEditorViewChange}
+          />
+        )}
+
+        {activeTab === 'files' && (
+          <WorkspaceFileTree view="explorer" width={contentWidth} />
         )}
 
         {activeTab === 'console' && (
@@ -106,7 +124,7 @@ export function WorkspaceRightPanel({
 
   if (mobile) {
     return (
-      <aside className="fixed inset-0 top-14 bottom-14 bg-[var(--app-panel)] flex flex-col z-50 sm:hidden">
+      <aside className="fixed inset-x-0 top-12 bottom-14 bg-[var(--app-panel)] flex flex-col z-50 sm:hidden">
         {panelContent}
       </aside>
     );
@@ -114,7 +132,7 @@ export function WorkspaceRightPanel({
 
   return (
     <aside
-      className="bg-[var(--app-panel)] flex flex-col min-w-[320px]"
+      className="bg-[var(--app-panel)] border-l border-[var(--app-border)] flex flex-col min-w-[320px]"
       style={{ width }}
     >
       {panelContent}

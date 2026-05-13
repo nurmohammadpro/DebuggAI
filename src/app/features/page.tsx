@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Bug, Zap, Globe, Code2, Shield, Target } from 'lucide-react';
+import { Bug, Zap, Globe, Code2, Shield, Target, Check } from 'lucide-react';
 import { PublicLayout } from '@/components/public-layout';
 
 const features = [
@@ -120,9 +120,9 @@ export default function FeaturesPage() {
                 </div>
                 <div className="term-output mt-2">  Initializing analysis engine...</div>
                 <div className="term-output">  Scanning 248 lines of code...</div>
-                <div className="term-success mt-2">  ✓ Issue found: TypeError on line 142</div>
+                <div className="term-success mt-2 flex items-center gap-2">  <Check className="w-3.5 h-3.5" /> Issue found: TypeError on line 142</div>
                 <div className="term-output mt-1">  → Fix: Converted string to integer before calculation.</div>
-                <div className="term-success">  ✓ Patch applied successfully.</div>
+                <div className="term-success flex items-center gap-2">  <Check className="w-3.5 h-3.5" /> Patch applied successfully.</div>
                 <div className="mt-4">
                   <span className="term-prompt">$ </span>
                   <span className="term-cursor"></span>

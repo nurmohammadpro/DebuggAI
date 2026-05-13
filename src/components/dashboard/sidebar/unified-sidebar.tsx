@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
+import { Activity, Bug, Database, Home, MessageSquarePlus, Plus, Zap } from 'lucide-react';
 import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
@@ -32,26 +33,26 @@ export function UnifiedSidebar({
 
   return (
     <aside
-      className={`${mobile ? 'flex' : 'hidden md:flex'} shrink-0 flex-col h-full bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transition-all duration-200 ${
-        collapsed ? 'w-[68px]' : 'w-[280px]'
+      className={`${mobile ? 'flex' : 'hidden md:flex'} shrink-0 flex-col h-full bg-[var(--app-panel)] border-r border-[var(--app-border)] transition-all duration-200 ${
+        collapsed ? 'w-[64px]' : 'w-[264px]'
       }`}
     >
       {/* Top Content - Navigation and Recent Items */}
       <div className="flex-1 overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="h-14 border-b border-[var(--border-default)] flex items-center justify-between px-4 shrink-0">
+        <div className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-3 shrink-0">
           {!collapsed && (
-            <Link href="/dashboard" className="font-semibold text-[14px] text-[var(--text-primary)]">
+            <Link href="/dashboard" className="font-semibold text-xs text-[var(--app-text)]">
               DeBuggAI
             </Link>
           )}
           {onToggleCollapsed && (
             <button
               onClick={onToggleCollapsed}
-              className="p-1 rounded-[var(--radius-sm)] text-[var(--text-tertiary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-secondary)] transition-all"
+              className="p-1 rounded text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text-muted)] transition-all"
               aria-label="Toggle sidebar"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <path d="M9 3v18"/>
               </svg>
@@ -60,10 +61,29 @@ export function UnifiedSidebar({
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 py-3 overflow-y-auto">
+        <div className="flex-1 py-2 overflow-y-auto">
+          {!collapsed && (
+            <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+              <Link
+                href="/dashboard/home?create=1"
+                className="h-8 rounded-[6px] bg-[var(--ds-green)] px-2 text-[11px] font-medium text-[#071006] hover:bg-[var(--ds-green-bright)] transition-colors inline-flex items-center justify-center gap-1.5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Project
+              </Link>
+              <Link
+                href="/dashboard/debug"
+                className="h-8 rounded-[6px] border border-[var(--app-border)] px-2 text-[11px] font-medium text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors inline-flex items-center justify-center gap-1.5"
+              >
+                <MessageSquarePlus className="h-3.5 w-3.5" />
+                Chat
+              </Link>
+            </div>
+          )}
+
           {/* Main Navigation */}
           {!collapsed && (
-            <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+            <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
               Workspace
             </div>
           )}
@@ -71,21 +91,21 @@ export function UnifiedSidebar({
           <NavItem
             collapsed={collapsed}
             active={isDashboardHome}
-            icon="⌂"
+            icon={<Home className="w-3.5 h-3.5" />}
             label="Dashboard"
             href="/dashboard"
           />
           <NavItem
             collapsed={collapsed}
             active={isWebBuilder}
-            icon="⚡"
+            icon={<Zap className="w-3.5 h-3.5" />}
             label="Web Builder"
             href="/dashboard/web-builder"
           />
           <NavItem
             collapsed={collapsed}
             active={isDebug}
-            icon="🐛"
+            icon={<Bug className="w-3.5 h-3.5" />}
             label="Debug Session"
             href="/dashboard/debug"
           />
@@ -93,7 +113,7 @@ export function UnifiedSidebar({
           {/* Recent Projects */}
           {!collapsed && recentProjects.length > 0 && (
             <div className="mt-4">
-              <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+              <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
                 Recent Projects
               </div>
               {recentProjects.slice(0, 5).map((project) => (
@@ -105,8 +125,8 @@ export function UnifiedSidebar({
           {/* Debug Sessions */}
           {!collapsed && recentChats.length > 0 && (
             <div className="mt-4">
-              <div className="px-4 mb-2 text-[10px] font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-                Debug Sessions
+              <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
+                Recent Chats
               </div>
               {recentChats.slice(0, 5).map((chat) => (
                 <RecentChatItem key={chat.id} chat={chat} />
@@ -117,27 +137,27 @@ export function UnifiedSidebar({
       </div>
 
       {/* Bottom Content - User Profile */}
-      <div className="p-3 border-t border-[var(--border-default)] shrink-0">
+      <div className="p-3 border-t border-[var(--app-border)] shrink-0">
         {collapsed ? (
           <Link
             href="/dashboard/settings"
-            className="w-7 h-7 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] flex items-center justify-center text-[12px] font-medium"
+            className="w-7 h-7 rounded-[6px] bg-[var(--app-surface)] flex items-center justify-center text-[11px] font-semibold text-[var(--app-text-muted)]"
           >
             {user?.email?.[0].toUpperCase() || 'U'}
           </Link>
         ) : (
           <Link
             href="/dashboard/settings"
-            className="flex items-center gap-2.5 p-2 rounded-[var(--radius-md)] hover:bg-[var(--bg-tertiary)] transition-all"
+            className="flex items-center gap-2 p-2 rounded-[6px] hover:bg-[var(--app-surface)] transition-all"
           >
-            <div className="w-7 h-7 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] flex items-center justify-center text-[12px] font-medium shrink-0">
+            <div className="w-7 h-7 rounded-[6px] bg-[var(--app-surface)] flex items-center justify-center text-[11px] font-semibold text-[var(--app-text-muted)] shrink-0">
               {user?.email?.[0].toUpperCase() || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-medium text-[var(--text-primary)] truncate">
+              <div className="text-xs font-medium text-[var(--app-text)] truncate">
                 {user?.displayName || user?.email || 'User'}
               </div>
-              <div className="text-[11px] text-[var(--text-tertiary)] capitalize">
+              <div className="text-[10px] text-[var(--app-text-dim)] capitalize">
                 {user?.plan || 'Free'} Plan
               </div>
             </div>
@@ -151,7 +171,7 @@ export function UnifiedSidebar({
 interface NavItemProps {
   collapsed: boolean;
   active: boolean;
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   href: string;
 }
@@ -160,13 +180,13 @@ function NavItem({ collapsed, active, icon, label, href }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 px-4 py-1.5 text-[13px] rounded-[var(--radius-sm)] transition-all ${
+      className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded transition-all ${
         active
-          ? 'bg-[var(--bg-tertiary)] font-medium text-[var(--text-primary)]'
-          : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+          ? 'bg-[var(--app-surface)] font-medium text-[var(--app-text)]'
+          : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
       }`}
     >
-      <span className="w-4 h-4 flex items-center justify-center text-[12px] shrink-0">
+      <span className="flex items-center justify-center shrink-0">
         {icon}
       </span>
       {!collapsed && <span>{label}</span>}
@@ -184,15 +204,13 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
   return (
     <Link
       href={`/dashboard?project=${project.id}`}
-      className="flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--bg-tertiary)] transition-all group"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
     >
-      <span className="w-4 h-4 flex items-center justify-center text-[12px] shrink-0">
-        📊
-      </span>
+      <Database className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
       <span className="flex-1 min-w-0 truncate">
         {project.description || project.prompt || 'Untitled Project'}
       </span>
-      <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
+      <span className="text-[10px] text-[var(--app-text-dim)] shrink-0">
         {timeAgo}
       </span>
     </Link>
@@ -210,15 +228,13 @@ function RecentChatItem({ chat }: RecentChatItemProps) {
   return (
     <Link
       href={`/dashboard/debug/history?session=${chat.id}`}
-      className="flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-[var(--text-primary)] rounded-[var(--radius-sm)] hover:bg-[var(--bg-tertiary)] transition-all group"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
     >
-      <span className="w-4 h-4 flex items-center justify-center text-[12px] shrink-0">
-        ●
-      </span>
+      <Activity className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
       <span className="flex-1 min-w-0 truncate">
         {title}
       </span>
-      <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
+      <span className="text-[10px] text-[var(--app-text-dim)] shrink-0">
         {timeAgo}
       </span>
     </Link>

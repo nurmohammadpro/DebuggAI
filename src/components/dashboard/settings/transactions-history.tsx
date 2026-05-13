@@ -213,7 +213,7 @@ export function TransactionsHistory() {
                     <div className="text-right">
                       <p
                         className={`text-lg font-semibold ${
-                          transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                          transaction.amount > 0 ? 'text-green-700' : 'text-red-700'
                         }`}
                       >
                         {transaction.amount > 0 ? '+' : ''}

@@ -77,7 +77,7 @@ export function MinimalWebBuilderContent() {
   return (
     <div className="h-full flex">
       {/* Left Panel: Chat & AI interaction */}
-      <div className="w-[380px] shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-secondary)]">
+      <div className="w-80 shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-secondary)]">
         <ChatPanel height="100%" chromeless />
       </div>
 
@@ -86,24 +86,24 @@ export function MinimalWebBuilderContent() {
         {/* Main Toolbar */}
         <div className="h-12 border-b border-[var(--border-default)] flex items-center px-4 shrink-0 bg-[var(--bg-secondary)] justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] border border-[var(--border-default)]">
-              <Code2 className="h-3.5 w-3.5" style={{ color: 'var(--accent)' }} />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--accent)' }}>
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-default)]">
+              <Code2 className="h-3 w-3" style={{ color: 'var(--accent)' }} />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--accent)' }}>
                 Web Builder
               </span>
             </div>
             {view === 'code' && activeFilePath && (
-              <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
+              <div className="flex items-center gap-2 text-[10px] text-[var(--text-tertiary)]">
                 <span className="opacity-30">/</span>
-                <span className="font-mono bg-[var(--bg-tertiary)] px-2 py-0.5 rounded-[var(--radius-md)] border border-[var(--border-default)] text-[var(--text-primary)] truncate max-w-[200px]">
+                <span className="font-mono bg-[var(--bg-tertiary)] px-2 py-0.5 rounded border border-[var(--border-default)] text-[var(--text-primary)] truncate max-w-[200px]">
                   {activeFilePath}
                 </span>
               </div>
             )}
             {isRunning && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[var(--radius-md)] bg-[var(--success)]/10 border border-[var(--success)]/20">
-                <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse" />
-                <span className="text-[10px] font-semibold text-[var(--success)] uppercase tracking-[0.12em]">Live</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-200 border border-green-300">
+                <div className="w-1 h-1 rounded-full bg-green-700 animate-pulse" />
+                <span className="text-[9px] font-semibold text-green-800 uppercase tracking-[0.12em]">Live</span>
               </div>
             )}
           </div>
@@ -114,20 +114,20 @@ export function MinimalWebBuilderContent() {
                 onClick={handleBuild}
                 disabled={!files}
                 className={cn(
-                  "flex items-center gap-1.5 h-8 px-3 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-tight transition-all border",
+                  "flex items-center gap-1 h-8 px-3 rounded text-[10px] font-semibold uppercase tracking-tight transition-all border",
                   files
                     ? "bg-[var(--accent)] text-white border-[var(--accent)] hover:opacity-90"
                     : "text-[var(--text-tertiary)] border-[var(--border-default)] cursor-not-allowed"
                 )}
               >
-                <Play className="h-3.5 w-3.5" />
-                Build & Run
+                <Play className="h-3 w-3" />
+                Build
               </button>
             )}
 
             {isBuilding && (
-              <div className="flex items-center gap-2 h-8 px-3 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-tight text-[var(--warning)] border border-[var(--warning)]/20 bg-[var(--warning)]/10">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <div className="flex items-center gap-2 h-8 px-3 rounded text-[10px] font-semibold uppercase tracking-tight text-orange-800 border border-orange-300 bg-orange-200">
+                <Loader2 className="h-3 w-3 animate-spin" />
                 Installing...
               </div>
             )}
@@ -136,16 +136,16 @@ export function MinimalWebBuilderContent() {
               <>
                 <button
                   onClick={sandbox.exportZip}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-tight transition-all border text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
+                  className="flex items-center gap-1 h-8 px-3 rounded text-[10px] font-semibold uppercase tracking-tight transition-all border text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
                 >
-                  <Download className="h-3.5 w-3.5" />
+                  <Download className="h-3 w-3" />
                   Export
                 </button>
                 <button
                   onClick={sandbox.stopSandbox}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-tight transition-all border text-[var(--error)] border-[var(--error)]/30 hover:bg-[var(--error)]/10"
+                  className="flex items-center gap-1 h-8 px-3 rounded text-[10px] font-semibold uppercase tracking-tight transition-all border text-red-800 border-red-300 hover:bg-red-200"
                 >
-                  <Square className="h-3.5 w-3.5" />
+                  <Square className="h-3 w-3" />
                   Stop
                 </button>
               </>
@@ -155,40 +155,40 @@ export function MinimalWebBuilderContent() {
               <button
                 onClick={() => setShowDiff(!showDiff)}
                 className={cn(
-                  "flex items-center gap-1.5 h-8 px-3 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-tight transition-all border",
+                  "flex items-center gap-1 h-8 px-3 rounded text-[10px] font-semibold uppercase tracking-tight transition-all border",
                   showDiff
-                    ? "bg-[var(--warning)]/20 text-[var(--warning)] border-[var(--warning)]/40"
+                    ? "bg-orange-200 text-orange-800 border-orange-300"
                     : "text-[var(--text-secondary)] border-[var(--border-default)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]"
                 )}
               >
-                <GitCompare className="h-3.5 w-3.5" />
-                Diff View
+                <GitCompare className="h-3 w-3" />
+                Diff
               </button>
             )}
 
-            <div className="flex items-center bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-0.5 border border-[var(--border-default)]">
+            <div className="flex items-center bg-[var(--bg-secondary)] rounded p-0.5 border border-[var(--border-default)]">
               <button
                 className={cn(
-                  "h-7 px-4 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-2",
+                  "h-7 px-3 rounded text-[10px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-1.5",
                   view === 'code'
                     ? 'bg-[var(--accent)] text-white'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 )}
                 onClick={() => setView('code')}
               >
-                <Code2 className="h-3.5 w-3.5" />
+                <Code2 className="h-3 w-3" />
                 Code
               </button>
               <button
                 className={cn(
-                  "h-7 px-4 rounded-[var(--radius-md)] text-[11px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-2",
+                  "h-7 px-3 rounded text-[10px] font-semibold uppercase tracking-[0.12em] transition-all flex items-center gap-1.5",
                   view === 'preview'
                     ? 'bg-[var(--accent)] text-white'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 )}
                 onClick={() => setView('preview')}
               >
-                <Play className="h-3.5 w-3.5" />
+                <Play className="h-3 w-3" />
                 Preview
               </button>
             </div>
@@ -201,7 +201,7 @@ export function MinimalWebBuilderContent() {
               files={files}
               activePath={activeFilePath}
               onSelect={setActiveFilePath}
-              className="w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]"
+              className="w-56 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]"
             />
           )}
           {view === 'code' && showTerminal && (
@@ -209,7 +209,7 @@ export function MinimalWebBuilderContent() {
               logs={sandbox.logs}
               isBuilding={isBuilding}
               error={sandbox.error}
-              className="w-80 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]"
+              className="w-72 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]"
             />
           )}
 
