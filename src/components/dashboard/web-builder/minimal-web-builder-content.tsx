@@ -86,9 +86,9 @@ export function MinimalWebBuilderContent() {
         {/* Main Toolbar */}
         <div className="h-12 border-b border-[var(--app-border)] flex items-center px-4 shrink-0 bg-[var(--app-panel)] justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
-              <Code2 className="h-3 w-3 text-[var(--app-accent)]" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-accent)]">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] bg-[var(--app-accent)] border border-[var(--app-accent)]">
+              <Code2 className="h-3 w-3 text-[#071006]" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#071006]">
                 Web Builder
               </span>
             </div>
