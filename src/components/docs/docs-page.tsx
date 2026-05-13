@@ -67,12 +67,12 @@ export function DocsPage() {
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+            <BookOpen className="h-5 w-5 text-[var(--app-accent)]" />
+            <h1 className="text-[28px] font-semibold tracking-tight text-[var(--app-text)]">
               Documentation
             </h1>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <p className="text-[13px] text-[var(--app-text-muted)]">
             Product guides and quick links. Full docs site coming soon.
           </p>
         </div>
@@ -81,12 +81,12 @@ export function DocsPage() {
           {sections.map((s) => (
             <Card key={s.title} className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-[8px] bg-muted/40 border border-border/40">
-                  <s.icon className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
+                  <s.icon className="h-5 w-5 text-[var(--app-accent)]" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-semibold">{s.title}</div>
-                  <div className="text-sm text-muted-foreground mt-1">
+                  <div className="font-semibold text-[var(--app-text)]">{s.title}</div>
+                  <div className="text-[13px] text-[var(--app-text-muted)] mt-1">
                     {s.description}
                   </div>
                   <div className="mt-3 flex flex-col gap-2">
@@ -94,7 +94,7 @@ export function DocsPage() {
                       <Link
                         key={l.href}
                         href={l.href}
-                        className="text-sm text-primary hover:underline"
+                        className="text-[13px] text-[var(--app-accent)] hover:text-[var(--app-text)] transition-colors"
                       >
                         {l.label}
                       </Link>
@@ -109,4 +109,3 @@ export function DocsPage() {
     </div>
   );
 }
-

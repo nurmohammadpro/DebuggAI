@@ -99,7 +99,7 @@ export function SignupForm() {
           required
           autoComplete="new-password"
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-[var(--app-text-dim)]">
           Must be at least 8 characters
         </p>
       </div>

@@ -155,7 +155,7 @@
   --popover: var(--ds-surface);
   --popover-foreground: var(--ds-text);
   --primary: var(--ds-green);
-  --primary-foreground: #ffffff;
+  --primary-foreground: #071006;
   --secondary: var(--ds-surface2);
   --secondary-foreground: var(--ds-text);
   --muted: var(--ds-surface2);
@@ -823,8 +823,6 @@
 .lang-tag:hover {
   border-color: var(--app-border-strong);
   background: var(--app-panel-2);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .lang-dot {
@@ -840,7 +838,6 @@
   border: 1px solid var(--app-border);
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 
 .terminal-header {
@@ -903,12 +900,11 @@
   border: 1px solid var(--app-border);
   border-radius: 6px;
   overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 
 .code-window:hover {
   border-color: var(--app-border-strong);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 .code-header {
@@ -956,7 +952,7 @@
 /* Collapse/FAQ */
 .collapse-item {
   border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   transition: border-color 0.2s;
 }
@@ -997,44 +993,25 @@
 /* Card Interactive */
 .card-interactive {
   cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.card-interactive:hover {
-  transform: translateY(-2px);
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .card-icon {
-  transition: transform 0.2s, background 0.2s;
+  transition: background 0.15s;
 }
 
 .card-interactive:hover .card-icon {
-  transform: scale(1.08);
   background: var(--app-accent-soft);
-}
-
-/* Glow Border Animation */
-.glow-border {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 1px rgba(0,200,83,0.15);
-  }
-  50% {
-    box-shadow: 0 0 0 1px rgba(0,200,83,0.3), 0 0 20px rgba(0,200,83,0.05);
-  }
 }
 
 /* Testimonials */
 .testimonial-card {
-  transition: all 0.2s;
+  transition: border-color 0.15s, background 0.15s;
   position: relative;
 }
 
 .testimonial-card:hover {
-  transform: translateY(-2px);
+  border-color: var(--app-border-strong);
 }
 
 .testimonial-quote {
@@ -1099,8 +1076,9 @@
   font-size: 13px;
   color: var(--app-text-muted);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.15s, background 0.15s;
   display: inline-block;
+  border-radius: 6px;
 }
 
 .footer-link:hover {

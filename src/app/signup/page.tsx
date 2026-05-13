@@ -35,7 +35,7 @@ export default function SignupPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-[var(--app-bg)] px-2 text-[var(--app-text-dim)]">
                   Or continue with
                 </span>
               </div>
@@ -45,13 +45,13 @@ export default function SignupPage() {
             <SignupForm />
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-muted-foreground text-center">
+            <div className="text-[13px] text-[var(--app-text-muted)] text-center">
               Already have an account?{' '}
-              <Link href="/login" className="text-primary hover:underline">
+              <Link href="/login" className="text-[var(--app-accent)] hover:text-[var(--app-text)] transition-colors">
                 Sign in
               </Link>
             </div>
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-xs text-[var(--app-text-dim)] text-center">
               By signing up, you agree to our Terms of Service and Privacy Policy
             </p>
           </CardFooter>

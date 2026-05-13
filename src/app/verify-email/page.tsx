@@ -3,15 +3,15 @@
  */
 
 import Link from 'next/link';
-import { Mail, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, CheckCircle2 } from 'lucide-react';
 import { PublicLayout } from '@/components/public-layout';
 
 export default function VerifyEmailPage() {
   return (
     <PublicLayout>
       <div className="min-h-[calc(100vh-52px)] flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-6 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)] text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-[10px] bg-[var(--app-accent-soft)] mb-6">
+        <div className="w-full max-w-md p-6 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-[6px] bg-[var(--app-accent-soft)] mb-6">
             <Mail className="h-6 w-6" style={{ color: 'var(--app-accent)' }} />
           </div>
 
@@ -36,7 +36,7 @@ export default function VerifyEmailPage() {
           <div className="mt-6 pt-4 border-t border-[var(--app-border)]">
             <Link
               href="/login"
-              className="text-[13px] text-[var(--app-accent)] hover:underline"
+              className="text-[13px] text-[var(--app-accent)] hover:text-[var(--app-text)] transition-colors"
             >
               Back to sign in
             </Link>

@@ -64,9 +64,9 @@ export default function FeaturesPage() {
                   style={{ 
                     width: '40px', 
                     height: '40px', 
-                    borderRadius: '8px', 
+                    borderRadius: '6px', 
                     background: 'var(--app-accent-soft)',
-                    transition: 'transform 0.2s, background 0.2s'
+                    transition: 'background 0.15s'
                   }}
                 >
                   <Icon className="h-5 w-5" style={{ color: 'var(--app-accent)' }} />
@@ -91,7 +91,7 @@ export default function FeaturesPage() {
                 Fits right into your workflow
               </h2>
               <p className="text-body mb-6" style={{ color: 'var(--app-text-muted)' }}>
-                Don't change how you work. DeBuggAI works with your existing setup, analyzing stack traces, logs, or raw code blocks directly from your terminal or IDE.
+                Do not change how you work. DeBuggAI works with your existing setup, analyzing stack traces, logs, or raw code blocks directly from your terminal or IDE.
               </p>
               <div className="flex flex-col gap-3">
                 {['Copy-paste errors for instant fixes', 'Context-aware variable tracking', 'Zero configuration required'].map((item) => (

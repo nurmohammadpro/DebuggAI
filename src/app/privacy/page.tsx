@@ -36,7 +36,7 @@ export default function PrivacyPage() {
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="p-4 rounded-[8px] bg-[var(--app-panel)] border border-[var(--app-border)]"
+                  className="p-4 rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)]"
                 >
                   <strong className="text-[13px] font-medium block mb-1 text-[var(--app-text)]">
                     {item.title}
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-[13px] leading-relaxed text-[var(--app-text-muted)]">
               If you have questions about this privacy policy or how we handle your data, please contact us at{' '}
-              <a href="mailto:privacy@debuggai.com" className="text-[var(--app-accent)] hover:underline">
+              <a href="mailto:privacy@debuggai.com" className="text-[var(--app-accent)] hover:text-[var(--app-text)] transition-colors">
                 privacy@debuggai.com
               </a>
             </p>

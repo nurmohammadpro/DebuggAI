@@ -12,7 +12,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={() => mounted && setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className={`inline-flex items-center justify-center h-8 w-8 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-colors ${className ?? ''}`}
+      className={`inline-flex items-center justify-center h-8 w-8 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:bg-[var(--app-panel-2)] hover:text-[var(--app-text)] transition-colors ${className ?? ''}`}
     >
       {!mounted ? (
         <Moon className="h-4 w-4 opacity-70" />

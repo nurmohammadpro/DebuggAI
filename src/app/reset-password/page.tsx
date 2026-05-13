@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
             </form>
           </CardContent>
           <CardFooter>
-            <Link href="/login" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
+            <Link href="/login" className="flex items-center text-sm text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to login
             </Link>

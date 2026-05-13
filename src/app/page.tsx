@@ -53,8 +53,6 @@ export default function LandingPage() {
     <PublicLayout>
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-20 relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[radial-gradient(ellipse,rgba(0,200,83,0.06)_0%,transparent_70%)] -z-10 pointer-events-none" />
-
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="fade-up inline-flex items-center gap-2 mb-5 rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" style={{ animation: 'dot-pulse 2s infinite' }} />
@@ -77,7 +75,7 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4" />
               </button>
             </Link>
-            <button className="inline-flex items-center justify-center gap-2 rounded-[8px] px-6 py-3 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
+            <button className="inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
               Watch Demo
               <Play className="h-3.5 w-3.5" />
             </button>
@@ -102,7 +100,7 @@ export default function LandingPage() {
       {/* Live Activity Feed */}
       <section className="container mx-auto px-4 pb-16">
         <div className="fade-up max-w-2xl mx-auto">
-          <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] p-4">
+          <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" style={{ animation: 'dot-pulse 2s infinite' }} />
               <span className="text-[10px] font-mono text-[var(--app-text-dim)] uppercase tracking-[0.12em]">Live Activity</span>
@@ -159,12 +157,12 @@ export default function LandingPage() {
               return (
                 <div
                   key={i}
-                  className="group rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] hover:border-[var(--app-border-strong)] transition-colors p-5 fade-up"
+                  className="group rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] hover:border-[var(--app-border-strong)] transition-colors p-5 fade-up"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
                   <div className="mb-4">
                     <div
-                      className="inline-flex p-2.5 rounded-[8px] text-lg"
+                      className="inline-flex p-2.5 rounded-[6px] text-lg"
                       style={{
                         background: `rgb(from var(${varName}) r g b / 0.12)`,
                         color: `var(${varName})`,
@@ -196,19 +194,19 @@ export default function LandingPage() {
               See it in action
             </h2>
             <p className="text-[15px] text-[var(--app-text-muted)] max-w-2xl mx-auto fade-up">
-              Watch how DeBuggAI identifies and fixes a real error — in real time
+              Watch how DeBuggAI identifies and fixes a real error in real time
             </p>
           </div>
 
           <div className="fade-up max-w-3xl mx-auto">
-            <div className="rounded-[8px] bg-[var(--app-panel)] border border-[var(--app-border)] overflow-hidden" key={terminalReplay}>
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] overflow-hidden" key={terminalReplay}>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--app-border)] bg-[var(--app-panel-2)]">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
                   <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
                   <div className="w-3 h-3 rounded-full bg-[#28C840]" />
                 </div>
-                <span className="text-[11px] text-[var(--app-text-dim)] ml-2">debuggai — session</span>
+                <span className="text-[11px] text-[var(--app-text-dim)] ml-2">debuggai session</span>
                 <div className="ml-auto flex gap-1.5">
                   <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">⌘K</span>
                   <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">Esc</span>
@@ -223,7 +221,7 @@ export default function LandingPage() {
                   <span className="text-[var(--app-text-muted)]">→ Language detected: <span className="text-[var(--app-info)]">Python</span></span>
                 </div>
                 <div className="typing-line" style={{ animationDelay: '1.2s' }}>
-                  <span className="text-[var(--app-text-muted)]">→ Error type: <span className="text-[var(--app-danger)]">TypeError</span> — unsupported operand</span>
+                  <span className="text-[var(--app-text-muted)]">→ Error type: <span className="text-[var(--app-danger)]">TypeError</span>, unsupported operand</span>
                 </div>
                 <div className="typing-line" style={{ animationDelay: '1.8s' }}>
                   <span className="text-[var(--app-text-muted)]">→ Analyzing stack trace...</span>
@@ -252,7 +250,7 @@ export default function LandingPage() {
             <div className="flex gap-2 justify-center mt-4">
               <button
                 onClick={() => setTerminalReplay(prev => prev + 1)}
-                className="inline-flex items-center rounded-[8px] px-3 py-1.5 text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                className="inline-flex items-center rounded-[6px] px-3 py-1.5 text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
               >
                 ↻ Replay
               </button>
@@ -277,7 +275,7 @@ export default function LandingPage() {
               10+ languages supported
             </h2>
             <p className="text-[15px] text-[var(--app-text-muted)] fade-up">
-              Automatic detection — just paste your code and go
+              Automatic detection: paste your code and go
             </p>
           </div>
 
@@ -298,7 +296,7 @@ export default function LandingPage() {
             ].map((lang, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2.5 rounded-[8px] bg-[var(--app-panel)] border border-[var(--app-border)] px-4 py-3 text-[13px] text-[var(--app-text)]"
+                className="flex items-center gap-2.5 rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] px-4 py-3 text-[13px] text-[var(--app-text)]"
               >
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: lang.color }} />
                 {lang.name}
@@ -331,10 +329,9 @@ export default function LandingPage() {
                   <div className="hidden md:block absolute top-12 left-0 w-[calc(50%+12px)] h-px bg-[var(--app-border-strong)]" />
                 )}
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3.5 text-lg font-semibold text-black font-mono"
+                  className="w-12 h-12 rounded-[6px] flex items-center justify-center mx-auto mb-3.5 text-lg font-semibold text-[#071006] font-mono"
                   style={{
                     background: 'var(--app-accent)',
-                    boxShadow: '0 0 0 4px rgba(0,200,83,0.12)',
                   }}
                 >
                   {item.step}
@@ -358,7 +355,7 @@ export default function LandingPage() {
             ].map((stat, i) => (
               <div
                 key={i}
-                className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] text-center p-6 hover:border-[var(--app-border-strong)] transition-colors"
+                className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] text-center p-6 hover:border-[var(--app-border-strong)] transition-colors"
               >
                 <div className="text-[28px] font-semibold tracking-tight text-[var(--app-accent)]">{stat.value}</div>
                 <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-dim)] mt-1">{stat.label}</div>
@@ -396,7 +393,7 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
-            <div className="rounded-[8px] bg-[var(--app-panel-2)] border border-[var(--app-border)] overflow-hidden">
+            <div className="rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
                 <div className="flex gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
@@ -473,7 +470,7 @@ export default function LandingPage() {
                 initial: 'A'
               },
             ].map((testimonial, i) => (
-              <div key={i} className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] p-6">
+              <div key={i} className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6">
                 <div className="flex gap-0.5 mb-3">
                   {[...Array(5)].map((_, j) => (
                     <Star key={j} className="h-3 w-3 text-[var(--app-warning)] fill-[var(--app-warning)]" />
@@ -517,7 +514,7 @@ export default function LandingPage() {
 
           <div className="fade-up grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {/* Free */}
-            <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">FREE</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
                 $0<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
@@ -534,7 +531,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <Link href="/signup" className="block">
-                <button className="w-full rounded-[8px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
+                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
                   Get Started
                 </button>
               </Link>
@@ -542,16 +539,14 @@ export default function LandingPage() {
 
             {/* Pro */}
             <div
-              className="relative rounded-[10px] bg-[var(--app-panel)] backdrop-blur-xl p-6 flex flex-col"
+              className="relative rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 flex flex-col"
               style={{
                 border: '1px solid var(--app-accent)',
-                boxShadow: '0 0 40px rgba(0,200,83,0.12)',
-                transform: 'scale(1.03)',
                 zIndex: 10,
               }}
             >
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                <span className="font-medium text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]" style={{ boxShadow: '0 2px 8px rgba(0,200,83,0.3)' }}>
+                <span className="font-medium text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]">
                   Most Popular
                 </span>
               </div>
@@ -576,7 +571,7 @@ export default function LandingPage() {
             </div>
 
             {/* Enterprise */}
-            <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">ENTERPRISE</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
                 $49<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
@@ -590,7 +585,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <Link href="/contact" className="block mt-auto">
-                <button className="w-full rounded-[8px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
+                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
                   Contact Sales
                 </button>
               </Link>
@@ -636,7 +631,7 @@ export default function LandingPage() {
             ].map((item, index) => (
               <div key={index} className="mb-1.5">
                 <button
-                  className="flex items-center gap-2.5 w-full text-[13px] font-medium text-[var(--app-text)] rounded-[8px] bg-[var(--app-panel)] p-4 text-left"
+                  className="flex items-center gap-2.5 w-full text-[13px] font-medium text-[var(--app-text)] rounded-[6px] bg-[var(--app-panel)] p-4 text-left"
                   onClick={() => setOpenFaq(openFaq === index ? null : index)}
                 >
                   <span
@@ -670,7 +665,7 @@ export default function LandingPage() {
       <section className="border-t border-[var(--app-border)] py-12">
         <div className="container mx-auto px-4">
           <div className="fade-up max-w-lg mx-auto">
-            <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] p-5">
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5">
               <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
                 Keyboard Shortcuts
               </div>
@@ -699,10 +694,9 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="fade-up max-w-2xl mx-auto">
             <div
-              className="rounded-[10px] bg-[var(--app-panel)] backdrop-blur-xl p-10 text-center relative overflow-hidden"
-              style={{ border: '1px solid var(--app-accent)', boxShadow: '0 0 40px rgba(0,200,83,0.08)' }}
+              className="rounded-[6px] bg-[var(--app-panel)] p-10 text-center relative overflow-hidden"
+              style={{ border: '1px solid var(--app-accent)' }}
             >
-              <div className="absolute -top-16 -right-16 w-48 h-48 bg-[radial-gradient(circle,rgba(0,200,83,0.06),transparent_70%)] pointer-events-none" />
               <div className="relative z-10">
                 <span className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
                   Ready?
@@ -721,7 +715,7 @@ export default function LandingPage() {
                     </button>
                   </Link>
                   <Link href="/pricing">
-                    <button className="inline-flex items-center rounded-[8px] px-6 py-3 text-[13px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+                    <button className="inline-flex items-center rounded-[6px] px-6 py-3 text-[13px] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
                       View Pricing
                     </button>
                   </Link>

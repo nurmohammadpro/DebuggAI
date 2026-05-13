@@ -43,8 +43,7 @@ export default function LanguagesPage() {
                 style={{ 
                   width: '10px', 
                   height: '10px', 
-                  background: lang.color,
-                  boxShadow: `0 0 8px ${lang.color}40`
+                  background: lang.color
                 }} 
               />
               <div className="flex-1 min-w-0">
