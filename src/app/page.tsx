@@ -32,6 +32,9 @@ export default function LandingPage() {
   const [terminalReplay, setTerminalReplay] = useState(0);
 
   useEffect(() => {
+    // Enable progressive-enhancement animations only when JS is running.
+    document.documentElement.classList.add('js');
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -46,7 +49,10 @@ export default function LandingPage() {
 
     document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      document.documentElement.classList.remove('js');
+    };
   }, []);
 
   return (
@@ -75,10 +81,12 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4" />
               </button>
             </Link>
-            <button className="inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
-              Watch Demo
-              <Play className="h-3.5 w-3.5" />
-            </button>
+            <Link href="/demo" className="w-full sm:w-auto">
+              <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+                Watch Demo
+                <Play className="h-3.5 w-3.5" />
+              </button>
+            </Link>
           </div>
 
           <div className="fade-up visible fade-up-delay-3 flex items-center justify-center gap-4 flex-wrap mt-5">

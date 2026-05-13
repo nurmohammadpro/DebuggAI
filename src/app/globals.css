@@ -1151,12 +1151,24 @@
 
 /* Fade Up Animation */
 .fade-up {
+  /* Progressive enhancement: content is visible by default.
+     When JS runs it adds `html.js`, which enables the reveal animation. */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.js .fade-up {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-.fade-up.visible {
+.js .fade-up.visible {
   opacity: 1;
   transform: translateY(0);
 }
