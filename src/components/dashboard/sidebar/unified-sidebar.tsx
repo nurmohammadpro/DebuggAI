@@ -49,7 +49,7 @@ export function UnifiedSidebar({
           {onToggleCollapsed && (
             <button
               onClick={onToggleCollapsed}
-              className="p-1 rounded text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text-muted)] transition-all"
+              className="p-1 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text-muted)] transition-all"
               aria-label="Toggle sidebar"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -180,7 +180,7 @@ function NavItem({ collapsed, active, icon, label, href }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded transition-all ${
+      className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-[6px] transition-all ${
         active
           ? 'bg-[var(--app-surface)] font-medium text-[var(--app-text)]'
           : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
@@ -204,7 +204,7 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
   return (
     <Link
       href={`/dashboard?project=${project.id}`}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
     >
       <Database className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
       <span className="flex-1 min-w-0 truncate">
@@ -228,7 +228,7 @@ function RecentChatItem({ chat }: RecentChatItemProps) {
   return (
     <Link
       href={`/dashboard/debug/history?session=${chat.id}`}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
     >
       <Activity className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
       <span className="flex-1 min-w-0 truncate">
