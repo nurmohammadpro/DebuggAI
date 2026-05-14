@@ -14,6 +14,12 @@ import {
   ChevronDown,
   Star,
   Zap,
+  Bug,
+  Globe,
+  RefreshCw,
+  Shield,
+  Activity,
+  X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components/public-layout';
@@ -91,15 +97,15 @@ export default function LandingPage() {
 
           <div className="fade-up visible fade-up-delay-3 flex items-center justify-center gap-4 flex-wrap mt-5">
             <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
-              <span className="text-[var(--app-accent)]">&#10003;</span> Free forever plan
+              <Check className="h-3 w-3 text-[var(--app-accent)]" /> Free forever plan
             </span>
             <span className="w-1 h-1 rounded-full bg-[var(--app-text-dim)]" />
             <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
-              <span className="text-[var(--app-accent)]">&#10003;</span> No credit card required
+              <Check className="h-3 w-3 text-[var(--app-accent)]" /> No credit card required
             </span>
             <span className="w-1 h-1 rounded-full bg-[var(--app-text-dim)]" />
             <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
-              <span className="text-[var(--app-accent)]">&#10003;</span> Setup in 2 minutes
+              <Check className="h-3 w-3 text-[var(--app-accent)]" /> Setup in 2 minutes
             </span>
           </div>
         </div>
@@ -154,14 +160,15 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
             {[
-              { icon: '🐛', title: 'AI Debugging', desc: 'Paste your error and get instant fixes with explanations. Supports 10+ languages out of the box.', badge: 'Most Used', color: 'blue' },
-              { icon: '⎘', title: 'Web Builder', desc: 'Describe what you want and watch AI create it live. Monaco editor + iframe preview.', badge: 'New', color: 'purple' },
-              { icon: <Zap className="w-5 h-5" />, title: 'Instant Answers', desc: 'Code reviews, best practices, and explanations in seconds. No more Stack Overflow.', badge: 'Fast', color: 'amber' },
-              { icon: '⟳', title: 'Project Templates', desc: 'Generate MERN, Laravel, Django, Flask, Rails, and Go stacks in seconds.', badge: '6 Stacks', color: 'purple' },
-              { icon: '◎', title: 'Zero-Knowledge Mode', desc: 'Your code is never stored. All analysis happens in-memory and is discarded immediately.', badge: 'Pro', color: 'red' },
-              { icon: '≡', title: 'SSE Streaming', desc: 'Watch the AI think in real-time with server-sent events. No loading spinners.', badge: 'Live', color: 'green' },
+              { icon: Bug, title: 'AI Debugging', desc: 'Paste your error and get instant fixes with explanations. Supports 10+ languages out of the box.', badge: 'Most Used', color: 'blue' },
+              { icon: Globe, title: 'Web Builder', desc: 'Describe what you want and watch AI create it live. Monaco editor + iframe preview.', badge: 'New', color: 'purple' },
+              { icon: Zap, title: 'Instant Answers', desc: 'Code reviews, best practices, and explanations in seconds. No more Stack Overflow.', badge: 'Fast', color: 'amber' },
+              { icon: RefreshCw, title: 'Project Templates', desc: 'Generate MERN, Laravel, Django, Flask, Rails, and Go stacks in seconds.', badge: '6 Stacks', color: 'purple' },
+              { icon: Shield, title: 'Zero-Knowledge Mode', desc: 'Your code is never stored. All analysis happens in-memory and is discarded immediately.', badge: 'Pro', color: 'red' },
+              { icon: Activity, title: 'SSE Streaming', desc: 'Watch the AI think in real-time with server-sent events. No loading spinners.', badge: 'Live', color: 'green' },
             ].map((feature, i) => {
               const varName = featureColorVars[feature.color] || '--app-accent';
+              const Icon = feature.icon;
               return (
                 <div
                   key={i}
@@ -170,13 +177,13 @@ export default function LandingPage() {
                 >
                   <div className="mb-4">
                     <div
-                      className="inline-flex p-2.5 rounded-[6px] text-lg"
+                      className="inline-flex p-2.5 rounded-[6px]"
                       style={{
                         background: `rgb(from var(${varName}) r g b / 0.12)`,
                         color: `var(${varName})`,
                       }}
                     >
-                      <span>{feature.icon}</span>
+                      <Icon className="w-5 h-5" />
                     </div>
                   </div>
                   <h3 className="text-[16px] font-medium tracking-[-0.02em] mb-2 text-[var(--app-text)]">{feature.title}</h3>
@@ -389,16 +396,19 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  { icon: '✕', color: 'var(--app-danger)', text: 'Removes dead code paths' },
-                  { icon: <Check className="w-4 h-4" />, color: 'var(--app-success)', text: 'Adds proper error handling' },
-                  { icon: <Check className="w-4 h-4" />, color: 'var(--app-success)', text: 'Follows language conventions' },
-                  { icon: <Check className="w-4 h-4" />, color: 'var(--app-success)', text: 'Explains each change' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                    <span style={{ color: item.color }}>{item.icon}</span>
-                    {item.text}
-                  </div>
-                ))}
+                  { icon: X, color: 'var(--app-danger)', text: 'Removes dead code paths' },
+                  { icon: Check, color: 'var(--app-success)', text: 'Adds proper error handling' },
+                  { icon: Check, color: 'var(--app-success)', text: 'Follows language conventions' },
+                  { icon: Check, color: 'var(--app-success)', text: 'Explains each change' },
+                ].map((item, i) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
+                      <Icon style={{ color: item.color }} className="w-4 h-4" />
+                      {item.text}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div className="rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] overflow-hidden">
@@ -413,7 +423,7 @@ export default function LandingPage() {
               <div className="p-4 font-mono text-[12px] leading-relaxed">
                 <div className="mb-3">
                   <div className="text-[10px] mb-1.5 flex items-center gap-1 text-[var(--app-danger)]">
-                    <span>✕</span> Before
+                    <X className="w-3 h-3" /> Before
                   </div>
                   <div className="text-[var(--app-text-muted)]">
                     <span className="text-[#FF7777]">def get_user(id):</span><br />
@@ -516,26 +526,26 @@ export default function LandingPage() {
               Simple, transparent pricing
             </h2>
             <p className="text-[15px] text-[var(--app-text-muted)] fade-up">
-              Start free, upgrade when you need more power
+              Start free, upgrade when you need more power. No hidden fees.
             </p>
           </div>
 
-          <div className="fade-up grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="fade-up grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 items-start">
             {/* Free */}
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">FREE</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
                 $0<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
               </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-5">For individuals learning</p>
-              <div className="flex flex-col gap-2.5 mb-6">
+              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For individuals learning</p>
+              <div className="flex flex-col gap-2.5 mb-5">
                 {['30 credits/month', 'Basic debugging', '7-day history'].map((f) => (
                   <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
                     <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
                   </div>
                 ))}
                 <div className="flex items-center gap-2 text-[13px] text-[var(--app-text-dim)]">
-                  <span>✕</span> Web Builder
+                  <X className="h-4 w-4" /> Web Builder
                 </div>
               </div>
               <Link href="/signup" className="block">
@@ -547,7 +557,7 @@ export default function LandingPage() {
 
             {/* Pro */}
             <div
-              className="relative rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 flex flex-col"
+              className="relative rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 flex flex-col"
               style={{
                 border: '1px solid var(--app-accent)',
                 zIndex: 10,
@@ -562,8 +572,8 @@ export default function LandingPage() {
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-accent)] mb-1">
                 $9<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
               </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-5">For serious developers</p>
-              <div className="flex flex-col gap-2.5 mb-6">
+              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For serious developers</p>
+              <div className="flex flex-col gap-2.5 mb-5">
                 {['300 credits/month', 'Priority AI responses', '90-day history', 'Web Builder + Templates', 'Zero-Knowledge Mode', 'Referral program'].map((f) => (
                   <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
                     <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
@@ -579,13 +589,13 @@ export default function LandingPage() {
             </div>
 
             {/* Team */}
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6 hover:border-[var(--app-border-strong)] transition-colors">
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">TEAM</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
                 $99<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
               </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-5">For small teams</p>
-              <div className="flex flex-col gap-2.5 mb-6">
+              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For small teams</p>
+              <div className="flex flex-col gap-2.5 mb-5">
                 {['2,500 credits/month', '3 seats included', 'Shared team dashboard', 'Web Builder + Export', 'Priority queue'].map((f) => (
                   <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
                     <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
@@ -593,6 +603,48 @@ export default function LandingPage() {
                 ))}
               </div>
               <Link href="/contact?plan=team" className="block mt-auto">
+                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
+                  Contact Sales
+                </button>
+              </Link>
+            </div>
+
+            {/* Business */}
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
+              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">BUSINESS</div>
+              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
+                $299<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+              </div>
+              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For growing organizations</p>
+              <div className="flex flex-col gap-2.5 mb-5">
+                {['10,000 credits/month', '10 seats included', 'Team analytics', 'Priority AI routing', 'Integrations (Git + Deploy)'].map((f) => (
+                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
+                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
+                  </div>
+                ))}
+              </div>
+              <Link href="/contact?plan=business" className="block mt-auto">
+                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
+                  Contact Sales
+                </button>
+              </Link>
+            </div>
+
+            {/* Enterprise */}
+            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
+              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">ENTERPRISE</div>
+              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
+                $999+<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+              </div>
+              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For large orgs and security needs</p>
+              <div className="flex flex-col gap-2.5 mb-5">
+                {['Starts at 40,000 credits/month', 'Dedicated workspace', 'Admin controls + audit logs', 'SLA support', 'Private deployment option'].map((f) => (
+                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
+                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
+                  </div>
+                ))}
+              </div>
+              <Link href="/contact?plan=enterprise" className="block mt-auto">
                 <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
                   Contact Sales
                 </button>

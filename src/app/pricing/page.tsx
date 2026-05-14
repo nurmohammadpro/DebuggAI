@@ -98,7 +98,7 @@ const comparisonFeatures = [
 export default function PricingPage() {
   return (
     <PublicLayout>
-      <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
+      <main className="container mx-auto px-4 pt-16 pb-24">
         <div className="text-center mb-16">
           <p className="text-[11px] font-medium tracking-[0.12em] uppercase mb-3 text-[var(--app-accent)]">
             Pricing

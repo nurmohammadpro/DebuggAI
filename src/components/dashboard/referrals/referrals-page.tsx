@@ -20,7 +20,8 @@ import {
   Medal,
   Award,
   Gem,
-  Diamond
+  Diamond,
+  Coins,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -161,7 +162,7 @@ export default function ReferralsPage() {
               </div>
             )}
           </div>
-          <div className="text-4xl sm:text-6xl self-center">🎁</div>
+          <Gift className="h-12 w-12 sm:h-16 sm:w-16 self-center text-[var(--app-accent)]" />
         </div>
       </div>
 
@@ -305,8 +306,8 @@ export default function ReferralsPage() {
                   Reach {stats?.nextMilestone.referrals} referrals
                 </div>
               </div>
-              <div className="text-lg font-semibold text-[var(--app-accent)]">
-                +{stats?.nextMilestone.bonus} 🪙
+              <div className="text-lg font-semibold text-[var(--app-accent)] flex items-center gap-2">
+                +{stats?.nextMilestone.bonus} <Coins className="h-4 w-4" />
               </div>
             </div>
           </div>

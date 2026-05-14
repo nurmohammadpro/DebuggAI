@@ -9,7 +9,7 @@ export default function DemoPage() {
 
   return (
     <PublicLayout>
-      <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
+      <main className="container mx-auto px-4 pt-16 pb-24">
         {/* Header Section */}
         <div className="text-center mb-16">
           <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
