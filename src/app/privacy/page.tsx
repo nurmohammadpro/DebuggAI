@@ -3,7 +3,8 @@ import { PublicLayout } from '@/components/public-layout';
 export default function PrivacyPage() {
   return (
     <PublicLayout>
-      <main className="max-w-3xl mx-auto px-6 pt-16 pb-24">
+      <main className="container mx-auto px-4 pt-16 pb-24">
+        <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <p className="text-[11px] font-medium tracking-[0.12em] uppercase mb-3 text-[var(--app-accent)]">
             Legal
@@ -96,6 +97,7 @@ export default function PrivacyPage() {
               </a>
             </p>
           </section>
+        </div>
         </div>
       </main>
     </PublicLayout>

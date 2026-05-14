@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { PublicLayout } from '@/components/public-layout';
 import { useState } from 'react';
+import { ChevronDown, Minus, Plus } from 'lucide-react';
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -22,7 +23,7 @@ export default function FAQPage() {
     },
     {
       question: 'How much does it cost?',
-      answer: 'DeBuggAI offers a free forever plan with 30 credits per month. Paid plans start at $9/month for 300 credits. We also offer enterprise plans with unlimited debugging and custom integrations.',
+      answer: 'DeBuggAI offers a free plan with 30 credits per month. Paid plans start at $9/month for 300 credits, and scale up to Team ($99) and Business ($299). Enterprise starts at $999/month with higher credit bundles and custom requirements.',
     },
     {
       question: 'Can I use DeBuggAI for commercial projects?',
@@ -36,7 +37,8 @@ export default function FAQPage() {
 
   return (
     <PublicLayout>
-      <main className="max-w-3xl mx-auto px-6 pt-16 pb-24">
+      <main className="container mx-auto px-4 pt-16 pb-24">
+        <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
@@ -71,7 +73,7 @@ export default function FAQPage() {
                 >
                   {/* Using the global .collapse-icon class */}
                   <div className="collapse-icon">
-                    {isOpen ? '−' : '+'}
+                    {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   </div>
                   
                   <span className="text-body font-medium flex-1" style={{ color: 'var(--app-text)' }}>
@@ -83,7 +85,7 @@ export default function FAQPage() {
                     className="collapse-arrow" 
                     style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                   >
-                    ↓
+                    <ChevronDown className="h-4 w-4" />
                   </div>
                 </button>
 
@@ -129,6 +131,7 @@ export default function FAQPage() {
               </button>
             </Link>
           </div>
+        </div>
         </div>
       </main>
     </PublicLayout>

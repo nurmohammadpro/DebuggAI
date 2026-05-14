@@ -6,7 +6,8 @@ import { PublicLayout } from '@/components/public-layout';
 export default function ContactPage() {
   return (
     <PublicLayout>
-      <main className="max-w-4xl mx-auto px-6 pt-16 pb-24">
+      <main className="container mx-auto px-4 pt-16 pb-24">
+        <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
           <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
@@ -84,6 +85,7 @@ export default function ContactPage() {
             </div>
           </div>
         </section>
+        </div>
       </main>
     </PublicLayout>
   );

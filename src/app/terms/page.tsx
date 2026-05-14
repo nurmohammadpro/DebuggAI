@@ -3,7 +3,8 @@ import { PublicLayout } from '@/components/public-layout';
 export default function TermsPage() {
   return (
     <PublicLayout>
-      <main className="max-w-3xl mx-auto px-6 pt-16 pb-24">
+      <main className="container mx-auto px-4 pt-16 pb-24">
+        <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>Terms of Service</h1>
@@ -70,6 +71,7 @@ export default function TermsPage() {
               <a href="mailto:legal@debuggai.com" className="footer-link">legal@debuggai.com</a>
             </p>
           </section>
+        </div>
         </div>
       </main>
     </PublicLayout>
