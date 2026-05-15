@@ -37,6 +37,7 @@ interface GenerationState {
   isGenerating: boolean;
   accumulated: string; // Accumulated streaming response
   currentProjectId: string | null;
+  currentThreadId: string | null;
 
   // Versions
   versions: CodeVersion[];
@@ -65,6 +66,7 @@ interface GenerationState {
   setLastError: (error: RuntimeError | null) => void;
   clearError: () => void;
   setProjectId: (id: string | null) => void;
+  setThreadId: (id: string | null) => void;
 
   // Reset
   reset: () => void;
@@ -83,6 +85,7 @@ const initialState = {
   currentVersionId: null,
   lastError: null,
   currentProjectId: null,
+  currentThreadId: null,
 };
 
 export const useGenerationStore = create<GenerationState>()(
@@ -180,6 +183,7 @@ export const useGenerationStore = create<GenerationState>()(
       clearError: () => set({ lastError: null }),
 
       setProjectId: (id) => set({ currentProjectId: id }),
+      setThreadId: (id) => set({ currentThreadId: id }),
 
       reset: () => set(initialState),
 
@@ -213,6 +217,7 @@ export const useGenerationStore = create<GenerationState>()(
         files: state.files,
         savedSnapshot: state.savedSnapshot,
         currentProjectId: state.currentProjectId,
+        currentThreadId: state.currentThreadId,
       }),
     }
   )

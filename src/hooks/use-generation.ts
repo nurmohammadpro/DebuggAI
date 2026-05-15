@@ -46,7 +46,9 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     setCurrentCode, 
     addVersion,
     currentProjectId,
-    setProjectId
+    currentThreadId,
+    setProjectId,
+    setThreadId,
   } = useGenerationStore();
 
   const getAuthHeaders = async () => {
@@ -54,6 +56,35 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     if (!session?.access_token) return null;
     return { Authorization: `Bearer ${session.access_token}` };
   };
+
+  const ensureThread = useCallback(async (): Promise<string> => {
+    if (currentThreadId) return currentThreadId;
+
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders) throw new Error('Unauthorized: please sign in again');
+
+    const res = await fetch('/api/threads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({
+        title: null,
+        projectId: currentProjectId,
+        workspaceId: null,
+        metadata: { source: 'use-generation' },
+      }),
+    });
+
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j.error || `Failed to create thread (HTTP ${res.status})`);
+    }
+
+    const j = await res.json();
+    const id = j?.thread?.id;
+    if (!id) throw new Error('Thread creation failed');
+    setThreadId(id);
+    return id;
+  }, [currentProjectId, currentThreadId, setThreadId]);
 
   /**
    * Generate code from AI prompt with SSE streaming
@@ -69,13 +100,15 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         if (!authHeaders) {
           throw new Error('Unauthorized: please sign in again');
         }
+
+        const threadId = await ensureThread();
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...authHeaders,
           },
-          body: JSON.stringify(request),
+          body: JSON.stringify({ ...request, threadId }),
         });
 
         if (!response.ok) {
@@ -121,21 +154,21 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 })
                 .eq('id', currentProjectId);
             } else {
-              // Create new project
-              const { data, error } = await supabase
-                .from('generations')
-                .insert({
-                  user_id: user.id,
+              // Create new canonical project (+ initial generation) via API.
+              const res = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                body: JSON.stringify({
                   code,
                   prompt: request.prompt,
                   description: request.prompt.slice(0, 50),
-                  version: 1,
-                })
-                .select()
-                .single();
-              
-              if (data && !error) {
-                setProjectId(data.id);
+                  stack: null,
+                  metadata: {},
+                }),
+              });
+              if (res.ok) {
+                const j = await res.json().catch(() => ({}));
+                if (j?.id) setProjectId(j.id);
               }
             }
             // Invalidate the projects query so the sidebar updates
@@ -168,6 +201,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       onDone, 
       onError,
       currentProjectId,
+      ensureThread,
       setProjectId,
       queryClient
     ]
@@ -188,6 +222,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         if (!authHeaders) {
           throw new Error('Unauthorized: please sign in again');
         }
+        const threadId = await ensureThread();
         const request: DebugRequest = {
           code,
           errorMessage,
@@ -201,7 +236,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             'Content-Type': 'application/json',
             ...authHeaders,
           },
-          body: JSON.stringify(request),
+          body: JSON.stringify({ ...request, threadId }),
         });
 
         if (!response.ok) {

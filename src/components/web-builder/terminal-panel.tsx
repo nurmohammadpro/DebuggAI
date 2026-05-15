@@ -27,17 +27,17 @@ export function TerminalPanel({
   return (
     <div
       className={cn(
-        'bg-[#0C0F0C] text-[var(--app-accent)]/90 font-mono text-xs rounded-[10px] border border-[var(--app-border)] flex flex-col',
+        'bg-[#0C0F0C] text-[var(--app-accent)]/90 font-mono text-xs rounded-[6px] border border-[var(--app-border)] flex flex-col',
         className,
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 bg-[var(--app-panel-2)] border-b border-[var(--app-border)] shrink-0 rounded-t-[10px]">
+      <div className="flex items-center justify-between px-3 h-8 bg-[var(--app-panel-2)] border-b border-[var(--app-border)] shrink-0 rounded-t-[6px]">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[var(--app-danger)]/60" />
-            <div className="w-2 h-2 rounded-full bg-[var(--app-warning)]/60" />
-            <div className="w-2 h-2 rounded-full bg-[var(--app-success)]/60" />
+            <div className="w-2 h-2 rounded-full bg-[var(--app-danger)]/75" />
+            <div className="w-2 h-2 rounded-full bg-[var(--app-warning)]/75" />
+            <div className="w-2 h-2 rounded-full bg-[var(--app-success)]/75" />
           </div>
           <span className="text-[10px] text-[var(--app-text-dim)] uppercase tracking-wider font-semibold ml-2">
             Terminal
@@ -46,7 +46,7 @@ export function TerminalPanel({
         {isBuilding && (
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)] animate-pulse" />
-            <span className="text-[9px] text-[var(--app-accent)]/70 uppercase tracking-widest font-semibold">
+            <span className="text-[9px] text-[var(--app-accent)]/80 uppercase tracking-widest font-semibold">
               Building
             </span>
           </div>

@@ -50,7 +50,7 @@ export function PreviewPane({
   return (
     <div
       className={cn(
-        "overflow-hidden flex flex-col border border-[var(--app-border)] bg-[var(--app-panel)] rounded-[10px]",
+        "overflow-hidden flex flex-col border border-[var(--app-border)] bg-[var(--app-panel)] rounded-[6px]",
         className
       )}
       style={{ height }}
@@ -105,7 +105,7 @@ export function PreviewPane({
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--app-bg)] animate-in fade-in duration-500">
             <div className="relative mb-8">
-              <div className="w-16 h-16 rounded-[10px] border-2 border-[var(--app-accent)]/20 animate-spin [animation-duration:3s]" />
+              <div className="w-16 h-16 rounded-[6px] border-2 border-[var(--app-accent)]/25 animate-spin [animation-duration:3s]" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <Play className="h-6 w-6 text-[var(--app-accent)] animate-pulse" />
               </div>
@@ -113,9 +113,9 @@ export function PreviewPane({
             <div className="flex flex-col items-center gap-2">
               <span className="text-[11px] font-semibold text-[var(--app-accent)] uppercase tracking-[0.3em] animate-pulse">Initializing Sandbox</span>
               <div className="flex gap-1">
-                <div className="w-1 h-1 bg-[var(--app-accent)]/20 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <div className="w-1 h-1 bg-[var(--app-accent)]/20 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <div className="w-1 h-1 bg-[var(--app-accent)]/20 rounded-full animate-bounce" />
+                <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce" />
               </div>
             </div>
           </div>
@@ -147,11 +147,11 @@ export function PreviewPane({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] font-medium text-[var(--app-text-dim)] uppercase tracking-tighter">Engine:</span>
-            <span className="text-[9px] font-semibold text-[var(--app-accent)]/60 uppercase">React v18</span>
+            <span className="text-[9px] font-semibold text-[var(--app-accent)]/75 uppercase">React v18</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] font-medium text-[var(--app-text-dim)] uppercase tracking-tighter">Port:</span>
-            <span className="text-[9px] font-semibold text-[var(--app-accent)]/60 uppercase">3000</span>
+            <span className="text-[9px] font-semibold text-[var(--app-accent)]/75 uppercase">3000</span>
           </div>
         </div>
         <div className="flex items-center gap-3">

@@ -215,11 +215,11 @@ export function ChatPanel({
           <div className="flex justify-start animate-in fade-in duration-300">
             <div className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[6px] px-4 py-2 flex items-center gap-2">
               <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/40 rounded-full animate-bounce" />
+                <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/55 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/55 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-1.5 h-1.5 bg-[var(--app-accent)]/55 rounded-full animate-bounce" />
               </div>
-              <span className="text-[10px] font-semibold text-[var(--app-accent)]/60 uppercase tracking-widest">Thinking</span>
+              <span className="text-[10px] font-semibold text-[var(--app-accent)]/80 uppercase tracking-widest">Thinking</span>
             </div>
           </div>
         )}

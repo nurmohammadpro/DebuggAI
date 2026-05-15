@@ -108,8 +108,9 @@
   --bg-primary: #ffffff;
   --bg-secondary: #fafafa;
   --bg-tertiary: #f3f4f6;
-  --border-default: #e5e7eb;
-  --border-hover: #d1d5db;
+  /* Default border was too faint on white, making chips/buttons look "washed out". */
+  --border-default: #d1d5db;
+  --border-hover: #cbd5e1;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   /* Light-mode tertiary text was too faint on white for small UI labels/buttons. */

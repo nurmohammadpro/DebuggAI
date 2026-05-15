@@ -102,7 +102,7 @@ export function NotificationCenter() {
             style={{
               background: 'var(--app-panel)',
               border: '1px solid var(--app-border-strong)',
-              borderRadius: '10px',
+              borderRadius: '6px',
               boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
             }}
           >

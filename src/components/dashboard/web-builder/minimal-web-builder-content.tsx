@@ -78,7 +78,15 @@ export function MinimalWebBuilderContent() {
     <div className="h-full flex">
       {/* Left Panel: Chat & AI interaction */}
       <div className="w-80 shrink-0 border-r border-[var(--app-border)] bg-[var(--app-panel)]">
-        <ChatPanel height="100%" chromeless />
+        <div className="h-12 border-b border-[var(--app-border)] bg-[var(--app-panel)] flex items-center px-3">
+          <div className="flex items-center gap-2 px-2 py-1 rounded-[6px] bg-[var(--app-accent-soft)] border border-[var(--app-border)]">
+            <Code2 className="h-3.5 w-3.5 text-[var(--app-accent)]" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-accent)]">
+              Web Builder
+            </span>
+          </div>
+        </div>
+        <ChatPanel height="calc(100% - 48px)" chromeless />
       </div>
 
       {/* Right Panel: Codebase & Preview */}
