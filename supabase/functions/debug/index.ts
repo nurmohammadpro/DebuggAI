@@ -15,11 +15,13 @@ const corsHeaders = {
 };
 
 interface DebugRequest {
+  threadId: string;
   prompt?: string;
   code: string;
   errorMessage: string;
   history?: Array<{ role: string; content: string }>;
   language?: string;
+  idempotencyKey?: string;
 }
 
 serve(async (req) => {
@@ -61,7 +63,14 @@ serve(async (req) => {
     }
 
     // 2. Parse request body
-    const { code, errorMessage, prompt, history = [], language }: DebugRequest = await req.json();
+    const { threadId, code, errorMessage, prompt, history = [], language, idempotencyKey }: DebugRequest = await req.json();
+
+    if (!threadId) {
+      return new Response(
+        JSON.stringify({ error: 'threadId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!code) {
       return new Response(
@@ -75,6 +84,26 @@ serve(async (req) => {
         JSON.stringify({ error: 'Error message is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Spend credits (basic debug)
+    const creditsToSpend = 1;
+    const { error: spendError } = await supabase.rpc('spend_credits', {
+      p_user_id: user.id,
+      p_amount: creditsToSpend,
+      p_source: 'debug',
+      p_description: 'Debug',
+      p_idempotency_key: idempotencyKey || null,
+      p_metadata: { language: language || null },
+    });
+
+    if (spendError) {
+      const msg = spendError.message || 'Failed to spend credits';
+      const status = msg.toLowerCase().includes('insufficient') ? 402 : 500;
+      return new Response(JSON.stringify({ error: msg }), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 3. Build messages array for AI with debug-focused system prompt
@@ -121,6 +150,48 @@ ${languageHint}`;
       );
     }
 
+    // Persist user message + create run/step
+    await supabase.from('thread_messages').insert({
+      thread_id: threadId,
+      user_id: user.id,
+      role: 'user',
+      content: prompt || 'Debug this code',
+      metadata: { source: 'debug', language: language || null, has_error: true },
+    });
+
+    const { data: run } = await supabase
+      .from('runs')
+      .insert({
+        thread_id: threadId,
+        user_id: user.id,
+        status: 'running',
+        objective: 'debug',
+        idempotency_key: idempotencyKey || null,
+        started_at: new Date().toISOString(),
+        metadata: { model, credits: creditsToSpend, language: language || null },
+      })
+      .select('id')
+      .single();
+
+    const runId = run?.id || null;
+    let stepId: string | null = null;
+    if (runId) {
+      const { data: step } = await supabase
+        .from('run_steps')
+        .insert({
+          run_id: runId,
+          step_index: 0,
+          kind: 'llm',
+          agent_name: 'edge',
+          status: 'running',
+          input: { language: language || null, hasErrorMessage: true },
+          started_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+      stepId = step?.id || null;
+    }
+
     const aiResponse = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -161,6 +232,8 @@ ${languageHint}`;
       async start(controller) {
         try {
           let buffer = '';
+          let assistantBuffer = '';
+          let usage: { input_tokens?: number; output_tokens?: number } | null = null;
 
           while (true) {
             const { done, value } = await reader.read();
@@ -188,9 +261,17 @@ ${languageHint}`;
 
                 try {
                   const parsed = JSON.parse(data);
+                  const u = parsed?.x_groq?.usage || parsed?.usage;
+                  if (u && typeof u === 'object') {
+                    usage = {
+                      input_tokens: typeof u.prompt_tokens === 'number' ? u.prompt_tokens : u.input_tokens,
+                      output_tokens: typeof u.completion_tokens === 'number' ? u.completion_tokens : u.output_tokens,
+                    };
+                  }
                   // Extract delta content
                   const content = parsed.choices?.[0]?.delta?.content || '';
                   if (content) {
+                    assistantBuffer += content;
                     // Send SSE format
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
@@ -203,8 +284,67 @@ ${languageHint}`;
           }
 
           controller.close();
+
+          const finalText = assistantBuffer.trim();
+          if (finalText) {
+            await supabase.from('thread_messages').insert({
+              thread_id: threadId,
+              user_id: user.id,
+              role: 'assistant',
+              content: finalText,
+              model,
+              tokens_in: usage?.input_tokens ?? null,
+              tokens_out: usage?.output_tokens ?? null,
+              metadata: { source: 'debug', run_id: runId },
+            });
+          }
+
+          await supabase
+            .from('threads')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', threadId);
+
+          if (runId) {
+            await supabase.from('ai_usage_ledger').insert({
+              user_id: user.id,
+              run_id: runId,
+              model,
+              input_tokens: usage?.input_tokens ?? null,
+              output_tokens: usage?.output_tokens ?? null,
+              cost_usd: null,
+              credits_charged: creditsToSpend,
+              metadata: { source: 'debug', language: language || null },
+            });
+
+            if (stepId) {
+              await supabase
+                .from('run_steps')
+                .update({ status: 'succeeded', ended_at: new Date().toISOString(), output: { ok: true } })
+                .eq('id', stepId);
+            }
+            await supabase
+              .from('runs')
+              .update({ status: 'succeeded', ended_at: new Date().toISOString() })
+              .eq('id', runId);
+          }
         } catch (error) {
           console.error('Streaming error:', error);
+          try {
+            if (stepId) {
+              await supabase
+                .from('run_steps')
+                .update({ status: 'failed', error: String(error), ended_at: new Date().toISOString() })
+                .eq('id', stepId);
+            }
+            if (runId) {
+              await supabase
+                .from('runs')
+                .update({ status: 'failed', error: String(error), ended_at: new Date().toISOString() })
+                .eq('id', runId);
+            }
+          } catch {
+            // ignore
+          }
           controller.error(error);
         }
       },

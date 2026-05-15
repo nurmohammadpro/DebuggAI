@@ -15,8 +15,10 @@ const corsHeaders = {
 };
 
 interface GenerateRequest {
+  threadId: string;
   prompt: string;
   history?: Array<{ role: string; content: string }>;
+  idempotencyKey?: string;
 }
 
 serve(async (req) => {
@@ -58,7 +60,14 @@ serve(async (req) => {
     }
 
     // 2. Parse request body
-    const { prompt, history = [] }: GenerateRequest = await req.json();
+    const { threadId, prompt, history = [], idempotencyKey }: GenerateRequest = await req.json();
+
+    if (!threadId) {
+      return new Response(
+        JSON.stringify({ error: 'threadId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!prompt) {
       return new Response(
@@ -67,24 +76,37 @@ serve(async (req) => {
       );
     }
 
-    // 3. Fetch recent messages from database for context
+    // Spend credits (basic generate)
+    const creditsToSpend = 1;
+    const { error: spendError } = await supabase.rpc('spend_credits', {
+      p_user_id: user.id,
+      p_amount: creditsToSpend,
+      p_source: 'generate',
+      p_description: 'Generate',
+      p_idempotency_key: idempotencyKey || null,
+      p_metadata: {},
+    });
+
+    if (spendError) {
+      const msg = spendError.message || 'Failed to spend credits';
+      const status = msg.toLowerCase().includes('insufficient') ? 402 : 500;
+      return new Response(JSON.stringify({ error: msg }), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 3. Fetch recent thread messages for context
     const { data: messages, error: messagesError } = await supabase
-      .from('messages')
+      .from('thread_messages')
       .select('role, content, created_at')
-      .eq('user_id', user.id)
+      .eq('thread_id', threadId)
       .order('created_at', { ascending: false })
       .limit(20);
 
     let conversationHistory: Array<{ role: string; content: string }> = [];
-
     if (!messagesError && messages) {
-      // Convert and reverse (most recent first in DB, but we need oldest first)
-      conversationHistory = messages
-        .reverse()
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
+      conversationHistory = messages.reverse().map((m: any) => ({ role: m.role, content: m.content }));
     }
 
     // 4. Build messages array for AI
@@ -115,6 +137,49 @@ Rules:
         JSON.stringify({ error: 'AI API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // 4. Persist user message + create run/step
+    await supabase.from('thread_messages').insert({
+      thread_id: threadId,
+      user_id: user.id,
+      role: 'user',
+      content: prompt,
+      metadata: { source: 'generate' },
+    });
+
+    const { data: run } = await supabase
+      .from('runs')
+      .insert({
+        thread_id: threadId,
+        user_id: user.id,
+        status: 'running',
+        objective: 'generate',
+        idempotency_key: idempotencyKey || null,
+        started_at: new Date().toISOString(),
+        metadata: { model, credits: creditsToSpend },
+      })
+      .select('id')
+      .single();
+
+    const runId = run?.id || null;
+
+    let stepId: string | null = null;
+    if (runId) {
+      const { data: step } = await supabase
+        .from('run_steps')
+        .insert({
+          run_id: runId,
+          step_index: 0,
+          kind: 'llm',
+          agent_name: 'edge',
+          status: 'running',
+          input: { prompt },
+          started_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+      stepId = step?.id || null;
     }
 
     const aiResponse = await fetch(`${baseUrl}/chat/completions`, {
@@ -157,6 +222,8 @@ Rules:
       async start(controller) {
         try {
           let buffer = '';
+          let assistantBuffer = '';
+          let usage: { input_tokens?: number; output_tokens?: number } | null = null;
 
           while (true) {
             const { done, value } = await reader.read();
@@ -184,9 +251,17 @@ Rules:
 
                 try {
                   const parsed = JSON.parse(data);
+                  const u = parsed?.x_groq?.usage || parsed?.usage;
+                  if (u && typeof u === 'object') {
+                    usage = {
+                      input_tokens: typeof u.prompt_tokens === 'number' ? u.prompt_tokens : u.input_tokens,
+                      output_tokens: typeof u.completion_tokens === 'number' ? u.completion_tokens : u.output_tokens,
+                    };
+                  }
                   // Extract delta content
                   const content = parsed.choices?.[0]?.delta?.content || '';
                   if (content) {
+                    assistantBuffer += content;
                     // Send SSE format
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
@@ -199,8 +274,67 @@ Rules:
           }
 
           controller.close();
+
+          const finalText = assistantBuffer.trim();
+          if (finalText) {
+            await supabase.from('thread_messages').insert({
+              thread_id: threadId,
+              user_id: user.id,
+              role: 'assistant',
+              content: finalText,
+              model,
+              tokens_in: usage?.input_tokens ?? null,
+              tokens_out: usage?.output_tokens ?? null,
+              metadata: { source: 'generate', run_id: runId },
+            });
+          }
+
+          await supabase
+            .from('threads')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', threadId);
+
+          if (runId) {
+            await supabase.from('ai_usage_ledger').insert({
+              user_id: user.id,
+              run_id: runId,
+              model,
+              input_tokens: usage?.input_tokens ?? null,
+              output_tokens: usage?.output_tokens ?? null,
+              cost_usd: null,
+              credits_charged: creditsToSpend,
+              metadata: { source: 'generate' },
+            });
+
+            if (stepId) {
+              await supabase
+                .from('run_steps')
+                .update({ status: 'succeeded', ended_at: new Date().toISOString(), output: { ok: true } })
+                .eq('id', stepId);
+            }
+            await supabase
+              .from('runs')
+              .update({ status: 'succeeded', ended_at: new Date().toISOString() })
+              .eq('id', runId);
+          }
         } catch (error) {
           console.error('Streaming error:', error);
+          try {
+            if (stepId) {
+              await supabase
+                .from('run_steps')
+                .update({ status: 'failed', error: String(error), ended_at: new Date().toISOString() })
+                .eq('id', stepId);
+            }
+            if (runId) {
+              await supabase
+                .from('runs')
+                .update({ status: 'failed', error: String(error), ended_at: new Date().toISOString() })
+                .eq('id', runId);
+            }
+          } catch {
+            // ignore
+          }
           controller.error(error);
         }
       },
