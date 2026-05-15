@@ -3,14 +3,14 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
-import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
+import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useShellStore } from '@/store/shell-store';
 
 export function useDashboardShell() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: projects = [] } = useMyProjects(25, true);
-  const { data: chats = [] } = useMyDebugSessions(25, true);
+  const { data: threads = [] } = useMyThreads(25, true);
 
   const [openMobileNav, setOpenMobileNav] = useState(false);
   const [openCommandPalette, setOpenCommandPalette] = useState(false);
@@ -18,7 +18,7 @@ export function useDashboardShell() {
   const { sidebarCollapsed, toggleSidebar } = useShellStore();
 
   const recentProjects = useMemo(() => projects.slice(0, 8), [projects]);
-  const recentChats = useMemo(() => chats.slice(0, 10), [chats]);
+  const recentThreads = useMemo(() => threads.slice(0, 10), [threads]);
 
   const onNewChatClick = useCallback(() => {
     const el = document.querySelector<HTMLTextAreaElement>(
@@ -63,9 +63,9 @@ export function useDashboardShell() {
   return {
     pathname,
     projects,
-    chats,
+    threads,
     recentProjects,
-    recentChats,
+    recentThreads,
     openMobileNav,
     setOpenMobileNav,
     openCommandPalette,

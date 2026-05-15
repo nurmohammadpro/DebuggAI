@@ -235,6 +235,7 @@ export function ChatPanel({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
+            data-dashboard-composer
             className="min-h-[0] max-h-[120px] resize-none bg-transparent border-0 text-[13px] leading-relaxed p-1 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none w-full"
             rows={1}
             disabled={isLoading}

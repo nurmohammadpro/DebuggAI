@@ -23,7 +23,7 @@ export function UnifiedLayout({
   showSidebar = true,
 }: UnifiedLayoutProps) {
   const { sidebarCollapsed, toggleSidebar } = useShellStore();
-  const { recentChats, recentProjects } = useDashboardShell();
+  const { recentThreads, recentProjects } = useDashboardShell();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -34,7 +34,7 @@ export function UnifiedLayout({
           {/* Desktop Sidebar */}
           <div className="hidden md:block">
             <UnifiedSidebar
-              recentChats={recentChats}
+              recentThreads={recentThreads}
               recentProjects={recentProjects}
               collapsed={sidebarCollapsed}
               onToggleCollapsed={toggleSidebar}
@@ -50,7 +50,7 @@ export function UnifiedLayout({
               />
               <div className="fixed inset-y-0 left-0 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] z-50 md:hidden overflow-y-auto">
                 <UnifiedSidebar
-                  recentChats={recentChats}
+                  recentThreads={recentThreads}
                   recentProjects={recentProjects}
                   collapsed={false}
                   onToggleCollapsed={() => setMobileMenuOpen(false)}

@@ -27,8 +27,8 @@ export function WorkspaceDashboard() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, getProjectCode, savedSnapshot, currentCode, files } = useGenerationStore();
-  const { recentChats, recentProjects } = useDashboardShell();
+  const { loadFromProject, bumpPreviewNonce, getProjectCode, savedSnapshot, currentCode, files, setThreadId } = useGenerationStore();
+  const { recentThreads, recentProjects } = useDashboardShell();
 
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('code');
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -37,6 +37,7 @@ export function WorkspaceDashboard() {
   const [rightWidth, setRightWidth] = useState(640);
 
   const urlProjectId = searchParams.get('project');
+  const urlThreadId = searchParams.get('thread');
   const effectiveProjectId = urlProjectId;
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
 
@@ -53,6 +54,10 @@ export function WorkspaceDashboard() {
       setSelectedProjectId(urlProjectId);
     }
   }, [selectedProjectId, setSelectedProjectId, urlProjectId]);
+
+  useEffect(() => {
+    if (urlThreadId) setThreadId(urlThreadId);
+  }, [setThreadId, urlThreadId]);
 
   useEffect(() => {
     if (project?.code) {
@@ -185,7 +190,7 @@ export function WorkspaceDashboard() {
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <UnifiedSidebar
-          recentChats={recentChats}
+          recentThreads={recentThreads}
           recentProjects={recentProjects}
           collapsed={false}
         />
@@ -200,7 +205,7 @@ export function WorkspaceDashboard() {
           />
           <div className="fixed inset-y-0 left-0 w-64 bg-[var(--app-panel)] border-r border-[var(--app-border)] z-50 md:hidden overflow-y-auto">
             <UnifiedSidebar
-              recentChats={recentChats}
+              recentThreads={recentThreads}
               recentProjects={recentProjects}
               collapsed={false}
               mobile

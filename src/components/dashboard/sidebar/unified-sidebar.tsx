@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
 import { Activity, Bug, Database, Home, MessageSquarePlus, Plus, Zap } from 'lucide-react';
-import type { DebugSessionRow } from '@/hooks/queries/use-my-debug-sessions';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
+import type { ThreadRow } from '@/hooks/queries/use-my-threads';
 
 interface UnifiedSidebarProps {
-  recentChats?: DebugSessionRow[];
+  recentThreads?: ThreadRow[];
   recentProjects?: GenerationRow[];
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
@@ -16,7 +16,7 @@ interface UnifiedSidebarProps {
 }
 
 export function UnifiedSidebar({
-  recentChats = [],
+  recentThreads = [],
   recentProjects = [],
   collapsed = false,
   onToggleCollapsed,
@@ -123,13 +123,13 @@ export function UnifiedSidebar({
           )}
 
           {/* Debug Sessions */}
-          {!collapsed && recentChats.length > 0 && (
+          {!collapsed && recentThreads.length > 0 && (
             <div className="mt-4">
               <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
-                Recent Chats
+                Threads
               </div>
-              {recentChats.slice(0, 5).map((chat) => (
-                <RecentChatItem key={chat.id} chat={chat} />
+              {recentThreads.slice(0, 8).map((thread) => (
+                <RecentThreadItem key={thread.id} thread={thread} />
               ))}
             </div>
           )}
@@ -217,17 +217,20 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
   );
 }
 
-interface RecentChatItemProps {
-  chat: DebugSessionRow;
+interface RecentThreadItemProps {
+  thread: ThreadRow;
 }
 
-function RecentChatItem({ chat }: RecentChatItemProps) {
-  const timeAgo = formatTimeAgo(new Date(chat.created_at));
-  const title = chat.error_message || chat.language || 'Debug Session';
+function RecentThreadItem({ thread }: RecentThreadItemProps) {
+  const timeAgo = formatTimeAgo(new Date(thread.updated_at || thread.created_at));
+  const title = (thread.title || '').trim() || 'New thread';
+  const href = thread.project_id
+    ? `/dashboard?project=${thread.project_id}&thread=${thread.id}`
+    : `/dashboard?thread=${thread.id}`;
 
   return (
     <Link
-      href={`/dashboard/debug/history?session=${chat.id}`}
+      href={href}
       className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
     >
       <Activity className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />

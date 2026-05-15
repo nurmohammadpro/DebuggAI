@@ -67,6 +67,7 @@ interface GenerationState {
   clearError: () => void;
   setProjectId: (id: string | null) => void;
   setThreadId: (id: string | null) => void;
+  clearThread: () => void;
 
   // Reset
   reset: () => void;
@@ -184,6 +185,7 @@ export const useGenerationStore = create<GenerationState>()(
 
       setProjectId: (id) => set({ currentProjectId: id }),
       setThreadId: (id) => set({ currentThreadId: id }),
+      clearThread: () => set({ currentThreadId: null }),
 
       reset: () => set(initialState),
 

@@ -49,6 +49,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     currentThreadId,
     setProjectId,
     setThreadId,
+    clearThread,
   } = useGenerationStore();
 
   const getAuthHeaders = async () => {
@@ -168,7 +169,11 @@ export function useGeneration(options: UseGenerationOptions = {}) {
               });
               if (res.ok) {
                 const j = await res.json().catch(() => ({}));
-                if (j?.id) setProjectId(j.id);
+                if (j?.id) {
+                  setProjectId(j.id);
+                  // Thread was likely created before a project existed; force a new thread scoped to the project.
+                  clearThread();
+                }
               }
             }
             // Invalidate the projects query so the sidebar updates
