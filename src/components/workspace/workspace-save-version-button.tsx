@@ -33,11 +33,11 @@ export function WorkspaceSaveVersionButton() {
       const code = getProjectCode();
       const description = `Saved ${new Date().toLocaleString()}`;
 
-      // Query max version for this user and increment
+      // Query max version for this project and increment
       const { data: latest } = await supabase
         .from('generations')
         .select('version')
-        .eq('user_id', session.user.id)
+        .eq('project_id', selectedProjectId)
         .order('version', { ascending: false })
         .limit(1)
         .single();
@@ -49,6 +49,7 @@ export function WorkspaceSaveVersionButton() {
         code,
         version: nextVersion,
         description,
+        project_id: selectedProjectId,
         metadata: { project_key: projectKey },
       });
 

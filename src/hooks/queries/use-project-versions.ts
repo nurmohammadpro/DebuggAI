@@ -21,13 +21,18 @@ export function useProjectVersions(
       const { session } = await getSession();
       if (!session?.user) return [];
 
-      const { data: keyVersions, error } = await supabase
+      // Prefer canonical project_id-based history when available.
+      // Fall back to legacy metadata.project_key for older rows.
+      const baseQuery = supabase
         .from('generations')
         .select('id,code,version,description,stack,prompt,metadata,created_at')
         .eq('user_id', session.user.id)
-        .contains('metadata', { project_key: projectKey })
         .order('created_at', { ascending: false })
         .limit(50);
+
+      const { data: keyVersions, error } = projectId
+        ? await baseQuery.eq('project_id', projectId)
+        : await baseQuery.contains('metadata', { project_key: projectKey });
 
       if (error) throw error;
 
