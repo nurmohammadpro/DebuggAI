@@ -4,14 +4,11 @@
  * Professional · Minimal · Developer-focused · Dark-first
  */
 
-'use client';
-
 import Link from 'next/link';
 import {
   ArrowRight,
   Check,
   Play,
-  ChevronDown,
   Star,
   Zap,
   Bug,
@@ -21,8 +18,10 @@ import {
   Activity,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { PublicLayout } from '@/components/public-layout';
+import { HomeFadeUpInit } from '@/components/public/home/home-fadeup-init';
+import { HomeTerminalDemo } from '@/components/public/home/home-terminal-demo';
+import { HomeFaq } from '@/components/public/home/home-faq';
 
 /* Map feature color names to --app-* variable suffixes */
 const featureColorVars: Record<string, string> = {
@@ -34,35 +33,9 @@ const featureColorVars: Record<string, string> = {
 };
 
 export default function LandingPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [terminalReplay, setTerminalReplay] = useState(0);
-
-  useEffect(() => {
-    // Enable progressive-enhancement animations only when JS is running.
-    document.documentElement.classList.add('js');
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
-    );
-
-    document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
-
-    return () => {
-      observer.disconnect();
-      document.documentElement.classList.remove('js');
-    };
-  }, []);
-
   return (
     <PublicLayout>
+      <HomeFadeUpInit />
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10">
@@ -213,69 +186,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="fade-up max-w-3xl mx-auto">
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] overflow-hidden" key={terminalReplay}>
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--app-border)] bg-[var(--app-panel-2)]">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-                  <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-                  <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-                </div>
-                <span className="text-[11px] text-[var(--app-text-dim)] ml-2">debuggai session</span>
-                <div className="ml-auto flex gap-1.5">
-                  <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">⌘K</span>
-                  <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">Esc</span>
-                </div>
-              </div>
-              <div className="p-4 font-mono text-[12px] leading-relaxed space-y-1">
-                <div className="typing-line" style={{ animationDelay: '0.3s' }}>
-                  <span className="text-[var(--app-accent)]">$ </span>
-                  <span className="text-[var(--app-text)]">debuggai analyze</span>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '0.8s' }}>
-                  <span className="text-[var(--app-text-muted)]">→ Language detected: <span className="text-[var(--app-info)]">Python</span></span>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '1.2s' }}>
-                  <span className="text-[var(--app-text-muted)]">→ Error type: <span className="text-[var(--app-danger)]">TypeError</span>, unsupported operand</span>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '1.8s' }}>
-                  <span className="text-[var(--app-text-muted)]">→ Analyzing stack trace...</span>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '2.5s' }}>
-                  <span className="text-[var(--app-success)] flex items-center gap-1"><Check className="w-3 h-3" /> Root cause found: str + int concatenation</span>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '3.0s' }}>
-                  <span className="text-[var(--app-text-muted)]">→ Generating fix...</span>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '3.6s' }}>
-                  <div className="rounded-[6px] bg-[var(--app-success-soft)] border border-[var(--app-success)]/15 p-2 mt-1">
-                    <span className="text-[var(--app-text-dim)] line-through">total = &quot;Price: &quot; + 49.99</span><br />
-                    <span className="text-[var(--app-success)]">total = f&quot;Price: &#123;49.99&#125;&quot;</span>
-                  </div>
-                </div>
-                <div className="typing-line" style={{ animationDelay: '4.2s' }}>
-                  <span className="text-[var(--app-success)] flex items-center gap-1"><Check className="w-3 h-3" /> Fix applied · 1 credit used · 2.1s</span>
-                </div>
-                <div className="mt-2">
-                  <span className="text-[var(--app-accent)]">$ </span>
-                  <span className="inline-block w-2 h-[14px] bg-[var(--app-accent)] animate-pulse align-text-bottom" />
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2 justify-center mt-4">
-              <button
-                onClick={() => setTerminalReplay(prev => prev + 1)}
-                className="inline-flex items-center rounded-[6px] px-3 py-1.5 text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
-              >
-                ↻ Replay
-              </button>
-              <Link href="/signup">
-                <button className="inline-flex items-center rounded-[6px] px-3 py-1.5 text-[11px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
-                  Try It Yourself →
-                </button>
-              </Link>
-            </div>
-          </div>
+          <HomeTerminalDemo />
         </div>
       </section>
 
@@ -666,58 +577,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="fade-up max-w-2xl mx-auto">
-            {[
-              {
-                q: 'What is Zero-Knowledge Mode?',
-                a: 'Your code and error logs are never stored on our servers. All analysis happens in-memory and is immediately discarded after the response. Available on Pro and higher plans.',
-              },
-              {
-                q: 'How do credits work?',
-                a: 'Each debug analysis costs 1 credit. Web Builder runs start at 20 credits and scale by project size. Credits reset monthly with your subscription.',
-              },
-              {
-                q: 'Can I use DeBuggAI for proprietary code?',
-                a: 'Yes! Enable Zero-Knowledge Mode on Pro or Enterprise plans. Your code is never persisted, logged, or used for training. We also offer on-premise deployment for Enterprise.',
-              },
-              {
-                q: 'Can I upgrade or downgrade anytime?',
-                a: 'Yes. Upgrades take effect immediately. Downgrades apply at the end of your current billing period. You keep your remaining credits until they expire.',
-              },
-              {
-                q: 'What stacks does the Web Builder support?',
-                a: 'MERN, Laravel (PHP), Django (Python), Flask (Python), Ruby on Rails, and Go. Each template generates a complete project structure with best practices baked in.',
-              },
-            ].map((item, index) => (
-              <div key={index} className="mb-1.5">
-                <button
-                  className="flex items-center gap-2.5 w-full text-[13px] font-medium text-[var(--app-text)] rounded-[6px] bg-[var(--app-panel)] p-4 text-left"
-                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                >
-                  <span
-                    className="w-[18px] h-[18px] rounded-[4px] flex items-center justify-center text-[10px] text-[var(--app-accent)] bg-[var(--app-accent-soft)] flex-shrink-0"
-                  >
-                    {index + 1}
-                  </span>
-                  {item.q}
-                  <ChevronDown
-                    className="ml-auto transition-transform duration-200 h-3.5 w-3.5 text-[var(--app-text-dim)]"
-                    style={{ transform: openFaq === index ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                  />
-                </button>
-                <div
-                  className="overflow-hidden transition-all duration-200"
-                  style={{
-                    maxHeight: openFaq === index ? '200px' : '0px',
-                  }}
-                >
-                  <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed px-4 pb-4">
-                    {item.a}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <HomeFaq />
         </div>
       </section>
 
