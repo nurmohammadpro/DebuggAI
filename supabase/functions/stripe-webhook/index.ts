@@ -18,13 +18,19 @@ const corsHeaders = {
 // Plan configurations
 const PLAN_CREDITS = {
   pro: 300,
-  enterprise: -1, // Unlimited
+  team: 2500,
+  business: 10000,
+  enterprise: 40000,
   free: 30,
 };
 
 const PLAN_TYPES = {
   'price_pro_monthly': 'pro',
   'price_pro_yearly': 'pro',
+  'price_team_monthly': 'team',
+  'price_team_yearly': 'team',
+  'price_business_monthly': 'business',
+  'price_business_yearly': 'business',
   'price_enterprise_monthly': 'enterprise',
   'price_enterprise_yearly': 'enterprise',
 };
@@ -99,7 +105,7 @@ serve(async (req) => {
         // Update user plan
         await supabase
           .from('profiles')
-          .update({ plan: planType })
+          .update({ plan_type: planType })
           .eq('id', userId);
 
         // Update credits
@@ -108,16 +114,23 @@ serve(async (req) => {
           await supabase
             .from('credit_wallets')
             .update({ balance: credits })
-            .eq('owner_id', userId);
+            .eq('user_id', userId);
 
           // Record transaction
-          await supabase.from('credit_transactions').insert({
-            wallet_id: (await supabase.from('credit_wallets').select('id').eq('owner_id', userId).single()).data?.id,
-            amount: credits,
-            type: 'earned',
-            source: 'subscription',
-            description: `Subscribed to ${planType} plan`,
-          });
+          const { data: wallet } = await supabase
+            .from('credit_wallets')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+          if (wallet?.id) {
+            await supabase.from('credit_transactions').insert({
+              wallet_id: wallet.id,
+              amount: credits,
+              type: 'credit_added',
+              description: `Subscribed to ${planType} plan`,
+              metadata: { source: 'subscription' },
+            });
+          }
         }
 
         console.log(`Checkout completed for user ${userId}, plan ${planType}`);
@@ -148,7 +161,7 @@ serve(async (req) => {
         // Update user plan
         await supabase
           .from('profiles')
-          .update({ plan: planType })
+          .update({ plan_type: planType })
           .eq('id', profile.id);
 
         // Update credits if subscription is active
@@ -158,7 +171,7 @@ serve(async (req) => {
             await supabase
               .from('credit_wallets')
               .update({ balance: credits })
-              .eq('owner_id', profile.id);
+              .eq('user_id', profile.id);
           }
         }
 
@@ -185,14 +198,14 @@ serve(async (req) => {
         // Downgrade to free plan
         await supabase
           .from('profiles')
-          .update({ plan: 'free' })
+          .update({ plan_type: 'free' })
           .eq('id', profile.id);
 
         // Reset credits to free tier
         await supabase
           .from('credit_wallets')
           .update({ balance: PLAN_CREDITS.free })
-          .eq('owner_id', profile.id);
+          .eq('user_id', profile.id);
 
         console.log(`Subscription deleted for user ${profile.id}, downgraded to free`);
         break;
@@ -205,7 +218,7 @@ serve(async (req) => {
         // Find user by Stripe customer ID
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, plan')
+          .select('id, plan_type')
           .eq('stripe_customer_id', customerId)
           .single();
 
@@ -215,20 +228,28 @@ serve(async (req) => {
         }
 
         // Reset monthly credits for paid plans
-        if (profile.plan === 'pro') {
+        if (profile.plan_type === 'pro' || profile.plan_type === 'team' || profile.plan_type === 'business' || profile.plan_type === 'enterprise') {
+          const credits = PLAN_CREDITS[profile.plan_type as keyof typeof PLAN_CREDITS] || PLAN_CREDITS.free;
           await supabase
             .from('credit_wallets')
-            .update({ balance: PLAN_CREDITS.pro })
-            .eq('owner_id', profile.id);
+            .update({ balance: credits })
+            .eq('user_id', profile.id);
 
           // Record transaction
-          await supabase.from('credit_transactions').insert({
-            wallet_id: (await supabase.from('credit_wallets').select('id').eq('owner_id', profile.id).single()).data?.id,
-            amount: PLAN_CREDITS.pro,
-            type: 'earned',
-            source: 'subscription',
-            description: 'Monthly credits reset',
-          });
+          const { data: wallet } = await supabase
+            .from('credit_wallets')
+            .select('id')
+            .eq('user_id', profile.id)
+            .single();
+          if (wallet?.id) {
+            await supabase.from('credit_transactions').insert({
+              wallet_id: wallet.id,
+              amount: credits,
+              type: 'subscription_reset',
+              description: 'Monthly credits reset',
+              metadata: { source: 'subscription' },
+            });
+          }
         }
 
         console.log(`Payment succeeded for user ${profile.id}`);

@@ -122,7 +122,7 @@ serve(async (req) => {
     const { data: referrerWallet } = await supabase
       .from('credit_wallets')
       .select('id, balance')
-      .eq('owner_id', referral.referrer_id)
+      .eq('user_id', referral.referrer_id)
       .single();
 
     if (referrerWallet) {
@@ -137,9 +137,9 @@ serve(async (req) => {
         .insert({
           wallet_id: referrerWallet.id,
           amount: REFERRER_REWARD,
-          type: 'earned',
-          source: 'referral',
+          type: 'referral_bonus',
           description: `Referral bonus: ${user.email} signed up with your code`,
+          metadata: { source: 'referral' },
         });
 
       // Create notification for referrer
@@ -147,9 +147,9 @@ serve(async (req) => {
         .from('notifications')
         .insert({
           user_id: referral.referrer_id,
-          type: 'referral',
-          title: '🎉 Referral Bonus!',
-          message: `You earned ${REFERRER_REWARD} credits for referring ${user.email}!`,
+          type: 'success',
+          title: 'Referral Bonus',
+          body: `You earned ${REFERRER_REWARD} credits for referring ${user.email}.`,
         });
     }
 
@@ -157,7 +157,7 @@ serve(async (req) => {
     const { data: refereeWallet } = await supabase
       .from('credit_wallets')
       .select('id, balance')
-      .eq('owner_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (refereeWallet) {
@@ -172,9 +172,9 @@ serve(async (req) => {
         .insert({
           wallet_id: refereeWallet.id,
           amount: REFEREE_REWARD,
-          type: 'earned',
-          source: 'referral_bonus',
+          type: 'referral_bonus',
           description: 'Welcome bonus for signing up with a referral code',
+          metadata: { source: 'referral_bonus' },
         });
     }
 
@@ -235,7 +235,7 @@ async function checkAmbassadorMilestone(
       const { data: wallet } = await supabase
         .from('credit_wallets')
         .select('id, balance')
-        .eq('owner_id', referrerId)
+        .eq('user_id', referrerId)
         .single();
 
       if (wallet) {
@@ -251,9 +251,9 @@ async function checkAmbassadorMilestone(
           .insert({
             wallet_id: wallet.id,
             amount: milestone.bonus,
-            type: 'earned',
-            source: 'ambassador_milestone',
+            type: 'referral_bonus',
             description: `Ambassador milestone: ${milestone.tier.toUpperCase()} tier (${referralCount} referrals)`,
+            metadata: { source: 'ambassador_milestone' },
           });
 
         // Create milestone notification
@@ -261,9 +261,9 @@ async function checkAmbassadorMilestone(
           .from('notifications')
           .insert({
             user_id: referrerId,
-            type: 'ambassador',
-            title: `🏆 ${milestone.tier.toUpperCase()} Ambassador!`,
-            message: `Amazing! You've reached ${milestone.tier.toUpperCase()} tier with ${referralCount} referrals. Bonus: +${milestone.bonus} credits!`,
+            type: 'success',
+            title: `${milestone.tier.toUpperCase()} Ambassador`,
+            body: `You reached ${milestone.tier.toUpperCase()} tier with ${referralCount} referrals. Bonus: +${milestone.bonus} credits.`,
           });
 
         // Update profile with ambassador tier
