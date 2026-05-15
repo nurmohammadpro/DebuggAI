@@ -15,10 +15,12 @@ const corsHeaders = {
 };
 
 interface DebugAnalyzeRequest {
+  threadId?: string;
   code: string;
   errorMessage?: string;
   language?: string;
   history?: Array<{ role: string; content: string }>;
+  idempotencyKey?: string;
 }
 
 // Language-specific error patterns and hints
@@ -128,13 +130,40 @@ serve(async (req) => {
     }
 
     // 2. Parse request
-    const { code, errorMessage, language, history = [] }: DebugAnalyzeRequest = await req.json();
+    const {
+      threadId,
+      code,
+      errorMessage,
+      language,
+      history = [],
+      idempotencyKey,
+    }: DebugAnalyzeRequest = await req.json();
 
     if (!code) {
       return new Response(
         JSON.stringify({ error: 'Code is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Spend credits (basic analyze)
+    const creditsToSpend = 1;
+    const { error: spendError } = await supabase.rpc('spend_credits', {
+      p_user_id: user.id,
+      p_amount: creditsToSpend,
+      p_source: 'debug_analyze',
+      p_description: 'Debug analyze',
+      p_idempotency_key: idempotencyKey || null,
+      p_metadata: { language: language || null },
+    });
+
+    if (spendError) {
+      const msg = spendError.message || 'Failed to spend credits';
+      const status = msg.toLowerCase().includes('insufficient') ? 402 : 500;
+      return new Response(JSON.stringify({ error: msg }), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 3. Auto-detect language if not provided
@@ -241,7 +270,61 @@ ${languageHint ? `\nCommon ${detectedLanguage} errors to check for:\n${languageH
       );
     }
 
-    // 8. Save debug session to database
+    // If we have a threadId, create a run + persist messages for Codex/v0-style history.
+    let runId: string | null = null;
+    if (threadId) {
+      const { data: run } = await supabase
+        .from('runs')
+        .insert({
+          thread_id: threadId,
+          user_id: user.id,
+          status: 'succeeded',
+          objective: 'debug_analyze',
+          idempotency_key: idempotencyKey || null,
+          started_at: new Date().toISOString(),
+          ended_at: new Date().toISOString(),
+          metadata: { detectedLanguage, credits: creditsToSpend },
+        })
+        .select('id')
+        .single();
+      runId = run?.id || null;
+
+      await supabase.from('thread_messages').insert([
+        {
+          thread_id: threadId,
+          user_id: user.id,
+          role: 'user',
+          content: userMessage,
+          metadata: { source: 'debug_analyze', detectedLanguage },
+        },
+        {
+          thread_id: threadId,
+          user_id: user.id,
+          role: 'assistant',
+          content: analysis,
+          model,
+          metadata: { source: 'debug_analyze', detectedLanguage, run_id: runId },
+        },
+      ]);
+
+      await supabase
+        .from('threads')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', threadId);
+
+      await supabase.from('ai_usage_ledger').insert({
+        user_id: user.id,
+        run_id: runId,
+        model,
+        input_tokens: null,
+        output_tokens: null,
+        cost_usd: null,
+        credits_charged: creditsToSpend,
+        metadata: { source: 'debug_analyze', detectedLanguage },
+      });
+    }
+
+    // 8. Save debug session to database (legacy history + admin analytics)
     const { data: sessionData, error: sessionError } = await supabase
       .from('debug_sessions')
       .insert({
@@ -266,6 +349,7 @@ ${languageHint ? `\nCommon ${detectedLanguage} errors to check for:\n${languageH
         analysis,
         language: detectedLanguage,
         sessionId: sessionData?.id,
+        runId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
