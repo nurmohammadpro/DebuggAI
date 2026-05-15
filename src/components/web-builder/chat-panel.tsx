@@ -7,12 +7,15 @@ import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
 import { useShellStore } from '@/store/shell-store';
 import { cn } from '@/lib/utils';
+import { useGenerationStore } from '@/store/generation-store';
+import { getSession } from '@/hooks/use-session';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
+type ChatMessage = {
+  id: string;
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
-  timestamp: number;
-}
+  created_at: string;
+};
 
 interface ChatPanelProps {
   height?: string;
@@ -30,36 +33,49 @@ export function ChatPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [accumulatedResponse, setAccumulatedResponse] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
+
+  const loadThreadMessages = async (threadId: string) => {
+    const session = await getSession();
+    const token = session.session?.access_token;
+    if (!token) return;
+    const res = await fetch(`/api/threads/${threadId}/messages?limit=200`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    const j = await res.json().catch(() => ({}));
+    const list = (j?.messages || []) as Array<any>;
+    setMessages(
+      list.map((m) => ({
+        id: String(m.id),
+        role: m.role,
+        content: String(m.content || ''),
+        created_at: String(m.created_at || new Date().toISOString()),
+      })),
+    );
+  };
+
   const { generate } = useGeneration({
-    onChunk: (chunk) => {
-      setAccumulatedResponse((prev) => prev + chunk);
-    },
-    onDone: () => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: accumulatedResponse,
-          timestamp: Date.now(),
-        },
-      ]);
-      setAccumulatedResponse('');
+    onDone: async () => {
       setIsLoading(false);
       toast.success('Code generated successfully!');
+      // If the edge function persisted thread messages, refresh history.
+      if (currentThreadId) {
+        await loadThreadMessages(currentThreadId);
+      }
     },
     onError: (error) => {
       setMessages((prev) => [
         ...prev,
         {
+          id: `err_${Date.now()}`,
           role: 'assistant',
           content: `Error: ${error.message}`,
-          timestamp: Date.now(),
+          created_at: new Date().toISOString(),
         },
       ]);
-      setAccumulatedResponse('');
       setIsLoading(false);
       toast.error('Failed to generate code');
     },
@@ -67,7 +83,13 @@ export function ChatPanel({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, accumulatedResponse]);
+  }, [messages, accumulated]);
+
+  useEffect(() => {
+    if (!currentThreadId) return;
+    loadThreadMessages(currentThreadId).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentThreadId]);
 
   const { setSidebarCollapsed } = useShellStore();
 
@@ -76,18 +98,17 @@ export function ChatPanel({
 
     setSidebarCollapsed(true);
 
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: input.trim(),
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const nowIso = new Date().toISOString();
+    setMessages((prev) => [
+      ...prev,
+      { id: `local_${Date.now()}`, role: 'user', content: input.trim(), created_at: nowIso },
+    ]);
     setInput('');
     setIsLoading(true);
+    resetAccumulated();
 
     try {
-      await generate({ prompt: userMessage.content });
+      await generate({ prompt: input.trim() });
     } catch (error) {
       console.error('Generation error:', error);
     }
@@ -174,7 +195,7 @@ export function ChatPanel({
 
         {messages.map((message, index) => (
           <div
-            key={index}
+            key={message.id}
             className={cn(
               "flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300",
               message.role === 'user' ? 'items-end' : 'items-start'
@@ -193,17 +214,17 @@ export function ChatPanel({
               </p>
             </div>
             <span className="text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1 font-medium">
-              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         ))}
 
         {/* Streaming response */}
-        {isLoading && accumulatedResponse && (
+        {isLoading && accumulated && (
           <div className="flex flex-col items-start animate-in fade-in duration-300">
             <div className="max-w-[85%] rounded-[6px] px-4 py-3 bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]">
               <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
-                {accumulatedResponse}
+                {accumulated}
                 <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle" />
               </p>
             </div>
@@ -211,7 +232,7 @@ export function ChatPanel({
         )}
 
         {/* Loading indicator */}
-        {isLoading && !accumulatedResponse && (
+        {isLoading && !accumulated && (
           <div className="flex justify-start animate-in fade-in duration-300">
             <div className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[6px] px-4 py-2 flex items-center gap-2">
               <div className="flex gap-1">
