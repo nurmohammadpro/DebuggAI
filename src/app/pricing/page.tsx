@@ -219,7 +219,7 @@ export default function PricingPage() {
                   <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-muted)]">
                     Business
                   </th>
-                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-muted)]">
                     Enterprise
                   </th>
                 </tr>
@@ -259,7 +259,7 @@ export default function PricingPage() {
 
         <div className="text-center mt-16 flex flex-col items-center gap-4">
           <div style={{ borderTop: '1px solid var(--app-border)', width: '80px' }} />
-          <p className="text-[13px] max-w-lg mx-auto text-[var(--app-text-dim)]">
+          <p className="text-[13px] max-w-lg mx-auto text-[var(--app-text-muted)]">
             Have questions about pricing or need a custom setup for your organization?
             Our team is ready to help you find the perfect plan.
           </p>

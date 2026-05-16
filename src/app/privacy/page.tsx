@@ -12,7 +12,7 @@ export default function PrivacyPage() {
           <h1 className="text-[28px] font-semibold tracking-tight mb-4 text-[var(--app-text)]">
             Privacy Policy
           </h1>
-          <p className="text-[13px] text-[var(--app-text-dim)]">Last updated: April 2026</p>
+          <p className="text-[13px] text-[var(--app-text-muted)]">Last updated: April 2026</p>
         </div>
 
         <div className="flex flex-col gap-10">
