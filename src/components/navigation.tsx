@@ -102,7 +102,7 @@ export function Navigation() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="w-[30px] h-[30px] p-0 rounded-[6px] flex items-center justify-center text-[12px] font-semibold cursor-pointer border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] outline-none hover:bg-[var(--app-panel-2)] transition-colors"
+                    className="w-9 h-9 p-0 rounded-[6px] flex items-center justify-center text-[12px] font-semibold cursor-pointer border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] outline-none hover:bg-[var(--app-panel-2)] transition-colors"
                   >
                     {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
                   </button>
