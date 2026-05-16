@@ -23,6 +23,7 @@ interface UseGenerationOptions {
 interface GenerationRequest {
   prompt: string;
   history?: Array<{ role: string; content: string }>;
+  persistUserMessage?: boolean;
 }
 
 interface DebugRequest {
@@ -109,7 +110,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             'Content-Type': 'application/json',
             ...authHeaders,
           },
-          body: JSON.stringify({ ...request, threadId }),
+          body: JSON.stringify({ persistUserMessage: true, ...request, threadId }),
         });
 
         if (!response.ok) {
@@ -295,5 +296,6 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     debug,
     isLoading,
     error,
+    ensureThreadId: ensureThread,
   };
 }

@@ -19,6 +19,11 @@ interface GenerateRequest {
   prompt: string;
   history?: Array<{ role: string; content: string }>;
   idempotencyKey?: string;
+  /**
+   * When true (default), the function writes the user prompt to thread_messages.
+   * When false, callers are responsible for persisting the user message.
+   */
+  persistUserMessage?: boolean;
 }
 
 serve(async (req) => {
@@ -60,7 +65,13 @@ serve(async (req) => {
     }
 
     // 2. Parse request body
-    const { threadId, prompt, history = [], idempotencyKey }: GenerateRequest = await req.json();
+    const {
+      threadId,
+      prompt,
+      history = [],
+      idempotencyKey,
+      persistUserMessage = true,
+    }: GenerateRequest = await req.json();
 
     if (!threadId) {
       return new Response(
@@ -139,14 +150,16 @@ Rules:
       );
     }
 
-    // 4. Persist user message + create run/step
-    await supabase.from('thread_messages').insert({
-      thread_id: threadId,
-      user_id: user.id,
-      role: 'user',
-      content: prompt,
-      metadata: { source: 'generate' },
-    });
+    // 4. Persist user message (optional) + create run/step
+    if (persistUserMessage) {
+      await supabase.from('thread_messages').insert({
+        thread_id: threadId,
+        user_id: user.id,
+        role: 'user',
+        content: prompt,
+        metadata: { source: 'generate' },
+      });
+    }
 
     const { data: run } = await supabase
       .from('runs')

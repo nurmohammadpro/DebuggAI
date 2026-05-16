@@ -57,14 +57,27 @@ export function ChatPanel({
     );
   };
 
-  const { generate } = useGeneration({
+  const { generate, ensureThreadId } = useGeneration({
     onDone: async () => {
       setIsLoading(false);
       toast.success('Code generated successfully!');
-      // If the edge function persisted thread messages, refresh history.
-      if (currentThreadId) {
-        await loadThreadMessages(currentThreadId);
+      const text = (accumulated || '').trim();
+      if (text) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `local_assistant_${Date.now()}`,
+            role: 'assistant',
+            content: text,
+            created_at: new Date().toISOString(),
+          },
+        ]);
       }
+      resetAccumulated();
+
+      // Background sync for eventual consistency (don’t block UX).
+      const tid = currentThreadId;
+      if (tid) setTimeout(() => void loadThreadMessages(tid), 1500);
     },
     onError: (error) => {
       setMessages((prev) => [
@@ -98,19 +111,42 @@ export function ChatPanel({
 
     setSidebarCollapsed(true);
 
+    const text = input.trim();
     const nowIso = new Date().toISOString();
-    setMessages((prev) => [
-      ...prev,
-      { id: `local_${Date.now()}`, role: 'user', content: input.trim(), created_at: nowIso },
-    ]);
     setInput('');
     setIsLoading(true);
     resetAccumulated();
 
     try {
-      await generate({ prompt: input.trim() });
+      const threadId = await ensureThreadId();
+
+      // Persist the user message explicitly (so threads are durable even if generation fails).
+      const session = await getSession();
+      const token = session.session?.access_token;
+      if (token) {
+        await fetch(`/api/threads/${threadId}/messages`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ role: 'user', content: text, metadata: { source: 'chat-panel' } }),
+        });
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { id: `local_user_${Date.now()}`, role: 'user', content: text, created_at: nowIso },
+      ]);
+
+      await generate({ prompt: text, persistUserMessage: false });
     } catch (error) {
       console.error('Generation error:', error);
+      // Show the typed message even if generation failed before persistence.
+      setMessages((prev) => [
+        ...prev,
+        { id: `local_user_${Date.now()}`, role: 'user', content: text, created_at: nowIso },
+      ]);
     }
   };
 
