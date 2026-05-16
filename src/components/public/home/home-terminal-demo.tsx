@@ -23,10 +23,10 @@ export function HomeTerminalDemo() {
             debuggai session
           </span>
           <div className="ml-auto flex gap-1.5">
-            <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">
+            <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-muted)] border border-[var(--app-border)]">
               ⌘K
             </span>
-            <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">
+            <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-muted)] border border-[var(--app-border)]">
               Esc
             </span>
           </div>
@@ -101,4 +101,3 @@ export function HomeTerminalDemo() {
     </div>
   );
 }
-

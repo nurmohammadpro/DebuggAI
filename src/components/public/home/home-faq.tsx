@@ -37,7 +37,7 @@ export function HomeFaq() {
             className="flex items-center gap-2.5 w-full text-[13px] font-medium text-[var(--app-text)] rounded-[6px] bg-[var(--app-panel)] p-4 text-left"
             onClick={() => setOpenFaq(openFaq === index ? null : index)}
           >
-            <span className="w-[18px] h-[18px] rounded-[4px] flex items-center justify-center text-[10px] text-[var(--app-accent)] bg-[var(--app-accent-soft)] flex-shrink-0">
+            <span className="w-[18px] h-[18px] rounded-[6px] flex items-center justify-center text-[10px] text-[var(--app-accent)] bg-[var(--app-accent-soft)] flex-shrink-0 border border-[var(--app-border)]">
               {index + 1}
             </span>
             {item.q}
@@ -61,4 +61,3 @@ export function HomeFaq() {
     </div>
   );
 }
-
