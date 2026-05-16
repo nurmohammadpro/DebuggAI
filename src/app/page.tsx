@@ -410,7 +410,7 @@ export default function LandingPage() {
                 </p>
                 <div className="flex items-center gap-2.5">
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                    className="w-8 h-8 rounded-[6px] flex items-center justify-center text-[11px] font-semibold"
                     style={{ background: `color-mix(in srgb, ${testimonial.color} 15%, transparent)`, color: testimonial.color }}
                   >
                     {testimonial.initial}
