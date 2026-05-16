@@ -29,6 +29,7 @@ export function WorkspaceRunsPanel() {
   const { currentThreadId } = useGenerationStore();
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const loadRuns = async () => {
     if (!currentThreadId) {
@@ -52,6 +53,36 @@ export function WorkspaceRunsPanel() {
     }
   };
 
+  const createRun = async () => {
+    if (!currentThreadId || creating) return;
+    const objective = (window.prompt('Run objective', 'plan') || '').trim();
+    if (!objective) return;
+
+    const session = await getSession();
+    const token = session.session?.access_token;
+    if (!token) return;
+
+    setCreating(true);
+    try {
+      const res = await fetch('/api/runs', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          threadId: currentThreadId,
+          objective,
+          enqueue: true,
+          queue: 'default',
+          priority: 100,
+          metadata: { source: 'runs-panel' },
+        }),
+      });
+      if (!res.ok) return;
+      await loadRuns();
+    } finally {
+      setCreating(false);
+    }
+  };
+
   useEffect(() => {
     loadRuns().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,12 +101,21 @@ export function WorkspaceRunsPanel() {
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text)]">
           Runs
         </div>
-        <button
-          onClick={() => void loadRuns()}
-          className="h-7 px-2 rounded-[6px] text-[11px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => void createRun()}
+            disabled={!currentThreadId || creating}
+            className="h-7 px-2 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] bg-[var(--app-accent)] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {creating ? 'Creating…' : 'New Run'}
+          </button>
+          <button
+            onClick={() => void loadRuns()}
+            className="h-7 px-2 rounded-[6px] text-[11px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 overflow-auto p-3 space-y-2">
@@ -176,4 +216,3 @@ function StatusPill({ status, small }: { status: string; small?: boolean }) {
     </span>
   );
 }
-
