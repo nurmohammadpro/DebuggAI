@@ -597,7 +597,7 @@ export default function LandingPage() {
                   { key: 'Esc', action: 'Cancel' },
                 ].map((shortcut, i) => (
                   <div key={i} className="flex items-center gap-2 text-[11px] text-[var(--app-text-muted)]">
-                    <span className="rounded-[4px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-dim)] border border-[var(--app-border)]">
+                    <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-muted)] border border-[var(--app-border)]">
                       {shortcut.key}
                     </span>
                     {shortcut.action}

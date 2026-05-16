@@ -146,7 +146,7 @@ export default function PricingPage() {
                   <span className="font-semibold tracking-tight text-[32px] leading-tight text-[var(--app-text)]">
                     {plan.price}
                   </span>
-                  <span className="text-[13px] text-[var(--app-text-dim)]">/mo</span>
+                  <span className="text-[13px] text-[var(--app-text-muted)]">/mo</span>
                 </div>
 
                 <p className="text-[13px] mt-2 text-[var(--app-text-muted)]">
@@ -162,9 +162,9 @@ export default function PricingPage() {
                     {feature.included ? (
                       <Check className="h-4 w-4 flex-shrink-0 text-[var(--app-success)]" />
                     ) : (
-                      <X className="h-4 w-4 flex-shrink-0 text-[var(--app-text-dim)]" />
+                      <X className="h-4 w-4 flex-shrink-0 text-[var(--app-text-muted)]" />
                     )}
-                    <span style={{ color: feature.included ? 'var(--app-text-muted)' : 'var(--app-text-dim)' }}>
+                    <span style={{ color: feature.included ? 'var(--app-text-muted)' : 'var(--app-text-muted)' }}>
                       {feature.text}
                     </span>
                   </li>
@@ -204,19 +204,19 @@ export default function PricingPage() {
             <table className="w-full min-w-[640px]">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--app-border)' }}>
-                  <th className="text-left p-4 font-medium text-[12px] text-[var(--app-text-dim)]" style={{ width: '40%' }}>
+                  <th className="text-left p-4 font-medium text-[12px] text-[var(--app-text-muted)]" style={{ width: '40%' }}>
                     FEATURES
                   </th>
-                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-muted)]">
                     Free
                   </th>
                   <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-accent)]">
                     Pro
                   </th>
-                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-muted)]">
                     Team
                   </th>
-                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
+                  <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-muted)]">
                     Business
                   </th>
                   <th className="text-center p-4 font-medium uppercase tracking-[0.12em] text-[11px] text-[var(--app-text-dim)]">
