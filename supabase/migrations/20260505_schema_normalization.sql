@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS projects (
   updated_at  TIMESTAMPTZ DEFAULT now()
 );
 
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+
 CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status) WHERE status = 'active';
 
@@ -113,6 +115,97 @@ CREATE TABLE IF NOT EXISTS project_integrations (
 
 CREATE INDEX IF NOT EXISTS idx_project_integrations_project ON project_integrations(project_id);
 
+-- 6.5 FIX: Re-point project-scoped tables from web_builder_sessions FK → projects FK
+-- ============================================================================
+-- Tables created by 20250427_project_settings.sql reference web_builder_sessions(id).
+-- Since 'projects' is now the canonical project entity, switch FKs and RLS policies.
+
+-- Backfill projects from web_builder_sessions where they don't yet exist.
+-- This ensures existing project-scoped data (env vars, domains, integrations, settings)
+-- won't violate the new FK constraint.
+INSERT INTO projects (id, user_id, name, description, stack, status, created_at, updated_at)
+SELECT
+  wbs.id,
+  wbs.user_id,
+  COALESCE(NULLIF(wbs.title, ''), 'Untitled Project'),
+  wbs.description,
+  wbs.stack,
+  'active',
+  wbs.created_at,
+  wbs.updated_at
+FROM web_builder_sessions wbs
+WHERE NOT EXISTS (SELECT 1 FROM projects p WHERE p.id = wbs.id)
+ON CONFLICT (id) DO NOTHING;
+
+DO $$
+DECLARE
+  v_conname TEXT;
+  v_tables TEXT[] := ARRAY['project_settings', 'project_env_vars', 'project_domains', 'project_integrations'];
+  v_tbl TEXT;
+BEGIN
+  FOREACH v_tbl IN ARRAY v_tables LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = v_tbl) THEN
+      SELECT conname INTO v_conname
+      FROM pg_constraint
+      WHERE conrelid = (v_tbl)::regclass
+        AND confrelid = 'web_builder_sessions'::regclass
+        AND contype = 'f';
+      IF v_conname IS NOT NULL THEN
+        EXECUTE format('ALTER TABLE %I DROP CONSTRAINT %I', v_tbl, v_conname);
+        EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE',
+                       v_tbl, v_tbl || '_project_id_fkey');
+      END IF;
+    END IF;
+  END LOOP;
+END $$;
+
+-- Replace RLS policies that still reference web_builder_sessions → use projects
+DO $$
+BEGIN
+  -- project_settings
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_settings') THEN
+    DROP POLICY IF EXISTS "Users can view settings for their own projects" ON project_settings;
+    DROP POLICY IF EXISTS "Users can update settings for their own projects" ON project_settings;
+    DROP POLICY IF EXISTS "Users can insert settings for their own projects" ON project_settings;
+    CREATE POLICY "Users can view settings for their own projects" ON project_settings
+      FOR SELECT USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+    CREATE POLICY "Users can update settings for their own projects" ON project_settings
+      FOR UPDATE USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+    CREATE POLICY "Users can insert settings for their own projects" ON project_settings
+      FOR INSERT WITH CHECK (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+  END IF;
+
+  -- project_env_vars
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_env_vars') THEN
+    DROP POLICY IF EXISTS "Users can view env vars for their own projects" ON project_env_vars;
+    DROP POLICY IF EXISTS "Users can manage env vars for their own projects" ON project_env_vars;
+    CREATE POLICY "Users can view env vars for their own projects" ON project_env_vars
+      FOR SELECT USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+    CREATE POLICY "Users can manage env vars for their own projects" ON project_env_vars
+      FOR ALL USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+  END IF;
+
+  -- project_domains
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_domains') THEN
+    DROP POLICY IF EXISTS "Users can view domains for their own projects" ON project_domains;
+    DROP POLICY IF EXISTS "Users can manage domains for their own projects" ON project_domains;
+    CREATE POLICY "Users can view domains for their own projects" ON project_domains
+      FOR SELECT USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+    CREATE POLICY "Users can manage domains for their own projects" ON project_domains
+      FOR ALL USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+  END IF;
+
+  -- project_integrations
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_integrations') THEN
+    DROP POLICY IF EXISTS "Users can view integrations for their own projects" ON project_integrations;
+    DROP POLICY IF EXISTS "Users can manage integrations for their own projects" ON project_integrations;
+    CREATE POLICY "Users can view integrations for their own projects" ON project_integrations
+      FOR SELECT USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+    CREATE POLICY "Users can manage integrations for their own projects" ON project_integrations
+      FOR ALL USING (project_id IN (SELECT id FROM projects WHERE user_id = auth.uid()));
+  END IF;
+END $$;
+
 -- 7. NEW TABLE: notifications
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS notifications (
@@ -121,14 +214,24 @@ CREATE TABLE IF NOT EXISTS notifications (
   title      TEXT NOT NULL,
   body       TEXT,
   type       TEXT DEFAULT 'info' CHECK (type IN ('info', 'success', 'warning', 'error')),
-  read       BOOLEAN DEFAULT false,
+  is_read    BOOLEAN DEFAULT false,
   link       TEXT,
   metadata   JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+
+-- Migrate data from legacy 'read' column if it exists
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'read') THEN
+    UPDATE notifications SET is_read = "read" WHERE is_read = false AND "read" = true;
+    ALTER TABLE notifications DROP COLUMN "read";
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
-  ON notifications(user_id, created_at DESC) WHERE read = false;
+  ON notifications(user_id, created_at DESC) WHERE is_read = false;
 CREATE INDEX IF NOT EXISTS idx_notifications_user_all
   ON notifications(user_id, created_at DESC);
 
@@ -151,6 +254,7 @@ CREATE TABLE IF NOT EXISTS abuse_events (
   resolved_at    TIMESTAMPTZ
 );
 
+ALTER TABLE abuse_events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 CREATE INDEX IF NOT EXISTS idx_abuse_events_status ON abuse_events(status);
 CREATE INDEX IF NOT EXISTS idx_abuse_events_created ON abuse_events(created_at DESC);
 
@@ -162,11 +266,20 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   email      TEXT NOT NULL,
   subject    TEXT,
   message    TEXT NOT NULL,
-  read       BOOLEAN DEFAULT false,
+  is_read    BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_contact_messages_read ON contact_messages(read, created_at DESC);
+ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contact_messages' AND column_name = 'read') THEN
+    UPDATE contact_messages SET is_read = "read" WHERE is_read = false AND "read" = true;
+    ALTER TABLE contact_messages DROP COLUMN "read";
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_contact_messages_read ON contact_messages(is_read, created_at DESC);
 
 -- 10. NEW TABLE: newsletter_subscribers
 -- ============================================================================
@@ -196,6 +309,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   updated_at             TIMESTAMPTZ DEFAULT now()
 );
 
+-- Ensure status column exists on pre-existing subscriptions table
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_active_user
   ON subscriptions(user_id) WHERE status = 'active';
 
@@ -210,10 +326,10 @@ CREATE INDEX IF NOT EXISTS idx_debug_sessions_user_created ON debug_sessions(use
 CREATE INDEX IF NOT EXISTS idx_debug_sessions_language ON debug_sessions(language);
 CREATE INDEX IF NOT EXISTS idx_generations_user_created ON generations(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_generations_stack ON generations(stack);
-CREATE INDEX IF NOT EXISTS idx_audit_events_created ON audit_events(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_events_action ON audit_events(action);
+-- Audit event indexes already created in 019_audit_events.sql / 024_indexes.sql
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
 CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(referral_code);
+ALTER TABLE referrals ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 CREATE INDEX IF NOT EXISTS idx_referrals_status ON referrals(status);
 
 -- 13. updated_at TRIGGERS
@@ -389,10 +505,25 @@ BEGIN
     CREATE POLICY contact_insert_public ON contact_messages
       FOR INSERT WITH CHECK (true);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'contact_select_admin') THEN
+    CREATE POLICY contact_select_admin ON contact_messages
+      FOR SELECT USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+      );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'contact_update_admin') THEN
+    CREATE POLICY contact_update_admin ON contact_messages
+      FOR UPDATE USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+      );
+  END IF;
 END $$;
 
 -- 16. HELPER FUNCTION: is_admin (for RLS policies and API checks)
 -- ============================================================================
+-- Must DROP first — prior definitions (004, 023) may have different signatures
+-- (e.g. DEFAULT auth.uid()) which cannot be changed via CREATE OR REPLACE.
+DROP FUNCTION IF EXISTS is_admin(uuid) CASCADE;
 CREATE OR REPLACE FUNCTION is_admin(p_user_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql

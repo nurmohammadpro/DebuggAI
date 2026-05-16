@@ -94,11 +94,16 @@ serve(async (req) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.subscription?.metadata?.supabase_user_id;
-        const planType = session.subscription?.metadata?.plan_type;
+        // subscription may be a string (ID) when not expanded; prefer session-level metadata
+        const metadata =
+          typeof session.subscription === 'object' && session.subscription?.metadata
+            ? session.subscription.metadata
+            : session.metadata;
+        const userId = metadata?.supabase_user_id;
+        const planType = metadata?.plan_type;
 
         if (!userId || !planType) {
-          console.error('Missing metadata in checkout session');
+          console.error('Missing metadata in checkout session', { sessionId: session.id });
           break;
         }
 
@@ -107,6 +112,15 @@ serve(async (req) => {
           .from('profiles')
           .update({ plan_type: planType })
           .eq('id', userId);
+
+        // Audit: plan change
+        await supabase.from('audit_events').insert({
+          user_id: userId,
+          action: 'plan.updated',
+          details: { planType, source: 'stripe_checkout', sessionId: session.id },
+          target_type: 'profile',
+          target_id: userId,
+        });
 
         // Update credits
         const credits = PLAN_CREDITS[planType as keyof typeof PLAN_CREDITS];
@@ -164,6 +178,15 @@ serve(async (req) => {
           .update({ plan_type: planType })
           .eq('id', profile.id);
 
+        // Audit
+        await supabase.from('audit_events').insert({
+          user_id: profile.id,
+          action: 'plan.updated',
+          details: { planType, source: 'stripe_subscription', event: event.type, priceId },
+          target_type: 'profile',
+          target_id: profile.id,
+        });
+
         // Update credits if subscription is active
         if (subscription.status === 'active') {
           const credits = PLAN_CREDITS[planType as keyof typeof PLAN_CREDITS];
@@ -200,6 +223,15 @@ serve(async (req) => {
           .from('profiles')
           .update({ plan_type: 'free' })
           .eq('id', profile.id);
+
+        // Audit
+        await supabase.from('audit_events').insert({
+          user_id: profile.id,
+          action: 'plan.canceled',
+          details: { source: 'stripe_subscription_deleted' },
+          target_type: 'profile',
+          target_id: profile.id,
+        });
 
         // Reset credits to free tier
         await supabase

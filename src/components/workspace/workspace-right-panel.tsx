@@ -1,9 +1,8 @@
 'use client';
 
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, X, ExternalLink } from 'lucide-react';
 import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspaceGitPanel } from '@/components/workspace/workspace-git-panel';
-import { WorkspaceEnvPanel } from '@/components/workspace/workspace-env-panel';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
@@ -105,7 +104,13 @@ export function WorkspaceRightPanel({
         )}
 
         {activeTab === 'env' && (
-          <WorkspaceEnvPanel />
+          <div className="h-full flex flex-col items-center justify-center text-center p-6">
+            <ExternalLink className="h-8 w-8 text-[var(--app-text-dim)] mb-3" />
+            <div className="text-[13px] font-medium text-[var(--app-text)] mb-1">Environment Variables</div>
+            <div className="text-[11px] text-[var(--app-text-muted)] max-w-[260px]">
+              Manage environment variables from the project settings page for secure, server-persisted storage.
+            </div>
+          </div>
         )}
 
         {activeTab === 'connections' && (

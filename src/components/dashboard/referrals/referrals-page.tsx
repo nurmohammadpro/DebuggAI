@@ -147,7 +147,7 @@ export default function ReferralsPage() {
       </div>
 
       {/* Hero Section */}
-      <div className="rounded-[8px] bg-[var(--app-accent-soft)] backdrop-blur-xl p-4 sm:p-6 lg:p-8 mb-6 border border-[var(--app-accent)]/10">
+      <div className="rounded-[6px] bg-[var(--app-accent-soft)] backdrop-blur-xl p-4 sm:p-6 lg:p-8 mb-6 border border-[var(--app-accent)]/10">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="text-center lg:text-left">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--app-text)] mb-2">Invite Friends, Earn Credits</h2>
@@ -168,7 +168,7 @@ export default function ReferralsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Users className="h-5 w-5 text-[var(--app-text-dim)]" />
           </div>
@@ -176,7 +176,7 @@ export default function ReferralsPage() {
           <div className="text-xs sm:text-[13px] text-[var(--app-text-muted)]">Total Referrals</div>
         </div>
 
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <TrendingUp className="h-5 w-5 text-[var(--app-success)]" />
           </div>
@@ -184,7 +184,7 @@ export default function ReferralsPage() {
           <div className="text-xs sm:text-[13px] text-[var(--app-text-muted)]">Completed</div>
         </div>
 
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Zap className="h-5 w-5 text-[var(--app-warning)]" />
           </div>
@@ -192,7 +192,7 @@ export default function ReferralsPage() {
           <div className="text-xs sm:text-[13px] text-[var(--app-text-muted)]">Credits Earned</div>
         </div>
 
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <Trophy className="h-5 w-5 text-[var(--app-purple)]" />
           </div>
@@ -204,7 +204,7 @@ export default function ReferralsPage() {
       </div>
 
       {/* Referral Link Section */}
-      <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6 mb-6">
+      <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6 mb-6">
         <h3 className="text-[16px] font-medium text-[var(--app-text)] mb-4 flex items-center gap-2">
           <Share2 className="h-5 w-5 text-[var(--app-accent)]" />
           Your Referral Link
@@ -218,9 +218,9 @@ export default function ReferralsPage() {
                 <input
                   value={referralUrl ?? ''}
                   readOnly
-                  className="flex-1 h-9 font-mono text-[13px] rounded-[8px] border-0 bg-[var(--app-panel-2)] px-3 text-[var(--app-text)] outline-none"
+                  className="flex-1 h-9 font-mono text-[13px] rounded-[6px] border-0 bg-[var(--app-panel-2)] px-3 text-[var(--app-text)] outline-none"
                 />
-                <button onClick={handleCopyLink} className="h-9 w-9 rounded-[8px] inline-flex items-center justify-center border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+                <button onClick={handleCopyLink} className="h-9 w-9 rounded-[6px] inline-flex items-center justify-center border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
@@ -232,9 +232,9 @@ export default function ReferralsPage() {
                 <input
                   value={referralCode}
                   readOnly
-                  className="flex-1 h-9 font-mono text-center text-base sm:text-lg rounded-[8px] border-0 bg-[var(--app-panel-2)] px-3 text-[var(--app-text)] outline-none"
+                  className="flex-1 h-9 font-mono text-center text-base sm:text-lg rounded-[6px] border-0 bg-[var(--app-panel-2)] px-3 text-[var(--app-text)] outline-none"
                 />
-                <button onClick={handleCopyCode} className="h-9 w-9 rounded-[8px] inline-flex items-center justify-center border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+                <button onClick={handleCopyCode} className="h-9 w-9 rounded-[6px] inline-flex items-center justify-center border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </button>
               </div>
@@ -251,7 +251,7 @@ export default function ReferralsPage() {
                     toast.success('Share text copied!');
                   }
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-[6px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-[var(--app-bg)] transition-colors hover:opacity-90"
               >
                 <Share2 className="h-4 w-4" />
                 Share Link
@@ -264,7 +264,7 @@ export default function ReferralsPage() {
             <p className="text-[13px] text-[var(--app-text-muted)] mb-4">
               Generate your unique referral code to start earning credits!
             </p>
-            <button onClick={handleGenerateCode} disabled={isLoading} className="inline-flex items-center rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50">
+            <button onClick={handleGenerateCode} disabled={isLoading} className="inline-flex items-center rounded-[6px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-[var(--app-bg)] transition-colors hover:opacity-90 disabled:opacity-50">
               {isLoading ? 'Generating...' : 'Generate Referral Code'}
             </button>
           </div>
@@ -273,7 +273,7 @@ export default function ReferralsPage() {
 
       {/* Milestone Progress */}
       {stats?.ambassadorTier && stats?.nextMilestone && (
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6 mb-6">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6 mb-6">
           <h3 className="text-[16px] font-medium text-[var(--app-text)] mb-4 flex items-center gap-2">
             <Crown className="h-5 w-5 text-[var(--app-warning)]" />
             Ambassador Progress
@@ -299,7 +299,7 @@ export default function ReferralsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-[8px] bg-[var(--app-panel-2)]">
+            <div className="flex items-center justify-between p-4 rounded-[6px] bg-[var(--app-panel-2)]">
               <div>
                 <div className="text-[13px] font-medium text-[var(--app-text)]">Next Milestone Bonus</div>
                 <div className="text-[13px] text-[var(--app-text-muted)]">
@@ -316,13 +316,13 @@ export default function ReferralsPage() {
 
       {/* Tabs for Referrals and Leaderboard */}
       <Tabs defaultValue="my-referrals" className="w-full">
-        <TabsList className="grid w-full max-w-xs sm:max-w-md grid-cols-2 rounded-[8px] bg-[var(--app-panel)] p-1">
+        <TabsList className="grid w-full max-w-xs sm:max-w-md grid-cols-2 rounded-[6px] bg-[var(--app-panel)] p-1">
           <TabsTrigger value="my-referrals" className="rounded-[6px] text-[13px]">My Referrals</TabsTrigger>
           <TabsTrigger value="leaderboard" className="rounded-[6px] text-[13px]">Leaderboard</TabsTrigger>
         </TabsList>
 
         <TabsContent value="my-referrals" className="mt-6">
-          <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
+          <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 sm:p-6">
             <h3 className="text-[16px] font-medium text-[var(--app-text)] mb-4">Referral History</h3>
 
             {referrals.length > 0 ? (
@@ -330,10 +330,10 @@ export default function ReferralsPage() {
                 {referrals.map((referral) => (
                   <div
                     key={referral.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-[var(--app-border)] rounded-[8px] hover:bg-[var(--app-panel-2)] transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-[var(--app-border)] rounded-[6px] hover:bg-[var(--app-panel-2)] transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-[8px] flex items-center justify-center shrink-0 bg-[var(--app-accent-soft)]">
+                      <div className="h-10 w-10 rounded-[6px] flex items-center justify-center shrink-0 bg-[var(--app-accent-soft)]">
                         <Users className="h-5 w-5 text-[var(--app-accent)]" />
                       </div>
                       <div>

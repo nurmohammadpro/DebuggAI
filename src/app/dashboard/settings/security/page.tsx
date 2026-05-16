@@ -85,9 +85,9 @@ export default function SecuritySettingsPage() {
         </p>
       </div>
 
-      <section className="rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel)] p-6">
+      <section className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 rounded-[8px] bg-[var(--app-accent-soft)] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[6px] bg-[var(--app-accent-soft)] flex items-center justify-center">
             <Shield className="h-4 w-4" style={{ color: 'var(--app-accent)' }} />
           </div>
           <div>
@@ -110,7 +110,7 @@ export default function SecuritySettingsPage() {
             <p className="text-[13px] text-[var(--app-text-muted)]">
               Scan this QR code with your authenticator app, then enter the verification code.
             </p>
-            <div className="bg-white p-4 rounded-[8px] inline-block">
+            <div className="bg-[var(--app-panel-2)] p-4 rounded-[6px] inline-block">
               <img src={qrCode} alt="QR Code" className="w-48 h-48" />
             </div>
             <div className="flex items-center gap-3 max-w-sm">
@@ -119,12 +119,12 @@ export default function SecuritySettingsPage() {
                 onChange={(e) => setVerifyCode(e.target.value)}
                 placeholder="000000"
                 maxLength={6}
-                className="flex-1 h-10 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[16px] text-[var(--app-text)] text-center tracking-[0.3em] outline-none focus:border-[var(--app-accent)]"
+                className="flex-1 h-10 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[16px] text-[var(--app-text)] text-center tracking-[0.3em] outline-none focus:border-[var(--app-accent)]"
               />
               <button
                 onClick={verifyMFA}
                 disabled={loading || verifyCode.length !== 6}
-                className="h-10 px-5 rounded-[8px] bg-[var(--app-accent)] text-black text-[13px] font-medium hover:opacity-90 disabled:opacity-40"
+                className="h-10 px-5 rounded-[6px] bg-[var(--app-accent)] text-[var(--app-bg)] text-[13px] font-medium hover:opacity-90 disabled:opacity-40"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify'}
               </button>
@@ -134,7 +134,7 @@ export default function SecuritySettingsPage() {
           <button
             onClick={enrollMFA}
             disabled={loading}
-            className="h-9 px-4 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px] font-medium text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors inline-flex items-center gap-2 disabled:opacity-40"
+            className="h-9 px-4 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px] font-medium text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors inline-flex items-center gap-2 disabled:opacity-40"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
             Enable Two-Factor Authentication

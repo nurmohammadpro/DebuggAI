@@ -58,15 +58,13 @@ export function DashboardDebugIssues() {
 }
 
 function IssueCard({ issue }: { issue: DebugIssue }) {
-  const iconBg = issue.type === 'error'
-    ? 'rgba(239,68,68,0.1)'
-    : 'rgba(245,158,11,0.1)';
-
   return (
-    <div className="p-3 border border-[var(--border-default)] rounded-[var(--radius-md)] flex items-start gap-3 cursor-pointer hover:border-[var(--border-hover)] transition-all bg-[var(--bg-primary)]">
+    <div className="p-3 border border-[var(--app-border)] rounded-[6px] flex items-start gap-3 cursor-pointer hover:border-[var(--app-text-dim)] transition-all bg-[var(--app-panel)]">
       <div
-        className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[14px] shrink-0"
-        style={{ background: iconBg }}
+        className={issue.type === 'error'
+          ? 'w-8 h-8 rounded-[6px] flex items-center justify-center text-[14px] shrink-0 bg-[var(--app-danger-soft)] text-[var(--app-danger)]'
+          : 'w-8 h-8 rounded-[6px] flex items-center justify-center text-[14px] shrink-0 bg-[var(--app-warning-soft)] text-[var(--app-warning)]'
+        }
       >
         ⚠
       </div>

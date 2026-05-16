@@ -98,21 +98,21 @@ export default function SettingsPage() {
       </div>
 
       {/* Profile Section */}
-      <section className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5 mb-6">
+      <section className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-5 mb-6">
         <h2 className="text-[13px] font-medium text-[var(--app-text)] mb-4">Profile</h2>
         <div className="flex items-start gap-4">
           <div className="relative">
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="w-16 h-16 rounded-[10px] bg-[var(--app-surface)] flex items-center justify-center text-[var(--app-text-muted)] overflow-hidden border border-[var(--app-border)] hover:border-[var(--app-accent)] transition-colors"
+              className="w-16 h-16 rounded-[6px] bg-[var(--app-surface)] flex items-center justify-center text-[var(--app-text-muted)] overflow-hidden border border-[var(--app-border)] hover:border-[var(--app-accent)] transition-colors"
             >
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
                 <User className="h-8 w-8" />
               )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity rounded-[10px]">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity rounded-[6px]">
                 <Camera className="h-5 w-5 text-white" />
               </div>
             </button>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full h-9 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)] transition-colors"
+                className="w-full h-9 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)] transition-colors"
               />
             </div>
             <div>
@@ -142,12 +142,12 @@ export default function SettingsPage() {
               <input
                 value={user?.email || ''}
                 disabled
-                className="w-full h-9 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text-muted)] outline-none"
+                className="w-full h-9 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text-muted)] outline-none"
               />
             </div>
             <button
               onClick={handleSaveProfile}
-              className="h-8 px-4 rounded-[8px] bg-[var(--app-accent)] text-black text-[11px] font-semibold uppercase tracking-tight hover:opacity-90 transition-opacity"
+              className="h-8 px-4 rounded-[6px] bg-[var(--app-accent)] text-[var(--app-bg)] text-[11px] font-semibold uppercase tracking-tight hover:opacity-90 transition-opacity"
             >
               Save Profile
             </button>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Current Plan Card */}
-      <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5 mb-6">
+      <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-5 mb-6">
         <h2 className="text-[16px] font-medium text-[var(--app-text)] mb-4">Current Plan</h2>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -171,7 +171,7 @@ export default function SettingsPage() {
             </p>
           </div>
           <Link href="/dashboard/pricing">
-            <button className="inline-flex items-center rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 w-full sm:w-auto">
+            <button className="inline-flex items-center rounded-[6px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-[var(--app-bg)] transition-colors hover:opacity-90 w-full sm:w-auto">
               Upgrade Plan
             </button>
           </Link>
@@ -181,9 +181,9 @@ export default function SettingsPage() {
       {/* Settings Sections */}
       <div className="grid gap-4">
         {settingsSections.map((section) => (
-          <div key={section.title} className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5">
+          <div key={section.title} className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-1.5 rounded-[8px] bg-[var(--app-surface)]">
+              <div className="p-1.5 rounded-[6px] bg-[var(--app-surface)]">
                 <section.icon className="h-5 w-5 text-[var(--app-accent)]" />
               </div>
               <div>
@@ -194,7 +194,7 @@ export default function SettingsPage() {
             <div className="space-y-1">
               {section.items.map((item) => (
                 <Link key={item.href} href={item.href}>
-                  <button className="w-full text-left rounded-[8px] px-3 py-2.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]">
+                  <button className="w-full text-left rounded-[6px] px-3 py-2.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]">
                     {item.label}
                   </button>
                 </Link>
@@ -205,18 +205,18 @@ export default function SettingsPage() {
       </div>
 
       {/* Danger Zone */}
-      <div className="mt-6 rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-5 border border-[var(--app-danger)]/15">
+      <div className="mt-6 rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-5 border border-[var(--app-danger)]/15">
         <h3 className="text-[16px] font-medium text-[var(--app-danger)] mb-2">Danger Zone</h3>
         <p className="text-[13px] text-[var(--app-text-muted)] mb-4">
           Irreversible actions that affect your account
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link href="/dashboard/settings/danger">
-            <button className="inline-flex items-center rounded-[8px] bg-[var(--app-danger)] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:opacity-90 w-full sm:w-auto">
+            <button className="inline-flex items-center rounded-[6px] bg-[var(--app-danger)] px-3 py-1.5 text-[13px] font-medium text-[var(--app-bg)] transition-colors hover:opacity-90 w-full sm:w-auto">
               Delete Account
             </button>
           </Link>
-          <button className="inline-flex items-center rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] w-full sm:w-auto">
+          <button className="inline-flex items-center rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] w-full sm:w-auto">
             Export Data
           </button>
         </div>

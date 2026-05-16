@@ -91,7 +91,7 @@ export function DebugHistory() {
           <button
             onClick={handleClearAll}
             disabled={(data || []).length === 0}
-            className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
             Clear All
@@ -100,7 +100,7 @@ export function DebugHistory() {
       </div>
 
       {/* Filter Bar */}
-      <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-4 mb-6">
+      <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-4 mb-6">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="search" className="text-[13px] font-medium text-[var(--app-text-muted)]">Search</label>
@@ -111,7 +111,7 @@ export function DebugHistory() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search code or errors..."
-                className="w-full h-9 pl-10 rounded-[8px] border-0 bg-[var(--app-panel-2)] text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+                className="w-full h-9 pl-10 rounded-[6px] border-0 bg-[var(--app-panel-2)] text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
               />
             </div>
           </div>
@@ -122,10 +122,10 @@ export function DebugHistory() {
               value={languageFilter}
               onValueChange={(v) => setLanguageFilter(v || 'all')}
             >
-              <SelectTrigger className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
+              <SelectTrigger className="rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
                 <SelectValue placeholder="All languages" />
               </SelectTrigger>
-              <SelectContent className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+              <SelectContent className="rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
                 <SelectItem value="all">All Languages</SelectItem>
                 {DEBUG_LANGUAGES.map((lang) => (
                   <SelectItem key={lang.id} value={lang.id}>
@@ -139,7 +139,7 @@ export function DebugHistory() {
       </div>
 
       {error && (
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl p-6">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl p-6">
           <div className="text-[13px] font-medium text-[var(--app-text)]">Failed to load history</div>
           <div className="text-xs text-[var(--app-text-muted)] mt-1">
             {error instanceof Error ? error.message : 'Unknown error'}
@@ -147,7 +147,7 @@ export function DebugHistory() {
           <div className="mt-4">
             <button
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+              className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
             >
               Retry
             </button>
@@ -156,7 +156,7 @@ export function DebugHistory() {
       )}
 
       {isLoading && (
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl">
           <div className="flex items-center justify-center h-64">
             <RefreshCw className="h-8 w-8 animate-spin text-[var(--app-text-dim)]" />
           </div>
@@ -164,7 +164,7 @@ export function DebugHistory() {
       )}
 
       {!isLoading && !error && filtered.length === 0 && (
-        <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl">
+        <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl">
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Bug className="h-16 w-16 mb-4 text-[var(--app-text-dim)]" />
             {(data || []).length === 0 ? (
@@ -189,7 +189,7 @@ export function DebugHistory() {
       {!isLoading && !error && filtered.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((session) => (
-            <div key={session.id} className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl flex flex-col overflow-hidden">
+            <div key={session.id} className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl flex flex-col overflow-hidden">
               <div className="p-4 flex-1 space-y-3">
                 <div className="flex items-start justify-between">
                   <span className="inline-flex rounded-[6px] border border-[var(--app-border)] px-2 py-0.5 text-[11px] font-normal text-[var(--app-text-muted)]">
@@ -228,7 +228,7 @@ export function DebugHistory() {
               <div className="p-4 pt-0 border-t border-[var(--app-border)]">
                 <div className="flex gap-2">
                   <button
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
                     onClick={() => {
                       const store = useDebugStore.getState();
                       store.setCurrentCode(session.code);
@@ -242,7 +242,7 @@ export function DebugHistory() {
                   </button>
                   <button
                     onClick={() => handleDelete(session.id)}
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-[8px] text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-danger-soft)] hover:text-[var(--app-danger)]"
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-[6px] text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-danger-soft)] hover:text-[var(--app-danger)]"
                     title="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

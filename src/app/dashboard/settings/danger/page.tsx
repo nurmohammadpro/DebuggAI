@@ -60,9 +60,9 @@ export default function DangerPage() {
         </p>
       </div>
 
-      <section className="rounded-[8px] border border-[var(--app-danger)]/30 bg-[var(--app-panel)] p-6">
+      <section className="rounded-[6px] border border-[var(--app-danger)]/30 bg-[var(--app-panel)] p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-[8px] bg-[var(--app-danger)]/10 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[6px] bg-[var(--app-danger)]/10 flex items-center justify-center">
             <AlertTriangle className="h-4 w-4 text-[var(--app-danger)]" />
           </div>
           <div>
@@ -84,12 +84,12 @@ export default function DangerPage() {
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="Type DELETE"
-              className="flex-1 h-9 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-danger)]"
+              className="flex-1 h-9 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-danger)]"
             />
             <button
               onClick={handleDelete}
               disabled={confirmText !== 'DELETE' || loading}
-              className="h-9 px-5 rounded-[8px] bg-[var(--app-danger)] text-white text-[13px] font-medium hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
+              className="h-9 px-5 rounded-[6px] bg-[var(--app-danger)] text-[var(--app-bg)] text-[13px] font-medium hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Delete Account

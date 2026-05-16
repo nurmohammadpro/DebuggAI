@@ -48,7 +48,7 @@ export function RecentDebugSessions() {
               <Bug className="h-3.5 w-3.5 mt-0.5 text-[var(--text-tertiary)] shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="px-1.5 py-0.5 rounded bg-gray-200 text-[10px] font-medium text-gray-800 shrink-0">
+                  <span className="px-1.5 py-0.5 rounded-[6px] bg-[var(--app-surface)] text-[10px] font-medium text-[var(--app-text-muted)] shrink-0">
                     {s.language}
                   </span>
                 </div>

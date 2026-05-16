@@ -60,6 +60,11 @@ BEGIN
     END IF;
   END IF;
 
+  -- Create wallet if missing (safety net for users without trigger-created wallets)
+  INSERT INTO public.credit_wallets (user_id, balance)
+  VALUES (p_user_id, 30)
+  ON CONFLICT (user_id) DO NOTHING;
+
   SELECT id, balance INTO v_wallet_id, v_balance
   FROM public.credit_wallets
   WHERE user_id = p_user_id
@@ -108,7 +113,8 @@ REVOKE ALL ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSO
 GRANT EXECUTE ON FUNCTION public.lease_jobs(TEXT, TEXT, INTEGER, INTEGER) TO service_role;
 GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO service_role;
 
--- If you later want the client to call spend_credits directly, explicitly GRANT
--- it to authenticated *after* verifying your threat model:
--- GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO authenticated;
+-- Edge functions (generate, debug, debug-ai-analyze) call spend_credits
+-- via the user's auth context (SUPABASE_ANON_KEY + Authorization header).
+-- The function already enforces auth.uid() = p_user_id for non-service_role callers.
+GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO authenticated;
 

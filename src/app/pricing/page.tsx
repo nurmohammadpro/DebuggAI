@@ -127,7 +127,7 @@ export default function PricingPage() {
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
                   <span
-                    className="font-medium tracking-wide text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]"
+                    className="font-medium tracking-wide text-[11px] bg-[var(--app-accent)] text-[var(--app-bg)] px-4 py-1 rounded-[6px]"
                   >
                     Most Popular
                   </span>
@@ -176,7 +176,7 @@ export default function PricingPage() {
                   className="w-full inline-flex items-center justify-center rounded-[6px] px-4 py-2.5 text-[13px] font-medium transition-colors hover:opacity-90"
                   style={plan.popular ? {
                     background: 'var(--app-accent)',
-                    color: '#071006'
+                    color: 'var(--app-bg)'
                   } : {
                     background: 'transparent',
                     color: 'var(--app-text-muted)',

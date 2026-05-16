@@ -176,10 +176,9 @@ CREATE TABLE IF NOT EXISTS collaboration_events (
 CREATE INDEX IF NOT EXISTS idx_collaboration_events_project_created
   ON collaboration_events(project_id, created_at DESC);
 
--- Partition old events (keep last 30 days)
-CREATE INDEX IF NOT EXISTS idx_collaboration_events_recent
-  ON collaboration_events(project_id, created_at DESC)
-  WHERE created_at > now() - interval '30 days';
+-- Note: Partial index on recent events with now() is not possible
+-- because now() is STABLE, not IMMUTABLE. Use the regular index above
+-- and add a periodic cleanup job (e.g., delete events older than 30 days).
 
 -- ============================================================================
 -- Comments on Collaborations

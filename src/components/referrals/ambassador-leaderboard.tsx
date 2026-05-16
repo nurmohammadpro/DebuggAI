@@ -25,41 +25,41 @@ import {
 const AMBASSADOR_CONFIG = {
   bronze: {
     icon: Medal,
-    color: 'text-orange-500',
-    bg: 'bg-orange-500/10',
-    borderColor: 'border-orange-500/20',
+    color: 'text-[var(--app-warning)]',
+    bg: 'bg-[var(--app-warning-soft)]',
+    borderColor: 'border-[var(--app-warning)]/20',
     minReferrals: 5,
     bonus: 25,
   },
   silver: {
     icon: Award,
-    color: 'text-gray-400',
-    bg: 'bg-gray-400/10',
-    borderColor: 'border-gray-400/20',
+    color: 'text-[var(--app-text-dim)]',
+    bg: 'bg-[var(--app-surface)]',
+    borderColor: 'border-[var(--app-border)]',
     minReferrals: 10,
     bonus: 50,
   },
   gold: {
     icon: Trophy,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    borderColor: 'border-yellow-500/20',
+    color: 'text-[var(--app-warning)]',
+    bg: 'bg-[var(--app-warning-soft)]',
+    borderColor: 'border-[var(--app-warning)]/20',
     minReferrals: 25,
     bonus: 150,
   },
   platinum: {
     icon: Gem,
-    color: 'text-purple-500',
-    bg: 'bg-purple-500/10',
-    borderColor: 'border-purple-500/20',
+    color: 'text-[var(--app-purple)]',
+    bg: 'bg-[var(--app-purple)]/10',
+    borderColor: 'border-[var(--app-purple)]/20',
     minReferrals: 50,
     bonus: 350,
   },
   diamond: {
     icon: Diamond,
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-400/10',
-    borderColor: 'border-cyan-400/20',
+    color: 'text-[var(--app-info)]',
+    bg: 'bg-[var(--app-info-soft)]',
+    borderColor: 'border-[var(--app-info)]/20',
     minReferrals: 100,
     bonus: 1000,
   },
@@ -98,9 +98,9 @@ export function AmbassadorLeaderboard() {
   };
 
   const getRankIcon = (index: number) => {
-    if (index === 0) return <Crown className="h-5 w-5 text-yellow-500" />;
-    if (index === 1) return <Trophy className="h-5 w-5 text-gray-400" />;
-    if (index === 2) return <Medal className="h-5 w-5 text-orange-600" />;
+    if (index === 0) return <Crown className="h-5 w-5 text-[var(--app-warning)]" />;
+    if (index === 1) return <Trophy className="h-5 w-5 text-[var(--app-text-dim)]" />;
+    if (index === 2) return <Medal className="h-5 w-5 text-[var(--app-warning)]" />;
     return null;
   };
 
@@ -117,7 +117,7 @@ export function AmbassadorLeaderboard() {
       <Card>
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Crown className="h-5 w-5 text-yellow-500" />
+            <Crown className="h-5 w-5 text-[var(--app-warning)]" />
             Ambassador Tiers
           </h3>
           <div className="grid md:grid-cols-5 gap-4">
@@ -126,7 +126,7 @@ export function AmbassadorLeaderboard() {
               return (
                 <div
                   key={tier}
-                  className={`p-4 rounded-[8px] border ${config.bg} ${config.borderColor}`}
+                  className={`p-4 rounded-[6px] border ${config.bg} ${config.borderColor}`}
                 >
                   <div className={`flex items-center justify-between mb-2 ${config.color}`}>
                     <Icon className="h-6 w-6" />
@@ -134,7 +134,7 @@ export function AmbassadorLeaderboard() {
                   </div>
                   <div className="text-2xl font-bold mb-1">{config.minReferrals}</div>
                   <div className="text-xs text-muted-foreground">referrals</div>
-                  <div className="text-sm font-semibold text-green-500 mt-2">
+                  <div className="text-sm font-semibold text-[var(--app-success)] mt-2">
                     +{config.bonus} bonus
                   </div>
                 </div>
@@ -170,8 +170,8 @@ export function AmbassadorLeaderboard() {
                 return (
                   <div
                     key={entry.referrer_id}
-                    className={`flex items-center gap-4 p-4 rounded-[8px] border transition-all hover:bg-muted/50 ${
-                      index === 0 ? 'bg-yellow-500/5 border-yellow-500/20' : ''
+                    className={`flex items-center gap-4 p-4 rounded-[6px] border transition-all hover:bg-muted/50 ${
+                      index === 0 ? 'bg-[var(--app-warning-soft)] border-[var(--app-warning)]/20' : ''
                     }`}
                   >
                     {/* Rank */}
@@ -210,7 +210,7 @@ export function AmbassadorLeaderboard() {
                     </div>
 
                     <div className="text-right w-24">
-                      <div className="font-semibold text-green-500">{entry.total_credits}</div>
+                      <div className="font-semibold text-[var(--app-success)]">{entry.total_credits}</div>
                       <div className="text-xs text-muted-foreground">earned</div>
                     </div>
                   </div>

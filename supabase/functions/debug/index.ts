@@ -190,6 +190,15 @@ ${languageHint}`;
         .select('id')
         .single();
       stepId = step?.id || null;
+
+      // Create job record for lifecycle consistency with agent-worker path
+      await supabase.from('jobs').insert({
+        run_id: runId,
+        queue: 'llm',
+        status: 'running',
+        kind: 'llm',
+        payload: { kind: 'llm', objective: 'debug', source: 'edge-function' },
+      });
     }
 
     const aiResponse = await fetch(`${baseUrl}/chat/completions`, {
@@ -326,6 +335,22 @@ ${languageHint}`;
               .from('runs')
               .update({ status: 'succeeded', ended_at: new Date().toISOString() })
               .eq('id', runId);
+
+            // Mark job succeeded (lifecycle consistent with agent-worker)
+            await supabase
+              .from('jobs')
+              .update({ status: 'succeeded', locked_until: null, updated_at: new Date().toISOString() })
+              .eq('run_id', runId)
+              .eq('kind', 'llm');
+
+            // Audit log
+            await supabase.from('audit_events').insert({
+              user_id: user.id,
+              action: 'run.completed',
+              details: { source: 'debug', credits: creditsToSpend, model, language: language || null },
+              target_type: 'run',
+              target_id: runId,
+            });
           }
         } catch (error) {
           console.error('Streaming error:', error);
@@ -341,6 +366,21 @@ ${languageHint}`;
                 .from('runs')
                 .update({ status: 'failed', error: String(error), ended_at: new Date().toISOString() })
                 .eq('id', runId);
+
+              await supabase
+                .from('jobs')
+                .update({ status: 'failed', last_error: String(error), locked_until: null, updated_at: new Date().toISOString() })
+                .eq('run_id', runId)
+                .eq('kind', 'llm');
+
+              // Audit log
+              await supabase.from('audit_events').insert({
+                user_id: user.id,
+                action: 'run.failed',
+                details: { source: 'debug', error: String(error) },
+                target_type: 'run',
+                target_id: runId,
+              });
             }
           } catch {
             // ignore

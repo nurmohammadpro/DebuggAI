@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
       .from('contact_messages')
       .select('*', { count: 'exact' });
 
-    if (read === 'true') query = query.eq('read', true);
-    else if (read === 'false') query = query.eq('read', false);
+    if (read === 'true') query = query.eq('is_read', true);
+    else if (read === 'false') query = query.eq('is_read', false);
 
     const { data, count, error } = await query
       .order('created_at', { ascending: false })
@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
 
     const { error } = await supabase
       .from('contact_messages')
-      .update({ read: true })
+      .update({ is_read: true })
       .in('id', ids);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

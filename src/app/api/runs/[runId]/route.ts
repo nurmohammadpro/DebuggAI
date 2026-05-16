@@ -1,5 +1,7 @@
 /**
  * Run Detail API
+ *
+ * Returns a single run with ordered steps and jobs.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -21,6 +23,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ runId: stri
     .single();
 
   if (runError) return NextResponse.json({ error: runError.message }, { status: 500 });
+  if (!run) return NextResponse.json({ error: 'Run not found' }, { status: 404 });
 
   const { data: steps, error: stepsError } = await auth.supabase
     .from('run_steps')
@@ -30,6 +33,27 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ runId: stri
 
   if (stepsError) return NextResponse.json({ error: stepsError.message }, { status: 500 });
 
-  return NextResponse.json({ run, steps: steps || [] });
+  const { data: jobs, error: jobsError } = await auth.supabase
+    .from('jobs')
+    .select('id, run_step_id, queue, priority, status, attempts, max_attempts, payload, last_error, locked_until, created_at, updated_at')
+    .eq('run_id', runId)
+    .order('created_at', { ascending: true });
+
+  if (jobsError) return NextResponse.json({ error: jobsError.message }, { status: 500 });
+
+  const { data: artifacts, error: artifactsError } = await auth.supabase
+    .from('artifacts')
+    .select('id, kind, storage_path, metadata, created_at')
+    .eq('run_id', runId)
+    .order('created_at', { ascending: true });
+
+  if (artifactsError) return NextResponse.json({ error: artifactsError.message }, { status: 500 });
+
+  return NextResponse.json({
+    run,
+    steps: steps || [],
+    jobs: jobs || [],
+    artifacts: artifacts || [],
+  });
 }
 

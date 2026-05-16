@@ -2,6 +2,7 @@
 
 import { Plug, ExternalLink } from 'lucide-react';
 import { useWorkspaceStore } from '@/store/workspace-store';
+import { supabase } from '@/lib/supabase';
 
 const INTEGRATIONS = [
   {
@@ -16,14 +17,14 @@ const INTEGRATIONS = [
     name: 'Vercel',
     description: 'Deploy your project instantly with Vercel.',
     icon: null,
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: 'netlify',
     name: 'Netlify',
     description: 'Deploy to Netlify with one click.',
     icon: null,
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: 'supabase',
@@ -84,7 +85,11 @@ export function WorkspaceConnectionsPanel() {
               <button
                 className="h-7 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight border border-[var(--app-accent)]/30 text-[var(--app-accent)] hover:bg-[var(--app-accent)]/10 transition-colors shrink-0"
                 onClick={() => {
-                  // GitHub OAuth flow will be implemented in Phase 5
+                  const redirectTo = `${window.location.origin}/dashboard/projects/${encodeURIComponent(selectedProjectId || '')}/settings/integrations?provider=github`;
+                  supabase.auth.signInWithOAuth({
+                    provider: 'github',
+                    options: { scopes: 'repo,user', redirectTo },
+                  });
                 }}
               >
                 Connect

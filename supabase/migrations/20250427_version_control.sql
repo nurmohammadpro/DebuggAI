@@ -424,8 +424,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Merge pull request
 CREATE OR REPLACE FUNCTION merge_pull_request(
   p_pr_id UUID,
-  p_merge_strategy pr_merge_strategy DEFAULT 'merge',
-  p_user_id UUID
+  p_user_id UUID,
+  p_merge_strategy pr_merge_strategy DEFAULT 'merge'
 )
 RETURNS BOOLEAN AS $$
 DECLARE

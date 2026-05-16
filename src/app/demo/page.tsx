@@ -26,7 +26,7 @@ export default function DemoPage() {
         {/* Step 1: The Problem */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-danger)', color: '#071006', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-danger)', color: 'var(--app-bg)', fontSize: '12px', fontWeight: '600' }}>
               1
             </div>
             <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>The Buggy Code</h2>
@@ -60,7 +60,7 @@ export default function DemoPage() {
         {/* Step 2: The AI Analysis (Terminal) */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: '#071006', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: 'var(--app-bg)', fontSize: '12px', fontWeight: '600' }}>
               2
             </div>
             <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>DeBuggAI Analysis</h2>
@@ -92,7 +92,7 @@ export default function DemoPage() {
         {/* Step 3: AI Insights Breakdown */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-info)', color: '#071006', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-info)', color: 'var(--app-bg)', fontSize: '12px', fontWeight: '600' }}>
               3
             </div>
             <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>Root Cause Breakdown</h2>
@@ -132,7 +132,7 @@ export default function DemoPage() {
         {/* Step 4: The Fixed Code */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: '#071006', fontSize: '12px', fontWeight: '600' }}>
+            <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: 'var(--app-bg)', fontSize: '12px', fontWeight: '600' }}>
               4
             </div>
             <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>The Production-Ready Fix</h2>

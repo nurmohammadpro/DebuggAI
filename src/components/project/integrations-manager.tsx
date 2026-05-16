@@ -6,8 +6,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, ExternalLink, CheckCircle2, Lock } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, CheckCircle2, Lock, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 interface Integration {
   id: string;
@@ -243,6 +244,15 @@ export function IntegrationsManager({ projectId }: IntegrationsManagerProps) {
     }
   };
 
+  const handleGitHubOAuth = async () => {
+    const redirectTo = `${window.location.origin}/dashboard/projects/${encodeURIComponent(projectId)}/settings/integrations`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { scopes: 'repo,user', redirectTo },
+    });
+    if (error) console.error('GitHub OAuth error:', error);
+  };
+
   const categories = ['all', ...Array.from(new Set(AVAILABLE_INTEGRATIONS.map(i => i.category)))];
   const filteredIntegrations = AVAILABLE_INTEGRATIONS.filter(
     i => selectedCategory === 'all' || i.category === selectedCategory
@@ -440,8 +450,18 @@ interface IntegrationConfigCardProps {
 }
 
 function IntegrationConfigCard({ config, onAdd }: IntegrationConfigCardProps) {
+  const isGitHub = config.type === 'github';
+
+  const handleGitHubConnect = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { scopes: 'repo,user', redirectTo: window.location.href },
+    });
+    if (error) console.error('GitHub OAuth error:', error);
+  };
+
   return (
-    <div className="p-4 border rounded-[8px] hover:bg-accent/50 transition-colors cursor-pointer group">
+    <div className="p-4 border rounded-[8px] hover:bg-accent/50 transition-colors group">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-[8px] bg-primary/10 flex items-center justify-center text-lg">
@@ -450,16 +470,40 @@ function IntegrationConfigCard({ config, onAdd }: IntegrationConfigCardProps) {
           <div className="flex-1">
             <h4 className="font-medium">{config.name}</h4>
             <p className="text-sm text-muted-foreground mt-1">{config.description}</p>
+            {isGitHub && (
+              <p className="text-xs text-[var(--app-accent)] mt-1.5 flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                OAuth available — one-click connect
+              </p>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={onAdd}
-            className="px-3 py-1.5 text-sm rounded-[8px] border hover:bg-accent transition-colors"
-          >
-            Add
-          </button>
+          {isGitHub ? (
+            <>
+              <button
+                onClick={handleGitHubConnect}
+                className="px-3 py-1.5 text-sm rounded-[8px] bg-[var(--app-accent)] text-[var(--app-bg)] hover:opacity-90 transition-colors font-medium"
+              >
+                Connect GitHub
+              </button>
+              <button
+                onClick={onAdd}
+                className="px-3 py-1.5 text-sm rounded-[8px] border hover:bg-accent transition-colors"
+                title="Manual token setup"
+              >
+                Manual
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onAdd}
+              className="px-3 py-1.5 text-sm rounded-[8px] border hover:bg-accent transition-colors"
+            >
+              Add
+            </button>
+          )}
           {config.docsUrl && (
             <a
               href={config.docsUrl}
@@ -467,7 +511,7 @@ function IntegrationConfigCard({ config, onAdd }: IntegrationConfigCardProps) {
               rel="noopener noreferrer"
               className="p-2 hover:bg-accent rounded-[8px] transition-colors"
             >
-              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              <ExternalLink className="w-4 w-4 text-muted-foreground" />
             </a>
           )}
         </div>
