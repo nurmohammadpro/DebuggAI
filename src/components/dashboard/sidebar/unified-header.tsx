@@ -15,6 +15,7 @@ export type ToolTab = {
 interface UnifiedHeaderProps {
   title?: string;
   subtitle?: string;
+  titleBadge?: React.ReactNode;
   actions?: React.ReactNode;
   toolTabs?: ToolTab[];
   activeToolTab?: WorkspaceRightTab;
@@ -22,7 +23,16 @@ interface UnifiedHeaderProps {
   mobileMenuButton?: React.ReactNode;
 }
 
-export function UnifiedHeader({ title, subtitle, actions, toolTabs, activeToolTab, onToolTabChange, mobileMenuButton }: UnifiedHeaderProps) {
+export function UnifiedHeader({
+  title,
+  subtitle,
+  titleBadge,
+  actions,
+  toolTabs,
+  activeToolTab,
+  onToolTabChange,
+  mobileMenuButton,
+}: UnifiedHeaderProps) {
   return (
     <header className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-4 bg-[var(--app-panel)] shrink-0">
       {/* Left: Mobile Menu Button + Title + Tool Tabs */}
@@ -32,9 +42,12 @@ export function UnifiedHeader({ title, subtitle, actions, toolTabs, activeToolTa
 
         {title && (
           <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-[var(--app-text)] truncate">
-              {title}
-            </h1>
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-sm font-semibold text-[var(--app-text)] truncate">
+                {title}
+              </h1>
+              {titleBadge}
+            </div>
             {subtitle && (
               <p className="text-[11px] text-[var(--app-text-muted)] truncate">
                 {subtitle}
@@ -52,9 +65,9 @@ export function UnifiedHeader({ title, subtitle, actions, toolTabs, activeToolTa
                 <button
                   key={tab.id}
                   onClick={() => onToolTabChange?.(tab.id)}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium transition-all ${
+                  className={`h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-[11px] font-medium transition-all ${
                     activeToolTab === tab.id
-                      ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                      ? 'bg-[var(--app-surface)] text-[var(--app-text)] border border-[var(--app-border)]'
                       : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
                   }`}
                 >

@@ -221,6 +221,11 @@ export function WorkspaceDashboard() {
         <UnifiedHeader
           title={project?.description || project?.prompt || 'Untitled Project'}
           subtitle={effectiveProjectId}
+          titleBadge={
+            <span className="hidden sm:inline-flex rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--app-text-muted)]">
+              Web Builder
+            </span>
+          }
           actions={headerActions}
           toolTabs={toolTabs}
           activeToolTab={rightTab}

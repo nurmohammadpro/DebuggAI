@@ -133,7 +133,7 @@ export function WorkspaceFileTree({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search files..."
-            className="w-full h-9 rounded-[8px] bg-[var(--app-panel-2)] border-0 px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+            className="w-full h-9 rounded-[6px] bg-[var(--app-panel-2)] border-0 px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
           />
         </div>
       )}

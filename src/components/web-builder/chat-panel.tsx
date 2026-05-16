@@ -190,7 +190,7 @@ export function ChatPanel({
             <span className="text-[11px] font-medium text-[var(--app-text-muted)] uppercase tracking-[0.12em]">AI</span>
           </div>
           <StackSelector>
-            <button className="inline-flex items-center gap-1.5 rounded-[6px] h-7 px-2 text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+            <button className="inline-flex items-center gap-1.5 rounded-[6px] h-7 px-2 text-[11px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
               <Layers className="h-3.5 w-3.5" />
               Templates
             </button>
@@ -203,7 +203,7 @@ export function ChatPanel({
         {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="mb-5">
-              <Sparkles className="h-10 w-10 text-[var(--app-accent)]/20" />
+              <Sparkles className="h-10 w-10 text-[var(--app-accent)]/35" />
             </div>
             <h4 className="text-[13px] font-medium text-[var(--app-text)] mb-2">
               {mode === 'debug' ? 'Debug mode' : 'Build mode'}

@@ -61,7 +61,7 @@ export function WorkspaceConnectionsPanel() {
         {INTEGRATIONS.map((integration) => (
           <div
             key={integration.id}
-            className="flex items-center gap-3 px-3 py-3 rounded-[8px] hover:bg-[var(--app-surface)] transition-colors border border-transparent hover:border-[var(--app-border)]"
+            className="flex items-center gap-3 px-3 py-3 rounded-[6px] hover:bg-[var(--app-surface)] transition-colors border border-transparent hover:border-[var(--app-border)]"
           >
             <div className="w-8 h-8 rounded-[6px] bg-[var(--app-panel-2)] flex items-center justify-center shrink-0">
               {integration.icon ? (
@@ -77,7 +77,7 @@ export function WorkspaceConnectionsPanel() {
               </div>
             </div>
             {integration.comingSoon ? (
-              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2 py-0.5 rounded-[4px] bg-[var(--app-surface)] text-[var(--app-text-dim)] shrink-0">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] px-2 py-0.5 rounded-[6px] bg-[var(--app-surface)] text-[var(--app-text-muted)] shrink-0 border border-[var(--app-border)]">
                 Soon
               </span>
             ) : (

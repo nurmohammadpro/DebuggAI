@@ -4,6 +4,8 @@
  * Server-side auth check with client-side collapsible sidebar and mobile responsive shell.
  */
 
+export const dynamic = 'force-dynamic';
+
 import { ReactNode } from 'react';
 import { getCurrentUser, adminSignOut } from '@/lib/admin/auth';
 import { redirect } from 'next/navigation';

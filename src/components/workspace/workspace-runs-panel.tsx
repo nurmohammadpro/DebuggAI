@@ -202,7 +202,7 @@ function StatusPill({ status, small }: { status: string; small?: boolean }) {
           ? 'bg-[var(--app-info-soft)] text-[var(--app-info)] border-[var(--app-info)]/20'
           : tone === 'wait'
             ? 'bg-[var(--app-warning-soft)] text-[var(--app-warning)] border-[var(--app-warning)]/20'
-            : 'bg-[var(--app-surface)] text-[var(--app-text-dim)] border-[var(--app-border)]';
+            : 'bg-[var(--app-surface)] text-[var(--app-text-muted)] border-[var(--app-border)]';
 
   return (
     <span
