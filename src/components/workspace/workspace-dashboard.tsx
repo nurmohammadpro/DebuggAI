@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { Code2, Eye, Files, GitBranch, Menu, Play, Plug, Settings, Share2, Terminal, Zap } from 'lucide-react';
+import { Code2, Eye, Files, GitBranch, ListChecks, Menu, Play, Plug, Settings, Share2, Terminal, Zap } from 'lucide-react';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
@@ -180,6 +180,7 @@ export function WorkspaceDashboard() {
     { id: 'preview' as const, label: 'Preview', icon: Eye },
     { id: 'files' as const, label: 'Files', icon: Files },
     { id: 'console' as const, label: 'Console', icon: Terminal },
+    { id: 'runs' as const, label: 'Runs', icon: ListChecks },
     { id: 'git' as const, label: 'Git', icon: GitBranch },
     { id: 'env' as const, label: 'Env', icon: Settings },
     { id: 'connections' as const, label: 'Connect', icon: Plug },

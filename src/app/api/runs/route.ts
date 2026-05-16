@@ -9,6 +9,31 @@ import { requireUser } from '@/lib/server/auth';
 
 export const dynamic = 'force-dynamic';
 
+export async function GET(req: NextRequest) {
+  const auth = await requireUser(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
+  const url = new URL(req.url);
+  const threadId = url.searchParams.get('threadId');
+  const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit') || 20)));
+
+  let q = auth.supabase
+    .from('runs')
+    .select(
+      'id, thread_id, user_id, status, objective, idempotency_key, error, metadata, started_at, ended_at, created_at, updated_at, run_steps(id, step_index, kind, agent_name, status, error, started_at, ended_at, created_at)',
+    )
+    .eq('user_id', auth.user!.id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (threadId) q = q.eq('thread_id', threadId);
+
+  const { data, error } = await q;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ runs: data || [] });
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireUser(req);
   if (auth.errorResponse) return auth.errorResponse;
@@ -84,4 +109,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ run, step, job }, { status: 201 });
 }
-

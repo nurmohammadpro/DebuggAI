@@ -7,6 +7,7 @@ import { WorkspaceEnvPanel } from '@/components/workspace/workspace-env-panel';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
+import { WorkspaceRunsPanel } from '@/components/workspace/workspace-runs-panel';
 import type { EditorView } from '@/components/workspace/workspace-editor';
 
 export type WorkspaceRightTab =
@@ -14,6 +15,7 @@ export type WorkspaceRightTab =
   | 'preview'
   | 'files'
   | 'console'
+  | 'runs'
   | 'git'
   | 'env'
   | 'connections';
@@ -43,6 +45,7 @@ export function WorkspaceRightPanel({
     preview: 'Preview',
     files: 'Files',
     console: 'Console',
+    runs: 'Runs',
     git: 'Git',
     env: 'Environment',
     connections: 'Connections',
@@ -91,6 +94,10 @@ export function WorkspaceRightPanel({
           <div className="h-full">
             <ErrorConsole chromeless className="h-full" />
           </div>
+        )}
+
+        {activeTab === 'runs' && (
+          <WorkspaceRunsPanel />
         )}
 
         {activeTab === 'git' && (
