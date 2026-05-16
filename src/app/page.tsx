@@ -69,15 +69,15 @@ export default function LandingPage() {
           </div>
 
           <div className="fade-up visible fade-up-delay-3 flex items-center justify-center gap-4 flex-wrap mt-5">
-            <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
+            <span className="text-[11px] text-[var(--app-text-muted)] flex items-center gap-1">
               <Check className="h-3 w-3 text-[var(--app-accent)]" /> Free forever plan
             </span>
             <span className="w-1 h-1 rounded-full bg-[var(--app-text-dim)]" />
-            <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
+            <span className="text-[11px] text-[var(--app-text-muted)] flex items-center gap-1">
               <Check className="h-3 w-3 text-[var(--app-accent)]" /> No credit card required
             </span>
             <span className="w-1 h-1 rounded-full bg-[var(--app-text-dim)]" />
-            <span className="text-[11px] text-[var(--app-text-dim)] flex items-center gap-1">
+            <span className="text-[11px] text-[var(--app-text-muted)] flex items-center gap-1">
               <Check className="h-3 w-3 text-[var(--app-accent)]" /> Setup in 2 minutes
             </span>
           </div>
@@ -161,7 +161,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-[16px] font-medium tracking-[-0.02em] mb-2 text-[var(--app-text)]">{feature.title}</h3>
                   <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed mb-3">{feature.desc}</p>
-                  <span className="inline-flex rounded-[6px] px-2.5 py-0.5 text-[10px] font-medium bg-[var(--app-surface)] text-[var(--app-text-dim)]">
+                  <span className="inline-flex rounded-[6px] px-2.5 py-0.5 text-[10px] font-medium bg-[var(--app-surface)] text-[var(--app-text-muted)] border border-[var(--app-border)]">
                     {feature.badge}
                   </span>
                 </div>
@@ -417,7 +417,7 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <div className="text-[13px] font-medium text-[var(--app-text)]">{testimonial.name}</div>
-                    <div className="text-[11px] text-[var(--app-text-dim)]">{testimonial.role}</div>
+                    <div className="text-[11px] text-[var(--app-text-muted)]">{testimonial.role}</div>
                   </div>
                 </div>
               </div>
@@ -446,7 +446,7 @@ export default function LandingPage() {
             <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">FREE</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $0<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+                $0<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
               </div>
               <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For individuals learning</p>
               <div className="flex flex-col gap-2.5 mb-5">
@@ -455,7 +455,7 @@ export default function LandingPage() {
                     <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
                   </div>
                 ))}
-                <div className="flex items-center gap-2 text-[13px] text-[var(--app-text-dim)]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
                   <X className="h-4 w-4" /> Web Builder
                 </div>
               </div>
@@ -481,7 +481,7 @@ export default function LandingPage() {
               </div>
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-accent)] mb-1 mt-4">PRO</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-accent)] mb-1">
-                $9<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+                $9<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
               </div>
               <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For serious developers</p>
               <div className="flex flex-col gap-2.5 mb-5">
@@ -503,7 +503,7 @@ export default function LandingPage() {
             <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">TEAM</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $99<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+                $99<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
               </div>
               <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For small teams</p>
               <div className="flex flex-col gap-2.5 mb-5">
@@ -524,7 +524,7 @@ export default function LandingPage() {
             <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">BUSINESS</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $299<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+                $299<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
               </div>
               <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For growing organizations</p>
               <div className="flex flex-col gap-2.5 mb-5">
@@ -545,7 +545,7 @@ export default function LandingPage() {
             <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
               <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">ENTERPRISE</div>
               <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $999+<span className="text-[13px] font-normal text-[var(--app-text-dim)]">/mo</span>
+                $999+<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
               </div>
               <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For large orgs and security needs</p>
               <div className="flex flex-col gap-2.5 mb-5">
