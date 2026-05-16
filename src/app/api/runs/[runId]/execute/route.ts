@@ -45,12 +45,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ runId: str
   const supabaseUrl =
     process.env.SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey =
-    process.env.SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !anonKey || !serviceKey) {
+  if (!supabaseUrl || !serviceKey) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
 
@@ -58,7 +55,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ runId: str
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      apikey: anonKey,
+      apikey: serviceKey,
       Authorization: `Bearer ${serviceKey}`,
     },
     body: JSON.stringify({
@@ -86,4 +83,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ runId: str
 
   return NextResponse.json({ ok: true, leased: json?.jobs || [], run: latestRun || null });
 }
-
