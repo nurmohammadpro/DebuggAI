@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getSession } from '@/hooks/use-session';
 import { useGenerationStore } from '@/store/generation-store';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type RunStep = {
   id: string;
@@ -30,6 +31,7 @@ export function WorkspaceRunsPanel() {
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [executingRunId, setExecutingRunId] = useState<string | null>(null);
 
   const loadRuns = async () => {
     if (!currentThreadId) {
@@ -80,6 +82,34 @@ export function WorkspaceRunsPanel() {
       await loadRuns();
     } finally {
       setCreating(false);
+    }
+  };
+
+  const executeRun = async (runId: string) => {
+    if (!runId || executingRunId) return;
+    const session = await getSession();
+    const token = session.session?.access_token;
+    if (!token) return;
+
+    setExecutingRunId(runId);
+    try {
+      const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/execute`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 10, leaseSeconds: 60 }),
+      });
+
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(typeof j?.error === 'string' ? j.error : 'Failed to execute run');
+        return;
+      }
+
+      const leasedCount = Array.isArray(j?.leased) ? j.leased.length : 0;
+      toast.success(leasedCount > 0 ? `Executing ${leasedCount} job(s)` : 'No queued jobs to execute');
+      await loadRuns();
+    } finally {
+      setExecutingRunId(null);
     }
   };
 
@@ -153,6 +183,19 @@ export function WorkspaceRunsPanel() {
                 {run.error}
               </div>
             )}
+
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={() => void executeRun(run.id)}
+                disabled={executingRunId !== null}
+                className="h-7 px-2 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors disabled:opacity-50"
+              >
+                {executingRunId === run.id ? 'Executing…' : 'Execute'}
+              </button>
+              <span className="text-[11px] text-[var(--app-text-dim)]">
+                Leases and runs queued jobs for this run.
+              </span>
+            </div>
 
             {(run.run_steps?.length || 0) > 0 && (
               <div className="mt-2 space-y-1.5">

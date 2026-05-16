@@ -21,6 +21,7 @@ const corsHeaders = {
 type LeaseBody = {
   action: 'lease';
   workerId: string;
+  runId?: string;
   queue?: string;
   limit?: number;
   leaseSeconds?: number;
@@ -68,16 +69,26 @@ serve(async (req) => {
         });
       }
 
-      const queue = (body.queue || 'default').trim() || 'default';
       const limit = Math.max(1, Math.min(25, Number(body.limit || 5)));
       const leaseSeconds = Math.max(10, Math.min(3600, Number(body.leaseSeconds || 60)));
 
-      const { data, error } = await supabase.rpc('lease_jobs', {
-        p_worker_id: workerId,
-        p_queue: queue,
-        p_limit: limit,
-        p_lease_seconds: leaseSeconds,
-      });
+      const runId = (body.runId || '').trim();
+      const rpc = runId ? 'lease_jobs_for_run' : 'lease_jobs';
+      const args = runId
+        ? {
+            p_worker_id: workerId,
+            p_run_id: runId,
+            p_limit: limit,
+            p_lease_seconds: leaseSeconds,
+          }
+        : {
+            p_worker_id: workerId,
+            p_queue: ((body.queue || 'default').trim() || 'default'),
+            p_limit: limit,
+            p_lease_seconds: leaseSeconds,
+          };
+
+      const { data, error } = await supabase.rpc(rpc, args);
 
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
