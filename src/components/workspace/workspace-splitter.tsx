@@ -54,7 +54,7 @@ export function WorkspaceSplitter({
       className="relative w-2 shrink-0 cursor-col-resize"
     >
       <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/45" />
-      <div className="absolute top-1/2 left-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-border/50 opacity-0 transition-opacity hover:opacity-100" />
+      <div className="absolute top-1/2 left-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-[6px] bg-border/50 opacity-0 transition-opacity hover:opacity-100" />
     </div>
   );
 }

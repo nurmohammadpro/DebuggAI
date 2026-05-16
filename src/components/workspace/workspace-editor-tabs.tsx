@@ -18,10 +18,10 @@ export function WorkspaceEditorTabs() {
       {orderedPaths.map((path) => (
         <button
           key={path}
-          className={`h-8 px-3 rounded-full text-xs border transition-colors shrink-0 ${
+          className={`h-8 px-3 rounded-[6px] text-[11px] border transition-colors shrink-0 font-mono max-w-[220px] truncate ${
             activeFilePath === path
-              ? 'bg-muted/50 border-border/60 text-foreground'
-              : 'bg-transparent border-transparent text-muted-foreground hover:bg-muted/30 hover:border-border/50'
+              ? 'bg-[var(--app-surface)] border-[var(--app-border)] text-[var(--app-text)]'
+              : 'bg-transparent border-transparent text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:border-[var(--app-border)] hover:text-[var(--app-text)]'
           }`}
           onClick={() => setActiveFilePath(path)}
           title={path}
