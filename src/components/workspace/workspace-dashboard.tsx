@@ -21,6 +21,7 @@ import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
 import type { WorkspaceRightTab } from '@/components/workspace/workspace-right-panel';
+import { CommandPalette } from '@/components/dashboard/command-palette';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export function WorkspaceDashboard() {
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
   const { loadFromProject, bumpPreviewNonce, getProjectCode, savedSnapshot, currentCode, files, setThreadId } = useGenerationStore();
-  const { recentThreads, recentProjects } = useDashboardShell();
+  const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('code');
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -188,6 +189,7 @@ export function WorkspaceDashboard() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
+      <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <UnifiedSidebar

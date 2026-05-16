@@ -153,10 +153,13 @@ export function CommandPalette({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={false} className="p-0 max-w-lg rounded-[10px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+      <DialogContent
+        showCloseButton={false}
+        className="p-0 max-w-lg rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel)]"
+      >
         <DialogTitle className="sr-only">Command Palette</DialogTitle>
-        <div className="flex items-center border-b border-[var(--app-border)] px-4">
-          <Search className="h-4 w-4 text-[var(--app-text-dim)] shrink-0" />
+        <div className="flex items-center border-b border-[var(--app-border)] px-4 bg-[var(--app-panel)]">
+          <Search className="h-4 w-4 text-[var(--app-text-muted)] shrink-0" />
           <input
             ref={inputRef}
             className="w-full border-0 bg-transparent h-12 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none"
@@ -197,7 +200,7 @@ export function CommandPalette({
                     key={item.id}
                     type="button"
                     className={cn(
-                      'flex items-center gap-3 w-full px-3 py-2 rounded-[8px] text-[13px] transition-colors text-left',
+                      'group flex items-center gap-3 w-full px-3 py-2 rounded-[6px] text-[13px] transition-colors text-left',
                       isSelected
                         ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)]'
                         : 'text-[var(--app-text)] hover:bg-[var(--app-surface)]',
@@ -205,7 +208,12 @@ export function CommandPalette({
                     onClick={() => navigate(item)}
                     onMouseEnter={() => setSelectedIndex(idx)}
                   >
-                    <item.icon className="h-4 w-4 shrink-0 text-[var(--app-text-dim)]" />
+                    <item.icon
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        isSelected ? 'text-[var(--app-accent)]' : 'text-[var(--app-text-dim)]',
+                      )}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="truncate">{item.label}</div>
                       {item.description && (
@@ -214,7 +222,12 @@ export function CommandPalette({
                         </div>
                       )}
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100" />
+                    <ArrowRight
+                      className={cn(
+                        'h-3.5 w-3.5 shrink-0',
+                        isSelected ? 'text-[var(--app-accent)] opacity-100' : 'text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100',
+                      )}
+                    />
                   </button>
                 );
               })}

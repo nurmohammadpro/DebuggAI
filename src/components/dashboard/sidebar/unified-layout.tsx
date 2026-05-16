@@ -6,6 +6,7 @@ import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { useShellStore } from '@/store/shell-store';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
+import { CommandPalette } from '@/components/dashboard/command-palette';
 
 interface UnifiedLayoutProps {
   children: ReactNode;
@@ -23,11 +24,12 @@ export function UnifiedLayout({
   showSidebar = true,
 }: UnifiedLayoutProps) {
   const { sidebarCollapsed, toggleSidebar } = useShellStore();
-  const { recentThreads, recentProjects } = useDashboardShell();
+  const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex">
+      <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
       {/* Sidebar */}
       {showSidebar && (
         <>
