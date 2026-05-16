@@ -115,7 +115,7 @@ export function DebugScreen() {
   return (
     <div className="flex flex-col">
       {/* Code Input Section */}
-      <div className="rounded-[8px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] m-4 sm:m-6 p-4 sm:p-6">
+      <div className="rounded-[6px] bg-[var(--app-panel)] backdrop-blur-xl border border-[var(--app-border)] m-4 sm:m-6 p-4 sm:p-6">
         <div className="mb-6">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">AI Debugger</h1>
@@ -144,10 +144,10 @@ export function DebugScreen() {
               value={currentLanguage}
               onValueChange={(v) => setCurrentLanguage(v as any)}
             >
-              <SelectTrigger className="w-full sm:w-[200px] rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
+              <SelectTrigger className="w-full sm:w-[200px] rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
-              <SelectContent className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
+              <SelectContent className="rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
                 {DEBUG_LANGUAGES.map((lang) => (
                   <SelectItem key={lang.id} value={lang.id}>
                     {lang.name}
@@ -158,7 +158,7 @@ export function DebugScreen() {
 
             <button
               onClick={() => router.push('/dashboard/debug/history')}
-              className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+              className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
             >
               <History className="h-4 w-4" />
               <span>History</span>
@@ -174,7 +174,7 @@ export function DebugScreen() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Paste your code here..."
-              className="mt-1 w-full font-mono text-xs min-h-[200px] sm:min-h-[240px] rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 resize-y"
+              className="mt-1 w-full font-mono text-xs min-h-[200px] sm:min-h-[240px] rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 resize-y"
             />
           </div>
 
@@ -185,7 +185,7 @@ export function DebugScreen() {
               value={errorMessage}
               onChange={(e) => setErrorMessage(e.target.value)}
               placeholder="Paste the error message you're seeing..."
-              className="mt-1 w-full font-mono text-xs min-h-[80px] sm:min-h-[92px] rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 resize-y"
+              className="mt-1 w-full font-mono text-xs min-h-[80px] sm:min-h-[92px] rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] p-3 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 resize-y"
             />
           </div>
 
@@ -196,7 +196,7 @@ export function DebugScreen() {
             <button
               onClick={handleAnalyze}
               disabled={isAnalyzing}
-              className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50 w-full sm:w-auto min-w-[180px] justify-center"
+              className="inline-flex items-center gap-2 rounded-[6px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50 w-full sm:w-auto min-w-[180px] justify-center"
             >
               {isAnalyzing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -210,7 +210,7 @@ export function DebugScreen() {
       </div>
 
       {/* Results Section */}
-      <div className="rounded-[8px] bg-[var(--app-panel-2)] backdrop-blur-xl border border-[var(--app-border)] mx-4 sm:mx-6 mb-4 sm:mb-6 p-4 sm:p-6">
+      <div className="rounded-[6px] bg-[var(--app-panel-2)] backdrop-blur-xl border border-[var(--app-border)] mx-4 sm:mx-6 mb-4 sm:mb-6 p-4 sm:p-6">
         <div className="text-[13px] font-medium text-[var(--app-text)] flex items-center gap-2 flex-wrap">
           <Sparkles className="h-4 w-4 text-[var(--app-text-dim)]" />
           Result
@@ -226,7 +226,7 @@ export function DebugScreen() {
 
         <div className="mt-4">
           {analysis ? (
-            <pre className="whitespace-pre-wrap break-words bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[8px] p-4 text-xs leading-relaxed overflow-x-auto text-[var(--app-text)] font-mono">
+            <pre className="whitespace-pre-wrap break-words bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[6px] p-4 text-xs leading-relaxed overflow-x-auto text-[var(--app-text)] font-mono">
               {analysis}
             </pre>
           ) : (
