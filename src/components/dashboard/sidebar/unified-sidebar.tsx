@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
-import { Activity, Bug, Database, Home, MessageSquarePlus, Plus, Zap } from 'lucide-react';
+import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, Zap } from 'lucide-react';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import type { ThreadRow } from '@/hooks/queries/use-my-threads';
+import { getSession } from '@/hooks/use-session';
+import { useGenerationStore } from '@/store/generation-store';
 
 interface UnifiedSidebarProps {
   recentThreads?: ThreadRow[];
@@ -24,12 +26,35 @@ export function UnifiedSidebar({
 }: UnifiedSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { user } = useSessionStore();
+  const { setThreadId, clearThread } = useGenerationStore();
 
   // Check if we're on the dashboard home (not viewing a project)
   const isDashboardHome = pathname === '/dashboard' && !searchParams?.has('project');
   const isWebBuilder = pathname === '/dashboard/web-builder';
   const isDebug = pathname === '/dashboard/debug' || pathname.startsWith('/dashboard/debug/');
+  const activeProjectId = searchParams?.get('project');
+
+  const createThread = async () => {
+    const session = await getSession();
+    const token = session.session?.access_token;
+    if (!token) return;
+
+    const res = await fetch('/api/threads', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: null, projectId: activeProjectId || null, workspaceId: null, metadata: { source: 'sidebar' } }),
+    });
+    if (!res.ok) return;
+    const j = await res.json().catch(() => ({}));
+    const id = j?.thread?.id as string | undefined;
+    if (!id) return;
+    setThreadId(id);
+
+    if (activeProjectId) router.push(`/dashboard?project=${activeProjectId}&thread=${id}`);
+    else router.push(`/dashboard?thread=${id}`);
+  };
 
   return (
     <aside
@@ -123,14 +148,63 @@ export function UnifiedSidebar({
           )}
 
           {/* Debug Sessions */}
-          {!collapsed && recentThreads.length > 0 && (
+          {!collapsed && (
             <div className="mt-4">
-              <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
-                Threads
+              <div className="px-3 mb-2 flex items-center justify-between gap-2">
+                <div className="text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
+                  Threads
+                </div>
+                <button
+                  onClick={createThread}
+                  className="h-6 w-6 rounded-[6px] inline-flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+                  aria-label="New thread"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
               </div>
-              {recentThreads.slice(0, 8).map((thread) => (
-                <RecentThreadItem key={thread.id} thread={thread} />
-              ))}
+              {recentThreads.length === 0 ? (
+                <div className="px-3 py-2 text-[11px] text-[var(--app-text-dim)]">
+                  No threads yet.
+                </div>
+              ) : (
+                recentThreads.slice(0, 10).map((thread) => (
+                  <RecentThreadItem
+                    key={thread.id}
+                    thread={thread}
+                    onRename={async () => {
+                      const next = window.prompt('Rename thread', (thread.title || '').trim() || 'New thread');
+                      if (next == null) return;
+                      const session = await getSession();
+                      const token = session.session?.access_token;
+                      if (!token) return;
+                      await fetch(`/api/threads/${thread.id}`, {
+                        method: 'PATCH',
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: next }),
+                      });
+                      // Best-effort refresh: navigate to same URL to retrigger queries.
+                      router.refresh();
+                    }}
+                    onDelete={async () => {
+                      const ok = window.confirm('Delete this thread? This cannot be undone.');
+                      if (!ok) return;
+                      const session = await getSession();
+                      const token = session.session?.access_token;
+                      if (!token) return;
+                      await fetch(`/api/threads/${thread.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      if (searchParams?.get('thread') === thread.id) {
+                        clearThread();
+                        if (activeProjectId) router.push(`/dashboard?project=${activeProjectId}`);
+                        else router.push('/dashboard');
+                      }
+                      router.refresh();
+                    }}
+                  />
+                ))
+              )}
             </div>
           )}
         </div>
@@ -219,9 +293,11 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
 
 interface RecentThreadItemProps {
   thread: ThreadRow;
+  onRename?: () => void;
+  onDelete?: () => void;
 }
 
-function RecentThreadItem({ thread }: RecentThreadItemProps) {
+function RecentThreadItem({ thread, onRename, onDelete }: RecentThreadItemProps) {
   const timeAgo = formatTimeAgo(new Date(thread.updated_at || thread.created_at));
   const title = (thread.title || '').trim() || 'New thread';
   const href = thread.project_id
@@ -229,18 +305,40 @@ function RecentThreadItem({ thread }: RecentThreadItemProps) {
     : `/dashboard?thread=${thread.id}`;
 
   return (
-    <Link
-      href={href}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
-    >
-      <Activity className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
-      <span className="flex-1 min-w-0 truncate">
-        {title}
-      </span>
-      <span className="text-[10px] text-[var(--app-text-dim)] shrink-0">
-        {timeAgo}
-      </span>
-    </Link>
+    <div className="group flex items-center gap-1 px-1">
+      <Link
+        href={href}
+        className="flex-1 flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all min-w-0"
+      >
+        <Activity className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
+        <span className="flex-1 min-w-0 truncate">{title}</span>
+        <span className="text-[10px] text-[var(--app-text-dim)] shrink-0">{timeAgo}</span>
+      </Link>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRename?.();
+        }}
+        className="hidden group-hover:inline-flex h-7 w-7 rounded-[6px] items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+        aria-label="Rename thread"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onDelete?.();
+        }}
+        className="hidden group-hover:inline-flex h-7 w-7 rounded-[6px] items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-danger)] hover:bg-[var(--app-danger-soft)] transition-colors"
+        aria-label="Delete thread"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 

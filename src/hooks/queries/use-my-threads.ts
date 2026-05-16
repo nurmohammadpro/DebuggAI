@@ -15,24 +15,26 @@ export type ThreadRow = {
   updated_at: string;
 };
 
-export function useMyThreads(limit = 50, enabled = true) {
+export function useMyThreads(limit = 50, enabled = true, projectId?: string | null) {
   return useQuery({
-    queryKey: [...queryKeys.myThreads, { limit }] as const,
+    queryKey: [...queryKeys.myThreads, { limit, projectId: projectId || null }] as const,
     enabled,
     queryFn: async (): Promise<ThreadRow[]> => {
       const session = await getSession();
       if (!session.user) return [];
 
-      const { data, error } = await supabase
+      let q = supabase
         .from('threads')
         .select('id,title,project_id,workspace_id,metadata,created_at,updated_at')
         .eq('user_id', session.user.id)
-        .order('updated_at', { ascending: false })
-        .limit(limit);
+        .order('updated_at', { ascending: false });
+
+      if (projectId) q = q.eq('project_id', projectId);
+
+      const { data, error } = await q.limit(limit);
 
       if (error) throw error;
       return (data || []) as ThreadRow[];
     },
   });
 }
-
