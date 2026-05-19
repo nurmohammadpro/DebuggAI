@@ -21,6 +21,7 @@ export function Logo({ className = '' }: { className?: string }) {
       height={24}
       className={className}
       priority
+      style={{ width: 'auto', height: 'auto' }}
     />
   );
 }

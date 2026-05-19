@@ -17,13 +17,22 @@ const corsHeaders = {
 
 interface CheckoutRequest {
   priceId: string;
-  planType: 'pro' | 'enterprise';
+  planType: 'pro' | 'team' | 'business' | 'enterprise';
 }
 
 // Plan configurations
-const PLAN_CREDITS = {
+const PLAN_CREDITS: Record<string, number> = {
   pro: 300,
+  team: 2500,
+  business: 10000,
   enterprise: -1, // Unlimited
+};
+
+const PLAN_TRIAL_DAYS: Record<string, number | undefined> = {
+  pro: 7,
+  team: 14,
+  business: 14,
+  enterprise: undefined,
 };
 
 const PLAN_PRICES = {
@@ -146,7 +155,7 @@ serve(async (req) => {
           supabase_user_id: user.id,
           plan_type: planType,
         },
-        trial_period_days: planType === 'pro' ? 7 : undefined,
+        trial_period_days: PLAN_TRIAL_DAYS[planType],
       },
       allow_promotion_codes: true,
     });

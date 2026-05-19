@@ -340,8 +340,8 @@ async function executePlan(
   }
 
   const apiKey = Deno.env.get('AI_API_KEY');
-  const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.groq.com/openai/v1';
-  const model = Deno.env.get('AI_MODEL') || 'llama-3.3-70b-versatile';
+  const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1';
+  const model = Deno.env.get('AI_MODEL') || 'deepseek-chat';
 
   if (!apiKey) {
     // No AI key — produce a generic plan
@@ -529,8 +529,8 @@ async function executeLLM(
   }
 
   const apiKey = Deno.env.get('AI_API_KEY');
-  const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.groq.com/openai/v1';
-  const model = Deno.env.get('AI_MODEL') || 'llama-3.3-70b-versatile';
+  const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1';
+  const model = Deno.env.get('AI_MODEL') || 'deepseek-chat';
 
   if (!apiKey) {
     throw new Error('AI API key not configured');
@@ -619,28 +619,146 @@ async function executeTool(
   ctx: { jobId: string; runId: string; stepId: string | null; payload: any },
 ) {
   const toolName = ctx.payload?.tool_name || 'unknown';
+  const input = ctx.payload?.input || {};
+
   if (!ctx.stepId) {
     await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
     return;
   }
 
-  // Record tool call
+  const now = new Date().toISOString();
+  let output: any = { ok: true };
+  let toolStatus: 'succeeded' | 'failed' = 'succeeded';
+
+  try {
+    switch (toolName) {
+      case 'read_file': {
+        const filePath = input?.path || input?.file_path || '';
+        if (!filePath) throw new Error('Missing file path');
+
+        const { data: artifacts, error } = await supabase
+          .from('artifacts')
+          .select('id, content, metadata, created_at')
+          .eq('run_id', ctx.runId)
+          .eq('kind', 'file')
+          .filter('metadata->>path', 'eq', filePath)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) throw new Error(`DB error: ${error.message}`);
+        if (!artifacts || artifacts.length === 0) {
+          output = { ok: true, content: null, path: filePath, note: 'File not found' };
+        } else {
+          output = { ok: true, content: artifacts[0].content, path: filePath, id: artifacts[0].id };
+        }
+        break;
+      }
+
+      case 'write_file': {
+        const filePath = input?.path || input?.file_path || '';
+        const content = input?.content ?? '';
+        if (!filePath) throw new Error('Missing file path');
+
+        // Upsert: delete existing file artifact, then insert new version
+        await supabase
+          .from('artifacts')
+          .delete()
+          .eq('run_id', ctx.runId)
+          .eq('kind', 'file')
+          .filter('metadata->>path', 'eq', filePath);
+
+        const { data: inserted, error: insertErr } = await supabase
+          .from('artifacts')
+          .insert({
+            run_id: ctx.runId,
+            kind: 'file',
+            content,
+            metadata: { path: filePath, tool: 'write_file', size: content.length },
+          })
+          .select('id')
+          .single();
+
+        if (insertErr) throw new Error(`Insert error: ${insertErr.message}`);
+        output = { ok: true, path: filePath, id: inserted?.id, bytesWritten: content.length };
+        break;
+      }
+
+      case 'list_files': {
+        const prefix = input?.prefix || '';
+        let query = supabase
+          .from('artifacts')
+          .select('id, metadata, created_at')
+          .eq('run_id', ctx.runId)
+          .eq('kind', 'file')
+          .order('created_at', { ascending: false });
+
+        if (prefix) {
+          query = query.ilike('metadata->>path', `${prefix}%`);
+        }
+
+        const { data: files, error } = await query;
+        if (error) throw new Error(`DB error: ${error.message}`);
+
+        output = {
+          ok: true,
+          files: (files || []).map((f: any) => ({
+            id: f.id,
+            path: f.metadata?.path || '',
+            created_at: f.created_at,
+          })),
+        };
+        break;
+      }
+
+      case 'delete_file': {
+        const filePath = input?.path || input?.file_path || '';
+        if (!filePath) throw new Error('Missing file path');
+
+        const { error } = await supabase
+          .from('artifacts')
+          .delete()
+          .eq('run_id', ctx.runId)
+          .eq('kind', 'file')
+          .filter('metadata->>path', 'eq', filePath);
+
+        if (error) throw new Error(`Delete error: ${error.message}`);
+        output = { ok: true, path: filePath, deleted: true };
+        break;
+      }
+
+      default:
+        output = { ok: true, tool_name: toolName, note: 'Unrecognized tool — no-op' };
+    }
+  } catch (err) {
+    toolStatus = 'failed';
+    output = { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
   await supabase.from('tool_calls').insert({
     run_step_id: ctx.stepId,
     tool_name: toolName,
-    status: 'succeeded',
-    input: ctx.payload?.input || {},
-    output: { ok: true },
-    started_at: new Date().toISOString(),
+    status: toolStatus,
+    input,
+    output,
+    started_at: now,
     ended_at: new Date().toISOString(),
   });
 
   await supabase
     .from('run_steps')
-    .update({ status: 'succeeded', output: { tool_name: toolName, ok: true }, ended_at: new Date().toISOString() })
+    .update({
+      status: toolStatus,
+      output: { tool_name: toolName, ...output },
+      ...(toolStatus === 'failed' ? { error: output.error } : {}),
+      ended_at: new Date().toISOString(),
+    })
     .eq('id', ctx.stepId);
 
-  await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
+  if (toolStatus === 'failed') {
+    await failJob(supabase, ctx.jobId, ctx.stepId, ctx.runId, output.error, false);
+  } else {
+    await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
+  }
 }
 
 async function executePatch(
@@ -652,20 +770,151 @@ async function executePatch(
     return;
   }
 
-  // Record artifact pointer (diff or full content)
-  await supabase.from('artifacts').insert({
-    run_id: ctx.runId,
-    kind: ctx.payload?.artifact_kind || 'diff',
-    content: ctx.payload?.content || null,
-    metadata: { source: 'patch_executor' },
-  });
+  const now = new Date().toISOString();
+  const artifactKind = ctx.payload?.artifact_kind || 'diff';
 
-  await supabase
-    .from('run_steps')
-    .update({ status: 'succeeded', output: { artifact_kind: ctx.payload?.artifact_kind || 'diff' }, ended_at: new Date().toISOString() })
-    .eq('id', ctx.stepId);
+  try {
+    // Fetch the most recent LLM output from run_steps for this run
+    const { data: llmSteps } = await supabase
+      .from('run_steps')
+      .select('output')
+      .eq('run_id', ctx.runId)
+      .eq('kind', 'llm')
+      .eq('status', 'succeeded')
+      .order('ended_at', { ascending: false })
+      .limit(1);
 
-  await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
+    const llmOutput = llmSteps?.[0]?.output;
+    const llmContent: string = llmOutput?.content || ctx.payload?.content || '';
+
+    if (!llmContent) {
+      // No content to patch — record empty artifact and succeed
+      await supabase.from('artifacts').insert({
+        run_id: ctx.runId,
+        kind: artifactKind,
+        content: null,
+        metadata: { source: 'patch_executor', note: 'No LLM output to extract' },
+      });
+
+      await supabase
+        .from('run_steps')
+        .update({ status: 'succeeded', output: { filesWritten: 0, note: 'No content' }, ended_at: new Date().toISOString() })
+        .eq('id', ctx.stepId);
+
+      await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
+      return;
+    }
+
+    // Extract code blocks from markdown (```language ... ```)
+    const codeBlockRegex = /```(\w+)?(?:\s+(?:title|path|file)[=:]\s*["']?([^\s"'\n]+)["']?)?\n([\s\S]*?)```/g;
+    const extractedFiles: Array<{ path: string; content: string; language: string }> = [];
+    let match: RegExpExecArray | null;
+
+    while ((match = codeBlockRegex.exec(llmContent)) !== null) {
+      const language = match[1] || 'text';
+      const pathHint = match[2];
+      const code = match[3]?.trim() || '';
+
+      if (!code) continue;
+
+      const filePath = pathHint || inferFilePath(language, extractedFiles.length);
+      extractedFiles.push({ path: filePath, content: code, language });
+    }
+
+    // If no code blocks found, treat entire output as a report artifact
+    if (extractedFiles.length === 0) {
+      await supabase.from('artifacts').insert({
+        run_id: ctx.runId,
+        kind: 'report',
+        content: llmContent,
+        metadata: { source: 'patch_executor', note: 'Full output (no code blocks found)' },
+      });
+
+      await supabase
+        .from('run_steps')
+        .update({ status: 'succeeded', output: { filesWritten: 0, note: 'Report saved, no code blocks' }, ended_at: new Date().toISOString() })
+        .eq('id', ctx.stepId);
+
+      await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
+      return;
+    }
+
+    // Write each extracted file as an artifact (delete old, insert new)
+    for (const file of extractedFiles) {
+      await supabase
+        .from('artifacts')
+        .delete()
+        .eq('run_id', ctx.runId)
+        .eq('kind', 'file')
+        .filter('metadata->>path', 'eq', file.path);
+
+      await supabase.from('artifacts').insert({
+        run_id: ctx.runId,
+        kind: 'file',
+        content: file.content,
+        metadata: {
+          path: file.path,
+          language: file.language,
+          source: 'patch_executor',
+          size: file.content.length,
+        },
+      });
+    }
+
+    // Also save the raw diff/report artifact
+    await supabase.from('artifacts').insert({
+      run_id: ctx.runId,
+      kind: artifactKind,
+      content: llmContent,
+      metadata: {
+        source: 'patch_executor',
+        filesExtracted: extractedFiles.length,
+        filePaths: extractedFiles.map((f) => f.path),
+      },
+    });
+
+    await supabase
+      .from('run_steps')
+      .update({
+        status: 'succeeded',
+        output: { filesWritten: extractedFiles.length, filePaths: extractedFiles.map((f) => f.path) },
+        ended_at: new Date().toISOString(),
+      })
+      .eq('id', ctx.stepId);
+
+    await succeedJob(supabase, ctx.jobId, ctx.stepId, ctx.runId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+
+    await supabase.from('artifacts').insert({
+      run_id: ctx.runId,
+      kind: artifactKind,
+      content: ctx.payload?.content || null,
+      metadata: { source: 'patch_executor', error: msg },
+    });
+
+    await supabase
+      .from('run_steps')
+      .update({ status: 'failed', error: msg, ended_at: new Date().toISOString() })
+      .eq('id', ctx.stepId);
+
+    await failJob(supabase, ctx.jobId, ctx.stepId, ctx.runId, msg, false);
+  }
+}
+
+function inferFilePath(language: string, index: number): string {
+  const defaultPaths: Record<string, string> = {
+    typescript: `src/generated_${index}.ts`,
+    tsx: `src/components/Generated${index}.tsx`,
+    javascript: `src/generated_${index}.js`,
+    jsx: `src/components/Generated${index}.jsx`,
+    css: `src/styles/generated_${index}.css`,
+    html: `public/generated_${index}.html`,
+    json: `data/generated_${index}.json`,
+    sql: `migrations/generated_${index}.sql`,
+    python: `generated_${index}.py`,
+  };
+  return defaultPaths[language.toLowerCase()] || `generated_${index}.${language || 'txt'}`;
 }
 
 async function executeVerify(
@@ -677,21 +926,244 @@ async function executeVerify(
     return;
   }
 
-  // Placeholder: in Phase B, this runs sandbox tests / linting
-  const passed = ctx.payload?.expected_pass !== false;
+  try {
+    // Fetch all file artifacts for this run
+    const { data: files } = await supabase
+      .from('artifacts')
+      .select('id, content, metadata')
+      .eq('run_id', ctx.runId)
+      .eq('kind', 'file');
 
-  await supabase
-    .from('run_steps')
-    .update({ status: passed ? 'succeeded' : 'failed', output: { passed }, ended_at: new Date().toISOString() })
-    .eq('id', ctx.stepId);
+    const checks: Array<{ path: string; passed: boolean; errors: string[] }> = [];
 
-  await supabase
-    .from('runs')
-    .update({ status: passed ? 'succeeded' : 'failed', ended_at: new Date().toISOString() })
-    .eq('id', ctx.runId);
+    for (const file of files || []) {
+      const path = file.metadata?.path || 'unknown';
+      const language = file.metadata?.language || detectLanguageFromPath(path);
+      const content = file.content || '';
+      const result = validateSyntax(content, language);
+      checks.push({ path, passed: result.passed, errors: result.errors });
+    }
 
-  await supabase
-    .from('jobs')
-    .update({ status: passed ? 'succeeded' : 'failed', locked_until: null, updated_at: new Date().toISOString() })
-    .eq('id', ctx.jobId);
+    // If no files, check if there's recent LLM output to validate
+    if (checks.length === 0) {
+      const { data: llmSteps } = await supabase
+        .from('run_steps')
+        .select('output')
+        .eq('run_id', ctx.runId)
+        .eq('kind', 'llm')
+        .eq('status', 'succeeded')
+        .order('ended_at', { ascending: false })
+        .limit(1);
+
+      const content = llmSteps?.[0]?.output?.content || '';
+      if (content) {
+        const result = validateSyntax(content, 'markdown');
+        checks.push({ path: 'llm_output', passed: result.passed, errors: result.errors });
+      }
+    }
+
+    const allPassed = checks.length > 0 && checks.every((c) => c.passed);
+    const failedCount = checks.filter((c) => !c.passed).length;
+
+    await supabase
+      .from('run_steps')
+      .update({
+        status: allPassed ? 'succeeded' : 'failed',
+        output: { passed: allPassed, checks, failedCount, totalFiles: checks.length },
+        ...(allPassed ? {} : { error: `${failedCount} file(s) failed syntax validation` }),
+        ended_at: new Date().toISOString(),
+      })
+      .eq('id', ctx.stepId);
+
+    // Update run status
+    await supabase
+      .from('runs')
+      .update({
+        status: allPassed ? 'succeeded' : 'failed',
+        ...(allPassed ? { ended_at: new Date().toISOString() } : { error: `${failedCount} file(s) failed validation`, ended_at: new Date().toISOString() }),
+      })
+      .eq('id', ctx.runId);
+
+    await supabase
+      .from('jobs')
+      .update({
+        status: allPassed ? 'succeeded' : 'failed',
+        ...(allPassed ? {} : { last_error: `${failedCount} file(s) failed validation` }),
+        locked_until: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ctx.jobId);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await supabase
+      .from('run_steps')
+      .update({ status: 'failed', error: msg, ended_at: new Date().toISOString() })
+      .eq('id', ctx.stepId);
+
+    await supabase
+      .from('runs')
+      .update({ status: 'failed', error: msg, ended_at: new Date().toISOString() })
+      .eq('id', ctx.runId);
+
+    await supabase
+      .from('jobs')
+      .update({ status: 'failed', last_error: msg, locked_until: null, updated_at: new Date().toISOString() })
+      .eq('id', ctx.jobId);
+  }
+}
+
+function detectLanguageFromPath(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() || '';
+  const map: Record<string, string> = {
+    ts: 'typescript', tsx: 'tsx', js: 'javascript', jsx: 'jsx',
+    css: 'css', scss: 'css', html: 'html', json: 'json',
+    py: 'python', sql: 'sql', md: 'markdown', yml: 'yaml', yaml: 'yaml',
+  };
+  return map[ext] || ext;
+}
+
+function validateSyntax(content: string, language: string): { passed: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  switch (language) {
+    case 'json':
+      try { JSON.parse(content); } catch (e: any) { errors.push(`JSON parse error: ${e.message}`); }
+      break;
+
+    case 'typescript':
+    case 'tsx':
+    case 'javascript':
+    case 'jsx':
+      checkBraceBalance(content, '{}', 'curly braces', errors);
+      checkBraceBalance(content, '()', 'parentheses', errors);
+      checkBraceBalance(content, '[]', 'brackets', errors);
+      checkStringQuotes(content, errors);
+      break;
+
+    case 'css':
+    case 'scss':
+      checkBraceBalance(content, '{}', 'curly braces', errors);
+      break;
+
+    case 'html':
+    case 'markdown':
+      checkHtmlTagBalance(content, errors);
+      break;
+
+    case 'yaml':
+    case 'yml':
+      // Basic YAML: check no tabs, consistent indentation
+      if (/\t/.test(content)) errors.push('YAML should not contain tabs');
+      break;
+
+    case 'python':
+      // Mixed tabs/spaces check
+      if (/\t/.test(content) && /^[ ]{4}/m.test(content)) {
+        errors.push('Mixed tabs and spaces');
+      }
+      break;
+
+    default:
+      // No validation for unknown languages
+  }
+
+  return { passed: errors.length === 0, errors };
+}
+
+function checkBraceBalance(content: string, pair: string, label: string, errors: string[]) {
+  const open = pair[0]!;
+  const close = pair[1]!;
+  let depth = 0;
+  let inString: string | null = null;
+  let inComment = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i]!;
+    const prev = i > 0 ? content[i - 1] : '';
+
+    // Track comments
+    if (!inString && ch === '/' && content[i + 1] === '/' && !inComment) {
+      inComment = true; // line comment
+    }
+    if (inComment && ch === '\n') {
+      inComment = false;
+    }
+    if (!inString && ch === '*' && prev === '/' && !inComment) {
+      // Block comment start — skip until */
+      const end = content.indexOf('*/', i + 1);
+      if (end !== -1) { i = end + 1; continue; }
+    }
+
+    if (inComment) continue;
+
+    // Track strings
+    if (!inString && (ch === '"' || ch === "'" || ch === '`')) {
+      inString = ch;
+    } else if (inString === ch && prev !== '\\') {
+      inString = null;
+    }
+
+    if (inString) continue;
+
+    if (ch === open) depth++;
+    if (ch === close) {
+      depth--;
+      if (depth < 0) {
+        errors.push(`Unmatched '${close}' (extra closing ${label})`);
+        depth = 0;
+      }
+    }
+  }
+
+  if (depth > 0) errors.push(`Unmatched '${open}' (${depth} unclosed ${label})`);
+}
+
+function checkStringQuotes(content: string, errors: string[]) {
+  let inString: string | null = null;
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i]!;
+    const prev = i > 0 ? content[i - 1] : '';
+    if (!inString && (ch === '"' || ch === "'" || ch === '`')) {
+      inString = ch;
+    } else if (inString === ch && prev !== '\\') {
+      inString = null;
+    }
+  }
+  if (inString) errors.push(`Unclosed string (${inString})`);
+}
+
+function checkHtmlTagBalance(content: string, errors: string[]) {
+  // Self-closing and void elements
+  const voidTags = new Set([
+    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+    'link', 'meta', 'param', 'source', 'track', 'wbr',
+  ]);
+
+  const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+  const stack: string[] = [];
+  let m: RegExpExecArray | null;
+
+  while ((m = tagRegex.exec(content)) !== null) {
+    const fullMatch = m[0];
+    const tagName = (m[1] || '').toLowerCase();
+
+    if (voidTags.has(tagName)) continue;
+    if (fullMatch.endsWith('/>')) continue; // self-closing
+
+    if (fullMatch.startsWith('</')) {
+      // Closing tag
+      if (stack.length === 0 || stack[stack.length - 1] !== tagName) {
+        errors.push(`Mismatched closing tag </${tagName}> (expected </${stack[stack.length - 1] || '?'}>)`);
+      } else {
+        stack.pop();
+      }
+    } else {
+      // Opening tag
+      stack.push(tagName);
+    }
+  }
+
+  if (stack.length > 0) {
+    errors.push(`Unclosed tag${stack.length > 1 ? 's' : ''}: ${stack.map((t) => `<${t}>`).join(', ')}`);
+  }
 }

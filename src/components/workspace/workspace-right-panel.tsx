@@ -1,12 +1,14 @@
 'use client';
 
-import { ChevronRight, X, ExternalLink } from 'lucide-react';
+import { ChevronRight, X, ExternalLink, LayoutPanelTop, Database } from 'lucide-react';
 import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspaceGitPanel } from '@/components/workspace/workspace-git-panel';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
 import { WorkspaceRunsPanel } from '@/components/workspace/workspace-runs-panel';
+import { VisualEditor } from '@/components/visual-editor/visual-editor';
+import { SchemaGenerator } from '@/components/schema-generator/schema-generator';
 import type { EditorView } from '@/components/workspace/workspace-editor';
 
 export type WorkspaceRightTab =
@@ -17,7 +19,9 @@ export type WorkspaceRightTab =
   | 'runs'
   | 'git'
   | 'env'
-  | 'connections';
+  | 'connections'
+  | 'visual'
+  | 'schema';
 
 interface WorkspaceRightPanelProps {
   activeTab: WorkspaceRightTab;
@@ -48,6 +52,8 @@ export function WorkspaceRightPanel({
     git: 'Git',
     env: 'Environment',
     connections: 'Connections',
+    visual: 'Visual Editor',
+    schema: 'Schema Generator',
   }[activeTab];
   const contentWidth = mobile ? 360 : width;
 
@@ -71,51 +77,61 @@ export function WorkspaceRightPanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === 'code' && (
-          <WorkspaceEditor
-            editorView="code"
-            onEditorViewChange={onEditorViewChange}
-          />
-        )}
+        <div key={activeTab} className="h-full animate-in fade-in slide-in-from-right-2 duration-200 fill-mode-both">
+          {activeTab === 'code' && (
+            <WorkspaceEditor
+              editorView="code"
+              onEditorViewChange={onEditorViewChange}
+            />
+          )}
 
-        {activeTab === 'preview' && (
-          <WorkspaceEditor
-            editorView="preview"
-            onEditorViewChange={onEditorViewChange}
-          />
-        )}
+          {activeTab === 'preview' && (
+            <WorkspaceEditor
+              editorView="preview"
+              onEditorViewChange={onEditorViewChange}
+            />
+          )}
 
-        {activeTab === 'files' && (
-          <WorkspaceFileTree view="explorer" width={contentWidth} />
-        )}
+          {activeTab === 'files' && (
+            <WorkspaceFileTree view="explorer" width={contentWidth} />
+          )}
 
-        {activeTab === 'console' && (
-          <div className="h-full">
-            <ErrorConsole chromeless className="h-full" />
-          </div>
-        )}
-
-        {activeTab === 'runs' && (
-          <WorkspaceRunsPanel />
-        )}
-
-        {activeTab === 'git' && (
-          <WorkspaceGitPanel />
-        )}
-
-        {activeTab === 'env' && (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6">
-            <ExternalLink className="h-8 w-8 text-[var(--app-text-dim)] mb-3" />
-            <div className="text-[13px] font-medium text-[var(--app-text)] mb-1">Environment Variables</div>
-            <div className="text-[11px] text-[var(--app-text-muted)] max-w-[260px]">
-              Manage environment variables from the project settings page for secure, server-persisted storage.
+          {activeTab === 'console' && (
+            <div className="h-full">
+              <ErrorConsole chromeless className="h-full" />
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'connections' && (
-          <WorkspaceConnectionsPanel />
-        )}
+          {activeTab === 'runs' && (
+            <WorkspaceRunsPanel />
+          )}
+
+          {activeTab === 'git' && (
+            <WorkspaceGitPanel />
+          )}
+
+          {activeTab === 'env' && (
+            <div className="h-full flex flex-col items-center justify-center text-center p-6">
+              <ExternalLink className="h-8 w-8 text-[var(--app-text-dim)] mb-3" />
+              <div className="text-[13px] font-medium text-[var(--app-text)] mb-1">Environment Variables</div>
+              <div className="text-[11px] text-[var(--app-text-muted)] max-w-[260px]">
+                Manage environment variables from the project settings page for secure, server-persisted storage.
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'connections' && (
+            <WorkspaceConnectionsPanel />
+          )}
+
+          {activeTab === 'visual' && (
+            <VisualEditor className="h-full" />
+          )}
+
+          {activeTab === 'schema' && (
+            <SchemaGenerator />
+          )}
+        </div>
       </div>
     </>
   );

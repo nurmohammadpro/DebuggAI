@@ -1,0 +1,111 @@
+# DeBuggAI — Supabase Configuration
+# For detailed docs: https://supabase.com/docs/guides/cli/config
+
+# Project-specific settings
+project_id = "debuggai"
+region = "us-east-1"
+organization_slug = "debuggai"
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[api.tls]
+enabled = true
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 200
+
+[db.seed]
+enabled = true
+sql_paths = ["./supabase/seed.sql"]
+
+[realtime]
+enabled = true
+port = 54326
+max_realtime_bytes_per_second = 1000000
+
+[realtime.broadcast]
+enabled = true
+
+[realtime.presence]
+enabled = true
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+file_size_limit = "50MiB"
+
+[storage.file_upload]
+enabled = true
+max_file_size = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://debuggai.vercel.app"]
+jwt_expiry = 3600
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.email.template]
+confirm_signup = "./supabase/templates/confirm.html"
+reset_password = "./supabase/templates/reset.html"
+
+[auth.sms]
+enable_signup = false
+
+[auth.external]
+enabled = false
+
+[auth.hook]
+enabled = false
+
+[analytics]
+enabled = false
+
+[functions]
+enabled = true
+
+[functions.agent-worker]
+enabled = true
+verify_jwt = true
+
+[functions.generate]
+enabled = true
+
+[functions.debug]
+enabled = true
+
+[functions.debug-ai-analyze]
+enabled = true
+
+[functions.create-checkout]
+enabled = true
+
+[functions.ambassador-leaderboard]
+enabled = true
+
+[functions.monitoring]
+enabled = true
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"

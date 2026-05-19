@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useGeneration } from '@/hooks/use-generation';
-import { Send, Loader2, Sparkles, Layers } from 'lucide-react';
+import { Send, Loader2, Sparkles, Layers, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
+import { PromptTemplates } from '@/components/visual-editor/prompt-templates';
 import { useShellStore } from '@/store/shell-store';
 import { cn } from '@/lib/utils';
 import { useGenerationStore } from '@/store/generation-store';
@@ -33,6 +34,7 @@ export function ChatPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
@@ -190,7 +192,10 @@ export function ChatPanel({
             <span className="text-[11px] font-medium text-[var(--app-text-muted)] uppercase tracking-[0.12em]">AI</span>
           </div>
           <StackSelector>
-            <button className="inline-flex items-center gap-1.5 rounded-[6px] h-7 px-2 text-[11px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="inline-flex items-center gap-1.5 rounded-[6px] h-7 px-2 text-[11px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+            >
               <Layers className="h-3.5 w-3.5" />
               Templates
             </button>
@@ -283,6 +288,37 @@ export function ChatPanel({
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Template Picker Dialog */}
+      {showTemplates && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowTemplates(false)}
+        >
+          <div
+            className="bg-[var(--app-panel)] border border-[var(--app-border)] rounded-[8px] w-[680px] max-h-[80vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 h-10 border-b border-[var(--app-border)] sticky top-0 bg-[var(--app-panel)] z-10">
+              <span className="text-[11px] font-medium text-[var(--app-text-muted)] uppercase tracking-[0.12em]">
+                Prompt Templates
+              </span>
+              <button
+                onClick={() => setShowTemplates(false)}
+                className="h-6 w-6 inline-flex items-center justify-center rounded-[4px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <PromptTemplates
+              onSelect={(prompt) => {
+                setInput(prompt);
+                setShowTemplates(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Input */}
       <div className="p-3 shrink-0 bg-[var(--app-panel-2)] border-t border-[var(--app-border)]">

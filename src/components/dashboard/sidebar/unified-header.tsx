@@ -58,20 +58,21 @@ export function UnifiedHeader({
 
         {/* Tool Tabs */}
         {toolTabs && toolTabs.length > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 relative">
             {toolTabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeToolTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => onToolTabChange?.(tab.id)}
-                  className={`h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-[11px] font-medium transition-all ${
-                    activeToolTab === tab.id
+                  className={`h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-[11px] font-medium transition-all duration-150 ${
+                    isActive
                       ? 'bg-[var(--app-surface)] text-[var(--app-text)] border border-[var(--app-border)]'
                       : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
                   }`}
                 >
-                  <Icon className="w-3 h-3" />
+                  <Icon className={`w-3 h-3 transition-transform duration-150 ${isActive ? 'scale-110' : ''}`} />
                   <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               );

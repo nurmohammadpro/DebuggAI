@@ -7,11 +7,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
-import { promises as fs } from 'fs';
+import { promises as fs, createReadStream } from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
 const ARCHIVE_DIR = path.join(process.cwd(), '.deploy-archives');
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await requireUser(request);
+    if (auth.errorResponse) return auth.errorResponse;
+
+    const { searchParams } = new URL(request.url);
+    const filename = searchParams.get('filename');
+
+    if (!filename) {
+      return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
+    }
+
+    // Prevent path traversal
+    const sanitized = path.basename(filename);
+    const zipPath = path.join(ARCHIVE_DIR, sanitized);
+
+    try {
+      await fs.access(zipPath);
+    } catch {
+      return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
+    }
+
+    const stat = await fs.stat(zipPath);
+    const stream = createReadStream(zipPath);
+
+    return new Response(stream as unknown as ReadableStream, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="${sanitized}"`,
+        'Content-Length': String(stat.size),
+      },
+    });
+  } catch (error) {
+    console.error('Deploy archive download error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Download failed' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

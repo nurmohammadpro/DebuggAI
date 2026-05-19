@@ -16,12 +16,15 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { Code2, Eye, Files, GitBranch, ListChecks, Menu, Play, Plug, Settings, Share2, Terminal, Zap } from 'lucide-react';
+import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
+import { DeployModal } from '@/components/workspace/deploy-modal';
 import type { WorkspaceRightTab } from '@/components/workspace/workspace-right-panel';
 import { CommandPalette } from '@/components/dashboard/command-palette';
+import { useCursorTracking, CollabCursorOverlay, CollabStatusBar } from '@/components/workspace/collab-cursors';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -36,11 +39,14 @@ export function WorkspaceDashboard() {
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rightWidth, setRightWidth] = useState(640);
+  const [deployModalOpen, setDeployModalOpen] = useState(false);
 
   const urlProjectId = searchParams.get('project');
   const urlThreadId = searchParams.get('thread');
   const effectiveProjectId = urlProjectId;
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
+
+  const { remoteCursors, broadcastCursor } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
 
   const unsavedCount = useMemo(() => {
     const currentSnapshot = getProjectCode();
@@ -150,6 +156,18 @@ export function WorkspaceDashboard() {
         <span className="text-[var(--app-text-muted)]">credits</span>
       </div>
 
+      {/* Collab Status */}
+      <CollabStatusBar cursors={remoteCursors} />
+
+      {/* Deploy Button */}
+      <button
+        className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+        onClick={() => setDeployModalOpen(true)}
+      >
+        <Rocket className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Deploy</span>
+      </button>
+
       {/* Save Version */}
       <WorkspaceSaveVersionButton />
 
@@ -178,7 +196,9 @@ export function WorkspaceDashboard() {
 
   const toolTabs = [
     { id: 'code' as const, label: 'Code', icon: Code2 },
+    { id: 'visual' as const, label: 'Visual', icon: LayoutPanelTop },
     { id: 'preview' as const, label: 'Preview', icon: Eye },
+    { id: 'schema' as const, label: 'Schema', icon: Database },
     { id: 'files' as const, label: 'Files', icon: Files },
     { id: 'console' as const, label: 'Console', icon: Terminal },
     { id: 'runs' as const, label: 'Runs', icon: ListChecks },
@@ -189,7 +209,19 @@ export function WorkspaceDashboard() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
+      <CollabCursorOverlay cursors={remoteCursors} />
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
+
+      {/* Deploy Modal */}
+      <DeployModal
+        open={deployModalOpen}
+        onOpenChange={setDeployModalOpen}
+        projectId={effectiveProjectId}
+        projectFiles={files?.files ? Object.fromEntries(
+          Object.entries(files.files).map(([path, f]) => [path, f.content])
+        ) : {}}
+        projectName={project?.prompt || project?.description || 'my-app'}
+      />
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <UnifiedSidebar
@@ -200,22 +232,36 @@ export function WorkspaceDashboard() {
       </div>
 
       {/* Mobile Sidebar Overlay */}
-      {mobileMenuOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            key="sidebar-overlay"
+            className="fixed inset-0 z-40 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="fixed inset-y-0 left-0 w-64 bg-[var(--app-panel)] border-r border-[var(--app-border)] z-50 md:hidden overflow-y-auto">
-            <UnifiedSidebar
-              recentThreads={recentThreads}
-              recentProjects={recentProjects}
-              collapsed={false}
-              mobile
-            />
-          </div>
-        </>
-      )}
+          >
+            <div className="absolute inset-0 bg-black/50" />
+            <motion.div
+              className="absolute inset-y-0 left-0 w-64 bg-[var(--app-panel)] border-r border-[var(--app-border)] overflow-y-auto"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <UnifiedSidebar
+                recentThreads={recentThreads}
+                recentProjects={recentProjects}
+                collapsed={false}
+                mobile
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
@@ -283,7 +329,7 @@ export function WorkspaceDashboard() {
           />
 
           {/* Code, preview, files, and project tools */}
-          <div className="hidden sm:block">
+          <div className="hidden sm:block transition-all duration-200 ease-out" style={{ width: rightCollapsed ? undefined : clamp(rightWidth, 380, 860) }}>
             <WorkspaceRightPanel
               activeTab={rightTab}
               onTabChange={setRightTab}
@@ -308,20 +354,42 @@ export function WorkspaceDashboard() {
         />
 
         {/* Mobile Panel Overlay */}
-        {mobilePanelOpen && (
-          <WorkspaceRightPanel
-            activeTab={rightTab}
-            onTabChange={setRightTab}
-            collapsed={false}
-            onToggleCollapsed={() => {}}
-            width={0}
-            mobile
-            onMobileClose={() => setMobilePanelOpen(false)}
-            onEditorViewChange={(view) => {
-              setRightTab(view);
-            }}
-          />
-        )}
+        <AnimatePresence>
+          {mobilePanelOpen && (
+            <motion.div
+              key="mobile-panel-overlay"
+              className="fixed inset-0 z-50 md:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setMobilePanelOpen(false)}
+            >
+              <div className="absolute inset-0 bg-black/50" />
+              <motion.div
+                className="absolute inset-y-0 right-0 w-full max-w-[90vw] bg-[var(--app-panel)] flex flex-col"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <WorkspaceRightPanel
+                  activeTab={rightTab}
+                  onTabChange={setRightTab}
+                  collapsed={false}
+                  onToggleCollapsed={() => {}}
+                  width={0}
+                  mobile
+                  onMobileClose={() => setMobilePanelOpen(false)}
+                  onEditorViewChange={(view) => {
+                    setRightTab(view);
+                  }}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

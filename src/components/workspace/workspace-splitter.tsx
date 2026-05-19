@@ -51,10 +51,11 @@ export function WorkspaceSplitter({
       aria-orientation="vertical"
       tabIndex={0}
       onPointerDown={onPointerDown}
-      className="relative w-2 shrink-0 cursor-col-resize"
+      className="group relative w-2 shrink-0 cursor-col-resize transition-colors duration-150 hover:bg-[var(--app-accent)]/5 active:bg-[var(--app-accent)]/10"
     >
-      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/45" />
-      <div className="absolute top-1/2 left-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-[6px] bg-border/50 opacity-0 transition-opacity hover:opacity-100" />
+      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--app-border)] transition-colors duration-150 group-hover:bg-[var(--app-accent)]/30 group-active:bg-[var(--app-accent)]/50" />
+      <div className="absolute top-1/2 left-1/2 h-10 w-1 -translate-x-1/2 -translate-y-1/2 rounded-[8px] bg-[var(--app-accent)]/0 transition-all duration-200 group-hover:bg-[var(--app-accent)]/20 group-active:bg-[var(--app-accent)]/30 group-hover:scale-y-110" />
+      <div className="absolute top-1/2 left-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--app-accent)]/0 transition-all duration-200 group-hover:bg-[var(--app-accent)]/40 group-active:bg-[var(--app-accent)]/60 group-hover:h-10" />
     </div>
   );
 }

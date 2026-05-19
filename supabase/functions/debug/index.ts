@@ -140,8 +140,8 @@ ${languageHint}`;
 
     // 4. Call AI API with streaming
     const apiKey = Deno.env.get('AI_API_KEY');
-    const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.groq.com/openai/v1';
-    const model = Deno.env.get('AI_MODEL') || 'llama-3.3-70b-versatile';
+    const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1';
+    const model = Deno.env.get('AI_MODEL') || 'deepseek-chat';
 
     if (!apiKey) {
       return new Response(
