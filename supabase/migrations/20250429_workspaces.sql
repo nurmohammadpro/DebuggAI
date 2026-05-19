@@ -215,8 +215,22 @@ CREATE TRIGGER project_comments_updated_at
   EXECUTE FUNCTION update_workspaces_updated_at();
 
 -- ============================================================================
+-- ============================================================================
 -- Row Level Security (RLS)
 -- ============================================================================
+
+-- Helper: check workspace membership (SECURITY DEFINER, bypasses RLS → no recursion)
+CREATE OR REPLACE FUNCTION public.is_workspace_member(p_workspace_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM workspace_members WHERE workspace_id = p_workspace_id AND user_id = auth.uid()
+  );
+$$;
 
 -- Workspaces RLS
 ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
@@ -224,13 +238,7 @@ ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view workspaces they are members of" ON workspaces;
 CREATE POLICY "Users can view workspaces they are members of"
   ON workspaces FOR SELECT
-  USING (
-    id IN (
-      SELECT workspace_id FROM workspace_members
-      WHERE user_id = auth.uid()
-    )
-    OR owner_id = auth.uid()
-  );
+  USING (owner_id = auth.uid() OR is_workspace_member(id));
 
 DROP POLICY IF EXISTS "Workspace owners can manage workspaces" ON workspaces;
 CREATE POLICY "Workspace owners can manage workspaces"
@@ -240,12 +248,10 @@ CREATE POLICY "Workspace owners can manage workspaces"
 DROP POLICY IF EXISTS "Workspace admins can update workspaces" ON workspaces;
 CREATE POLICY "Workspace admins can update workspaces"
   ON workspaces FOR UPDATE
-  USING (
-    id IN (
-      SELECT workspace_id FROM workspace_members
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_id = id AND user_id = auth.uid() AND role = 'admin'
+  ));
 
 -- Workspace Members RLS
 ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
@@ -254,14 +260,8 @@ DROP POLICY IF EXISTS "Users can view workspace members" ON workspace_members;
 CREATE POLICY "Users can view workspace members"
   ON workspace_members FOR SELECT
   USING (
-    workspace_id IN (
-      SELECT id FROM workspaces
-      WHERE owner_id = auth.uid()
-      OR id IN (
-        SELECT workspace_id FROM workspace_members
-        WHERE user_id = auth.uid()
-      )
-    )
+    user_id = auth.uid()
+    OR EXISTS (SELECT 1 FROM workspaces WHERE id = workspace_id AND owner_id = auth.uid())
   );
 
 DROP POLICY IF EXISTS "Workspace owners can manage members" ON workspace_members;
