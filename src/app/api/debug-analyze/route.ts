@@ -5,29 +5,31 @@
  */
 
 import { NextRequest } from 'next/server';
-import { getBearerToken } from '@/lib/api/bearer';
+import { requireUser } from '@/lib/server/auth';
+import { withRateLimit } from '@/lib/server/plan-enforcement';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = getBearerToken(req);
-    if (!token) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
+
+    const rateLimit = await withRateLimit(auth.user!.id, 'debug_analyze');
+    if (!rateLimit.allowed) {
+      return new Response(JSON.stringify(rateLimit.body), {
+        status: rateLimit.status,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
       });
     }
 
-    // 1. Get request body
     const body = await req.json();
 
-    // 2. Call Supabase edge function
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/debug-ai-analyze`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${auth.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

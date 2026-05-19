@@ -27,21 +27,38 @@ serve(async (req) => {
   }
 
   try {
+    // Auth check — require valid user JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const adminClient = createClient(supabaseUrl, supabaseKey);
+
+    // Validate the user's token
+    const { data: userData, error: authError } = await adminClient.auth.getUser(token);
+    if (authError || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const url = new URL(req.url);
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get top referrers with their referral counts and earnings
-    const { data: topReferrers, error } = await supabase
+    const { data: topReferrers, error } = await adminClient
       .rpc('get_ambassador_leaderboard', { limit_count: limit });
 
     if (error) {
       // Fallback to manual query if RPC doesn't exist
-      const { data: referrals } = await supabase
+      const { data: referrals } = await adminClient
         .from('referrals')
         .select('referrer_id, status, credits_earned')
         .eq('status', 'completed');
@@ -68,7 +85,7 @@ serve(async (req) => {
           .sort((a, b) => b.total_referrals - a.total_referrals)
           .slice(0, limit)
           .map(async (stats) => {
-            const { data: profile } = await supabase
+            const { data: profile } = await adminClient
               .from('profiles')
               .select('email, full_name, avatar_url, metadata')
               .eq('id', stats.referrer_id)

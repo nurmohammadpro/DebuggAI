@@ -5,11 +5,15 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/server/admin';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const admin = await requireAdmin(req);
+  if (admin.errorResponse) return admin.errorResponse;
+
   const supabase = createSupabaseAdmin();
   const url = new URL(req.url);
   const days = Math.min(90, Math.max(1, Number(url.searchParams.get('days') || 7)));

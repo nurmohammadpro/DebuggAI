@@ -4,14 +4,31 @@
  */
 
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
+import { requireUser } from '@/lib/server/auth';
 import { NextRequest, NextResponse } from 'next/server';
+
+async function verifyProjectOwnership(userId: string, projectId: string): Promise<boolean> {
+  const supabase = createSupabaseAdmin();
+  const { data } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('id', projectId)
+    .eq('user_id', userId)
+    .single();
+  return !!data;
+}
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
     const { id: projectId } = await params;
+    if (!(await verifyProjectOwnership(auth.user!.id, projectId))) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     const supabase = createSupabaseAdmin();
 
     const { data: envVars, error } = await supabase
@@ -45,7 +62,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
     const { id: projectId } = await params;
+    if (!(await verifyProjectOwnership(auth.user!.id, projectId))) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     const body = await req.json();
     const supabase = createSupabaseAdmin();
 
@@ -86,7 +108,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
     const { id: projectId } = await params;
+    if (!(await verifyProjectOwnership(auth.user!.id, projectId))) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     const body = await req.json();
     const supabase = createSupabaseAdmin();
 
@@ -122,7 +149,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
     const { id: projectId } = await params;
+    if (!(await verifyProjectOwnership(auth.user!.id, projectId))) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     const { searchParams } = new URL(req.url);
     const envVarId = searchParams.get('id');
 

@@ -69,6 +69,41 @@ export async function checkRateLimit(userId: string, action: string): Promise<{ 
   return { allowed: current < planConfig.rateLimit, current, limit: planConfig.rateLimit };
 }
 
+export async function logUsage(userId: string, action: string): Promise<void> {
+  try {
+    const supabase = createSupabaseAdmin();
+    await supabase.from('analytics_usage_logs').insert({
+      user_id: userId,
+      action_type: action,
+    });
+  } catch {
+    // Best-effort logging — never block the request
+  }
+}
+
+export async function withRateLimit(
+  userId: string,
+  action: string
+): Promise<{ allowed: true } | { allowed: false; status: number; body: object }> {
+  const result = await checkRateLimit(userId, action);
+
+  if (!result.allowed) {
+    return {
+      allowed: false,
+      status: 429,
+      body: {
+        error: 'Rate limit exceeded',
+        limit: result.limit,
+        current: result.current,
+        retryAfter: 60,
+      },
+    };
+  }
+
+  await logUsage(userId, action);
+  return { allowed: true };
+}
+
 export function getActionCost(action: string): number {
   return ACTION_COSTS[action] ?? 1;
 }

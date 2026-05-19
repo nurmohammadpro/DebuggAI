@@ -1,7 +1,16 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/verify-email', '/auth/callback'];
+const PUBLIC_PREFIXES = ['/api/', '/_next/', '/favicon.ico'];
+
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_PATHS.includes(pathname)) return true;
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Security headers
@@ -24,10 +33,33 @@ export function middleware(request: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https:",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://api.openai.com https://api.anthropic.com ws://localhost:* wss://*.supabase.co",
+      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com ws://localhost:* wss://*.supabase.co",
       "frame-src 'self' http://localhost:*",
     ].join('; ')
   );
+
+  // Auth guard for dashboard routes
+  if (pathname.startsWith('/dashboard') && !isPublicPath(pathname)) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+        },
+      }
+    );
+
+    const { data } = await supabase.auth.getUser();
+
+    if (!data?.user) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   return response;
 }

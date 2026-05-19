@@ -5,19 +5,12 @@
  */
 
 import { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { requireUser } from '@/lib/server/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Get the session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
 
     // 2. Get request body
     const body = await req.json();
@@ -29,7 +22,7 @@ export async function POST(req: NextRequest) {
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${auth.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

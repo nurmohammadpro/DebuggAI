@@ -35,8 +35,17 @@ serve(async (req) => {
       });
     }
 
-    // Metrics endpoint
+    // Metrics endpoint (requires API key)
     if (isMetrics) {
+      const apiKey = req.headers.get('Authorization')?.replace('Bearer ', '');
+      const configuredKey = Deno.env.get('MONITORING_API_KEY');
+      if (!configuredKey || apiKey !== configuredKey) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
       try {
         // Get user count
         const { count: userCount } = await supabase

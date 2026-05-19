@@ -9,16 +9,20 @@
  */
 
 import type { NextRequest } from 'next/server';
-import { getBearerToken } from '@/lib/api/bearer';
+import { requireUser } from '@/lib/server/auth';
+import { withRateLimit } from '@/lib/server/plan-enforcement';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const token = getBearerToken(req);
-  if (!token) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
+  const auth = await requireUser(req);
+  if (auth.errorResponse) return auth.errorResponse;
+
+  const rateLimit = await withRateLimit(auth.user!.id, 'debug');
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify(rateLimit.body), {
+      status: rateLimit.status,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
     });
   }
 
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
   const response = await fetch(edgeFunctionUrl, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${auth.token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),

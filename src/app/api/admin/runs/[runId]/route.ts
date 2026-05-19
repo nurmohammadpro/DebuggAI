@@ -6,11 +6,15 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/server/admin';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ runId: string }> }) {
+  const admin = await requireAdmin(req);
+  if (admin.errorResponse) return admin.errorResponse;
+
   const supabase = createSupabaseAdmin();
   const { runId } = await ctx.params;
 
@@ -56,6 +60,9 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ runId: stri
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ runId: string }> }) {
+  const admin = await requireAdmin(req);
+  if (admin.errorResponse) return admin.errorResponse;
+
   const supabase = createSupabaseAdmin();
   const { runId } = await ctx.params;
   const body = await req.json().catch(() => null) as null | { action: 'cancel' | 'retry' };
