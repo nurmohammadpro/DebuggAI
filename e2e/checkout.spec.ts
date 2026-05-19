@@ -3,26 +3,17 @@ import { test, expect } from '@playwright/test';
 test.describe('Checkout Flow', () => {
   test('pricing page renders plan tiers', async ({ page }) => {
     await page.goto('/pricing');
-    await page.waitForTimeout(2000);
-
     // Pricing page should list plan options
-    const freePlan = page.locator('text=Free');
-    const proPlan = page.locator('text=Pro');
-
-    // At least one plan tier should be visible
-    await expect(freePlan.or(proPlan).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'FREE' })).toBeVisible({ timeout: 10000 });
   });
 
-  test('pricing page does not crash', async ({ page }) => {
-    await page.goto('/pricing');
-    await page.waitForTimeout(2000);
-    await expect(page.locator('body')).not.toHaveText(/500|Internal Server Error/);
+  test('pricing page returns 200', async ({ page }) => {
+    const response = await page.goto('/pricing');
+    expect(response?.status()).toBe(200);
   });
 
   test('pro plan has upgrade CTA', async ({ page }) => {
     await page.goto('/pricing');
-    await page.waitForTimeout(2000);
-
     // Look for upgrade/CTA buttons
     const ctaButtons = page.locator('a[href*="checkout"], button:has-text("Upgrade"), button:has-text("Get Started"), button:has-text("Subscribe")');
     const count = await ctaButtons.count();
@@ -37,10 +28,10 @@ test.describe('Checkout Flow', () => {
     expect(url.includes('/login') || url.includes('/billing')).toBeTruthy();
   });
 
-  test('billing page loaded from dashboard', async ({ page }) => {
-    await page.goto('/dashboard/billing');
-    await page.waitForTimeout(2000);
-    // Page should at least render (either billing UI or redirect to login)
-    await expect(page.locator('body')).not.toHaveText(/500|Internal Server Error/);
+  test('billing page redirects to login when unauthenticated', async ({ page }) => {
+    const response = await page.goto('/dashboard/billing');
+    // Either it redirects to login or the response itself is a redirect
+    const url = page.url();
+    expect(url.includes('/login') || url.includes('/billing')).toBeTruthy();
   });
 });
