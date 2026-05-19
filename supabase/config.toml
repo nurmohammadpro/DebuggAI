@@ -1,10 +1,5 @@
 # DeBuggAI — Supabase Configuration
-# For detailed docs: https://supabase.com/docs/guides/cli/config
-
-# Project-specific settings
 project_id = "debuggai"
-region = "us-east-1"
-organization_slug = "debuggai"
 
 [api]
 port = 54321
@@ -32,14 +27,6 @@ sql_paths = ["./supabase/seed.sql"]
 
 [realtime]
 enabled = true
-port = 54326
-max_realtime_bytes_per_second = 1000000
-
-[realtime.broadcast]
-enabled = true
-
-[realtime.presence]
-enabled = true
 
 [studio]
 port = 54323
@@ -49,10 +36,6 @@ port = 54324
 
 [storage]
 file_size_limit = "50MiB"
-
-[storage.file_upload]
-enabled = true
-max_file_size = "50MiB"
 
 [auth]
 enabled = true
@@ -65,28 +48,13 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
-[auth.email.template]
-confirm_signup = "./supabase/templates/confirm.html"
-reset_password = "./supabase/templates/reset.html"
-
 [auth.sms]
 enable_signup = false
 
 [auth.external]
-enabled = false
-
-[auth.hook]
-enabled = false
 
 [analytics]
 enabled = false
-
-[functions]
-enabled = true
-
-[functions.agent-worker]
-enabled = true
-verify_jwt = true
 
 [functions.generate]
 enabled = true
@@ -100,12 +68,18 @@ enabled = true
 [functions.create-checkout]
 enabled = true
 
+[functions.agent-worker]
+enabled = true
+verify_jwt = true
+
 [functions.ambassador-leaderboard]
 enabled = true
 
 [functions.monitoring]
 enabled = true
 
-[edge_runtime]
+[functions.web-builder-templates]
 enabled = true
+
+[edge_runtime]
 policy = "per_worker"
