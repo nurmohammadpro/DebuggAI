@@ -59,7 +59,7 @@ export function ChatPanel({
     );
   };
 
-  const { generate, ensureThreadId } = useGeneration({
+  const { generate, generateFromTemplate, ensureThreadId } = useGeneration({
     onDone: async () => {
       setIsLoading(false);
       toast.success('Code generated successfully!');
@@ -108,6 +108,21 @@ export function ChatPanel({
 
   const { setSidebarCollapsed } = useShellStore();
 
+  const KNOWN_STACKS: Record<string, string> = {
+    mern: 'mern', mean: 'mean', laravel: 'laravel', django: 'django',
+    flask: 'flask', rails: 'rails', go: 'go', nextjs: 'nextjs',
+    'next.js': 'nextjs', react: 'react', vue: 'vue', svelte: 'svelte',
+    't3 stack': 't3', t3: 't3',
+  };
+
+  const detectStack = (text: string): string | null => {
+    const lower = text.toLowerCase();
+    for (const [key, stack] of Object.entries(KNOWN_STACKS)) {
+      if (lower.includes(key)) return stack;
+    }
+    return null;
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -141,9 +156,18 @@ export function ChatPanel({
         { id: `local_user_${Date.now()}`, role: 'user', content: text, created_at: nowIso },
       ]);
 
-      await generate({ prompt: text, persistUserMessage: false });
+      // If the prompt names a known stack, use the instant template path.
+      const stack = detectStack(text);
+      if (stack) {
+        const projectName = text.replace(new RegExp(`\\b${Object.keys(KNOWN_STACKS).join('|')}\\b`, 'gi'), '').replace(/\s+/g, ' ').trim().slice(0, 60) || `${stack}-app`;
+        toast.info(`Generating ${stack} project from template...`);
+        await generateFromTemplate(stack, [], projectName);
+      } else {
+        await generate({ prompt: text, persistUserMessage: false });
+      }
     } catch (error) {
       console.error('Generation error:', error);
+      toast.error(error instanceof Error ? error.message : 'Generation failed');
       // Show the typed message even if generation failed before persistence.
       setMessages((prev) => [
         ...prev,
