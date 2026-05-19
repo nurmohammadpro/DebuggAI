@@ -48,6 +48,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS env_vars_updated_at ON project_env_vars;
 CREATE TRIGGER env_vars_updated_at
   BEFORE UPDATE ON project_env_vars
   FOR EACH ROW
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS project_integrations (
 );
 
 -- Supported integration types
+ALTER TABLE project_integrations DROP CONSTRAINT IF EXISTS valid_integration_type;
 ALTER TABLE project_integrations
   ADD CONSTRAINT valid_integration_type
   CHECK (integration_type IN (
@@ -113,6 +115,7 @@ CREATE INDEX IF NOT EXISTS idx_project_integrations_project_id ON project_integr
 CREATE INDEX IF NOT EXISTS idx_project_integrations_type ON project_integrations(integration_type);
 
 -- Trigger to update updated_at timestamp
+DROP TRIGGER IF EXISTS integrations_updated_at ON project_integrations;
 CREATE TRIGGER integrations_updated_at
   BEFORE UPDATE ON project_integrations
   FOR EACH ROW

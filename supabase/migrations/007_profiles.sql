@@ -14,7 +14,7 @@ CREATE TABLE public.profiles (
   stripe_customer_id    TEXT UNIQUE,
   is_admin              BOOLEAN NOT NULL DEFAULT false,
   is_ambassador         BOOLEAN NOT NULL DEFAULT false,
-  referral_code         TEXT UNIQUE DEFAULT encode(gen_random_bytes(6), 'hex'),
+  referral_code         TEXT UNIQUE DEFAULT encode(extensions.gen_random_bytes(6), 'hex'),
   zero_knowledge_mode   BOOLEAN NOT NULL DEFAULT false,
   last_login_at         TIMESTAMPTZ,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
