@@ -27,7 +27,7 @@ export function StackSelector({ children }: StackSelectorProps) {
   const [projectName, setProjectName] = useState('my-app');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { generate } = useGeneration({
+  const { generate, generateFromTemplate } = useGeneration({
     onDone: () => {
       setIsGenerating(false);
       setOpen(false);
@@ -35,8 +35,8 @@ export function StackSelector({ children }: StackSelectorProps) {
     },
     onError: (error) => {
       setIsGenerating(false);
-      toast.error('Failed to generate project');
-      console.log(error)
+      toast.error(error.message || 'Failed to generate project');
+      console.log(error);
     },
   });
 
@@ -53,10 +53,9 @@ export function StackSelector({ children }: StackSelectorProps) {
 
     setIsGenerating(true);
 
-    const prompt = `Create a ${selectedStack.toUpperCase()} stack application called "${projectName}" with features: ${selectedFeatures.join(', ')}. Generate the complete project structure with all necessary files.`;
-
     try {
-      await generate({ prompt });
+      // Use instant template generation for stack-based projects (no LLM)
+      await generateFromTemplate(selectedStack, selectedFeatures, projectName.trim());
     } catch (error) {
       console.error('Generation error:', error);
     }

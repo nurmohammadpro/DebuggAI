@@ -24,6 +24,10 @@ interface GenerateRequest {
    * When false, callers are responsible for persisting the user message.
    */
   persistUserMessage?: boolean;
+  /** Credit amount to spend (defaults to 1 for debug, 20+ for web builder) */
+  creditAmount?: number;
+  /** Source label for credit transaction (defaults to "generate") */
+  creditSource?: string;
 }
 
 serve(async (req) => {
@@ -71,6 +75,8 @@ serve(async (req) => {
       history = [],
       idempotencyKey,
       persistUserMessage = true,
+      creditAmount,
+      creditSource,
     }: GenerateRequest = await req.json();
 
     if (!threadId) {
@@ -87,13 +93,16 @@ serve(async (req) => {
       );
     }
 
-    // Spend credits (basic generate)
-    const creditsToSpend = 1;
+    // Spend credits — use request-provided amount or default to 1 (debug)
+    const creditsToSpend = typeof creditAmount === 'number' && creditAmount > 0
+      ? creditAmount
+      : 1;
+    const sourceLabel = creditSource || 'generate';
     const { error: spendError } = await supabase.rpc('spend_credits', {
       p_user_id: user.id,
       p_amount: creditsToSpend,
-      p_source: 'generate',
-      p_description: 'Generate',
+      p_source: sourceLabel,
+      p_description: `Generate: ${prompt.slice(0, 100)}`,
       p_idempotency_key: idempotencyKey || null,
       p_metadata: {},
     });

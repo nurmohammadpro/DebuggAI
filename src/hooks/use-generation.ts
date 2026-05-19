@@ -9,6 +9,70 @@ import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { useGenerationStore } from '@/store/generation-store';
+import type { VirtualProjectFiles, VirtualFile } from '@/lib/project/virtual-files';
+import { serializeVirtualFiles } from '@/lib/project/virtual-files';
+
+function languageFromPath(path: string): string | undefined {
+  const lower = path.toLowerCase();
+  if (lower.endsWith('.tsx')) return 'typescript';
+  if (lower.endsWith('.ts')) return 'typescript';
+  if (lower.endsWith('.jsx')) return 'javascript';
+  if (lower.endsWith('.js')) return 'javascript';
+  if (lower.endsWith('.css')) return 'css';
+  if (lower.endsWith('.html')) return 'html';
+  if (lower.endsWith('.json')) return 'json';
+  if (lower.endsWith('.md')) return 'markdown';
+  if (lower.endsWith('.py')) return 'python';
+  if (lower.endsWith('.rb')) return 'ruby';
+  if (lower.endsWith('.go')) return 'go';
+  if (lower.endsWith('.php')) return 'php';
+  return undefined;
+}
+
+function templateToVirtualFiles(flatFiles: Record<string, string>): VirtualProjectFiles {
+  const files: Record<string, VirtualFile> = {};
+  let entryPath = '';
+
+  for (const [path, content] of Object.entries(flatFiles)) {
+    const normalizedPath = path.replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+    files[normalizedPath] = {
+      path: normalizedPath,
+      content,
+      language: languageFromPath(normalizedPath),
+      status: 'added',
+    };
+  }
+
+  // Pick the best entry point
+  const entryCandidates = [
+    'client/src/App.js',
+    'client/src/App.tsx',
+    'client/src/App.jsx',
+    'src/App.tsx',
+    'src/App.js',
+    'server/index.js',
+    'server/server.js',
+    'main.go',
+    'manage.py',
+    'app.py',
+    'config/routes.rb',
+  ];
+  for (const candidate of entryCandidates) {
+    if (files[candidate]) {
+      entryPath = candidate;
+      break;
+    }
+  }
+  if (!entryPath) {
+    entryPath = Object.keys(files)[0] || 'package.json';
+  }
+
+  return { entryPath, files };
+}
+
+function serializeVirtualFilesWrapper(project: VirtualProjectFiles): string {
+  return serializeVirtualFiles(project);
+}
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 import { extractCode } from '@/lib/extract-code';
 import { supabase } from '@/lib/supabase';
@@ -214,6 +278,114 @@ export function useGeneration(options: UseGenerationOptions = {}) {
   );
 
   /**
+   * Generate project from static template (instant, no LLM).
+   * Used for stack-based project creation (MERN, MEAN, etc.).
+   */
+  const generateFromTemplate = useCallback(
+    async (stack: string, features: string[], projectName: string) => {
+      setIsLoading(true);
+      setError(null);
+      resetAccumulated();
+
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders) {
+          throw new Error('Unauthorized: please sign in again');
+        }
+
+        const response = await fetch('/api/generate/template', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ stack, features, projectName }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          if (response.status === 402) {
+            throw new Error(
+              errorData.error || 'Insufficient credits. Upgrade your plan to continue.'
+            );
+          }
+          throw new Error(
+            errorData.error || `HTTP ${response.status}: ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        const flatFiles: Record<string, string> = data.template || {};
+
+        if (Object.keys(flatFiles).length === 0) {
+          throw new Error('Template returned no files');
+        }
+
+        // Convert flat Record<string,string> to VirtualProjectFiles
+        const virtualFiles = templateToVirtualFiles(flatFiles);
+
+        // Set files and entry path in store
+        setCurrentCode(virtualFiles.files[virtualFiles.entryPath]?.content || '');
+        useGenerationStore.setState({
+          files: virtualFiles,
+          activeFilePath: virtualFiles.entryPath,
+          accumulated: JSON.stringify(flatFiles, null, 2),
+        });
+
+        // Save as new version
+        const serialized = serializeVirtualFilesWrapper(virtualFiles);
+        addVersion(serialized, `Template: ${stack}`);
+
+        // Persist to Supabase
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const res = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({
+                code: serialized,
+                prompt: `${stack} stack: ${projectName}`,
+                description: `${stack.toUpperCase()} project: ${projectName}`,
+                stack,
+                metadata: { features, generatedFrom: 'template' },
+              }),
+            });
+            if (res.ok) {
+              const j = await res.json().catch(() => ({}));
+              if (j?.id) {
+                setProjectId(j.id);
+                clearThread();
+              }
+            }
+          }
+          await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
+        } catch (saveError) {
+          console.error('Failed to persist template project:', saveError);
+        }
+
+        onDone?.(serialized);
+        return serialized;
+      } catch (err) {
+        const errorObj =
+          err instanceof Error ? err : new Error('Template generation failed');
+        setError(errorObj);
+        onError?.(errorObj);
+        throw errorObj;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      appendAccumulated,
+      resetAccumulated,
+      setCurrentCode,
+      addVersion,
+      onDone,
+      onError,
+      setProjectId,
+      queryClient,
+    ]
+  );
+
+  /**
    * Debug code with error message
    * Convenience method for debugging
    */
@@ -293,6 +465,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
   return {
     generate,
+    generateFromTemplate,
     debug,
     isLoading,
     error,
