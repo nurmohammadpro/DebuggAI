@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { useGenerationStore } from '@/store/generation-store';
 import type { VirtualProjectFiles, VirtualFile } from '@/lib/project/virtual-files';
-import { serializeVirtualFiles } from '@/lib/project/virtual-files';
+import { extractVirtualFiles, serializeVirtualFiles } from '@/lib/project/virtual-files';
 
 function languageFromPath(path: string): string | undefined {
   const lower = path.toLowerCase();
@@ -178,10 +178,30 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.error || `HTTP ${response.status}: ${response.statusText}`
-          );
+          const raw = await response.text().catch(() => '');
+          const errorData: unknown = raw
+            ? (() => {
+                try {
+                  return JSON.parse(raw) as unknown;
+                } catch {
+                  return {};
+                }
+              })()
+            : {};
+
+          const getField = (obj: unknown, key: string): string | undefined => {
+            if (!obj || typeof obj !== 'object') return;
+            const rec = obj as Record<string, unknown>;
+            const v = rec[key];
+            return typeof v === 'string' ? v : undefined;
+          };
+
+          const msg =
+            getField(errorData, 'error') ||
+            getField(errorData, 'message') ||
+            getField(errorData, 'details') ||
+            `HTTP ${response.status}: ${response.statusText}`;
+          throw new Error(msg);
         }
 
         // Parse SSE stream with callback
@@ -200,11 +220,21 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           throw new Error('No code found in AI response');
         }
 
-        // Update current code
-        setCurrentCode(code);
+        // Build/refresh virtual file snapshot for the editor + preview.
+        // This ensures PreviewPane can render something even for single-file responses.
+        const baseFiles = useGenerationStore.getState().files || undefined;
+        const virtualFiles = extractVirtualFiles(code, baseFiles || undefined);
+
+        useGenerationStore.setState({
+          files: virtualFiles,
+          activeFilePath: virtualFiles.entryPath,
+        });
+
+        // Update current code surface to match the active file.
+        setCurrentCode(virtualFiles.files[virtualFiles.entryPath]?.content || code);
 
         // Save as new version
-        addVersion(code, 'Generated');
+        addVersion(serializeVirtualFilesWrapper(virtualFiles), 'Generated');
 
         // Persistence to Supabase
         try {
@@ -236,8 +266,16 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 const j = await res.json().catch(() => ({}));
                 if (j?.id) {
                   setProjectId(j.id);
-                  // Thread was likely created before a project existed; force a new thread scoped to the project.
-                  clearThread();
+                  // Keep the same thread (preserves chat history), but attach it to the new project.
+                  try {
+                    await fetch(`/api/threads/${threadId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json', ...authHeaders },
+                      body: JSON.stringify({ projectId: j.id }),
+                    });
+                  } catch {
+                    // best-effort
+                  }
                 }
               }
             }
@@ -350,11 +388,21 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             });
             if (res.ok) {
               const j = await res.json().catch(() => ({}));
-              if (j?.id) {
-                setProjectId(j.id);
-                clearThread();
+                if (j?.id) {
+                  setProjectId(j.id);
+                  // Preserve existing conversation; attach thread to the new project.
+                  try {
+                    const tid = await ensureThread();
+                    await fetch(`/api/threads/${tid}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json', ...authHeaders },
+                      body: JSON.stringify({ projectId: j.id }),
+                    });
+                  } catch {
+                    // best-effort
+                  }
+                }
               }
-            }
           }
           await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
         } catch (saveError) {

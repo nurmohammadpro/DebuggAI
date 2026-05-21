@@ -77,7 +77,7 @@ export function WorkspaceRightPanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        <div key={activeTab} className="h-full animate-in fade-in slide-in-from-right-2 duration-200 fill-mode-both">
+        <div key={activeTab} className="h-full min-h-0 animate-in fade-in slide-in-from-right-2 duration-200 fill-mode-both">
           {activeTab === 'code' && (
             <WorkspaceEditor
               editorView="code"
@@ -160,7 +160,7 @@ export function WorkspaceRightPanel({
 
   return (
     <aside
-      className="bg-[var(--app-panel)] border-l border-[var(--app-border)] flex flex-col min-w-[320px]"
+      className="bg-[var(--app-panel)] border-l border-[var(--app-border)] flex flex-col min-w-[320px] min-h-0 h-full"
       style={{ width }}
     >
       {panelContent}

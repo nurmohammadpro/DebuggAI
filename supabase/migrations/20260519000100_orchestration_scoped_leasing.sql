@@ -38,8 +38,11 @@ BEGIN
   WHERE j.id IN (SELECT id FROM picked)
   RETURNING j.*;
 END;
-$$;
+$$
+;
 
-REVOKE ALL ON FUNCTION public.lease_jobs_for_run(TEXT, UUID, INTEGER, INTEGER) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.lease_jobs_for_run(TEXT, UUID, INTEGER, INTEGER) TO service_role;
+REVOKE ALL ON FUNCTION public.lease_jobs_for_run(TEXT, UUID, INTEGER, INTEGER) FROM PUBLIC
+;
 
+GRANT EXECUTE ON FUNCTION public.lease_jobs_for_run(TEXT, UUID, INTEGER, INTEGER) TO service_role
+;

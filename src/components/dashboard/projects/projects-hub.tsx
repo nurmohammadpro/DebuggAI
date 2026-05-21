@@ -48,25 +48,39 @@ export function ProjectsHub() {
 
   const onDuplicate = async (project: (typeof projects)[number]) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!session?.user || !token) {
         toast.error('Please sign in again');
         return;
       }
 
-      const { error: insertError } = await supabase.from('generations').insert({
-        user_id: session.user.id,
-        code: project.code,
-        version: 1,
-        description: project.description ? `Copy of ${project.description}` : 'Copy',
-        stack: project.stack,
-        prompt: project.prompt,
-        metadata: { ...(project.metadata || {}), project_key: getProjectKey(project) },
-      });
+      const { data: source, error: sourceError } = await supabase
+        .from('generations')
+        .select('code')
+        .eq('id', project.id)
+        .single();
 
-      if (insertError) throw insertError;
+      if (sourceError) throw sourceError;
+      if (!source?.code) throw new Error('Source project has no code to duplicate');
+
+      const duplicateName = project.description ? `Copy of ${project.description}` : 'Copy';
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          description: duplicateName,
+          stack: project.stack,
+          prompt: project.prompt || duplicateName,
+          code: source.code,
+          metadata: { ...(project.metadata || {}), project_key: getProjectKey(project) },
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Failed to duplicate');
       toast.success('Project duplicated');
       refetch();
     } catch (e) {

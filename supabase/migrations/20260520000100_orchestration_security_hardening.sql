@@ -102,19 +102,26 @@ BEGIN
 
   RETURN QUERY SELECT v_wallet_id, v_balance, v_tx_id;
 END;
-$$;
+$$
+;
 
 -- --------------------------------------------------------------------------
 -- Function execution grants
 -- --------------------------------------------------------------------------
-REVOKE ALL ON FUNCTION public.lease_jobs(TEXT, TEXT, INTEGER, INTEGER) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.lease_jobs(TEXT, TEXT, INTEGER, INTEGER) FROM PUBLIC
+;
 
-GRANT EXECUTE ON FUNCTION public.lease_jobs(TEXT, TEXT, INTEGER, INTEGER) TO service_role;
-GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO service_role;
+REVOKE ALL ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) FROM PUBLIC
+;
+
+GRANT EXECUTE ON FUNCTION public.lease_jobs(TEXT, TEXT, INTEGER, INTEGER) TO service_role
+;
+
+GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO service_role
+;
 
 -- Edge functions (generate, debug, debug-ai-analyze) call spend_credits
 -- via the user's auth context (SUPABASE_ANON_KEY + Authorization header).
 -- The function already enforces auth.uid() = p_user_id for non-service_role callers.
-GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO authenticated;
-
+GRANT EXECUTE ON FUNCTION public.spend_credits(UUID, INTEGER, TEXT, TEXT, TEXT, JSONB) TO authenticated
+;

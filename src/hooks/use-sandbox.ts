@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getSession } from '@/hooks/use-session';
 
 export interface SandboxState {
   id: string | null;
@@ -34,8 +35,11 @@ export function useSandbox(options: UseSandboxOptions = {}) {
     port: null,
   });
 
-  const eventSourceRef = useRef<EventSource | null>(null);
+  // In React Strict Mode, effects can run twice in dev.
+  // Guard against concurrent create requests from the same component instance.
+  const createInFlightRef = useRef(false);
   const logsRef = useRef<string[]>([]);
+  const logsAbortRef = useRef<AbortController | null>(null);
 
   const update = useCallback((partial: Partial<SandboxState>) => {
     setState((prev) => ({ ...prev, ...partial }));
@@ -47,73 +51,148 @@ export function useSandbox(options: UseSandboxOptions = {}) {
   }, []);
 
   const connectLogs = useCallback(
-    (id: string) => {
-      // Close any existing connection
-      eventSourceRef.current?.close();
+    async (id: string) => {
+      // Abort any existing stream
+      logsAbortRef.current?.abort();
 
-      const es = new EventSource(`/api/sandbox/${id}/logs`);
-      eventSourceRef.current = es;
+      const { session } = await getSession();
+      const token = session?.access_token;
+      if (!token) {
+        update({ status: 'error', error: 'Not authenticated' });
+        options.onStatusChange?.('error');
+        return;
+      }
 
-      es.addEventListener('log', (e: MessageEvent) => {
-        try {
-          const { text } = JSON.parse(e.data);
-          appendLog(text);
-        } catch {}
-      });
+      const controller = new AbortController();
+      logsAbortRef.current = controller;
 
-      es.addEventListener('status', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
+      try {
+        const res = await fetch(`/api/sandbox/${id}/logs`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
 
-          if (data.status === 'installing') {
-            update({ status: 'installing' });
-            options.onStatusChange?.('installing');
-          } else if (data.status === 'install_done') {
-            update({ status: 'installing' });
-          } else if (data.status === 'starting') {
-            update({ status: 'installing', framework: data.framework || null });
-          } else if (data.status === 'running') {
-            update({ status: 'running', previewUrl: `/preview/${id}` });
-            options.onStatusChange?.('running');
-          } else if (data.status === 'exited') {
-            update({ status: 'error', error: `Process exited with code ${data.code}` });
-            options.onStatusChange?.('error');
+        if (!res.ok || !res.body) {
+          const text = await res.text().catch(() => '');
+          throw new Error(text || `Failed to stream logs (${res.status})`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        let buffer = '';
+        let eventName = 'message';
+        let dataLines: string[] = [];
+
+        const flushEvent = () => {
+          if (!dataLines.length) return;
+          const dataRaw = dataLines.join('\n');
+          dataLines = [];
+
+          try {
+            const parsed = JSON.parse(dataRaw);
+
+            if (eventName === 'log') {
+              const text = typeof parsed?.text === 'string' ? parsed.text : '';
+              if (text) appendLog(text);
+              return;
+            }
+
+            if (eventName === 'status') {
+              const status = parsed?.status as string | undefined;
+              if (status === 'installing') {
+                update({ status: 'installing' });
+                options.onStatusChange?.('installing');
+              } else if (status === 'install_done') {
+                update({ status: 'installing' });
+              } else if (status === 'starting') {
+                update({ status: 'installing', framework: parsed?.framework || null });
+              } else if (status === 'running') {
+                update({ status: 'running', previewUrl: `/preview/${id}` });
+                options.onStatusChange?.('running');
+              } else if (status === 'exited') {
+                update({
+                  status: 'error',
+                  error: `Process exited with code ${parsed?.code ?? 'unknown'}`,
+                });
+                options.onStatusChange?.('error');
+              }
+              return;
+            }
+
+            if (eventName === 'ping') {
+              if (parsed?.status === 'running') {
+                update({ status: 'running', previewUrl: `/preview/${id}` });
+                options.onStatusChange?.('running');
+              }
+              if (typeof parsed?.port === 'number') update({ port: parsed.port });
+              return;
+            }
+
+            if (eventName === 'close') {
+              controller.abort();
+              return;
+            }
+          } catch {
+            // ignore bad JSON
           }
-        } catch {}
-      });
+        };
 
-      es.addEventListener('ping', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.status === 'running') {
-            update({ status: 'running', previewUrl: `/preview/${id}` });
-            options.onStatusChange?.('running');
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const rawLine of lines) {
+            const line = rawLine.replace(/\r$/, '');
+            if (!line) {
+              flushEvent();
+              eventName = 'message';
+              continue;
+            }
+            if (line.startsWith('event:')) {
+              eventName = line.slice('event:'.length).trim() || 'message';
+              continue;
+            }
+            if (line.startsWith('data:')) {
+              dataLines.push(line.slice('data:'.length).trimStart());
+              continue;
+            }
           }
-        } catch {}
-      });
-
-      es.addEventListener('close', () => {
-        es.close();
-        eventSourceRef.current = null;
-      });
-
-      es.onerror = () => {
-        // EventSource auto-reconnects
-      };
+        }
+      } catch (err: unknown) {
+        if (controller.signal.aborted) return;
+        const message = err instanceof Error ? err.message : 'Failed to stream logs';
+        update({ status: 'error', error: message });
+        options.onStatusChange?.('error');
+      }
     },
     [appendLog, update, options],
   );
 
   const createSandbox = useCallback(
     async (files: Record<string, string>) => {
+      if (createInFlightRef.current) return null;
+      createInFlightRef.current = true;
       update({ status: 'creating', error: null, logs: [] });
       logsRef.current = [];
       options.onStatusChange?.('creating');
 
       try {
+        const { session } = await getSession();
+        const token = session?.access_token;
+        if (!token) throw new Error('Not authenticated');
+
         const res = await fetch('/api/sandbox/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ files }),
         });
 
@@ -130,10 +209,13 @@ export function useSandbox(options: UseSandboxOptions = {}) {
         connectLogs(data.id);
 
         return data.id;
-      } catch (err: any) {
-        update({ status: 'error', error: err.message });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to create sandbox';
+        update({ status: 'error', error: message });
         options.onStatusChange?.('error');
         return null;
+      } finally {
+        createInFlightRef.current = false;
       }
     },
     [update, connectLogs, options],
@@ -142,9 +224,14 @@ export function useSandbox(options: UseSandboxOptions = {}) {
   const stopSandbox = useCallback(async () => {
     if (!state.id) return;
     try {
-      await fetch(`/api/sandbox/${state.id}/stop`, { method: 'POST' });
+      const { session } = await getSession();
+      const token = session?.access_token;
+      await fetch(`/api/sandbox/${state.id}/stop`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
     } catch {}
-    eventSourceRef.current?.close();
+    logsAbortRef.current?.abort();
     update({ status: 'stopped', previewUrl: null });
     options.onStatusChange?.('stopped');
   }, [state.id, update, options]);
@@ -152,7 +239,11 @@ export function useSandbox(options: UseSandboxOptions = {}) {
   const exportZip = useCallback(async () => {
     if (!state.id) return;
     try {
-      const res = await fetch(`/api/sandbox/${state.id}/export`);
+      const { session } = await getSession();
+      const token = session?.access_token;
+      const res = await fetch(`/api/sandbox/${state.id}/export`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -161,15 +252,16 @@ export function useSandbox(options: UseSandboxOptions = {}) {
       a.download = `project-${state.id}.zip`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err: any) {
-      update({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Export failed';
+      update({ error: message });
     }
   }, [state.id, update]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      eventSourceRef.current?.close();
+      logsAbortRef.current?.abort();
     };
   }, []);
 

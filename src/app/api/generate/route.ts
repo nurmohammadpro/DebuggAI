@@ -53,10 +53,39 @@ export async function POST(req: NextRequest) {
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    return new Response(text, {
+    const contentType = response.headers.get('Content-Type') || '';
+    const text = await response.text().catch(() => '');
+
+    // Ensure the client always receives JSON, even if the edge platform returns HTML/text.
+    let json: { error?: string; details?: string } | null = null;
+    if (contentType.includes('application/json')) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        json = null;
+      }
+    }
+
+    const details = text && text.length > 2000 ? text.slice(0, 2000) + '…' : text;
+    const payload =
+      json && (json.error || json.details)
+        ? json
+        : {
+            error: 'Generate request failed',
+            // Only surface raw details in non-production to avoid leaking platform internals.
+            details: process.env.NODE_ENV === 'production' ? undefined : details || undefined,
+          };
+
+    // Server-side log for local debugging.
+    console.error('[api/generate] edge function error', {
       status: response.status,
-      headers: { 'Content-Type': response.headers.get('Content-Type') || 'application/json' },
+      contentType,
+      details,
+    });
+
+    return new Response(JSON.stringify(payload), {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -70,4 +99,3 @@ export async function POST(req: NextRequest) {
     },
   });
 }
-

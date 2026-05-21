@@ -12,6 +12,9 @@ interface PreviewPaneProps {
   className?: string;
   chromeless?: boolean;
   sandboxUrl?: string | null;
+  onRefresh?: () => void;
+  forceSandbox?: boolean;
+  sandboxError?: string | null;
 }
 
 export function PreviewPane({
@@ -19,6 +22,9 @@ export function PreviewPane({
   className,
   chromeless = false,
   sandboxUrl,
+  onRefresh,
+  forceSandbox = false,
+  sandboxError = null,
 }: PreviewPaneProps) {
   const {
     files,
@@ -30,21 +36,85 @@ export function PreviewPane({
   const [nonce, setNonce] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const sandpackFiles = useMemo(() => {
-    if (!files) return undefined;
+  const { sandpackFiles, sandpackTemplate } = useMemo(() => {
+    if (!files) return { sandpackFiles: undefined, sandpackTemplate: 'react' as const };
+
+    const isTs =
+      Object.keys(files.files).some((p) => p.endsWith('.ts') || p.endsWith('.tsx'));
+
+    // Sandpack templates use flat /App.(js|tsx) and /index.(js|tsx) files.
+    // Our generator often writes under src/, so map common paths.
     const result: Record<string, { code: string }> = {};
+
+    const put = (path: string, code: string) => {
+      const key = path.startsWith('/') ? path : '/' + path;
+      result[key] = { code };
+    };
+
     for (const [path, file] of Object.entries(files.files)) {
       if (file.status === 'deleted') continue;
-      const key = path.startsWith('/') ? path : '/' + path;
-      result[key] = { code: file.content };
+      const normalized = path.startsWith('/') ? path.slice(1) : path;
+
+      // Map src/App.* to /App.* so the template entry imports pick it up.
+      if (normalized === 'src/App.tsx') put('/App.tsx', file.content);
+      else if (normalized === 'src/App.ts') put('/App.ts', file.content);
+      else if (normalized === 'src/App.jsx') put('/App.jsx', file.content);
+      else if (normalized === 'src/App.js') put('/App.js', file.content);
+      else if (normalized === 'src/index.tsx') put('/index.tsx', file.content);
+      else if (normalized === 'src/index.ts') put('/index.ts', file.content);
+      else if (normalized === 'src/index.jsx') put('/index.jsx', file.content);
+      else if (normalized === 'src/index.js') put('/index.js', file.content);
+      else put('/' + normalized, file.content);
     }
-    return result;
+
+    // If we only have an App file, synthesize a minimal index so Sandpack can boot.
+    if (!result['/index.js'] && !result['/index.jsx'] && !result['/index.ts'] && !result['/index.tsx']) {
+      if (result['/App.tsx'] || result['/App.ts']) {
+        put(
+          '/index.tsx',
+          [
+            "import React from 'react';",
+            "import ReactDOM from 'react-dom/client';",
+            "import App from './App';",
+            '',
+            "const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);",
+            'root.render(',
+            '  <React.StrictMode>',
+            '    <App />',
+            '  </React.StrictMode>',
+            ');',
+            '',
+          ].join('\n'),
+        );
+      } else if (result['/App.jsx'] || result['/App.js']) {
+        put(
+          '/index.js',
+          [
+            "import React from 'react';",
+            "import { createRoot } from 'react-dom/client';",
+            "import App from './App';",
+            '',
+            "const root = createRoot(document.getElementById('root'));",
+            'root.render(',
+            '  <React.StrictMode>',
+            '    <App />',
+            '  </React.StrictMode>',
+            ');',
+            '',
+          ].join('\n'),
+        );
+      }
+    }
+
+    const template: 'react' | 'react-ts' = isTs ? 'react-ts' : 'react';
+    return { sandpackFiles: result, sandpackTemplate: template };
   }, [files, currentCode]);
 
   const handleRefresh = () => {
     setIsLoading(true);
     setNonce(n => n + 1);
     setLastError(null);
+    onRefresh?.();
   };
 
   return (
@@ -88,20 +158,57 @@ export function PreviewPane({
       </div>
 
       {/* Sandbox preview (iframe from Docker container) */}
-      {sandboxUrl ? (
+      {forceSandbox ? (
         <div className="flex-1 min-h-0 relative bg-white">
-          <iframe
-            src={sandboxUrl}
-            className="w-full h-full border-0"
-            title="Live Preview"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
-            onLoad={() => setIsLoading(false)}
-          />
+          {sandboxError ? (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--app-bg)] p-6 text-center">
+              <div className="text-[12px] font-semibold text-[var(--app-danger)] mb-2">Preview Failed</div>
+              <div className="text-[11px] text-[var(--app-text-dim)] max-w-[520px] mb-4 break-words">
+                {sandboxError}
+              </div>
+              {onRefresh && (
+                <button
+                  className="h-8 px-3 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)] text-[11px] font-semibold uppercase tracking-tight hover:bg-[var(--app-panel-2)]"
+                  onClick={onRefresh}
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          ) : sandboxUrl ? (
+            <iframe
+              src={sandboxUrl}
+              className="w-full h-full border-0"
+              title="Live Preview"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+              onLoad={() => setIsLoading(false)}
+            />
+          ) : (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--app-bg)] animate-in fade-in duration-500">
+              <div className="relative mb-8">
+                <div className="w-16 h-16 rounded-[6px] border-2 border-[var(--app-accent)]/25 animate-spin [animation-duration:3s]" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Play className="h-6 w-6 text-[var(--app-accent)] animate-pulse" />
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[11px] font-semibold text-[var(--app-accent)] uppercase tracking-[0.3em] animate-pulse">Starting Docker Sandbox</span>
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <>
       {/* Sandpack content (in-browser fallback) */}
       <div className="flex-1 min-h-0 bg-white relative">
+        <div className="absolute top-2 right-2 z-20 text-[10px] px-2 py-1 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text-dim)]">
+          In-browser preview unavailable. Using Docker preview is recommended.
+        </div>
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--app-bg)] animate-in fade-in duration-500">
             <div className="relative mb-8">
@@ -123,7 +230,7 @@ export function PreviewPane({
 
         <SandpackProvider
           key={nonce}
-          template="react"
+          template={sandpackTemplate}
           theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
           files={sandpackFiles}
           options={{

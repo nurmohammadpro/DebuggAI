@@ -2,9 +2,7 @@
 -- Core user identity table
 -- Execution Order: 3rd (after enums)
 
-DROP TABLE IF EXISTS public.profiles CASCADE;
-
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id                    UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email                 TEXT NOT NULL UNIQUE,
   full_name             TEXT,

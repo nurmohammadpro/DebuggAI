@@ -2,9 +2,7 @@
 -- Atomic balance storage
 -- Execution Order: 4th
 
-DROP TABLE IF EXISTS public.credit_wallets CASCADE;
-
-CREATE TABLE public.credit_wallets (
+CREATE TABLE IF NOT EXISTS public.credit_wallets (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
   balance     INTEGER NOT NULL DEFAULT 30 CHECK (balance >= 0),

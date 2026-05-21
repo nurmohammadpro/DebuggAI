@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 export function RenameProjectDialog({
   open,
@@ -37,11 +37,21 @@ export function RenameProjectDialog({
     }
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('generations')
-        .update({ description: name.trim() })
-        .eq('id', projectId);
-      if (error) throw error;
+      const { session } = await getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Please sign in again');
+
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ description: name.trim() }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Failed to rename');
+
       toast.success('Project renamed');
       onOpenChange(false);
       onRenamed();
@@ -80,4 +90,3 @@ export function RenameProjectDialog({
     </Dialog>
   );
 }
-

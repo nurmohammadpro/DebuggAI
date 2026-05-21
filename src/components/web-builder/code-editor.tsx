@@ -17,7 +17,7 @@ interface CodeEditorProps {
 }
 
 export function CodeEditor({
-  height = '600px',
+  height = '100%',
   readOnly = false,
   className,
   showHeader = true,
