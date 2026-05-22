@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Docker-friendly builds. Produces `.next/standalone` for lean production images.
+  output: "standalone",
 };
 
 export default withSentryConfig(nextConfig, {

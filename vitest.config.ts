@@ -6,7 +6,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
-    exclude: ['e2e/**', 'node_modules/**'],
+    // Sandboxes write full npm projects under `.projects/`; never treat those as tests.
+    exclude: ['e2e/**', 'node_modules/**', '.projects/**'],
   },
   resolve: {
     alias: {

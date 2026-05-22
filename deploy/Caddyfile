@@ -1,0 +1,19 @@
+{
+  # Keep logs reasonably small by default; adjust for your needs.
+  # debug
+}
+
+# Set your domain here (replace example.com) OR use a wildcard/temporary IP during first bring-up.
+example.com {
+  encode zstd gzip
+
+  # Basic hardening headers (CSP is set by the app; we avoid duplicating it here).
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+
+  reverse_proxy app:3000
+}
+
