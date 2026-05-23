@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig } from 'lucide-react';
+import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig, CheckCircle2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
@@ -40,6 +40,7 @@ export function WorkspaceDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rightWidth, setRightWidth] = useState(980);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
+  const [stage, setStage] = useState<'seed' | 'sprout' | 'sapling' | 'tree'>('sapling');
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
 
@@ -164,6 +165,15 @@ export function WorkspaceDashboard() {
       toast.message(url);
     }
   };
+
+  const stageTone =
+    stage === 'seed'
+      ? 'bg-[var(--app-info-soft)] text-[var(--app-info)] border-[var(--app-info)]/20'
+      : stage === 'sprout'
+        ? 'bg-[var(--app-warning-soft)] text-[var(--app-warning)] border-[var(--app-warning)]/20'
+        : stage === 'tree'
+          ? 'bg-[var(--app-success-soft)] text-[var(--app-success)] border-[var(--app-success)]/20'
+          : 'bg-[var(--app-accent-soft)] text-[var(--app-accent)] border-[var(--app-accent)]/20';
 
   const headerActions = (
     <>
@@ -290,9 +300,14 @@ export function WorkspaceDashboard() {
           title={project?.description || project?.prompt || 'Untitled Project'}
           subtitle={effectiveProjectId}
           titleBadge={
-            <span className="hidden sm:inline-flex rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--app-text-muted)]">
-              Web Builder
-            </span>
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="inline-flex rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--app-text-muted)]">
+                Web Builder
+              </span>
+              <span className={`inline-flex items-center rounded-[6px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${stageTone}`}>
+                {stage}
+              </span>
+            </div>
           }
           actions={headerActions}
           toolTabs={toolTabs}
@@ -332,6 +347,45 @@ export function WorkspaceDashboard() {
                 </span>
               )}
             </div>
+
+            <div className="border-b border-[var(--app-border)] bg-[var(--app-panel)] px-4 py-3 shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[12px] font-semibold text-[var(--app-text)]">Progress narrative</div>
+                  <div className="text-[11px] text-[var(--app-text-dim)] truncate">
+                    Plan, edit, verify, export. Keep the loop visible.
+                  </div>
+                </div>
+                <button
+                  onClick={() =>
+                    setStage((s) => (s === 'seed' ? 'sprout' : s === 'sprout' ? 'sapling' : s === 'sapling' ? 'tree' : 'seed'))
+                  }
+                  className="h-7 px-2 rounded-[6px] border border-[var(--app-border)] text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                >
+                  Advance
+                </button>
+              </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Plan', done: stage !== 'seed' },
+                  { label: 'Edit', done: stage === 'sapling' || stage === 'tree' },
+                  { label: 'Verify', done: stage === 'tree' },
+                  { label: 'Export', done: false },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-1.5"
+                  >
+                    <CheckCircle2
+                      className={`h-4 w-4 ${s.done ? 'text-[var(--app-success)]' : 'text-[var(--app-text-dim)]'}`}
+                    />
+                    <div className="text-[12px] text-[var(--app-text)]">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <ChatPanel
               height="100%"
               chromeless
