@@ -14,6 +14,7 @@ import { getProjectKey } from '@/lib/project/project-key';
 import { RecentDebugSessions } from '@/components/dashboard/home/recent-debug-sessions';
 import { RecentTransactions } from '@/components/dashboard/home/recent-transactions';
 import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
+import { FolderKanban, Bug, Clock } from 'lucide-react';
 
 export function ProjectsHub() {
   const router = useRouter();
@@ -92,9 +93,9 @@ export function ProjectsHub() {
     <div className="p-4 sm:p-6 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-medium text-[var(--text-primary)]">Projects</div>
+          <div className="text-sm font-medium text-[var(--text-primary)]">Dashboard</div>
           <div className="text-xs text-[var(--text-secondary)] mt-1">
-            Open a project in the workspace, or generate a new one.
+            Projects, threads, and recent activity.
           </div>
         </div>
         <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -102,6 +103,12 @@ export function ProjectsHub() {
           <span className="hidden sm:inline text-xs">New Project</span>
           <span className="sm:hidden text-xs">Create</span>
         </CreateProjectDialog>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-3">
+        <StatCard icon={FolderKanban} label="Projects" value={String((data || []).length)} sub="In your workspace" />
+        <StatCard icon={Bug} label="Debug Sessions" value="—" sub="Connect to real data next" />
+        <StatCard icon={Clock} label="Runs" value="—" sub="Thread runs + jobs" />
       </div>
 
       <ProjectsFilters
@@ -180,6 +187,31 @@ export function ProjectsHub() {
           <RecentTransactions />
         </div>
       </div>
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div className="rounded-[6px] border border-[var(--border-default)] bg-[var(--bg-primary)] p-3">
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-8 rounded-[6px] bg-[var(--bg-tertiary)] border border-[var(--border-default)] flex items-center justify-center">
+          <Icon className="h-4 w-4 text-[var(--text-secondary)]" />
+        </div>
+        <div className="text-[18px] font-semibold text-[var(--text-primary)]">{value}</div>
+      </div>
+      <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{label}</div>
+      <div className="text-[12px] text-[var(--text-secondary)] mt-0.5">{sub}</div>
     </div>
   );
 }
