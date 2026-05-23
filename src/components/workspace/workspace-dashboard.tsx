@@ -366,7 +366,7 @@ export function WorkspaceDashboard() {
           subtitle={effectiveProjectId}
           titleBadge={
             <div className="hidden sm:flex items-center gap-2">
-              <span className="inline-flex rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--app-text-muted)]">
+              <span className="inline-flex rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-0.5 text-[10px] font-semibold text-[var(--app-text)]">
                 Web Builder
               </span>
               <span className={`inline-flex items-center rounded-[6px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${stageTone}`}>
@@ -410,7 +410,7 @@ export function WorkspaceDashboard() {
                 </p>
               </div>
               {unsavedCount > 0 && (
-                <span className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-2 py-0.5 text-[10px] font-medium text-[var(--app-text-muted)]">
+                <span className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-0.5 text-[10px] font-semibold text-[var(--app-text)]">
                   Unsaved
                 </span>
               )}
@@ -428,7 +428,7 @@ export function WorkspaceDashboard() {
                   onClick={() =>
                     setStage((s) => (s === 'seed' ? 'sprout' : s === 'sprout' ? 'sapling' : s === 'sapling' ? 'tree' : 'seed'))
                   }
-                  className="h-7 px-2 rounded-[6px] border border-[var(--app-border)] text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                  className="h-7 px-2 rounded-[6px] border border-[var(--app-border)] text-[11px] font-medium text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
                 >
                   Advance
                 </button>
