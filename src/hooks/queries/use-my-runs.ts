@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/hooks/use-session';
 import { queryKeys } from '@/hooks/queries/query-keys';
@@ -18,10 +18,16 @@ export type RunRow = {
   updated_at: string;
 };
 
-export function useMyRuns(limit = 20, enabled = true) {
-  return useQuery({
+export type UseMyRunsOptions = Pick<
+  UseQueryOptions<RunRow[], Error>,
+  'refetchInterval'
+>;
+
+export function useMyRuns(limit = 20, enabled = true, options?: UseMyRunsOptions) {
+  return useQuery<RunRow[], Error, RunRow[]>({
     queryKey: [...queryKeys.myRuns, { limit }] as const,
     enabled,
+    refetchInterval: options?.refetchInterval,
     queryFn: async (): Promise<RunRow[]> => {
       const session = await getSession();
       if (!session.user) return [];
@@ -38,4 +44,3 @@ export function useMyRuns(limit = 20, enabled = true) {
     },
   });
 }
-

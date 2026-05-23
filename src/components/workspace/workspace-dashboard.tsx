@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
 import { useProject } from '@/hooks/queries/use-project';
+import { useMyRuns } from '@/hooks/queries/use-my-runs';
 import { useGenerationStore } from '@/store/generation-store';
 import { getProjectKey } from '@/lib/project/project-key';
 import { WorkspaceRightPanel } from '@/components/workspace/workspace-right-panel';
@@ -54,6 +55,12 @@ export function WorkspaceDashboard() {
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
 
   const { remoteCursors, broadcastCursor } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
+
+  const { data: latestRuns } = useMyRuns(1, !!effectiveProjectId, {
+    // Keep the workspace status reasonably fresh without being noisy.
+    refetchInterval: 5000,
+  });
+  const latestRun = latestRuns?.[0];
 
   const unsavedCount = useMemo(() => {
     const currentSnapshot = getProjectCode();
@@ -178,6 +185,17 @@ export function WorkspaceDashboard() {
         : stage === 'tree'
           ? 'bg-[var(--app-success-soft)] text-[var(--app-success)] border-[var(--app-success)]/20'
           : 'bg-[var(--app-accent-soft)] text-[var(--app-accent)] border-[var(--app-accent)]/20';
+
+  const runTone =
+    latestRun?.status === 'failed'
+      ? 'bg-[var(--app-danger-soft)] text-[var(--app-danger)] border-[var(--app-danger)]/20'
+      : latestRun?.status === 'succeeded'
+        ? 'bg-[var(--app-success-soft)] text-[var(--app-success)] border-[var(--app-success)]/20'
+        : latestRun?.status === 'canceled'
+          ? 'bg-[var(--app-surface)] text-[var(--app-text-dim)] border-[var(--app-border)]'
+          : latestRun?.status === 'queued' || latestRun?.status === 'running'
+            ? 'bg-[var(--app-warning-soft)] text-[var(--app-warning)] border-[var(--app-warning)]/20'
+            : 'bg-[var(--app-surface)] text-[var(--app-text-dim)] border-[var(--app-border)]';
 
   const headerActions = (
     <>
@@ -434,25 +452,50 @@ export function WorkspaceDashboard() {
                 </button>
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {[
-                  { label: 'Plan', done: stage !== 'seed' },
-                  { label: 'Edit', done: stage === 'sapling' || stage === 'tree' },
-                  { label: 'Verify', done: stage === 'tree' },
-                  { label: 'Export', done: false },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-1.5"
-                  >
-                    <CheckCircle2
-                      className={`h-4 w-4 ${s.done ? 'text-[var(--app-success)]' : 'text-[var(--app-text-dim)]'}`}
-                    />
-                    <div className="text-[12px] text-[var(--app-text)]">{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+	              <div className="mt-2 grid grid-cols-2 gap-2">
+	                {[
+	                  { label: 'Plan', done: stage !== 'seed' },
+	                  { label: 'Edit', done: stage === 'sapling' || stage === 'tree' },
+	                  { label: 'Verify', done: stage === 'tree' },
+	                  { label: 'Export', done: false },
+	                ].map((s) => (
+	                  <div
+	                    key={s.label}
+	                    className="flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-1.5"
+	                  >
+	                    <CheckCircle2
+	                      className={`h-4 w-4 ${s.done ? 'text-[var(--app-success)]' : 'text-[var(--app-text-dim)]'}`}
+	                    />
+	                    <div className="text-[12px] text-[var(--app-text)]">{s.label}</div>
+	                  </div>
+	                ))}
+	              </div>
+
+	              {latestRun && (
+	                <div className="mt-2 flex items-center justify-between gap-2 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2.5 py-2">
+	                  <div className="min-w-0 flex items-center gap-2">
+	                    <span className={`shrink-0 inline-flex items-center rounded-[6px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${runTone}`}>
+	                      {latestRun.status}
+	                    </span>
+	                    <div className="min-w-0">
+	                      <div className="flex items-center gap-1.5 text-[11px] text-[var(--app-text-dim)]">
+	                        <ListChecks className="h-3.5 w-3.5" />
+	                        <span className="font-semibold text-[var(--app-text)]">Latest run</span>
+	                      </div>
+	                      <div className="text-[12px] text-[var(--app-text)] truncate">
+	                        {latestRun.objective || 'Workspace run'}
+	                      </div>
+	                    </div>
+	                  </div>
+	                  <button
+	                    onClick={() => router.push(`/dashboard/runs/${latestRun.id}`)}
+	                    className="shrink-0 h-7 px-2 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors text-[11px] font-semibold text-[var(--app-text)]"
+	                  >
+	                    Open
+	                  </button>
+	                </div>
+	              )}
+	            </div>
 
             <ChatPanel
               height="100%"
