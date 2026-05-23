@@ -8,7 +8,7 @@ services:
     expose:
       - "3000"
     environment:
-      HOSTNAME: "0.0.0.0"
+      HOSTNAME: 0.0.0.0
       NODE_ENV: production
       PROJECTS_DIR: /var/lib/debuggai/projects
       SANDBOX_BASE_PORT: "4000"
@@ -19,12 +19,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - debuggai_projects:/var/lib/debuggai/projects
     labels:
+      - traefik.enable=true
       - traefik.docker.network=dokploy-network
       - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.rule=Host(`debuggaidemo.appbrainer.tech`)
-      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.entrypoints=web
-      - traefik.http.services.appbrainer-debuggai-r1cdzf-21-web.loadbalancer.server.port=3000
+      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.entrypoints=web,websecure
+      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.tls.certresolver=letsencrypt
       - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.service=appbrainer-debuggai-r1cdzf-21-web
-      - traefik.enable=true
+      - traefik.http.services.appbrainer-debuggai-r1cdzf-21-web.loadbalancer.server.port=3000
     networks:
       - dokploy-network
       - default
