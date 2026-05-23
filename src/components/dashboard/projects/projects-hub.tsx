@@ -127,6 +127,58 @@ export function ProjectsHub() {
 
       <div className="grid lg:grid-cols-[1fr,280px] gap-4 items-start">
         <div className="space-y-3 order-2 lg:order-1">
+          {(latestProject || latestThread) && (
+            <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+                    Continue
+                  </div>
+                  <div className="text-[12px] text-[var(--app-text-muted)] mt-0.5">
+                    Pick up your latest project or thread.
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    if (!latestProject) return;
+                    router.push(`/dashboard?project=${latestProject.id}`);
+                  }}
+                  disabled={!latestProject}
+                  className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors px-3 py-2 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="text-[11px] font-semibold text-[var(--app-text)]">
+                    Latest project
+                  </div>
+                  <div className="text-[11px] text-[var(--app-text-muted)] mt-0.5 line-clamp-1">
+                    {latestProject ? (latestProject.description || latestProject.prompt || 'Untitled project') : 'No projects yet'}
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (!latestThread) return;
+                    const projectId = latestThread.project_id;
+                    const url = projectId
+                      ? `/dashboard?project=${projectId}&thread=${latestThread.id}`
+                      : `/dashboard?thread=${latestThread.id}`;
+                    router.push(url);
+                  }}
+                  disabled={!latestThread}
+                  className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors px-3 py-2 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="text-[11px] font-semibold text-[var(--app-text)]">
+                    Latest thread
+                  </div>
+                  <div className="text-[11px] text-[var(--app-text-muted)] mt-0.5 line-clamp-1">
+                    {latestThread ? ((latestThread.title || '').trim() || latestThread.id.slice(0, 8)) : 'No threads yet'}
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
           {error && (
             <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-4">
               <div className="text-sm font-medium text-[var(--app-text)]">Failed to load projects</div>
@@ -190,70 +242,6 @@ export function ProjectsHub() {
         </div>
 
         <div className="space-y-3 order-1 lg:order-2">
-          <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] overflow-hidden">
-            <div className="px-3 py-2 border-b border-[var(--app-border)]">
-              <div className="text-xs font-medium text-[var(--app-text)]">Continue</div>
-              <div className="text-[11px] text-[var(--app-text-muted)] mt-0.5">
-                Jump back into your latest work.
-              </div>
-            </div>
-
-            <div className="p-3 space-y-3">
-              {latestProject ? (
-                <button
-                  onClick={() => router.push(`/dashboard?project=${latestProject.id}`)}
-                  className="w-full text-left rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors px-3 py-2"
-                >
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                    Latest project
-                  </div>
-                  <div className="mt-1 text-[13px] font-medium text-[var(--app-text)] line-clamp-1">
-                    {latestProject.description || latestProject.prompt || 'Untitled project'}
-                  </div>
-                  <div className="mt-1 text-[11px] text-[var(--app-text-muted)] line-clamp-1">
-                    Open workspace
-                  </div>
-                </button>
-              ) : (
-                <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 py-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                    Latest project
-                  </div>
-                  <div className="mt-1 text-[12px] text-[var(--app-text-muted)]">No projects yet.</div>
-                </div>
-              )}
-
-              {latestThread ? (
-                <button
-                  onClick={() => {
-                    const projectId = latestThread.project_id;
-                    const url = projectId
-                      ? `/dashboard?project=${projectId}&thread=${latestThread.id}`
-                      : `/dashboard?thread=${latestThread.id}`;
-                    router.push(url);
-                  }}
-                  className="w-full text-left rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors px-3 py-2"
-                >
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                    Latest thread
-                  </div>
-                  <div className="mt-1 text-[13px] font-medium text-[var(--app-text)] line-clamp-1">
-                    {(latestThread.title || '').trim() || latestThread.id.slice(0, 8)}
-                  </div>
-                  <div className="mt-1 text-[11px] text-[var(--app-text-muted)] line-clamp-1">
-                    Re-open conversation
-                  </div>
-                </button>
-              ) : (
-                <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 py-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                    Latest thread
-                  </div>
-                  <div className="mt-1 text-[12px] text-[var(--app-text-muted)]">No threads yet.</div>
-                </div>
-              )}
-            </div>
-          </div>
           <RecentDebugSessions />
           <RecentTransactions />
         </div>
