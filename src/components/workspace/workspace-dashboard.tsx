@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig, CheckCircle2 } from 'lucide-react';
+import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig, CheckCircle2, PanelRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
@@ -219,6 +219,15 @@ export function WorkspaceDashboard() {
         <span>Run</span>
       </button>
 
+      {/* Mobile: open the right panel drawer */}
+      <button
+        className="sm:hidden h-8 w-8 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center justify-center text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+        onClick={() => setMobilePanelOpen(true)}
+        aria-label="Open panels"
+      >
+        <PanelRight className="h-4 w-4" />
+      </button>
+
       {/* Account Menu */}
       <WorkspaceAccountMenu />
     </>
@@ -270,16 +279,17 @@ export function WorkspaceDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="absolute inset-0 bg-black/50" />
+            {/* Keep the header visible; the scrim starts below it. */}
+            <div className="absolute top-12 bottom-0 left-0 right-0 bg-black/45" />
             <motion.div
-              className="absolute inset-y-0 left-0 w-64 bg-[var(--app-panel)] border-r border-[var(--app-border)] overflow-y-auto"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+              className="absolute top-12 bottom-2 left-2 w-[min(320px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--app-panel)_92%,black)] border border-[var(--app-border)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-y-auto"
+              initial={{ x: -24, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -24, opacity: 0 }}
+              transition={{ type: 'tween', duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
               onClick={(e) => e.stopPropagation()}
             >
               <UnifiedSidebar
@@ -436,16 +446,17 @@ export function WorkspaceDashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
               onClick={() => setMobilePanelOpen(false)}
             >
-              <div className="absolute inset-0 bg-black/50" />
+              {/* Keep the header visible; the scrim starts below it. */}
+              <div className="absolute top-12 bottom-0 left-0 right-0 bg-black/45" />
               <motion.div
-                className="absolute inset-y-0 right-0 w-full max-w-[90vw] bg-[var(--app-panel)] flex flex-col"
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.8 }}
+                className="absolute top-12 bottom-2 right-2 w-[min(720px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--app-panel)_92%,black)] border border-[var(--app-border)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] flex flex-col"
+                initial={{ x: 24, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 24, opacity: 0 }}
+                transition={{ type: 'tween', duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <WorkspaceRightPanel
