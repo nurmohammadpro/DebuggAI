@@ -74,7 +74,7 @@ function serializeVirtualFilesWrapper(project: VirtualProjectFiles): string {
   return serializeVirtualFiles(project);
 }
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
-import { extractCode } from '@/lib/extract-code';
+
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/hooks/use-session';
 

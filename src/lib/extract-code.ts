@@ -10,7 +10,6 @@
 
 const FILE_MARKER_REGEX = /^\s*(?:\/\/|#)\s*File:\s*([\w./-]+\.[a-zA-Z0-9]+)\s*$/im;
 const FENCE_REGEX = /```(\w*)\n([\s\S]*?)```/g;
-const FENCE_WITH_FILENAME = /```(\w*)\n([\s\S]*?)```/;
 
 /**
  * Extract code from markdown response
@@ -215,14 +214,15 @@ function generateFilePath(code: string, seen: Set<string>): string {
         : '.tsx';
 
   // Avoid collisions
-  let path = `components/${name}${ext}`;
-  if (seen.has(path)) {
-    let i = 2;
-    while (seen.has(path.replace(/[/]/, `/${name}${i}`))) i++;
-    path = `components/${name}${i}${ext}`;
+  const basePath = `components/${name}${ext}`;
+  if (!seen.has(basePath)) {
+    return basePath;
   }
-
-  return path;
+  let i = 2;
+  while (seen.has(`components/${name}${i}${ext}`)) {
+    i++;
+  }
+  return `components/${name}${i}${ext}`;
 }
 
 function languageFromExt(path: string): string | undefined {
