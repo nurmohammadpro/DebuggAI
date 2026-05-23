@@ -295,21 +295,23 @@ export function MinimalDebugContent() {
             </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-1 flex-wrap">
-            {sections.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveSection(s.id)}
-                className={[
-                  'h-8 px-2.5 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors',
-                  activeSection === s.id
-                    ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-default)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] border border-transparent',
-                ].join(' ')}
-              >
-                {s.label}
-              </button>
-            ))}
+          <div className="mt-3 -mx-4 px-4 overflow-x-auto whitespace-nowrap">
+            <div className="inline-flex items-center gap-1 min-w-max">
+              {sections.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveSection(s.id)}
+                  className={[
+                    'h-8 px-2.5 rounded-[6px] text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors shrink-0',
+                    activeSection === s.id
+                      ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-default)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] border border-transparent',
+                  ].join(' ')}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
