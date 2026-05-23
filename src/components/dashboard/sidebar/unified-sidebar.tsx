@@ -63,7 +63,7 @@ export function UnifiedSidebar({
       }`}
     >
       {/* Top Content - Navigation and Recent Items */}
-      <div className="flex-1 overflow-y-auto flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col">
         {/* Header */}
         <div className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-3 shrink-0">
           {!collapsed && (
@@ -86,7 +86,7 @@ export function UnifiedSidebar({
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 py-2 overflow-y-auto">
+        <div className="flex-1 min-h-0 py-2 overflow-y-auto">
           {!collapsed && (
             <div className="px-3 pb-3 grid grid-cols-2 gap-2">
               <Link

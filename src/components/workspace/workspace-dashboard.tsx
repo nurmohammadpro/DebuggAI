@@ -324,6 +324,8 @@ export function WorkspaceDashboard() {
             </div>
           }
           actions={headerActions}
+          showHelp={false}
+          showAccountMenu={false}
           toolTabs={toolTabs}
           activeToolTab={rightTab}
           onToolTabChange={(tab) => {

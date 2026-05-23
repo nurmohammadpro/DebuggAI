@@ -21,6 +21,8 @@ interface UnifiedHeaderProps {
   activeToolTab?: WorkspaceRightTab;
   onToolTabChange?: (tab: WorkspaceRightTab) => void;
   mobileMenuButton?: React.ReactNode;
+  showHelp?: boolean;
+  showAccountMenu?: boolean;
 }
 
 export function UnifiedHeader({
@@ -32,6 +34,8 @@ export function UnifiedHeader({
   activeToolTab,
   onToolTabChange,
   mobileMenuButton,
+  showHelp = true,
+  showAccountMenu = true,
 }: UnifiedHeaderProps) {
   return (
     <header className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-4 bg-[var(--app-panel)] shrink-0">
@@ -86,16 +90,18 @@ export function UnifiedHeader({
         {actions}
 
         {/* Help */}
-        <Link
-          href="/docs"
-          className="w-7 h-7 flex items-center justify-center rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all"
-          aria-label="Help"
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-        </Link>
+        {showHelp && (
+          <Link
+            href="/docs"
+            className="w-7 h-7 flex items-center justify-center rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all"
+            aria-label="Help"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+          </Link>
+        )}
 
         {/* User Account Menu */}
-        <AccountMenu align="end" className="h-7 w-7" />
+        {showAccountMenu && <AccountMenu align="end" className="h-7 w-7" />}
       </div>
     </header>
   );
