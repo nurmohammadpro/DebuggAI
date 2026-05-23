@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { Save, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -9,8 +9,12 @@ import { supabase } from '@/lib/supabase';
 import { useGenerationStore } from '@/store/generation-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
+import { cn } from '@/lib/utils';
 
-export function WorkspaceSaveVersionButton() {
+export const WorkspaceSaveVersionButton = forwardRef<
+  HTMLButtonElement,
+  { className?: string }
+>(function WorkspaceSaveVersionButton({ className }, ref) {
   const queryClient = useQueryClient();
   const { projectKey, selectedProjectId } = useWorkspaceStore();
   const { getProjectCode, markSaved } = useGenerationStore();
@@ -69,7 +73,11 @@ export function WorkspaceSaveVersionButton() {
 
   return (
     <button
-      className="h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] inline-flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+      ref={ref}
+      className={cn(
+        "h-8 px-3 rounded-[6px] text-[11px] font-semibold uppercase tracking-tight transition-all border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] inline-flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed",
+        className
+      )}
       onClick={onSave}
       disabled={disabled}
       title={disabled ? 'Select a project to save versions' : 'Save version'}
@@ -82,4 +90,4 @@ export function WorkspaceSaveVersionButton() {
       <span className="hidden sm:inline">Save</span>
     </button>
   );
-}
+});

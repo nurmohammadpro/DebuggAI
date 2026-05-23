@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig, CheckCircle2, PanelRight } from 'lucide-react';
+import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, MoreVertical, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig, CheckCircle2, PanelRight, Save } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
@@ -26,6 +26,7 @@ import type { WorkspaceRightTab } from '@/components/workspace/workspace-right-p
 import { CommandPalette } from '@/components/dashboard/command-palette';
 import { useCursorTracking, CollabCursorOverlay, CollabStatusBar } from '@/components/workspace/collab-cursors';
 import { useShellStore } from '@/store/shell-store';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -45,6 +46,7 @@ export function WorkspaceDashboard() {
   const [stage, setStage] = useState<'seed' | 'sprout' | 'sapling' | 'tree'>('sapling');
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
+  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const urlProjectId = searchParams.get('project');
   const urlThreadId = searchParams.get('thread');
@@ -179,6 +181,9 @@ export function WorkspaceDashboard() {
 
   const headerActions = (
     <>
+      {/* Hidden button to reuse the save logic for the mobile overflow menu */}
+      <WorkspaceSaveVersionButton className="hidden" ref={saveButtonRef} />
+
       {/* Credits Display */}
       <div className="hidden sm:flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
         <Zap className="h-3.5 w-3.5 text-[var(--ds-green)]" />
@@ -189,11 +194,13 @@ export function WorkspaceDashboard() {
       </div>
 
       {/* Collab Status */}
-      <CollabStatusBar cursors={remoteCursors} />
+      <div className="hidden sm:block">
+        <CollabStatusBar cursors={remoteCursors} />
+      </div>
 
       {/* Deploy Button */}
       <button
-        className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+        className="hidden sm:inline-flex h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
         onClick={() => setDeployModalOpen(true)}
       >
         <Rocket className="h-3.5 w-3.5" />
@@ -201,11 +208,11 @@ export function WorkspaceDashboard() {
       </button>
 
       {/* Save Version */}
-      <WorkspaceSaveVersionButton />
+      <WorkspaceSaveVersionButton className="hidden sm:inline-flex" />
 
       {/* Share Button */}
       <button
-        className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+        className="hidden sm:inline-flex h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
         onClick={handleShare}
       >
         <Share2 className="h-3.5 w-3.5" />
@@ -214,7 +221,7 @@ export function WorkspaceDashboard() {
 
       {/* Run Button */}
       <button
-        className="h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-[#071006] hover:bg-[var(--ds-green-bright)] transition inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight"
+        className="hidden sm:inline-flex h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-[#071006] hover:bg-[var(--ds-green-bright)] transition items-center gap-2 text-[11px] font-semibold uppercase tracking-tight"
         onClick={handleRun}
       >
         <Play className="h-3.5 w-3.5" />
@@ -229,6 +236,46 @@ export function WorkspaceDashboard() {
       >
         <PanelRight className="h-4 w-4" />
       </button>
+
+      {/* Mobile: overflow menu for actions */}
+      <div className="sm:hidden">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="h-8 w-8 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center justify-center text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
+              aria-label="More actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text)]">
+            <DropdownMenuLabel className="px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+              Actions
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setDeployModalOpen(true)} className="cursor-pointer">
+              <Rocket className="h-4 w-4" />
+              Deploy
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => saveButtonRef.current?.click()}
+              className="cursor-pointer"
+            >
+              <Save className="h-4 w-4" />
+              Save version
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+              <Share2 className="h-4 w-4" />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleRun} className="cursor-pointer">
+              <Play className="h-4 w-4" />
+              Run preview
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* Account Menu */}
       <WorkspaceAccountMenu />
