@@ -17,7 +17,7 @@ const tabs = [
 
 export function WorkspaceMobileTabs({ activeTab, onTabChange }: WorkspaceMobileTabsProps) {
   return (
-    <div className="sm:hidden h-14 border-t border-[var(--app-border)] bg-[var(--app-panel)] flex items-center justify-around">
+    <div className="sm:hidden border-t border-[var(--app-border)] bg-[var(--app-panel)] flex items-center justify-around px-1 py-1 pb-[env(safe-area-inset-bottom)]">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -26,8 +26,10 @@ export function WorkspaceMobileTabs({ activeTab, onTabChange }: WorkspaceMobileT
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex flex-col items-center justify-center gap-1 w-full h-full transition-colors ${
-              isActive ? 'text-[var(--app-text)]' : 'text-[var(--app-text-muted)]'
+            className={`flex flex-col items-center justify-center gap-1 w-full min-h-[48px] transition-colors rounded-[10px] ${
+              isActive
+                ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]/60 hover:text-[var(--app-text)]'
             }`}
           >
             <Icon className="w-5 h-5" />
