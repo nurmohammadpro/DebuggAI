@@ -1,5 +1,5 @@
 services:
-  DebuggAI:
+  debuggai:
     build:
       context: .
       dockerfile: Dockerfile
