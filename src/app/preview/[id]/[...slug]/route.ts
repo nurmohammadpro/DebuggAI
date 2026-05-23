@@ -31,6 +31,9 @@ export async function GET(
     return new NextResponse('Sandbox not available', { status: 404 });
   }
 
+  // Keep sandbox alive while it's actively being viewed.
+  sandboxManager.touch(id).catch(() => {});
+
   // Build the target path
   const subPath = slug?.length ? '/' + slug.join('/') : '/';
   const search = req.nextUrl.search;

@@ -44,11 +44,19 @@ const SANDBOX_TIMEOUT_MS = parseInt(
   process.env.SANDBOX_TIMEOUT_MS || '1800000',
   10,
 );
+const SANDBOX_REAPER_INTERVAL_MS = parseInt(
+  process.env.SANDBOX_REAPER_INTERVAL_MS || '300000',
+  10,
+);
+const SANDBOX_LIMIT_CPUS = process.env.SANDBOX_LIMIT_CPUS || '1.0';
+const SANDBOX_LIMIT_MEMORY = process.env.SANDBOX_LIMIT_MEMORY || '1024m';
+const SANDBOX_LIMIT_PIDS = process.env.SANDBOX_LIMIT_PIDS || '256';
 
 class SandboxManager {
   private sandboxes: Map<string, SandboxRecord> = new Map();
   private initPromise: Promise<void> | null = null;
   private monitors: Map<string, NodeJS.Timeout> = new Map();
+  private reaper: NodeJS.Timeout | null = null;
 
   async init(): Promise<void> {
     if (this.initPromise) return this.initPromise;
@@ -60,6 +68,13 @@ class SandboxManager {
     await fs.mkdir(PROJECTS_DIR, { recursive: true });
     await this.loadState();
     await this.cleanupStale();
+
+    if (!this.reaper) {
+      this.reaper = setInterval(() => {
+        void this.reapExpired().catch(() => {});
+      }, SANDBOX_REAPER_INTERVAL_MS);
+      this.reaper.unref?.();
+    }
   }
 
   async create(
@@ -222,6 +237,12 @@ fi
       [
         'docker', 'run', '-d',
         '--name', containerName,
+        '--cpus', SANDBOX_LIMIT_CPUS,
+        '--memory', SANDBOX_LIMIT_MEMORY,
+        '--pids-limit', SANDBOX_LIMIT_PIDS,
+        '--security-opt', 'no-new-privileges',
+        '--cap-drop', 'ALL',
+        '--tmpfs', '/tmp:rw,nosuid,nodev,size=64m',
         '-p', `${port}:3000`,
         '-v', `${projectDir}:/app`,
         '-w', '/app',
@@ -400,6 +421,33 @@ fi
         this.sandboxes.delete(sandbox.id);
       }
     }
+    await this.saveState();
+  }
+
+  private async reapExpired(): Promise<void> {
+    const now = Date.now();
+
+    // Stop sandboxes that have been idle too long (even if still marked running/installing).
+    for (const sandbox of this.sandboxes.values()) {
+      const age = now - sandbox.lastActiveAt;
+      if (sandbox.status !== 'stopped' && age > SANDBOX_TIMEOUT_MS) {
+        try {
+          await this.stop(sandbox.id);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    // Remove old stopped sandboxes from disk/state.
+    for (const sandbox of this.sandboxes.values()) {
+      const age = now - sandbox.lastActiveAt;
+      if (sandbox.status === 'stopped' && age > SANDBOX_TIMEOUT_MS) {
+        fs.rm(sandbox.projectDir, { recursive: true, force: true }).catch(() => {});
+        this.sandboxes.delete(sandbox.id);
+      }
+    }
+
     await this.saveState();
   }
 

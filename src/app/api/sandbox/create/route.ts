@@ -22,6 +22,13 @@ export async function POST(req: NextRequest) {
   if (!user) return errorResponse;
 
   try {
+    if (process.env.SANDBOX_DISABLED === '1' || process.env.SANDBOX_DISABLED === 'true') {
+      return NextResponse.json(
+        { error: 'Live preview is temporarily disabled.' },
+        { status: 503 },
+      );
+    }
+
     // Fail fast before charging credits if Docker isn't available.
     const dockerCheck = spawnSync('docker', ['version'], { stdio: 'ignore' });
     if (dockerCheck.error || (typeof dockerCheck.status === 'number' && dockerCheck.status !== 0)) {
