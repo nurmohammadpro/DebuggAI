@@ -25,6 +25,7 @@ import { DeployModal } from '@/components/workspace/deploy-modal';
 import type { WorkspaceRightTab } from '@/components/workspace/workspace-right-panel';
 import { CommandPalette } from '@/components/dashboard/command-palette';
 import { useCursorTracking, CollabCursorOverlay, CollabStatusBar } from '@/components/workspace/collab-cursors';
+import { useShellStore } from '@/store/shell-store';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export function WorkspaceDashboard() {
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
   const { loadFromProject, bumpPreviewNonce, getProjectCode, savedSnapshot, currentCode, files, setThreadId } = useGenerationStore();
   const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
+  const { sidebarCollapsed, toggleSidebar } = useShellStore();
 
   const [rightTab, setRightTab] = useState<WorkspaceRightTab>('code');
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -266,7 +268,8 @@ export function WorkspaceDashboard() {
         <UnifiedSidebar
           recentThreads={recentThreads}
           recentProjects={recentProjects}
-          collapsed={false}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={toggleSidebar}
         />
       </div>
 
@@ -300,6 +303,7 @@ export function WorkspaceDashboard() {
                 recentThreads={recentThreads}
                 recentProjects={recentProjects}
                 collapsed={false}
+                onToggleCollapsed={() => setMobileMenuOpen(false)}
                 mobile
               />
             </motion.div>
@@ -327,6 +331,7 @@ export function WorkspaceDashboard() {
           showHelp={false}
           showAccountMenu={false}
           toolTabs={toolTabs}
+          toolTabsClassName="hidden lg:flex"
           activeToolTab={rightTab}
           onToolTabChange={(tab) => {
             setRightCollapsed(false);

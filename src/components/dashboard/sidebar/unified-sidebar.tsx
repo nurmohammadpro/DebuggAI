@@ -59,7 +59,7 @@ export function UnifiedSidebar({
   return (
     <aside
       className={`${mobile ? 'flex' : 'hidden md:flex'} shrink-0 flex-col h-full bg-[var(--app-panel)] border-r border-[var(--app-border)] transition-all duration-200 ${
-        collapsed ? 'w-[64px]' : 'w-[264px]'
+        mobile ? 'w-full' : collapsed ? 'w-[64px]' : 'w-[264px]'
       }`}
     >
       {/* Top Content - Navigation and Recent Items */}

@@ -23,6 +23,7 @@ interface UnifiedHeaderProps {
   mobileMenuButton?: React.ReactNode;
   showHelp?: boolean;
   showAccountMenu?: boolean;
+  toolTabsClassName?: string;
 }
 
 export function UnifiedHeader({
@@ -36,6 +37,7 @@ export function UnifiedHeader({
   mobileMenuButton,
   showHelp = true,
   showAccountMenu = true,
+  toolTabsClassName,
 }: UnifiedHeaderProps) {
   return (
     <header className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-4 bg-[var(--app-panel)] shrink-0">
@@ -62,7 +64,7 @@ export function UnifiedHeader({
 
         {/* Tool Tabs */}
         {toolTabs && toolTabs.length > 0 && (
-          <div className="flex items-center gap-1 relative">
+          <div className={`flex items-center gap-1 relative ${toolTabsClassName || ''}`}>
             {toolTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeToolTab === tab.id;
