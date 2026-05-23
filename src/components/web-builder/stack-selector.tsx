@@ -27,7 +27,7 @@ export function StackSelector({ children }: StackSelectorProps) {
   const [projectName, setProjectName] = useState('my-app');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { generate, generateFromTemplate } = useGeneration({
+  const { generate } = useGeneration({
     onDone: () => {
       setIsGenerating(false);
       setOpen(false);
@@ -54,8 +54,17 @@ export function StackSelector({ children }: StackSelectorProps) {
     setIsGenerating(true);
 
     try {
-      // Use instant template generation for stack-based projects (no LLM)
-      await generateFromTemplate(selectedStack, selectedFeatures, projectName.trim());
+      // Next.js only: generate via the LLM path (streaming) so results match the user's prompt/features.
+      const featuresText =
+        selectedFeatures.length > 0
+          ? `\n\nInclude these features:\n- ${selectedFeatures.join('\n- ')}`
+          : '';
+      await generate({
+        prompt:
+          `Create a production-ready Next.js App Router project named "${projectName.trim()}".` +
+          `${featuresText}`,
+        persistUserMessage: true,
+      });
     } catch (error) {
       console.error('Generation error:', error);
     }

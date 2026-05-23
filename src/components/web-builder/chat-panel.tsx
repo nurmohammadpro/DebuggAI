@@ -59,7 +59,7 @@ export function ChatPanel({
     );
   };
 
-  const { generate, generateFromTemplate, ensureThreadId } = useGeneration({
+  const { generate, ensureThreadId } = useGeneration({
     onDone: async () => {
       setIsLoading(false);
       toast.success('Code generated successfully!');
@@ -108,27 +108,6 @@ export function ChatPanel({
 
   const { setSidebarCollapsed } = useShellStore();
 
-  // Template generation is only available for stacks supported by the
-  // `web-builder-templates` edge function. Other stacks (Next.js, React, etc.)
-  // should go through the LLM path.
-  const TEMPLATE_STACKS: Record<string, string> = {
-    mern: 'mern',
-    mean: 'mean',
-    laravel: 'laravel',
-    django: 'django',
-    flask: 'flask',
-    rails: 'rails',
-    go: 'go',
-  };
-
-  const detectStack = (text: string): string | null => {
-    const lower = text.toLowerCase();
-    for (const [key, stack] of Object.entries(TEMPLATE_STACKS)) {
-      if (lower.includes(key)) return stack;
-    }
-    return null;
-  };
-
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -162,26 +141,8 @@ export function ChatPanel({
         { id: `local_user_${Date.now()}`, role: 'user', content: text, created_at: nowIso },
       ]);
 
-      // If the prompt names a known stack, use the instant template path.
-      const stack = detectStack(text);
-      if (stack) {
-        const projectName = text
-          .replace(new RegExp(`\\b${Object.keys(TEMPLATE_STACKS).join('|')}\\b`, 'gi'), '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .slice(0, 60) || `${stack}-app`;
-        toast.info(`Generating ${stack} project from template...`);
-        try {
-          await generateFromTemplate(stack, [], projectName);
-        } catch (e) {
-          // If templates are missing or return empty, fallback to LLM generation
-          // so the user isn't blocked.
-          toast.message('Template unavailable, falling back to AI generation...');
-          await generate({ prompt: text, persistUserMessage: false });
-        }
-      } else {
-        await generate({ prompt: text, persistUserMessage: false });
-      }
+      // Next.js only: always use the LLM generation path.
+      await generate({ prompt: text, persistUserMessage: false });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Generation failed');

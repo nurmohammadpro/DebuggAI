@@ -31,78 +31,61 @@ export function WorkspaceEditor({
       out[key] = f.content;
     }
 
-    // If we don't have a runnable project manifest, scaffold a tiny Vite+React app
-    // around the generated component so Docker preview always works.
+    // If we don't have a runnable project manifest, scaffold a minimal Next.js App Router project
+    // so Docker preview always works (Next.js-only product direction).
     if (!out['package.json']) {
       const isTs =
         Object.keys(out).some((p) => p.endsWith('.ts') || p.endsWith('.tsx'));
 
-      // Prefer an existing App file if present.
-      const appPath =
-        out['src/App.tsx'] ? 'src/App.tsx'
-          : out['src/App.jsx'] ? 'src/App.jsx'
-          : out['App.tsx'] ? 'src/App.tsx'
-          : out['App.jsx'] ? 'src/App.jsx'
-          : isTs ? 'src/App.tsx' : 'src/App.jsx';
+      const existingPage: string | null =
+        out['app/page.tsx'] ||
+        out['app/page.jsx'] ||
+        out['src/App.tsx'] ||
+        out['src/App.jsx'] ||
+        out['App.tsx'] ||
+        out['App.jsx'] ||
+        null;
 
-      const existingApp =
-        out['src/App.tsx'] || out['src/App.jsx'] || out['App.tsx'] || out['App.jsx'] || null;
-
-      out['src/App.tsx'] = appPath.endsWith('.tsx') ? (existingApp ?? out['src/App.tsx'] ?? '') : out['src/App.tsx'];
-      out['src/App.jsx'] = appPath.endsWith('.jsx') ? (existingApp ?? out['src/App.jsx'] ?? '') : out['src/App.jsx'];
-
-      // Normalize the app file into src/
-      if (existingApp && (out['App.tsx'] || out['App.jsx'])) {
-        delete out['App.tsx'];
-        delete out['App.jsx'];
-      }
-
-      const mainFile = isTs ? 'src/main.tsx' : 'src/main.jsx';
-      out[mainFile] =
-        isTs
-          ? [
-              "import React from 'react';",
-              "import ReactDOM from 'react-dom/client';",
-              "import App from './App';",
-              "import './index.css';",
-              '',
-              'ReactDOM.createRoot(document.getElementById(\"root\") as HTMLElement).render(',
-              '  <React.StrictMode>',
-              '    <App />',
-              '  </React.StrictMode>',
-              ');',
-              '',
-            ].join('\n')
-          : [
-              "import React from 'react';",
-              "import ReactDOM from 'react-dom/client';",
-              "import App from './App';",
-              "import './index.css';",
-              '',
-              'ReactDOM.createRoot(document.getElementById(\"root\")).render(',
-              '  <React.StrictMode>',
-              '    <App />',
-              '  </React.StrictMode>',
-              ');',
-              '',
-            ].join('\n');
-
-      out['src/index.css'] = out['src/index.css'] || 'html,body,#root{height:100%;margin:0}';
-      out['index.html'] =
-        out['index.html'] ||
+      // Basic app router shell
+      out['app/layout.tsx'] =
+        out['app/layout.tsx'] ||
         [
-          '<!doctype html>',
-          '<html lang="en">',
-          '  <head>',
-          '    <meta charset="UTF-8" />',
-          '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-          '    <title>Preview</title>',
-          '  </head>',
-          '  <body>',
-          '    <div id="root"></div>',
-          `    <script type="module" src="/${mainFile}"></script>`,
-          '  </body>',
-          '</html>',
+          "import './globals.css';",
+          '',
+          'export default function RootLayout({',
+          '  children,',
+          '}: {',
+          '  children: React.ReactNode;',
+          '}) {',
+          '  return (',
+          '    <html lang=\"en\">',
+          '      <body>{children}</body>',
+          '    </html>',
+          '  );',
+          '}',
+          '',
+        ].join('\n');
+
+      out['app/page.tsx'] =
+        out['app/page.tsx'] ||
+        (existingPage
+          ? existingPage
+          : [
+              'export default function Page() {',
+              "  return <main style={{ padding: 24 }}>Hello from Next.js</main>;",
+              '}',
+              '',
+            ].join('\n'));
+
+      out['app/globals.css'] = out['app/globals.css'] || 'html,body{height:100%;margin:0}';
+
+      out['next.config.js'] =
+        out['next.config.js'] ||
+        [
+          '/** @type {import(\"next\").NextConfig} */',
+          'const nextConfig = {};',
+          '',
+          'module.exports = nextConfig;',
           '',
         ].join('\n');
 
@@ -110,47 +93,31 @@ export function WorkspaceEditor({
         out['package.json'] ||
         JSON.stringify(
           {
-            name: 'preview-app',
+            name: 'next-preview-app',
             private: true,
             version: '0.0.0',
-            type: 'module',
             scripts: {
-              dev: 'vite --host 0.0.0.0 --port 3000',
-              build: 'vite build',
-              preview: 'vite preview --host 0.0.0.0 --port 3000',
+              dev: 'next dev -H 0.0.0.0 -p 3000',
+              build: 'next build',
+              start: 'next start -H 0.0.0.0 -p 3000',
             },
             dependencies: {
-              react: '^18.3.1',
-              'react-dom': '^18.3.1',
+              next: '^16.2.3',
+              react: '^19.2.4',
+              'react-dom': '^19.2.4',
             },
             devDependencies: isTs
               ? {
-                  vite: '^6.0.0',
                   typescript: '^5.0.0',
-                  '@types/react': '^18.2.0',
-                  '@types/react-dom': '^18.2.0',
-                  '@vitejs/plugin-react': '^4.3.0',
+                  '@types/node': '^20.0.0',
+                  '@types/react': '^19.0.0',
+                  '@types/react-dom': '^19.0.0',
                 }
-              : {
-                  vite: '^6.0.0',
-                  '@vitejs/plugin-react': '^4.3.0',
-                },
+              : {},
           },
           null,
           2,
         );
-
-      out['vite.config.ts'] =
-        out['vite.config.ts'] ||
-        [
-          "import { defineConfig } from 'vite';",
-          "import react from '@vitejs/plugin-react';",
-          '',
-          'export default defineConfig({',
-          '  plugins: [react()],',
-          '});',
-          '',
-        ].join('\n');
     }
 
     return out;

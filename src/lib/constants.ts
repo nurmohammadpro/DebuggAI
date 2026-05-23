@@ -50,46 +50,10 @@ export const PLANS = {
 
 export const WEB_BUILDER_STACKS = [
   {
-    id: 'mern',
-    name: 'MERN',
-    description: 'MongoDB, Express, React, Node.js',
-    icon: '⚛️',
-  },
-  {
-    id: 'mean',
-    name: 'MEAN',
-    description: 'MongoDB, Express, Angular, Node.js',
-    icon: '🅰️',
-  },
-  {
-    id: 'laravel',
-    name: 'Laravel',
-    description: 'PHP, Laravel Framework, MySQL',
-    icon: '🔴',
-  },
-  {
-    id: 'django',
-    name: 'Django',
-    description: 'Python, Django, PostgreSQL',
-    icon: '🐍',
-  },
-  {
-    id: 'flask',
-    name: 'Flask',
-    description: 'Python, Flask, SQLAlchemy',
-    icon: 'pepper',
-  },
-  {
-    id: 'rails',
-    name: 'Rails',
-    description: 'Ruby, Rails, PostgreSQL',
-    icon: 'gem',
-  },
-  {
-    id: 'go',
-    name: 'Go Stack',
-    description: 'Go, Gin/Echo, PostgreSQL',
-    icon: 'circle',
+    id: 'nextjs',
+    name: 'Next.js (App Router)',
+    description: 'Next.js App Router, TypeScript, Tailwind',
+    icon: '▲',
   },
 ] as const;
 

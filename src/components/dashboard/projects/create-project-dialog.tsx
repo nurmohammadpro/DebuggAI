@@ -24,7 +24,7 @@ export function CreateProjectDialog({
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [name, setName] = useState('New Project');
-  const [selectedStack, setSelectedStack] = useState<string>('mern');
+  const [selectedStack, setSelectedStack] = useState<string>('nextjs');
   const [creating, setCreating] = useState(false);
 
   const stackMeta = useMemo(
@@ -52,7 +52,7 @@ export function CreateProjectDialog({
       const { id, durationMs } = await createProjectFromGeneration({
         name: name.trim(),
         stack: selectedStack,
-        prompt: `Create a ${selectedStack.toUpperCase()} app: ${name.trim()}`,
+        prompt: `Create a Next.js App Router app: ${name.trim()}`,
         createdFrom: 'dashboard-dialog',
       });
 
