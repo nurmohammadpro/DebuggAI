@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, Clock, Bug, Trash2, RefreshCw } from 'lucide-react';
+import { Search, Clock, Bug, Trash2, RefreshCw, ArrowLeft } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
@@ -81,8 +81,15 @@ export function DebugHistory() {
     <div className="p-4 sm:p-6">
       {/* Page Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
+            <button
+              onClick={() => router.push('/dashboard/debug')}
+              className="inline-flex items-center gap-2 text-[12px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Debugger
+            </button>
             <h1 className="text-[16px] font-medium tracking-[-0.02em] text-[var(--app-text)]">Debug History</h1>
             <p className="text-[13px] text-[var(--app-text-muted)] mt-1">
               View and manage your past debugging sessions
@@ -91,7 +98,7 @@ export function DebugHistory() {
           <button
             onClick={handleClearAll}
             disabled={(data || []).length === 0}
-            className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-danger)]/25 bg-[var(--app-danger-soft)] px-3 py-1.5 text-[13px] text-[var(--app-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--app-danger-soft)_70%,black)] disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
             Clear All
