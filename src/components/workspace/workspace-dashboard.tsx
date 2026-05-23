@@ -275,7 +275,7 @@ export function WorkspaceDashboard() {
         {mobileMenuOpen && (
           <motion.div
             key="sidebar-overlay"
-            className="fixed inset-0 z-40 md:hidden"
+            className="fixed inset-0 z-40 md:hidden pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -283,7 +283,10 @@ export function WorkspaceDashboard() {
             onClick={() => setMobileMenuOpen(false)}
           >
             {/* Keep the header visible; the scrim starts below it. */}
-            <div className="absolute top-12 bottom-0 left-0 right-0 bg-black/45" />
+            <div
+              className="absolute top-12 bottom-0 left-0 right-0 bg-black/45 pointer-events-auto"
+              onClick={() => setMobileMenuOpen(false)}
+            />
             <motion.div
               className="absolute top-12 bottom-2 left-2 w-[min(320px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--app-panel)_92%,black)] border border-[var(--app-border)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-y-auto"
               initial={{ x: -24, opacity: 0 }}
@@ -291,6 +294,7 @@ export function WorkspaceDashboard() {
               exit={{ x: -24, opacity: 0 }}
               transition={{ type: 'tween', duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
               onClick={(e) => e.stopPropagation()}
+              style={{ pointerEvents: 'auto' }}
             >
               <UnifiedSidebar
                 recentThreads={recentThreads}
@@ -442,7 +446,7 @@ export function WorkspaceDashboard() {
           {mobilePanelOpen && (
             <motion.div
               key="mobile-panel-overlay"
-              className="fixed inset-0 z-50 md:hidden"
+              className="fixed inset-0 z-50 md:hidden pointer-events-none"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -450,7 +454,10 @@ export function WorkspaceDashboard() {
               onClick={() => setMobilePanelOpen(false)}
             >
               {/* Keep the header visible; the scrim starts below it. */}
-              <div className="absolute top-12 bottom-0 left-0 right-0 bg-black/45" />
+              <div
+                className="absolute top-12 bottom-0 left-0 right-0 bg-black/45 pointer-events-auto"
+                onClick={() => setMobilePanelOpen(false)}
+              />
               <motion.div
                 className="absolute top-12 bottom-2 right-2 w-[min(720px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--app-panel)_92%,black)] border border-[var(--app-border)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] flex flex-col"
                 initial={{ x: 24, opacity: 0 }}
@@ -458,6 +465,7 @@ export function WorkspaceDashboard() {
                 exit={{ x: 24, opacity: 0 }}
                 transition={{ type: 'tween', duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
                 onClick={(e) => e.stopPropagation()}
+                style={{ pointerEvents: 'auto' }}
               >
                 <WorkspaceRightPanel
                   activeTab={rightTab}
