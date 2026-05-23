@@ -64,7 +64,9 @@ export function UnifiedHeader({
 
         {/* Tool Tabs */}
         {toolTabs && toolTabs.length > 0 && (
-          <div className={`flex items-center gap-1 relative ${toolTabsClassName || ''}`}>
+          <div
+            className={`flex-1 min-w-0 flex items-center gap-1 relative overflow-x-auto ${toolTabsClassName || ''}`}
+          >
             {toolTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeToolTab === tab.id;
@@ -72,7 +74,7 @@ export function UnifiedHeader({
                 <button
                   key={tab.id}
                   onClick={() => onToolTabChange?.(tab.id)}
-                  className={`h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-[11px] font-medium transition-all duration-150 ${
+                  className={`shrink-0 h-8 flex items-center gap-1.5 px-2.5 rounded-[6px] text-[11px] font-medium transition-all duration-150 ${
                     isActive
                       ? 'bg-[var(--app-surface)] text-[var(--app-text)] border border-[var(--app-border)]'
                       : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
