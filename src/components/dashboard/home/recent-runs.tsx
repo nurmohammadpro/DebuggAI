@@ -53,7 +53,11 @@ export function RecentRuns() {
       {!isLoading && !error && data && data.length > 0 && (
         <div className="divide-y divide-[var(--app-border)]">
           {data.map((r) => (
-            <div key={r.id} className="p-2.5 hover:bg-[var(--app-surface)] transition-colors">
+            <Link
+              key={r.id}
+              href={`/dashboard/runs/${r.id}`}
+              className="block p-2.5 hover:bg-[var(--app-surface)] transition-colors"
+            >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-[12px] font-medium text-[var(--app-text)] line-clamp-1">
@@ -72,11 +76,10 @@ export function RecentRuns() {
                   {r.error}
                 </div>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       )}
     </div>
   );
 }
-

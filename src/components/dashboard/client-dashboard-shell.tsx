@@ -28,6 +28,7 @@ export function ClientDashboardShell({ children }: ClientDashboardShellProps) {
     if (pathname === '/dashboard/home') return { title: 'Projects', subtitle: 'Manage your projects' };
     if (pathname === '/dashboard/web-builder') return { title: 'Web Builder', subtitle: 'Build and preview your web applications' };
     if (pathname === '/dashboard/debug') return { title: 'Debug Session', subtitle: 'AI-powered code debugging' };
+    if (pathname?.startsWith('/dashboard/runs')) return { title: 'Runs', subtitle: 'Execution history and step trace' };
     if (pathname?.startsWith('/dashboard/settings')) return { title: 'Settings', subtitle: 'Manage your account preferences' };
     if (pathname === '/dashboard/pricing') return { title: 'Pricing', subtitle: 'View plans and pricing' };
     if (pathname === '/dashboard/referrals') return { title: 'Referrals', subtitle: 'Invite friends and earn rewards' };

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
-import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, X, Zap } from 'lucide-react';
+import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, X, Zap, ListChecks } from 'lucide-react';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import type { ThreadRow } from '@/hooks/queries/use-my-threads';
 import { getSession } from '@/hooks/use-session';
@@ -34,6 +34,7 @@ export function UnifiedSidebar({
   const isDashboardHome = pathname === '/dashboard' && !searchParams?.has('project');
   const isWebBuilder = pathname === '/dashboard/web-builder';
   const isDebug = pathname === '/dashboard/debug' || pathname.startsWith('/dashboard/debug/');
+  const isRuns = pathname === '/dashboard/runs' || pathname.startsWith('/dashboard/runs/');
   const activeProjectId = searchParams?.get('project');
 
   const createThread = async () => {
@@ -130,6 +131,13 @@ export function UnifiedSidebar({
             icon={<Zap className="w-3.5 h-3.5" />}
             label="Web Builder"
             href="/dashboard/web-builder"
+          />
+          <NavItem
+            collapsed={collapsed}
+            active={isRuns}
+            icon={<ListChecks className="w-3.5 h-3.5" />}
+            label="Runs"
+            href="/dashboard/runs"
           />
           <NavItem
             collapsed={collapsed}

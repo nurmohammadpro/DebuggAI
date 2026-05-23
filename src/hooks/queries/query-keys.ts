@@ -4,6 +4,7 @@ export const queryKeys = {
   myProjects: ['projects', 'mine'] as const,
   myThreads: ['threads', 'mine'] as const,
   myRuns: ['runs', 'mine'] as const,
+  runDetails: (runId: string) => ['runs', runId, 'details'] as const,
   threadMessages: (threadId: string) => ['threads', threadId, 'messages'] as const,
   project: (id: string) => ['project', id] as const,
   projectVersions: (projectKey: string) => ['projectVersions', projectKey] as const,
