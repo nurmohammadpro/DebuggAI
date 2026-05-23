@@ -60,18 +60,23 @@ export function WorkspaceRightPanel({
   const panelContent = (
     <>
       <div className="h-11 border-b border-[var(--app-border)] flex items-center justify-between px-3 shrink-0">
-        <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text)]">
-          {title}
-        </h2>
+        <div className="min-w-0">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text)] truncate">
+            {title}
+          </h2>
+          <div className="text-[10px] text-[var(--app-text-dim)] -mt-0.5">
+            {mobile ? 'Panels' : 'Workspace tools'}
+          </div>
+        </div>
         <button
-          className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-[8px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors border border-transparent hover:border-[var(--app-border)]"
           title={mobile ? 'Close' : 'Collapse panel'}
           onClick={mobile ? onMobileClose : onToggleCollapsed}
         >
           {mobile ? (
-            <X className="h-4 w-4 text-[var(--app-text-dim)]" />
+            <X className="h-4 w-4 text-[var(--app-text-muted)]" />
           ) : (
-            <ChevronRight className="h-4 w-4 rotate-180 text-[var(--app-text-dim)]" />
+            <ChevronRight className="h-4 w-4 rotate-180 text-[var(--app-text-muted)]" />
           )}
         </button>
       </div>
