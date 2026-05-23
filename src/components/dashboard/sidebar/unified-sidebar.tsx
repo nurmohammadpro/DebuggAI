@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
-import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, Zap } from 'lucide-react';
+import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, X, Zap } from 'lucide-react';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import type { ThreadRow } from '@/hooks/queries/use-my-threads';
 import { getSession } from '@/hooks/use-session';
@@ -75,12 +75,16 @@ export function UnifiedSidebar({
             <button
               onClick={onToggleCollapsed}
               className="p-1 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text-muted)] transition-all"
-              aria-label="Toggle sidebar"
+              aria-label={mobile ? 'Close sidebar' : 'Toggle sidebar'}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <path d="M9 3v18"/>
-              </svg>
+              {mobile ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 3v18" />
+                </svg>
+              )}
             </button>
           )}
         </div>
