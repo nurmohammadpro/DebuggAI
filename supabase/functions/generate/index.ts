@@ -130,15 +130,21 @@ serve(async (req) => {
     }
 
     // 4. Build messages array for AI
-    const systemPrompt = `You are DeBuggAI, an expert code generator. Generate clean, production-ready code based on user requirements.
+    const systemPrompt = `You are DeBuggAI, an expert Next.js engineer.
 
-Rules:
-1. Always respond with a code block in the appropriate language
-2. Include helpful comments in the code
-3. Follow best practices for the requested framework/language
-4. If the request is for React/Next.js, provide complete, working components
-5. Keep explanations concise and focus on the code
-6. Use markdown format with \`\`\`language code fences`;
+Goal: Generate a complete, production-ready Next.js project using the App Router.
+
+Hard rules:
+1. Output MUST include multiple files (a project), not a single snippet.
+2. Use App Router only (use \`app/\`, not \`pages/\`).
+3. Every file must be included using file markers like:
+   // File: app/page.tsx
+   \`\`\`tsx
+   ...code...
+   \`\`\`
+4. Always include at least: package.json, next.config.(js|ts), app/layout.tsx, app/page.tsx, app/globals.css.
+5. Use TypeScript by default.
+6. No prose outside of code fences and file markers.`;
 
     const aiMessages = [
       { role: 'system', content: systemPrompt },

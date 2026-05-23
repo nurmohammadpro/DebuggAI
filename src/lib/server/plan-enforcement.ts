@@ -28,7 +28,16 @@ const ACTION_COSTS: Record<string, number> = {
 };
 
 export async function getUserPlan(userId: string): Promise<PlanType> {
-  const supabase = createSupabaseAdmin();
+  let supabase: ReturnType<typeof createSupabaseAdmin> | null = null;
+  try {
+    supabase = createSupabaseAdmin();
+  } catch (e) {
+    // Dev ergonomics: allow the app to run without service role key.
+    // In production you should always set SUPABASE_SERVICE_ROLE_KEY.
+    console.warn('[plan-enforcement] SUPABASE_SERVICE_ROLE_KEY missing; defaulting plan to FREE');
+    return 'FREE';
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('plan_type')
@@ -55,7 +64,13 @@ export async function checkRateLimit(userId: string, action: string): Promise<{ 
   const planConfig = PLANS[plan];
   if (planConfig.rateLimit === -1) return { allowed: true, current: 0, limit: -1 };
 
-  const supabase = createSupabaseAdmin();
+  let supabase: ReturnType<typeof createSupabaseAdmin> | null = null;
+  try {
+    supabase = createSupabaseAdmin();
+  } catch {
+    // If we can't read rate-limit logs, fail open (the edge functions still meter credits).
+    return { allowed: true, current: 0, limit: planConfig.rateLimit };
+  }
   const windowStart = new Date(Date.now() - 60_000).toISOString();
 
   const { count, error } = await supabase

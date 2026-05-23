@@ -16,7 +16,9 @@ export async function middleware(request: NextRequest) {
   // Security headers
   const response = NextResponse.next();
 
-  response.headers.set('X-Frame-Options', 'DENY');
+  // The app embeds same-origin iframes for workspace previews under /preview/*.
+  // DENY breaks that flow; SAMEORIGIN preserves clickjacking protection while allowing our own iframe usage.
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set(
@@ -29,12 +31,15 @@ export async function middleware(request: NextRequest) {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "img-src 'self' data: https:",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com ws://localhost:* wss://*.supabase.co",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net",
+      "worker-src 'self' blob:",
       "frame-src 'self' http://localhost:*",
+      "frame-ancestors 'self'",
     ].join('; ')
   );
 

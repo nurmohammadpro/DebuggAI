@@ -529,7 +529,7 @@ RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = ''
+SET search_path = public
 AS $$
   SELECT COALESCE(
     (SELECT is_admin FROM profiles WHERE id = p_user_id),
@@ -544,7 +544,7 @@ RETURNS TEXT
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = ''
+SET search_path = public
 AS $$
   SELECT COALESCE(
     (SELECT plan_type FROM profiles WHERE id = p_user_id),

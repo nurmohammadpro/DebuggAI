@@ -38,12 +38,14 @@ SELECT
   now()
 FROM public.generations g
 WHERE g.project_id IS NULL
+  AND EXISTS (SELECT 1 FROM public.profiles WHERE id = g.user_id)
 ON CONFLICT (id) DO NOTHING;
 
 -- Set the project_id on those generations to point at the newly created project.
 UPDATE public.generations g
 SET project_id = g.id
-WHERE g.project_id IS NULL;
+WHERE g.project_id IS NULL
+  AND EXISTS (SELECT 1 FROM public.projects WHERE id = g.id);
 
 -- Helpful index for per-project versioning.
 CREATE INDEX IF NOT EXISTS idx_generations_project_version

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
@@ -38,8 +38,10 @@ export function WorkspaceDashboard() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [rightWidth, setRightWidth] = useState(640);
+  const [rightWidth, setRightWidth] = useState(980);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
+  const projectBootStartedAtRef = useRef<number | null>(null);
+  const projectBootLoggedRef = useRef<string | null>(null);
 
   const urlProjectId = searchParams.get('project');
   const urlThreadId = searchParams.get('thread');
@@ -63,14 +65,32 @@ export function WorkspaceDashboard() {
   }, [selectedProjectId, setSelectedProjectId, urlProjectId]);
 
   useEffect(() => {
+    if (!effectiveProjectId) return;
+    if (projectBootLoggedRef.current === effectiveProjectId) return;
+    projectBootStartedAtRef.current = performance.now();
+  }, [effectiveProjectId]);
+
+  useEffect(() => {
     if (urlThreadId) setThreadId(urlThreadId);
   }, [setThreadId, urlThreadId]);
 
   useEffect(() => {
     if (project?.code) {
       loadFromProject(project.code, project.description || 'Loaded project');
+      if (
+        effectiveProjectId &&
+        projectBootLoggedRef.current !== effectiveProjectId &&
+        projectBootStartedAtRef.current != null
+      ) {
+        const elapsed = Math.round(performance.now() - projectBootStartedAtRef.current);
+        console.info('[workspace] project boot duration (ms)', {
+          projectId: effectiveProjectId,
+          elapsed,
+        });
+        projectBootLoggedRef.current = effectiveProjectId;
+      }
     }
-  }, [loadFromProject, project?.code, project?.description]);
+  }, [effectiveProjectId, loadFromProject, project?.code, project?.description]);
 
   useEffect(() => {
     if (!project) return;
@@ -296,7 +316,7 @@ export function WorkspaceDashboard() {
         {/* IDE Workspace */}
         <div className="flex-1 min-h-0 flex min-w-0">
           {/* Primary conversation surface */}
-          <section className="flex-1 min-w-[360px] bg-[var(--app-bg)] flex flex-col min-h-0">
+          <section className="flex-1 min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0">
             <div className="h-11 border-b border-[var(--app-border)] bg-[var(--app-panel)] flex items-center justify-between px-4 shrink-0">
               <div className="min-w-0">
                 <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text)]">
@@ -324,18 +344,18 @@ export function WorkspaceDashboard() {
           <WorkspaceSplitter
             ariaLabel="Resize right panel"
             onResize={(dx) =>
-              setRightWidth((w) => clamp(w - dx, 380, 860))
+              setRightWidth((w) => clamp(w - dx, 420, 1400))
             }
           />
 
           {/* Code, preview, files, and project tools */}
-          <div className="hidden sm:block transition-all duration-200 ease-out" style={{ width: rightCollapsed ? undefined : clamp(rightWidth, 380, 860) }}>
+          <div className="hidden sm:block transition-all duration-200 ease-out" style={{ width: rightCollapsed ? undefined : clamp(rightWidth, 420, 1400) }}>
             <WorkspaceRightPanel
               activeTab={rightTab}
               onTabChange={setRightTab}
               collapsed={rightCollapsed}
               onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-              width={clamp(rightWidth, 380, 860)}
+              width={clamp(rightWidth, 420, 1400)}
               onEditorViewChange={(view) => {
                 setRightTab(view);
               }}

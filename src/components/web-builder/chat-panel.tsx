@@ -141,9 +141,11 @@ export function ChatPanel({
         { id: `local_user_${Date.now()}`, role: 'user', content: text, created_at: nowIso },
       ]);
 
+      // Next.js only: always use the LLM generation path.
       await generate({ prompt: text, persistUserMessage: false });
     } catch (error) {
       console.error('Generation error:', error);
+      toast.error(error instanceof Error ? error.message : 'Generation failed');
       // Show the typed message even if generation failed before persistence.
       setMessages((prev) => [
         ...prev,

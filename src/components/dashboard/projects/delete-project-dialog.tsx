@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 export function DeleteProjectDialog({
   open,
@@ -26,8 +26,17 @@ export function DeleteProjectDialog({
   const onDelete = async () => {
     setDeleting(true);
     try {
-      const { error } = await supabase.from('generations').delete().eq('id', projectId);
-      if (error) throw error;
+      const { session } = await getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Please sign in again');
+
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'Failed to delete');
+
       toast.success('Project deleted');
       onOpenChange(false);
       onDeleted();
@@ -62,4 +71,3 @@ export function DeleteProjectDialog({
     </Dialog>
   );
 }
-

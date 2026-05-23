@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   const auth = await requireUser(req);
   if (auth.errorResponse) return auth.errorResponse;
 
@@ -90,7 +91,13 @@ export async function POST(req: NextRequest) {
       version: 1,
     });
 
-  if (genError) return NextResponse.json({ error: genError.message }, { status: 500 });
+  if (genError) {
+    // Best-effort compensation: avoid leaving orphaned canonical projects
+    // when generation creation fails after project row insertion.
+    await auth.supabase.from('projects').delete().eq('id', projectId);
+    return NextResponse.json({ error: genError.message }, { status: 500 });
+  }
 
-  return NextResponse.json({ id: projectId }, { status: 201 });
+  const durationMs = Date.now() - startedAt;
+  return NextResponse.json({ id: projectId, durationMs }, { status: 201 });
 }

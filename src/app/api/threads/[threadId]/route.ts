@@ -19,14 +19,28 @@ export async function PATCH(
   const { threadId } = await ctx.params;
   if (!threadId) return NextResponse.json({ error: 'threadId is required' }, { status: 400 });
 
-  const body = (await req.json().catch(() => null)) as null | { title?: string | null };
+  const body = (await req.json().catch(() => null)) as null | {
+    title?: string | null;
+    projectId?: string | null;
+    workspaceId?: string | null;
+    metadata?: Record<string, unknown> | null;
+  };
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
 
-  const title = (body.title || '').trim();
+  const title = typeof body.title === 'string' ? body.title.trim() : null;
+
+  const patch: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (typeof title === 'string') patch.title = title || null;
+  if (body.projectId !== undefined) patch.project_id = body.projectId || null;
+  if (body.workspaceId !== undefined) patch.workspace_id = body.workspaceId || null;
+  if (body.metadata !== undefined) patch.metadata = body.metadata || {};
 
   const { data, error } = await auth.supabase
     .from('threads')
-    .update({ title: title || null, updated_at: new Date().toISOString() })
+    .update(patch)
     .eq('id', threadId)
     .eq('user_id', auth.user!.id)
     .select('id, title, project_id, workspace_id, created_at, updated_at, metadata')
@@ -57,4 +71,3 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
-

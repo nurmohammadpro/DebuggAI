@@ -190,7 +190,7 @@ export const useGenerationStore = create<GenerationState>()(
       reset: () => set(initialState),
 
       loadFromProject: (code, description) =>
-        set(() => {
+        set((state) => {
           const baseVersion: CodeVersion = {
             id: Date.now().toString(),
             code,
@@ -206,6 +206,10 @@ export const useGenerationStore = create<GenerationState>()(
             savedSnapshot: code,
             versions: [baseVersion],
             currentVersionId: baseVersion.id,
+            // Preserve thread + project context; otherwise the chat panel "resets"
+            // when we reload the project code.
+            currentProjectId: state.currentProjectId,
+            currentThreadId: state.currentThreadId,
           };
         }),
     }),

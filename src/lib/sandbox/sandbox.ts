@@ -9,7 +9,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { spawn, execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import path from 'path';
 import crypto from 'crypto';
 
@@ -67,6 +67,7 @@ class SandboxManager {
     files: Record<string, string>,
   ): Promise<SandboxRecord> {
     await this.init();
+    this.assertDockerAvailable();
 
     // Enforce per-user limit
     const userCount = Array.from(this.sandboxes.values()).filter(
@@ -126,13 +127,42 @@ class SandboxManager {
     return record;
   }
 
+  private assertDockerAvailable() {
+    try {
+      const result = spawnSync('docker', ['version'], { stdio: 'ignore' });
+      if (result.error) throw result.error;
+      if (typeof result.status === 'number' && result.status !== 0) {
+        throw new Error('docker exited non-zero');
+      }
+    } catch {
+      throw new Error(
+        'Docker is required to run sandboxes. Install Docker Desktop and ensure the `docker` CLI is available, then restart the dev server.',
+      );
+    }
+  }
+
   private generateStartScript(): string {
     return `#!/bin/sh
 set -e
 
 cd /app
 echo "---SANDBOX_INSTALL_START---"
-npm install 2>&1
+
+# Install dependencies.
+# Supports:
+# 1) root package.json (single app or workspaces)
+# 2) common split repos: client/ + server/
+if [ -f "package.json" ]; then
+  npm install 2>&1
+elif [ -f "client/package.json" ]; then
+  (cd client && npm install 2>&1)
+  if [ -f "server/package.json" ]; then
+    (cd server && npm install 2>&1)
+  fi
+else
+  echo "No package.json found. Nothing to install."
+fi
+
 echo "---SANDBOX_INSTALL_DONE---"
 
 # Auto-detect framework and start dev server
@@ -145,10 +175,28 @@ elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
 elif [ -f "angular.json" ]; then
   echo "---SANDBOX_DETECTED:angular---"
   npx ng serve --port 3000 --host 0.0.0.0
+elif [ -f "client/package.json" ]; then
+  echo "---SANDBOX_DETECTED:client-server---"
+  # Best-effort: start server in the background (not exposed), run client on port 3000.
+  if [ -f "server/package.json" ]; then
+    (cd server && (npm run dev 2>/dev/null || npm start 2>/dev/null || true)) &
+  fi
+
+  cd client
+  if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
+    echo "---SANDBOX_DETECTED:next(client)---"
+    npx next dev -p 3000 -H 0.0.0.0
+  elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
+    echo "---SANDBOX_DETECTED:vite(client)---"
+    npx vite --port 3000 --host 0.0.0.0
+  else
+    echo "---SANDBOX_DETECTED:package-scripts(client)---"
+    HOST=0.0.0.0 PORT=3000 npm start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null
+  fi
 elif [ -f "package.json" ]; then
   # Try common dev scripts
   echo "---SANDBOX_DETECTED:package-scripts---"
-  npx react-scripts start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null || npm start -- --port 3000 --host 0.0.0.0 2>/dev/null
+  HOST=0.0.0.0 PORT=3000 npx react-scripts start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null || npm start -- --port 3000 --host 0.0.0.0 2>/dev/null
 else
   echo "---SANDBOX_DETECTED:static---"
   npx serve . -p 3000 -l 3000
@@ -158,6 +206,7 @@ fi
 
   private async startContainer(record: SandboxRecord): Promise<void> {
     const { projectDir, containerName, port } = record;
+    this.assertDockerAvailable();
 
     // Remove any existing container with same name
     execSync(`docker rm -f ${containerName} 2>/dev/null || true`, {

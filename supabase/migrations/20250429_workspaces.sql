@@ -10,19 +10,19 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enums for Collaboration
 -- ============================================================================
 
-CREATE TYPE workspace_plan AS ENUM ('team', 'business', 'enterprise');
-CREATE TYPE workspace_role AS ENUM ('owner', 'admin', 'member', 'viewer');
-CREATE TYPE workspace_status AS ENUM ('active', 'suspended', 'archived');
-CREATE TYPE collaboration_status AS ENUM ('pending', 'accepted', 'declined');
-CREATE TYPE collaboration_permission AS ENUM ('owner', 'editor', 'viewer', 'commenter');
-CREATE TYPE collaboration_event_type AS ENUM (
+DO $$ BEGIN CREATE TYPE workspace_plan AS ENUM ('team', 'business', 'enterprise'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE workspace_role AS ENUM ('owner', 'admin', 'member', 'viewer'); EXCEPTION WHEN duplicate_object THEN NULL; End $$;
+DO $$ BEGIN CREATE TYPE workspace_status AS ENUM ('active', 'suspended', 'archived'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE collaboration_status AS ENUM ('pending', 'accepted', 'declined'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE collaboration_permission AS ENUM ('owner', 'editor', 'viewer', 'commenter'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE collaboration_event_type AS ENUM (
   'cursor_move',
   'edit',
   'selection',
   'comment',
   'presence',
   'version_change'
-);
+); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ============================================================================
 -- Workspaces
@@ -64,6 +64,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS workspace_slug_trigger ON workspaces;
 CREATE TRIGGER workspace_slug_trigger
   BEFORE INSERT ON workspaces
   FOR EACH ROW
@@ -78,6 +79,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS workspaces_updated_at ON workspaces;
 CREATE TRIGGER workspaces_updated_at
   BEFORE UPDATE ON workspaces
   FOR EACH ROW
@@ -127,12 +129,13 @@ CREATE OR REPLACE FUNCTION generate_invitation_token()
 RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.token IS NULL OR NEW.token = '' THEN
-    NEW.token := encode(gen_random_bytes(32), 'base64');
+    NEW.token := encode(extensions.gen_random_bytes(32), 'base64');
   END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS invitation_token_trigger ON workspace_invitations;
 CREATE TRIGGER invitation_token_trigger
   BEFORE INSERT ON workspace_invitations
   FOR EACH ROW
@@ -205,57 +208,63 @@ CREATE INDEX IF NOT EXISTS idx_project_comments_parent_id ON project_comments(pa
 CREATE INDEX IF NOT EXISTS idx_project_comments_resolved ON project_comments(resolved);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS project_comments_updated_at ON project_comments;
 CREATE TRIGGER project_comments_updated_at
   BEFORE UPDATE ON project_comments
   FOR EACH ROW
   EXECUTE FUNCTION update_workspaces_updated_at();
 
 -- ============================================================================
+-- ============================================================================
 -- Row Level Security (RLS)
 -- ============================================================================
+
+-- Helper: check workspace membership (SECURITY DEFINER, bypasses RLS → no recursion)
+CREATE OR REPLACE FUNCTION public.is_workspace_member(p_workspace_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM workspace_members WHERE workspace_id = p_workspace_id AND user_id = auth.uid()
+  );
+$$;
 
 -- Workspaces RLS
 ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view workspaces they are members of" ON workspaces;
 CREATE POLICY "Users can view workspaces they are members of"
   ON workspaces FOR SELECT
-  USING (
-    id IN (
-      SELECT workspace_id FROM workspace_members
-      WHERE user_id = auth.uid()
-    )
-    OR owner_id = auth.uid()
-  );
+  USING (owner_id = auth.uid() OR is_workspace_member(id));
 
+DROP POLICY IF EXISTS "Workspace owners can manage workspaces" ON workspaces;
 CREATE POLICY "Workspace owners can manage workspaces"
   ON workspaces FOR ALL
   USING (owner_id = auth.uid());
 
+DROP POLICY IF EXISTS "Workspace admins can update workspaces" ON workspaces;
 CREATE POLICY "Workspace admins can update workspaces"
   ON workspaces FOR UPDATE
-  USING (
-    id IN (
-      SELECT workspace_id FROM workspace_members
-      WHERE user_id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (EXISTS (
+    SELECT 1 FROM workspace_members
+    WHERE workspace_id = id AND user_id = auth.uid() AND role = 'admin'
+  ));
 
 -- Workspace Members RLS
 ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view workspace members" ON workspace_members;
 CREATE POLICY "Users can view workspace members"
   ON workspace_members FOR SELECT
   USING (
-    workspace_id IN (
-      SELECT id FROM workspaces
-      WHERE owner_id = auth.uid()
-      OR id IN (
-        SELECT workspace_id FROM workspace_members
-        WHERE user_id = auth.uid()
-      )
-    )
+    user_id = auth.uid()
+    OR EXISTS (SELECT 1 FROM workspaces WHERE id = workspace_id AND owner_id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Workspace owners can manage members" ON workspace_members;
 CREATE POLICY "Workspace owners can manage members"
   ON workspace_members FOR ALL
   USING (
@@ -264,6 +273,7 @@ CREATE POLICY "Workspace owners can manage members"
     )
   );
 
+DROP POLICY IF EXISTS "Workspace admins can invite members" ON workspace_members;
 CREATE POLICY "Workspace admins can invite members"
   ON workspace_members FOR INSERT
   WITH CHECK (
@@ -280,6 +290,7 @@ CREATE POLICY "Workspace admins can invite members"
 -- Workspace Invitations RLS
 ALTER TABLE workspace_invitations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view invitations for their workspaces" ON workspace_invitations;
 CREATE POLICY "Users can view invitations for their workspaces"
   ON workspace_invitations FOR SELECT
   USING (
@@ -292,6 +303,7 @@ CREATE POLICY "Users can view invitations for their workspaces"
     )
   );
 
+DROP POLICY IF EXISTS "Users can create invitations for their workspaces" ON workspace_invitations;
 CREATE POLICY "Users can create invitations for their workspaces"
   ON workspace_invitations FOR INSERT
   WITH CHECK (
@@ -307,6 +319,7 @@ CREATE POLICY "Users can create invitations for their workspaces"
 -- Project Collaborators RLS
 ALTER TABLE project_collaborators ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view collaborators for their projects" ON project_collaborators;
 CREATE POLICY "Users can view collaborators for their projects"
   ON project_collaborators FOR SELECT
   USING (
@@ -316,6 +329,7 @@ CREATE POLICY "Users can view collaborators for their projects"
     OR user_id = auth.uid()
   );
 
+DROP POLICY IF EXISTS "Project owners can manage collaborators" ON project_collaborators;
 CREATE POLICY "Project owners can manage collaborators"
   ON project_collaborators FOR ALL
   USING (
@@ -327,6 +341,7 @@ CREATE POLICY "Project owners can manage collaborators"
 -- Collaboration Events RLS
 ALTER TABLE collaboration_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view events for their collaborative projects" ON collaboration_events;
 CREATE POLICY "Users can view events for their collaborative projects"
   ON collaboration_events FOR SELECT
   USING (
@@ -339,6 +354,7 @@ CREATE POLICY "Users can view events for their collaborative projects"
     )
   );
 
+DROP POLICY IF EXISTS "Users can create events for collaborative projects" ON collaboration_events;
 CREATE POLICY "Users can create events for collaborative projects"
   ON collaboration_events FOR INSERT
   WITH CHECK (
@@ -357,6 +373,7 @@ CREATE POLICY "Users can create events for collaborative projects"
 -- Project Comments RLS
 ALTER TABLE project_comments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view comments for their projects" ON project_comments;
 CREATE POLICY "Users can view comments for their projects"
   ON project_comments FOR SELECT
   USING (
@@ -369,6 +386,7 @@ CREATE POLICY "Users can view comments for their projects"
     )
   );
 
+DROP POLICY IF EXISTS "Users can create comments for their projects" ON project_comments;
 CREATE POLICY "Users can create comments for their projects"
   ON project_comments FOR INSERT
   WITH CHECK (
@@ -384,6 +402,7 @@ CREATE POLICY "Users can create comments for their projects"
     )
   );
 
+DROP POLICY IF EXISTS "Comment authors can update their comments" ON project_comments;
 CREATE POLICY "Comment authors can update their comments"
   ON project_comments FOR UPDATE
   USING (user_id = auth.uid());
@@ -444,9 +463,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================================================
 
 -- Enable realtime for collaboration tables
-ALTER PUBLICATION supabase_realtime ADD TABLE collaboration_events;
-ALTER PUBLICATION supabase_realtime ADD TABLE project_comments;
-ALTER PUBLICATION supabase_realtime ADD TABLE workspace_members;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE collaboration_events; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE project_comments; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE workspace_members; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ============================================================================
 -- Comments

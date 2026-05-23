@@ -24,7 +24,7 @@ export function CreateProjectDialog({
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = controlledOnOpenChange ?? setUncontrolledOpen;
   const [name, setName] = useState('New Project');
-  const [selectedStack, setSelectedStack] = useState<string>('mern');
+  const [selectedStack, setSelectedStack] = useState<string>('nextjs');
   const [creating, setCreating] = useState(false);
 
   const stackMeta = useMemo(
@@ -48,15 +48,21 @@ export function CreateProjectDialog({
         return;
       }
 
-      const { id } = await createProjectFromGeneration({
-        userId: session.user.id,
+      const startedAt = performance.now();
+      const { id, durationMs } = await createProjectFromGeneration({
         name: name.trim(),
         stack: selectedStack,
-        prompt: `Create a ${selectedStack.toUpperCase()} app: ${name.trim()}`,
+        prompt: `Create a Next.js App Router app: ${name.trim()}`,
         createdFrom: 'dashboard-dialog',
       });
 
-      toast.success('Project created');
+      const clientDurationMs = Math.round(performance.now() - startedAt);
+      const serverDurationMs = typeof durationMs === 'number' ? Math.round(durationMs) : null;
+      toast.success(
+        serverDurationMs != null
+          ? `Project created in ${serverDurationMs}ms (server), ${clientDurationMs}ms total`
+          : `Project created in ${clientDurationMs}ms`
+      );
       setOpen(false);
       router.push(`/dashboard?project=${id}`);
     } catch (e) {
@@ -80,7 +86,7 @@ export function CreateProjectDialog({
             New Project
           </DialogTitle>
           <DialogDescription className="text-[13px] text-[var(--app-text-muted)]">
-            Creates a new project row (from `generations`) and opens it in the workspace.
+            Creates a new project and opens it in the workspace.
           </DialogDescription>
         </DialogHeader>
 

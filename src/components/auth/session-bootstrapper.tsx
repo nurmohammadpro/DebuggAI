@@ -59,8 +59,8 @@ export function SessionBootstrapper() {
             .from('credit_wallets')
             .select('balance')
             .eq('user_id', userId)
-            .single(),
-          supabase.from('profiles').select('is_admin').eq('id', userId).single(),
+            .maybeSingle(),
+          supabase.from('profiles').select('is_admin').eq('id', userId).maybeSingle(),
         ]);
 
       if (!walletError && wallet?.balance !== undefined) {

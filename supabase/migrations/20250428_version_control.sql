@@ -10,9 +10,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enums for Version Control
 -- ============================================================================
 
-CREATE TYPE pr_status AS ENUM ('open', 'review', 'approved', 'rejected', 'merged');
-CREATE TYPE pr_merge_strategy AS ENUM ('merge', 'squash', 'rebase');
-CREATE TYPE git_provider AS ENUM ('github', 'gitlab', 'bitbucket', 'custom');
+DO $$ BEGIN CREATE TYPE pr_status AS ENUM ('open', 'review', 'approved', 'rejected', 'merged'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE pr_merge_strategy AS ENUM ('merge', 'squash', 'rebase'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE git_provider AS ENUM ('github', 'gitlab', 'bitbucket', 'custom'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ============================================================================
 -- Project Branches
@@ -52,6 +52,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS branches_updated_at ON project_branches;
 CREATE TRIGGER branches_updated_at
   BEFORE UPDATE ON project_branches
   FOR EACH ROW
@@ -87,6 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_pull_requests_status ON pull_requests(status);
 CREATE INDEX IF NOT EXISTS idx_pull_requests_updated_at ON pull_requests(updated_at DESC);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS pull_requests_updated_at ON pull_requests;
 CREATE TRIGGER pull_requests_updated_at
   BEFORE UPDATE ON pull_requests
   FOR EACH ROW
@@ -114,6 +116,7 @@ CREATE INDEX IF NOT EXISTS idx_pr_comments_user_id ON pr_comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_pr_comments_parent_id ON pr_comments(parent_id);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS pr_comments_updated_at ON pr_comments;
 CREATE TRIGGER pr_comments_updated_at
   BEFORE UPDATE ON pr_comments
   FOR EACH ROW
@@ -142,6 +145,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_pr_reviews_unique
   ON pr_reviews(pr_id, reviewer_id);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS pr_reviews_updated_at ON pr_reviews;
 CREATE TRIGGER pr_reviews_updated_at
   BEFORE UPDATE ON pr_reviews
   FOR EACH ROW
@@ -172,6 +176,7 @@ CREATE INDEX IF NOT EXISTS idx_git_integrations_project_id ON git_integrations(p
 CREATE INDEX IF NOT EXISTS idx_git_integrations_provider ON git_integrations(provider);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS git_integrations_updated_at ON git_integrations;
 CREATE TRIGGER git_integrations_updated_at
   BEFORE UPDATE ON git_integrations
   FOR EACH ROW
@@ -198,16 +203,19 @@ CREATE TABLE IF NOT EXISTS deployments (
 );
 
 -- Add constraint for valid deployment providers
+ALTER TABLE deployments DROP CONSTRAINT IF EXISTS valid_deployment_provider;
 ALTER TABLE deployments
   ADD CONSTRAINT valid_deployment_provider
   CHECK (provider IN ('vercel', 'netlify', 'aws', 'custom'));
 
 -- Add constraint for valid environments
+ALTER TABLE deployments DROP CONSTRAINT IF EXISTS valid_deployment_environment;
 ALTER TABLE deployments
   ADD CONSTRAINT valid_deployment_environment
   CHECK (environment IN ('production', 'preview', 'development'));
 
 -- Add constraint for valid statuses
+ALTER TABLE deployments DROP CONSTRAINT IF EXISTS valid_deployment_status;
 ALTER TABLE deployments
   ADD CONSTRAINT valid_deployment_status
   CHECK (status IN ('pending', 'building', 'success', 'failed', 'cancelled'));
@@ -220,6 +228,7 @@ CREATE INDEX IF NOT EXISTS idx_deployments_status ON deployments(status);
 CREATE INDEX IF NOT EXISTS idx_deployments_created_at ON deployments(created_at DESC);
 
 -- Trigger to update updated_at
+DROP TRIGGER IF EXISTS deployments_updated_at ON deployments;
 CREATE TRIGGER deployments_updated_at
   BEFORE UPDATE ON deployments
   FOR EACH ROW
@@ -237,6 +246,7 @@ CREATE TABLE IF NOT EXISTS deployment_logs (
 );
 
 -- Add constraint for valid log levels
+ALTER TABLE deployment_logs DROP CONSTRAINT IF EXISTS valid_log_level;
 ALTER TABLE deployment_logs
   ADD CONSTRAINT valid_log_level
   CHECK (level IN ('info', 'warning', 'error', 'debug'));
@@ -251,6 +261,7 @@ CREATE INDEX IF NOT EXISTS idx_deployment_logs_deployment_id ON deployment_logs(
 -- Project Branches RLS
 ALTER TABLE project_branches ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view branches for their projects" ON project_branches;
 CREATE POLICY "Users can view branches for their projects"
   ON project_branches FOR SELECT
   USING (
@@ -259,6 +270,7 @@ CREATE POLICY "Users can view branches for their projects"
     )
   );
 
+DROP POLICY IF EXISTS "Project owners can manage branches" ON project_branches;
 CREATE POLICY "Project owners can manage branches"
   ON project_branches FOR ALL
   USING (
@@ -270,6 +282,7 @@ CREATE POLICY "Project owners can manage branches"
 -- Pull Requests RLS
 ALTER TABLE pull_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view PRs for their projects" ON pull_requests;
 CREATE POLICY "Users can view PRs for their projects"
   ON pull_requests FOR SELECT
   USING (
@@ -278,6 +291,7 @@ CREATE POLICY "Users can view PRs for their projects"
     )
   );
 
+DROP POLICY IF EXISTS "Project owners can manage PRs" ON pull_requests;
 CREATE POLICY "Project owners can manage PRs"
   ON pull_requests FOR ALL
   USING (
@@ -289,6 +303,7 @@ CREATE POLICY "Project owners can manage PRs"
 -- PR Comments RLS
 ALTER TABLE pr_comments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view PR comments" ON pr_comments;
 CREATE POLICY "Users can view PR comments"
   ON pr_comments FOR SELECT
   USING (
@@ -300,6 +315,7 @@ CREATE POLICY "Users can view PR comments"
     )
   );
 
+DROP POLICY IF EXISTS "Users can create PR comments" ON pr_comments;
 CREATE POLICY "Users can create PR comments"
   ON pr_comments FOR INSERT
   WITH CHECK (
@@ -312,6 +328,7 @@ CREATE POLICY "Users can create PR comments"
     )
   );
 
+DROP POLICY IF EXISTS "Comment authors can update their comments" ON pr_comments;
 CREATE POLICY "Comment authors can update their comments"
   ON pr_comments FOR UPDATE
   USING (user_id = auth.uid());
@@ -319,6 +336,7 @@ CREATE POLICY "Comment authors can update their comments"
 -- PR Reviews RLS
 ALTER TABLE pr_reviews ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view PR reviews" ON pr_reviews;
 CREATE POLICY "Users can view PR reviews"
   ON pr_reviews FOR SELECT
   USING (
@@ -330,6 +348,7 @@ CREATE POLICY "Users can view PR reviews"
     )
   );
 
+DROP POLICY IF EXISTS "Users can create PR reviews" ON pr_reviews;
 CREATE POLICY "Users can create PR reviews"
   ON pr_reviews FOR INSERT
   WITH CHECK (
@@ -342,6 +361,7 @@ CREATE POLICY "Users can create PR reviews"
     )
   );
 
+DROP POLICY IF EXISTS "Reviewers can update their reviews" ON pr_reviews;
 CREATE POLICY "Reviewers can update their reviews"
   ON pr_reviews FOR UPDATE
   USING (reviewer_id = auth.uid());
@@ -349,6 +369,7 @@ CREATE POLICY "Reviewers can update their reviews"
 -- Git Integrations RLS
 ALTER TABLE git_integrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view git integrations for their projects" ON git_integrations;
 CREATE POLICY "Users can view git integrations for their projects"
   ON git_integrations FOR SELECT
   USING (
@@ -357,6 +378,7 @@ CREATE POLICY "Users can view git integrations for their projects"
     )
   );
 
+DROP POLICY IF EXISTS "Project owners can manage git integrations" ON git_integrations;
 CREATE POLICY "Project owners can manage git integrations"
   ON git_integrations FOR ALL
   USING (
@@ -368,6 +390,7 @@ CREATE POLICY "Project owners can manage git integrations"
 -- Deployments RLS
 ALTER TABLE deployments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view deployments for their projects" ON deployments;
 CREATE POLICY "Users can view deployments for their projects"
   ON deployments FOR SELECT
   USING (
@@ -376,6 +399,7 @@ CREATE POLICY "Users can view deployments for their projects"
     )
   );
 
+DROP POLICY IF EXISTS "Project owners can manage deployments" ON deployments;
 CREATE POLICY "Project owners can manage deployments"
   ON deployments FOR ALL
   USING (
@@ -387,6 +411,7 @@ CREATE POLICY "Project owners can manage deployments"
 -- Deployment Logs RLS
 ALTER TABLE deployment_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view logs for their deployments" ON deployment_logs;
 CREATE POLICY "Users can view logs for their deployments"
   ON deployment_logs FOR SELECT
   USING (

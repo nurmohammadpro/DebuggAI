@@ -1,13 +1,11 @@
 import { supabase } from '@/lib/supabase';
 
 export async function createProjectFromGeneration({
-  userId,
   name,
   stack,
   prompt,
   createdFrom = 'dashboard',
 }: {
-  userId: string;
   name: string;
   stack: string;
   prompt: string;
@@ -16,24 +14,37 @@ export async function createProjectFromGeneration({
   const projectKey = crypto.randomUUID();
   const code = starterCode(name.trim());
 
-  const { data, error } = await supabase
-    .from('generations')
-    .insert({
-      user_id: userId,
-      code,
-      version: 1,
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error('Please sign in again');
+
+  const res = await fetch('/api/projects', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
       description: name.trim(),
       stack,
       prompt,
+      code,
       metadata: { project_key: projectKey, created_from: createdFrom },
-    })
-    .select('id')
-    .single();
+    }),
+  });
 
-  if (error) throw error;
-  if (!data?.id) throw new Error('Failed to create project');
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(payload?.error || 'Failed to create project');
+  }
 
-  return { id: data.id, projectKey };
+  if (!payload?.id) throw new Error('Failed to create project');
+
+  return {
+    id: payload.id as string,
+    projectKey,
+    durationMs: typeof payload.durationMs === 'number' ? payload.durationMs : undefined,
+  };
 }
 
 function starterCode(name: string) {
@@ -55,4 +66,3 @@ export default function App() {
 function escapeTemplate(value: string) {
   return value.replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }
-

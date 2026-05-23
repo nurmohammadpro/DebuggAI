@@ -33,6 +33,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -171,13 +172,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON public.profiles;
 CREATE TRIGGER trg_profiles_updated_at
   BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+DROP TRIGGER IF EXISTS trg_wallets_updated_at ON public.credit_wallets;
 CREATE TRIGGER trg_wallets_updated_at
   BEFORE UPDATE ON public.credit_wallets FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+DROP TRIGGER IF EXISTS trg_sessions_updated_at ON public.debug_sessions;
 CREATE TRIGGER trg_sessions_updated_at
   BEFORE UPDATE ON public.debug_sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+DROP TRIGGER IF EXISTS trg_wb_sessions_updated_at ON public.web_builder_sessions;
 CREATE TRIGGER trg_wb_sessions_updated_at
   BEFORE UPDATE ON public.web_builder_sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+DROP TRIGGER IF EXISTS trg_templates_updated_at ON public.web_builder_templates;
 CREATE TRIGGER trg_templates_updated_at
   BEFORE UPDATE ON public.web_builder_templates FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();

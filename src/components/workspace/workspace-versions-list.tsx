@@ -64,7 +64,10 @@ export function WorkspaceVersionsList() {
         <button
           key={v.id}
           className="w-full flex items-center gap-2 px-2 py-2 rounded-[8px] text-sm text-left hover:bg-muted/40"
-          onClick={() => loadFromProject(v.code, v.description || 'Version')}
+          onClick={() => {
+            if (!v.code) return;
+            loadFromProject(v.code, v.description || 'Version');
+          }}
         >
           <History className="h-4 w-4 text-muted-foreground" />
           <div className="min-w-0 flex-1">

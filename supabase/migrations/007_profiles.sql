@@ -2,9 +2,7 @@
 -- Core user identity table
 -- Execution Order: 3rd (after enums)
 
-DROP TABLE IF EXISTS public.profiles CASCADE;
-
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id                    UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email                 TEXT NOT NULL UNIQUE,
   full_name             TEXT,
@@ -14,7 +12,7 @@ CREATE TABLE public.profiles (
   stripe_customer_id    TEXT UNIQUE,
   is_admin              BOOLEAN NOT NULL DEFAULT false,
   is_ambassador         BOOLEAN NOT NULL DEFAULT false,
-  referral_code         TEXT UNIQUE DEFAULT encode(gen_random_bytes(6), 'hex'),
+  referral_code         TEXT UNIQUE DEFAULT encode(extensions.gen_random_bytes(6), 'hex'),
   zero_knowledge_mode   BOOLEAN NOT NULL DEFAULT false,
   last_login_at         TIMESTAMPTZ,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
