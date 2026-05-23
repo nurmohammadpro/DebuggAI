@@ -6,8 +6,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, History, Copy, Check } from 'lucide-react';
+import { Loader2, Sparkles, History, Copy, Check, LayoutPanelTop } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
@@ -23,7 +24,7 @@ import {
 type DebugSectionId = 'summary' | 'root-cause' | 'fix' | 'tests' | 'raw';
 
 export function MinimalDebugContent() {
-  const router = typeof window !== 'undefined' ? require('next/navigation').useRouter() : null;
+  const router = useRouter();
   const {
     currentLanguage,
     setCurrentLanguage,
@@ -53,6 +54,7 @@ export function MinimalDebugContent() {
   const [analysis, setAnalysis] = useState('');
   const [detectedLanguage, setDetectedLanguage] = useState('');
   const [activeSection, setActiveSection] = useState<DebugSectionId>('summary');
+  const [mobileView, setMobileView] = useState<'input' | 'results'>('input');
 
   const sections = useMemo(() => {
     const parsed = parseDebugSections(analysis);
@@ -109,6 +111,7 @@ export function MinimalDebugContent() {
       setAnalysis(data.analysis);
       setDetectedLanguage(data.language);
       setActiveSection('summary');
+      setMobileView('results');
 
       try {
         addSession({
@@ -134,17 +137,45 @@ export function MinimalDebugContent() {
   };
 
   const handleHistory = () => {
-    if (router) {
-      router.push('/dashboard/debug/history');
-    } else {
-      window.location.href = '/dashboard/debug/history';
-    }
+    router.push('/dashboard/debug/history');
   };
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex flex-col lg:flex-row">
+      {/* Mobile: view toggle */}
+      <div className="lg:hidden border-b border-[var(--border-default)] bg-[var(--bg-primary)] p-2">
+        <div className="inline-flex rounded-[8px] border border-[var(--border-default)] bg-[var(--bg-secondary)] p-1">
+          <button
+            type="button"
+            onClick={() => setMobileView('input')}
+            className={`h-8 px-3 rounded-[6px] text-[12px] font-medium transition-colors ${
+              mobileView === 'input'
+                ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Input
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileView('results')}
+            className={`h-8 px-3 rounded-[6px] text-[12px] font-medium transition-colors ${
+              mobileView === 'results'
+                ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Results
+          </button>
+        </div>
+      </div>
+
       {/* Left Panel: Input */}
-      <div className="w-[400px] border-r border-[var(--border-default)] flex flex-col bg-[var(--bg-secondary)]">
+      <div
+        className={`w-full lg:w-[420px] border-r border-[var(--border-default)] flex flex-col bg-[var(--bg-secondary)] ${
+          mobileView === 'results' ? 'hidden lg:flex' : 'flex'
+        }`}
+      >
         <div className="p-4 border-b border-[var(--border-default)]">
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-[14px] font-medium text-[var(--text-primary)]">AI Debug Assistant</h1>
@@ -227,7 +258,7 @@ export function MinimalDebugContent() {
       </div>
 
       {/* Right Panel: Results */}
-      <div className="flex-1 flex flex-col bg-[var(--bg-primary)]">
+      <div className={`flex-1 flex flex-col bg-[var(--bg-primary)] ${mobileView === 'input' ? 'hidden lg:flex' : 'flex'}`}>
         <div className="p-4 border-b border-[var(--border-default)] bg-[var(--bg-primary)]">
           <div className="flex items-center gap-2">
             <span className="text-[12px] font-medium text-[var(--text-primary)]">Results</span>
@@ -237,6 +268,14 @@ export function MinimalDebugContent() {
               </span>
             )}
             <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={handleHistory}
+                className="h-8 w-8 rounded-[6px] border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors inline-flex items-center justify-center"
+                title="History"
+                aria-label="History"
+              >
+                <History className="h-4 w-4" />
+              </button>
               <button
                 disabled={!analysis}
                 onClick={async () => {

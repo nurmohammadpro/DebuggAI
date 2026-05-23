@@ -9,12 +9,14 @@ import { Plus } from 'lucide-react';
 import { ProjectsFilters } from '@/components/dashboard/projects/projects-filters';
 import { ProjectCard } from '@/components/dashboard/projects/project-card';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
+import { useMyThreads } from '@/hooks/queries/use-my-threads';
+import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { supabase } from '@/lib/supabase';
 import { getProjectKey } from '@/lib/project/project-key';
 import { RecentDebugSessions } from '@/components/dashboard/home/recent-debug-sessions';
 import { RecentTransactions } from '@/components/dashboard/home/recent-transactions';
 import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
-import { FolderKanban, Bug, Clock } from 'lucide-react';
+import { FolderKanban, Bug, MessageSquare } from 'lucide-react';
 
 export function ProjectsHub() {
   const router = useRouter();
@@ -23,6 +25,8 @@ export function ProjectsHub() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useMyProjects(75, true);
+  const { data: threads } = useMyThreads(50, true);
+  const { data: debugSessions } = useMyDebugSessions(100, true);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -107,8 +111,8 @@ export function ProjectsHub() {
 
       <div className="grid sm:grid-cols-3 gap-3">
         <StatCard icon={FolderKanban} label="Projects" value={String((data || []).length)} sub="In your workspace" />
-        <StatCard icon={Bug} label="Debug Sessions" value="—" sub="Connect to real data next" />
-        <StatCard icon={Clock} label="Runs" value="—" sub="Thread runs + jobs" />
+        <StatCard icon={Bug} label="Debug Sessions" value={String((debugSessions || []).length)} sub="Last 100 sessions" />
+        <StatCard icon={MessageSquare} label="Threads" value={String((threads || []).length)} sub="Last 50 threads" />
       </div>
 
       <ProjectsFilters
