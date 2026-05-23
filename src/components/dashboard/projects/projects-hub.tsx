@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { getProjectKey } from '@/lib/project/project-key';
 import { RecentDebugSessions } from '@/components/dashboard/home/recent-debug-sessions';
 import { RecentTransactions } from '@/components/dashboard/home/recent-transactions';
+import { RecentRuns } from '@/components/dashboard/home/recent-runs';
 import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
 import { FolderKanban, Bug, MessageSquare } from 'lucide-react';
 
@@ -242,6 +243,7 @@ export function ProjectsHub() {
         </div>
 
         <div className="space-y-3 order-1 lg:order-2">
+          <RecentRuns />
           <RecentDebugSessions />
           <RecentTransactions />
         </div>

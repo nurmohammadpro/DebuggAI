@@ -3,6 +3,7 @@ export const queryKeys = {
   credits: (userId: string) => ['credits', userId] as const,
   myProjects: ['projects', 'mine'] as const,
   myThreads: ['threads', 'mine'] as const,
+  myRuns: ['runs', 'mine'] as const,
   threadMessages: (threadId: string) => ['threads', threadId, 'messages'] as const,
   project: (id: string) => ['project', id] as const,
   projectVersions: (projectKey: string) => ['projectVersions', projectKey] as const,
