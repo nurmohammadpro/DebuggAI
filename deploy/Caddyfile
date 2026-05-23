@@ -3,16 +3,27 @@
   # debug
 }
 
-# Set your domain here (replace example.com) OR use a wildcard/temporary IP during first bring-up.
-example.com {
+debuggaidemo.appbrainer.tech {
   encode zstd gzip
 
-  # Basic hardening headers (CSP is set by the app; we avoid duplicating it here).
+  # Harden headers — CSP is set by the app, so we don't duplicate it here.
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     X-Content-Type-Options "nosniff"
     Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    -Server  # Hide Caddy version from headers
   }
+
+  # Optional: proxy preview sandbox containers directly (bypasses app for lower latency).
+  # Requires dynamic port mapping — uncomment once sandbox routing is stable.
+  # @sandbox {
+  #   path /preview/*
+  # }
+  # handle @sandbox {
+  #   rewrite * /{path}
+  #   reverse_proxy 127.0.0.1:{http.request.header.X-Sandbox-Port}
+  # }
 
   reverse_proxy app:3000
 }

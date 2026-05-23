@@ -13,6 +13,7 @@ import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
 import { requireFeature, getUserPlan, getActionCost } from '@/lib/server/plan-enforcement';
 import { spawnSync } from 'child_process';
+import * as Sentry from '@sentry/nextjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -103,6 +104,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to create sandbox';
+    console.error('[sandbox/create] Error:', { userId: user.id, error: message });
+    Sentry.captureException(err, {
+      tags: { route: 'sandbox/create' },
+      extra: { userId: user.id, message },
+    });
     return NextResponse.json(
       { error: message },
       { status: 500 },

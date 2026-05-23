@@ -9,25 +9,40 @@ services:
       - .env.production
     environment:
       NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: https://debuggaidemo.appbrainer.tech
       PROJECTS_DIR: /var/lib/debuggai/projects
       SANDBOX_BASE_PORT: "4000"
       MAX_SANDBOXES: "10"
       SANDBOX_TIMEOUT_MS: "1800000"
+      SANDBOX_REAPER_INTERVAL_MS: "300000"
       SANDBOX_DOCKER_IMAGE: "node:20-slim"
+      SANDBOX_LIMIT_CPUS: "1.0"
+      SANDBOX_LIMIT_MEMORY: "1024m"
+      SANDBOX_LIMIT_PIDS: "256"
+      SANDBOX_DISABLED: "0"
     volumes:
       # Required so the app can start/stop sandbox containers on the host.
       - /var/run/docker.sock:/var/run/docker.sock
       # Persist sandboxes and exported zips across deploys/restarts.
       - debuggai_projects:/var/lib/debuggai/projects
-    ports:
-      - "3000:3000"
+    # Healthcheck so Caddy won't route traffic until app is ready
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Don't expose port 3000 directly — let Caddy handle TLS on 443
+    expose:
+      - "3000"
 
   caddy:
     image: caddy:2-alpine
     container_name: debuggai_caddy
     restart: unless-stopped
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     ports:
       - "80:80"
       - "443:443"

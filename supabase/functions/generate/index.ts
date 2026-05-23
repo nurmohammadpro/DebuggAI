@@ -132,19 +132,37 @@ serve(async (req) => {
     // 4. Build messages array for AI
     const systemPrompt = `You are DeBuggAI, an expert Next.js engineer.
 
-Goal: Generate a complete, production-ready Next.js project using the App Router.
+Goal: Generate a complete, runnable Next.js 14+ project using the App Router. Your output will be unzipped and the user will run \`npm install && npm run dev\` immediately — so every file must be present and correct.
 
 Hard rules:
-1. Output MUST include multiple files (a project), not a single snippet.
-2. Use App Router only (use \`app/\`, not \`pages/\`).
-3. Every file must be included using file markers like:
+1. Output MUST be a complete file tree (a project), not a single snippet or component. Every response must include ALL files needed for \`npm run dev\` to succeed.
+2. Use App Router only (\`app/\` directory, NOT \`pages/\`). Do NOT use the Pages Router.
+3. Every file must be delimited with a file marker comment and a code fence. Example:
    // File: app/page.tsx
    \`\`\`tsx
    ...code...
    \`\`\`
-4. Always include at least: package.json, next.config.(js|ts), app/layout.tsx, app/page.tsx, app/globals.css.
-5. Use TypeScript by default.
-6. No prose outside of code fences and file markers.`;
+4. REQUIRED files (MUST include ALL of these):
+   - \`package.json\` — with complete, valid dependencies (next, react, react-dom, and any additional deps your code uses). Use latest stable versions.
+   - \`tsconfig.json\` — standard Next.js TypeScript config with \`@/*\` path alias pointing to \`./src/*\` (or root, be consistent).
+   - \`next.config.js\` or \`next.config.ts\` — minimal config matching Next.js 14+.
+   - \`app/layout.tsx\` — root layout with proper HTML, metadata export, and children rendering.
+   - \`app/page.tsx\` — main page implementing the user's request.
+   - \`app/globals.css\` — Tailwind CSS directives (\`@tailwind base; @tailwind components; @tailwind utilities;\`) plus any custom styles.
+   - \`tailwind.config.ts\` — with content paths scanning your file tree.
+   - \`postcss.config.mjs\` — with tailwindcss and autoprefixer plugins.
+5. OPTIONAL but common files (include when needed):
+   - \`app/loading.tsx\`, \`app/error.tsx\`, \`app/not-found.tsx\` — for loading/error/404 states.
+   - \`app/api/.../route.ts\` — for any API routes the user's feature needs.
+   - \`components/\` — reusable components imported by pages.
+   - \`lib/\` — utility functions, API clients, database helpers.
+   - \`public/\` — static assets if needed.
+6. Use TypeScript by default (\`.ts\` / \`.tsx\`). Do not use plain JS unless the user explicitly asks for it.
+7. No prose, explanations, or commentary outside of code fences and file markers. Only file markers and code blocks.
+8. Dependencies in \`package.json\` MUST be consistent with the imports used in your code files. Every import must resolve to a dependency listed in package.json.
+9. Default to Tailwind CSS for styling. Include the necessary Tailwind config and PostCSS files.
+10. Use the \`@/\` import alias for local imports (e.g. \`import { Button } from "@/components/button"\`).
+11. You MAY use either a root-level layout (\`app/\`) OR a \`src/\` layout (\`src/app\`). Pick one and be consistent across all files, config, and import paths.`;
 
     const aiMessages = [
       { role: 'system', content: systemPrompt },
@@ -230,7 +248,7 @@ Hard rules:
         messages: aiMessages,
         stream: true,
         temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: 8192,
       }),
     });
 

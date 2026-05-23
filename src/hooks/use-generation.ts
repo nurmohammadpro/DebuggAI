@@ -213,41 +213,35 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           }
         );
 
-        // Extract code from markdown response
-        const code = extractCode(accumulated);
+        // Build/refresh virtual file snapshot from the full accumulated response.
+        // extractVirtualFiles handles file markers (// File: path/to/file.tsx), code fences, and
+        // the split-by-marker format the new generate prompt produces.
+        const baseFiles = useGenerationStore.getState().files || undefined;
+        const virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
 
-        if (!code) {
+        if (Object.keys(virtualFiles.files).length === 0) {
           throw new Error('No code found in AI response');
         }
 
-        // Build/refresh virtual file snapshot for the editor + preview.
-        // This ensures PreviewPane can render something even for single-file responses.
-        const baseFiles = useGenerationStore.getState().files || undefined;
-        const virtualFiles = extractVirtualFiles(code, baseFiles || undefined);
+        const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
+        const serialized = serializeVirtualFilesWrapper(virtualFiles);
 
         useGenerationStore.setState({
           files: virtualFiles,
           activeFilePath: virtualFiles.entryPath,
         });
 
-        // Update current code surface to match the active file.
-        setCurrentCode(virtualFiles.files[virtualFiles.entryPath]?.content || code);
-
-        // Save as new version
-        addVersion(serializeVirtualFilesWrapper(virtualFiles), 'Generated');
+        setCurrentCode(entryContent);
+        addVersion(serialized, 'Generated');
 
         // Persistence to Supabase
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
             if (currentProjectId) {
-              // Update existing project
               await supabase
                 .from('generations')
-                .update({ 
-                  code,
-                  // In a real app we might increment version, but for now just update
-                })
+                .update({ code: serialized })
                 .eq('id', currentProjectId);
             } else {
               // Create new canonical project (+ initial generation) via API.
@@ -255,7 +249,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify({
-                  code,
+                  code: serialized,
                   prompt: request.prompt,
                   description: request.prompt.slice(0, 50),
                   stack: null,
@@ -286,10 +280,10 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           console.error('Failed to persist generation:', saveError);
         }
 
-        // Call onDone callback
-        onDone?.(code);
+        // Call onDone callback with serialized multi-file project
+        onDone?.(serialized);
 
-        return code;
+        return serialized;
       } catch (err) {
         const errorObj =
           err instanceof Error ? err : new Error('Generation failed');
@@ -481,23 +475,31 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           }
         );
 
-        // Extract code from markdown response
-        const fixedCode = extractCode(accumulated);
+        // Build virtual file snapshot from the full accumulated response.
+        // This handles the new debug prompt format where fixes include complete
+        // project files with file markers (// File: path/to/file.tsx).
+        const baseFiles = useGenerationStore.getState().files || undefined;
+        const virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
 
-        if (!fixedCode) {
+        if (Object.keys(virtualFiles.files).length === 0) {
           throw new Error('No code found in debug response');
         }
 
-        // Update current code
-        setCurrentCode(fixedCode);
+        const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
+        const serialized = serializeVirtualFilesWrapper(virtualFiles);
 
-        // Save as new version
-        addVersion(fixedCode, 'Debugged fix');
+        useGenerationStore.setState({
+          files: virtualFiles,
+          activeFilePath: virtualFiles.entryPath,
+        });
 
-        // Call onDone callback
-        onDone?.(fixedCode);
+        setCurrentCode(entryContent);
+        addVersion(serialized, 'Debugged fix');
 
-        return fixedCode;
+        // Call onDone callback with serialized multi-file fix
+        onDone?.(serialized);
+
+        return serialized;
       } catch (err) {
         const errorObj =
           err instanceof Error ? err : new Error('Debug failed');

@@ -26,7 +26,18 @@ export async function middleware(request: NextRequest) {
     'camera=(), microphone=(), geolocation=()'
   );
 
+  // Strict-Transport-Security (HSTS) — also set by Caddy, but defense-in-depth
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
+    );
+  }
+
   // Content-Security-Policy
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const appOrigin = appUrl ? new URL(appUrl).origin : '';
+
   response.headers.set(
     'Content-Security-Policy',
     [
@@ -38,13 +49,15 @@ export async function middleware(request: NextRequest) {
       "font-src 'self' data: https://fonts.gstatic.com",
       "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net",
       "worker-src 'self' blob:",
-      "frame-src 'self' http://localhost:*",
+      `frame-src 'self' http://localhost:* ${appOrigin}`.trim(),
       "frame-ancestors 'self'",
     ].join('; ')
   );
 
-  // Auth guard for dashboard routes
-  if (pathname.startsWith('/dashboard') && !isPublicPath(pathname)) {
+  // Auth guard for dashboard routes.
+  // /dashboard/admin* is excluded because admin routes have their own server-side
+  // guard (requireAdmin) and client-side guard (AdminRouteGuard component).
+  if (pathname.startsWith('/dashboard') && !isPublicPath(pathname) && !pathname.startsWith('/dashboard/admin')) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

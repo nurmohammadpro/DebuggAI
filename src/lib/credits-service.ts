@@ -1,6 +1,13 @@
 /**
  * Credits Service
  *
+ * ⚠️ DEPRECATED — This module uses the client-side supabase instance for direct
+ * table operations, which WILL FAIL under RLS in production. All credit operations
+ * should use the server-side `spend_credits` RPC via `createSupabaseAdmin()` instead
+ * (see src/app/api/sandbox/create/route.ts for the reference pattern).
+ *
+ * This file is kept for reference only and is no longer imported anywhere in the app.
+ *
  * Handles credit operations including checking balance, deducting credits,
  * and recording transactions.
  */

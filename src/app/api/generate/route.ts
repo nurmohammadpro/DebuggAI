@@ -11,6 +11,7 @@
 import type { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { withRateLimit } from '@/lib/server/plan-enforcement';
+import * as Sentry from '@sentry/nextjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,7 +81,12 @@ export async function POST(req: NextRequest) {
     console.error('[api/generate] edge function error', {
       status: response.status,
       contentType,
-      details,
+      details: details?.slice(0, 500),
+    });
+    Sentry.captureMessage('Generate edge function error', {
+      level: 'error',
+      tags: { route: 'generate', status: String(response.status) },
+      extra: { contentType, details: details?.slice(0, 500) },
     });
 
     return new Response(JSON.stringify(payload), {

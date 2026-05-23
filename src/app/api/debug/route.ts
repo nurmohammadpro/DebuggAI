@@ -11,6 +11,7 @@
 import type { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { withRateLimit } from '@/lib/server/plan-enforcement';
+import * as Sentry from '@sentry/nextjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,15 @@ export async function POST(req: NextRequest) {
 
   if (!response.ok) {
     const text = await response.text();
+    console.error('[api/debug] edge function error', {
+      status: response.status,
+      details: text.slice(0, 500),
+    });
+    Sentry.captureMessage('Debug edge function error', {
+      level: 'error',
+      tags: { route: 'debug', status: String(response.status) },
+      extra: { details: text.slice(0, 500) },
+    });
     return new Response(text, {
       status: response.status,
       headers: { 'Content-Type': response.headers.get('Content-Type') || 'application/json' },

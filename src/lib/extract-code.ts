@@ -1,9 +1,16 @@
 /**
  * Code Extraction Utility
  *
- * Extracts code blocks from AI markdown responses.
- * Supports multiple languages and formats.
+ * Extracts code blocks and file trees from AI markdown responses.
+ * Supports:
+ * - Single code fences (```tsx ... ```)
+ * - File markers with fences (// File: app/page.tsx ```tsx ... ```)
+ * - Multiple files with split-by-marker format
  */
+
+const FILE_MARKER_REGEX = /^\s*(?:\/\/|#)\s*File:\s*([\w./-]+\.[a-zA-Z0-9]+)\s*$/im;
+const FENCE_REGEX = /```(\w*)\n([\s\S]*?)```/g;
+const FENCE_WITH_FILENAME = /```(\w*)\n([\s\S]*?)```/;
 
 /**
  * Extract code from markdown response
@@ -79,6 +86,160 @@ export function extractMultipleCodes(markdown: string): string[] {
   }
 
   return codes;
+}
+
+/**
+ * Extract files with their paths from AI markdown that uses file markers.
+ *
+ * Handles two formats:
+ * 1. File marker comment before/inside a code fence:
+ *    // File: app/page.tsx
+ *    ```tsx
+ *    ...code...
+ *    ```
+ *
+ * 2. File header markers with plain code (no fences):
+ *    // File: app/page.tsx
+ *    const Component = () => { ... };
+ *
+ * 3. Standalone code fences (assigned a generated name based on content)
+ *
+ * @param markdown - AI response text with file markers and code blocks
+ * @returns Array of { path, content, language } objects
+ */
+export function extractFilesFromMarkdown(
+  markdown: string
+): Array<{ path: string; content: string; language?: string }> {
+  const files: Array<{ path: string; content: string; language?: string }> = [];
+  const seen = new Set<string>();
+
+  // Split the markdown into chunks at each file marker boundary
+  const lines = markdown.split('\n');
+  let currentPath: string | null = null;
+  let currentLines: string[] = [];
+  let inFence = false;
+  let fenceEndIdx = 0;
+
+  const flush = () => {
+    if (!currentPath) {
+      if (currentLines.length > 0) {
+        // No path assigned — check if it's a code block
+        const content = currentLines.join('\n').trim();
+        if (content) {
+          const path = generateFilePath(content, seen);
+          if (path && !seen.has(path)) {
+            seen.add(path);
+            files.push({ path, content, language: languageFromExt(path) });
+          }
+        }
+      }
+      return;
+    }
+    const normalized = currentPath.replace(/^(\.\/)+/, '').replace(/\\/g, '/');
+    if (seen.has(normalized)) return;
+    const content = currentLines.join('\n').trim();
+    if (!content) return;
+    seen.add(normalized);
+    files.push({
+      path: normalized,
+      // Avoid the RegExp dotAll (/s) flag to keep TS target compatibility.
+      content: content.replace(/^```\w*\n([\s\S]*)```$/, '$1').trim(),
+      language: languageFromExt(normalized),
+    });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Track fence open/close to handle code inside fences
+    if (/^```/.test(line)) {
+      if (!inFence) {
+        inFence = true;
+        fenceEndIdx = i;
+      } else {
+        inFence = false;
+      }
+    }
+
+    // Check for file marker (e.g. "// File: app/page.tsx" or "# File: app.py")
+    const markerMatch = line.match(FILE_MARKER_REGEX);
+    if (markerMatch) {
+      flush();
+      currentPath = markerMatch[1];
+      currentLines = [];
+      continue;
+    }
+
+    currentLines.push(line);
+  }
+
+  flush();
+
+  // Fallback: if no files were found via markers, try extracting from fences
+  if (files.length === 0) {
+    for (const [_, lang, code] of markdown.matchAll(FENCE_REGEX)) {
+      const trimmed = code.trim();
+      if (!trimmed) continue;
+
+      // Check if first line of code is a file marker comment
+      const firstLine = trimmed.split('\n')[0] || '';
+      const inlineMarker = firstLine.match(FILE_MARKER_REGEX);
+      const path = inlineMarker?.[1] || generateFilePath(trimmed, seen);
+
+      if (!seen.has(path)) {
+        seen.add(path);
+        const content = inlineMarker
+          ? trimmed.split('\n').slice(1).join('\n').trim()
+          : trimmed;
+        files.push({ path, content, language: lang || lang || languageFromExt(path) });
+      }
+    }
+  }
+
+  return files;
+}
+
+function generateFilePath(code: string, seen: Set<string>): string {
+  // Heuristic: if it looks like a React component, use a sensible name
+  const compMatch = code.match(/(?:export\s+)?(?:default\s+)?function\s+(\w+)/);
+  const constMatch = code.match(/const\s+(\w+)/);
+  const name = compMatch?.[1] || constMatch?.[1] || 'index';
+
+  // Determine extension
+  const ext = code.includes('React') || /=>\s*</.test(code) || /render\s*\(/.test(code)
+    ? '.tsx'
+    : code.includes('export default') || code.includes('module.exports')
+      ? '.js'
+      : code.includes(':') && !code.includes('=>')
+        ? '.ts'
+        : '.tsx';
+
+  // Avoid collisions
+  let path = `components/${name}${ext}`;
+  if (seen.has(path)) {
+    let i = 2;
+    while (seen.has(path.replace(/[/]/, `/${name}${i}`))) i++;
+    path = `components/${name}${i}${ext}`;
+  }
+
+  return path;
+}
+
+function languageFromExt(path: string): string | undefined {
+  const lower = path.toLowerCase();
+  if (lower.endsWith('.tsx')) return 'typescript';
+  if (lower.endsWith('.ts')) return 'typescript';
+  if (lower.endsWith('.jsx')) return 'javascript';
+  if (lower.endsWith('.js')) return 'javascript';
+  if (lower.endsWith('.css')) return 'css';
+  if (lower.endsWith('.html')) return 'html';
+  if (lower.endsWith('.json')) return 'json';
+  if (lower.endsWith('.md')) return 'markdown';
+  if (lower.endsWith('.py')) return 'python';
+  if (lower.endsWith('.rb')) return 'ruby';
+  if (lower.endsWith('.go')) return 'go';
+  if (lower.endsWith('.php')) return 'php';
+  return undefined;
 }
 
 /**
