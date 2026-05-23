@@ -47,10 +47,10 @@ export function UnifiedLayout({
           {mobileMenuOpen && (
             <>
               <div
-                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                className="fixed top-12 bottom-0 left-0 right-0 bg-black/45 z-40 md:hidden"
                 onClick={() => setMobileMenuOpen(false)}
               />
-              <div className="fixed inset-y-0 left-0 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] z-50 md:hidden overflow-y-auto">
+              <div className="fixed top-12 bottom-2 left-2 w-[min(320px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--bg-secondary)_92%,black)] border border-[var(--border-default)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] z-50 md:hidden overflow-y-auto">
                 <UnifiedSidebar
                   recentThreads={recentThreads}
                   recentProjects={recentProjects}
