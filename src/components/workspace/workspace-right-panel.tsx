@@ -157,7 +157,7 @@ export function WorkspaceRightPanel({
 
   if (mobile) {
     return (
-      <aside className="fixed inset-x-0 top-12 bottom-14 bg-[var(--app-panel)] flex flex-col z-50 sm:hidden">
+      <aside className="fixed inset-x-0 top-12 bottom-[calc(56px+env(safe-area-inset-bottom))] bg-[var(--app-panel)] flex flex-col z-50 sm:hidden">
         {panelContent}
       </aside>
     );
