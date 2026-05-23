@@ -128,15 +128,15 @@ export function ProjectsHub() {
       <div className="grid lg:grid-cols-[1fr,280px] gap-4 items-start">
         <div className="space-y-3 order-2 lg:order-1">
           {error && (
-            <div className="border border-[var(--border-default)] p-4">
-              <div className="text-sm font-medium text-[var(--text-primary)]">Failed to load projects</div>
-              <div className="text-xs text-[var(--text-secondary)] mt-1">
+            <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-4">
+              <div className="text-sm font-medium text-[var(--app-text)]">Failed to load projects</div>
+              <div className="text-xs text-[var(--app-text-muted)] mt-1">
                 {error instanceof Error ? error.message : 'Unknown error'}
               </div>
               <div className="mt-3">
                 <button
                   onClick={() => refetch()}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--text-secondary)] border border-[var(--border-default)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--app-text)] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors rounded-[6px]"
                 >
                   Retry
                 </button>
@@ -146,16 +146,16 @@ export function ProjectsHub() {
 
           {isLoading && (
             <div className="space-y-2">
-              <div className="border border-[var(--border-default)] p-3 h-14 animate-pulse" />
-              <div className="border border-[var(--border-default)] p-3 h-14 animate-pulse" />
-              <div className="border border-[var(--border-default)] p-3 h-14 animate-pulse" />
+              <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-3 h-14 animate-pulse" />
+              <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-3 h-14 animate-pulse" />
+              <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-3 h-14 animate-pulse" />
             </div>
           )}
 
           {!isLoading && !error && projects.length === 0 && (
-            <div className="border border-[var(--border-default)] p-6 text-center">
-              <div className="text-sm font-medium text-[var(--text-primary)]">No projects yet</div>
-              <div className="text-xs text-[var(--text-secondary)] mt-1">
+            <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-6 text-center">
+              <div className="text-sm font-medium text-[var(--app-text)]">No projects yet</div>
+              <div className="text-xs text-[var(--app-text-muted)] mt-1">
                 Generate your first project to get started.
               </div>
             </div>
@@ -163,7 +163,7 @@ export function ProjectsHub() {
 
           {!isLoading && !error && projects.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
+              <div className="flex items-center justify-between gap-2 text-xs text-[var(--app-text-muted)]">
                 <div>
                   {projects.length} projects
                 </div>

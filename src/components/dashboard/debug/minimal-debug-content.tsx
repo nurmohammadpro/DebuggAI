@@ -244,14 +244,14 @@ export function MinimalDebugContent() {
             </button>
             <button
               onClick={handleHistory}
-              className="w-full flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-default)] px-4 py-2 text-[12px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-all"
+              className="w-full flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-primary)] px-4 py-2 text-[12px] font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all"
             >
               <History className="h-4 w-4" />
               View History
             </button>
           </div>
 
-          <div className="text-[11px] text-[var(--text-tertiary)] text-center">
+          <div className="text-[11px] text-[var(--text-secondary)] text-center">
             Credits: <span className="text-[var(--text-primary)]">1</span> per analysis
           </div>
         </div>
@@ -287,7 +287,7 @@ export function MinimalDebugContent() {
                     toast.message('Copy failed');
                   }
                 }}
-                className="h-8 px-3 rounded-[6px] border border-[var(--border-default)] text-[11px] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors inline-flex items-center gap-2 disabled:opacity-50"
+                className="h-8 px-3 rounded-[6px] border border-[var(--border-default)] bg-[var(--bg-primary)] text-[11px] font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors inline-flex items-center gap-2 disabled:opacity-50"
               >
                 <Copy className="h-3.5 w-3.5" />
                 Copy
