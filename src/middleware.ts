@@ -42,12 +42,14 @@ export async function middleware(request: NextRequest) {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob:",
+      // Monaco requires 'unsafe-eval' and blob: workers. Cloudflare Insights uses static.cloudflareinsights.com.
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
+      "script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net",
+      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com https://static.cloudflareinsights.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net",
       "worker-src 'self' blob:",
       `frame-src 'self' http://localhost:* ${appOrigin}`.trim(),
       "frame-ancestors 'self'",
