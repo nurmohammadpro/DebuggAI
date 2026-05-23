@@ -28,7 +28,7 @@ export function UnifiedLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex">
+    <div className="min-h-[100dvh] w-full overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex">
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
       {/* Sidebar */}
       {showSidebar && (

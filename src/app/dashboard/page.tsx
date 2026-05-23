@@ -24,7 +24,7 @@ export default function DashboardWorkspacePage() {
     return (
       <Suspense
         fallback={
-          <div className="h-screen w-screen flex items-center justify-center bg-background" />
+          <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background" />
         }
       >
         <ProjectsHub />
@@ -35,7 +35,7 @@ export default function DashboardWorkspacePage() {
   return (
     <Suspense
       fallback={
-        <div className="h-screen w-screen flex items-center justify-center bg-background" />
+        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background" />
       }
     >
       <WorkspaceDashboard />

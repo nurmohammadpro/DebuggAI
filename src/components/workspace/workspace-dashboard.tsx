@@ -134,7 +134,7 @@ export function WorkspaceDashboard() {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
         <div
           className="animate-spin rounded-full h-8 w-8 border-b-2"
           style={{ borderColor: 'var(--accent)' }}
@@ -238,7 +238,7 @@ export function WorkspaceDashboard() {
   ];
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
+    <div className="min-h-[100dvh] w-full overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
       <CollabCursorOverlay cursors={remoteCursors} />
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
 
