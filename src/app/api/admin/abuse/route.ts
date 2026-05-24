@@ -5,13 +5,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     // Get abuse events from last 24 hours
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
     console.error('Admin abuse API error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: error instanceof Error && error.message.includes('Admin') ? 403 : 500 }
+      { status: 500 }
     );
   }
 }

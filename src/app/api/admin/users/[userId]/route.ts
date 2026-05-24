@@ -7,17 +7,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
 
     const { userId } = await params;
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     // Get profile
     const { data: profile, error: profileError } = await supabase
@@ -73,11 +75,13 @@ export async function PATCH(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const currentUser = await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
+    const currentUser = admin.user!;
     const { userId } = await params;
     const body = await request.json();
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     // Prevent self-modification of sensitive fields
     if (currentUser.id === userId && body.is_admin !== undefined) {
@@ -126,7 +130,9 @@ export async function DELETE(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const currentUser = await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
+    const currentUser = admin.user!;
     const { userId } = await params;
     const body = await request.json();
     const reason = body.reason || 'No reason provided';
@@ -136,7 +142,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
     }
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     // Delete from auth (cascades to all tables)
     const { error } = await supabase.auth.admin.deleteUser(userId);

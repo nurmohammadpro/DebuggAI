@@ -6,11 +6,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
 
     const body = await request.json().catch(() => null);
     if (!body?.action) {
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'purge_sessions': {
-        const { supabase } = await import('@/lib/supabase');
+        const supabase = createSupabaseAdmin();
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
         const { error: debugErr } = await supabase
@@ -50,13 +52,13 @@ export async function POST(request: NextRequest) {
       }
 
       case 'vacuum': {
-        const { supabase } = await import('@/lib/supabase');
+        const supabase = createSupabaseAdmin();
         await supabase.rpc('pg_vacuum_analyze' as any).select('*');
         return NextResponse.json({ success: true, message: 'Database vacuumed' });
       }
 
       case 'reindex': {
-        const { supabase } = await import('@/lib/supabase');
+        const supabase = createSupabaseAdmin();
         await supabase.rpc('pg_reindex_all' as any).select('*');
         return NextResponse.json({ success: true, message: 'Indexes rebuilt' });
       }

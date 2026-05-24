@@ -5,11 +5,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
 
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get('limit') || '100');
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get('action') || '';
     const target_type = searchParams.get('target_type') || '';
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     let query = supabase
       .from('audit_events')
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
     console.error('Admin audit API error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: error instanceof Error && error.message.includes('Admin') ? 403 : 500 }
+      { status: 500 }
     );
   }
 }

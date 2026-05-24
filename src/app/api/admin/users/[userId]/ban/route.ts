@@ -5,14 +5,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const currentUser = await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
+    const currentUser = admin.user!;
     const { userId } = await params;
     const body = await request.json().catch(() => ({}));
     const reason = body.reason || 'No reason provided';
@@ -21,7 +24,7 @@ export async function POST(
       return NextResponse.json({ error: 'Cannot ban yourself' }, { status: 400 });
     }
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     // Set banned flag in user metadata (auth)
     const { error: authError } = await supabase.auth.admin.updateUserById(userId, {

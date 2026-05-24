@@ -5,14 +5,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUser = await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
+    const currentUser = admin.user!;
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const { status, resolution } = body as { status?: string; resolution?: string };
@@ -24,7 +27,7 @@ export async function PATCH(
       );
     }
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     const updateData: Record<string, any> = {
       status,

@@ -6,13 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin/auth';
+import { requireAdmin } from '@/lib/server/admin';
+import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
     const { searchParams } = new URL(request.url);
     const limit = Math.min(200, Math.max(1, Number(searchParams.get('limit') || '50')));
 
@@ -35,7 +37,8 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin(request);
+    if (admin.errorResponse) return admin.errorResponse;
 
     const body = await request.json().catch(() => null);
     if (!body || typeof body !== 'object') {
@@ -47,7 +50,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'id and subscribed are required' }, { status: 400 });
     }
 
-    const { supabase } = await import('@/lib/supabase');
+    const supabase = createSupabaseAdmin();
 
     const { error } = await supabase
       .from('newsletter_subscribers')
