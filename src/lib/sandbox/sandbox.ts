@@ -12,6 +12,7 @@ import { promises as fs } from 'fs';
 import { execSync, spawnSync } from 'child_process';
 import path from 'path';
 import crypto from 'crypto';
+import os from 'os';
 
 export type SandboxStatus =
   | 'creating'
@@ -33,8 +34,10 @@ export interface SandboxRecord {
   containerId?: string;
 }
 
+// Default to OS temp dir to avoid bundler/NFT tracing the whole repo via process.cwd().
+// Override with PROJECTS_DIR in production for a persistent location.
 const PROJECTS_DIR =
-  process.env.PROJECTS_DIR || path.join(process.cwd(), '.projects');
+  process.env.PROJECTS_DIR || path.join(os.tmpdir(), 'debuggai-projects');
 const STATE_FILE = path.join(PROJECTS_DIR, 'sandbox-state.json');
 const BASE_PORT = parseInt(process.env.SANDBOX_BASE_PORT || '4000', 10);
 const MAX_SANDBOXES = parseInt(process.env.MAX_SANDBOXES || '10', 10);
