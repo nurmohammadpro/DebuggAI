@@ -150,7 +150,7 @@ export async function withRateLimit(
       action,
       limit: result.limit,
       current: result.current,
-    }).catch(() => {});
+    }, undefined, undefined, { req: opts?.req }).catch(() => {});
     return {
       allowed: false,
       status: 429,
