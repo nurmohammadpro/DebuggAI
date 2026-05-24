@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
 import { promises as fs } from 'fs';
+import { withRateLimit } from '@/lib/server/plan-enforcement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,14 @@ export async function GET(
   const { id } = await params;
 
   try {
+    const rateLimit = await withRateLimit(user.id, 'web_builder');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(rateLimit.body, {
+        status: rateLimit.status,
+        headers: { 'Retry-After': '60' },
+      });
+    }
+
     const zipPath = await sandboxManager.exportZip(id);
     const buffer = await fs.readFile(zipPath);
 

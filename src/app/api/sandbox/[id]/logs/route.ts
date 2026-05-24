@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
 import { spawn } from 'child_process';
+import { withRateLimit } from '@/lib/server/plan-enforcement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,14 @@ export async function GET(
 ) {
   const { user, errorResponse } = await requireUser(req);
   if (!user) return errorResponse;
+
+  const rateLimit = await withRateLimit(user.id, 'web_builder');
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify(rateLimit.body), {
+      status: rateLimit.status,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+    });
+  }
 
   const { id } = await params;
   const sandbox = await sandboxManager.get(id);

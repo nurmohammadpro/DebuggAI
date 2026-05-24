@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
-import { requireFeature, getUserPlan, getActionCost } from '@/lib/server/plan-enforcement';
+import { requireFeature, getUserPlan, getActionCost, withRateLimit } from '@/lib/server/plan-enforcement';
 import { spawnSync } from 'child_process';
 import * as Sentry from '@sentry/nextjs';
 
@@ -23,6 +23,14 @@ export async function POST(req: NextRequest) {
   if (!user) return errorResponse;
 
   try {
+    const rateLimit = await withRateLimit(user.id, 'web_builder');
+    if (!rateLimit.allowed) {
+      return NextResponse.json(rateLimit.body, {
+        status: rateLimit.status,
+        headers: { 'Retry-After': '60' },
+      });
+    }
+
     if (process.env.SANDBOX_DISABLED === '1' || process.env.SANDBOX_DISABLED === 'true') {
       return NextResponse.json(
         { error: 'Live preview is temporarily disabled.' },

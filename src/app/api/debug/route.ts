@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireUser(req);
   if (auth.errorResponse) return auth.errorResponse;
 
-  const rateLimit = await withRateLimit(auth.user!.id, 'debug');
+  const rateLimit = await withRateLimit(auth.user!.id, 'analyze');
   if (!rateLimit.allowed) {
     return new Response(JSON.stringify(rateLimit.body), {
       status: rateLimit.status,
@@ -79,4 +79,3 @@ export async function POST(req: NextRequest) {
     },
   });
 }
-

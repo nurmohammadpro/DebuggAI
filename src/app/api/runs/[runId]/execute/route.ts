@@ -9,12 +9,21 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
+import { withRateLimit } from '@/lib/server/plan-enforcement';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ runId: string }> }) {
   const auth = await requireUser(req);
   if (auth.errorResponse) return auth.errorResponse;
+
+  const rateLimit = await withRateLimit(auth.user!.id, 'web_builder');
+  if (!rateLimit.allowed) {
+    return NextResponse.json(rateLimit.body, {
+      status: rateLimit.status,
+      headers: { 'Retry-After': '60' },
+    });
+  }
 
   const { runId } = await ctx.params;
   if (!runId) return NextResponse.json({ error: 'runId is required' }, { status: 400 });

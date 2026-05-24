@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const user = auth.user!;
   const supabase = auth.supabase!;
 
-  const rateLimit = await withRateLimit(user.id, 'generate');
+  const rateLimit = await withRateLimit(user.id, 'web_builder');
   if (!rateLimit.allowed) {
     return new Response(JSON.stringify(rateLimit.body), {
       status: rateLimit.status,

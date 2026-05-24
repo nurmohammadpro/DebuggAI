@@ -7,6 +7,7 @@ type PlanType = keyof typeof PLANS;
 type FeatureName = 'analyze' | 'reverse' | 'web_builder' | 'zero_knowledge' | 'priority_ai'
   | 'team_dashboard' | 'export' | 'github' | 'vercel' | 'analytics'
   | 'admin_controls' | 'sla' | 'private_deployment';
+type RateLimitAction = 'analyze' | 'reverse' | 'web_builder';
 
 const PLAN_FEATURES: Record<PlanType, FeatureName[]> = {
   FREE: ['analyze', 'reverse'],
@@ -59,7 +60,7 @@ export async function requireFeature(userId: string, feature: FeatureName): Prom
   return { allowed: checkFeatureAccess(plan, feature), plan };
 }
 
-export async function checkRateLimit(userId: string, action: string): Promise<{ allowed: boolean; current: number; limit: number }> {
+export async function checkRateLimit(userId: string, action: RateLimitAction): Promise<{ allowed: boolean; current: number; limit: number }> {
   const plan = await getUserPlan(userId);
   const planConfig = PLANS[plan];
   if (planConfig.rateLimit === -1) return { allowed: true, current: 0, limit: -1 };
@@ -84,7 +85,7 @@ export async function checkRateLimit(userId: string, action: string): Promise<{ 
   return { allowed: current < planConfig.rateLimit, current, limit: planConfig.rateLimit };
 }
 
-export async function logUsage(userId: string, action: string): Promise<void> {
+export async function logUsage(userId: string, action: RateLimitAction): Promise<void> {
   try {
     const supabase = createSupabaseAdmin();
     await supabase.from('analytics_usage_logs').insert({
@@ -98,7 +99,7 @@ export async function logUsage(userId: string, action: string): Promise<void> {
 
 export async function withRateLimit(
   userId: string,
-  action: string
+  action: RateLimitAction
 ): Promise<{ allowed: true } | { allowed: false; status: number; body: object }> {
   const result = await checkRateLimit(userId, action);
 

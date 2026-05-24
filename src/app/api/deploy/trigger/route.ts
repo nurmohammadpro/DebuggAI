@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const auth = await requireUser(request);
     if (auth.errorResponse) return auth.errorResponse;
 
-    const rateLimit = await withRateLimit(auth.user!.id, 'deploy');
+    const rateLimit = await withRateLimit(auth.user!.id, 'web_builder');
     if (!rateLimit.allowed) {
       return new Response(JSON.stringify(rateLimit.body), {
         status: rateLimit.status,
