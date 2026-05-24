@@ -117,6 +117,25 @@ function getClientIp(req?: NextRequest): string | null {
   return (req.ip as string | undefined) || null;
 }
 
+async function logAbuseEvent(opts: { userId: string; action: RateLimitAction; req?: NextRequest; limit: number; current: number }) {
+  try {
+    const supabase = createSupabaseAdmin();
+    await supabase.from('abuse_events').insert({
+      user_id: opts.userId,
+      ip_address: getClientIp(opts.req),
+      event_type: 'rate_limit_hit',
+      endpoint: opts.req?.nextUrl?.pathname || null,
+      metadata: {
+        action: opts.action,
+        limit: opts.limit,
+        current: opts.current,
+      },
+    });
+  } catch {
+    // best-effort
+  }
+}
+
 export async function logUsage(
   userId: string,
   action: RateLimitAction,
@@ -151,6 +170,13 @@ export async function withRateLimit(
       limit: result.limit,
       current: result.current,
     }, undefined, undefined, { req: opts?.req }).catch(() => {});
+    logAbuseEvent({
+      userId,
+      action,
+      req: opts?.req,
+      limit: result.limit,
+      current: result.current,
+    }).catch(() => {});
     return {
       allowed: false,
       status: 429,
