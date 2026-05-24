@@ -25,7 +25,7 @@ type AuditAction =
 export async function logAuditEvent(
   userId: string,
   action: AuditAction,
-  details: Record<string, unknown> = {},
+  metadata: Record<string, unknown> = {},
   targetType?: string,
   targetId?: string,
   opts?: { req?: NextRequest },
@@ -36,13 +36,19 @@ export async function logAuditEvent(
       opts?.req?.headers.get('x-forwarded-for') ||
       opts?.req?.headers.get('X-Forwarded-For');
     const ip = forwarded ? forwarded.split(',')[0]?.trim() : null;
+    const userAgent =
+      opts?.req?.headers.get('user-agent') ||
+      opts?.req?.headers.get('User-Agent') ||
+      null;
+
     await supabase.from('audit_events').insert({
       user_id: userId,
       action,
-      details: JSON.stringify(details),
       target_type: targetType || null,
       target_id: targetId || null,
       ip_address: ip || null,
+      user_agent: userAgent,
+      metadata,
     });
   } catch {
     // Audit logging is best-effort — never fail the main operation
