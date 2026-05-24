@@ -8,6 +8,7 @@ type AuditAction =
   | 'run.canceled'
   | 'run.succeeded'
   | 'run.failed'
+  | 'rate_limit.hit'
   | 'credit.spent'
   | 'credit.added'
   | 'credit.adjusted'

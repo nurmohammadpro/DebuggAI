@@ -3,6 +3,7 @@ import 'server-only';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { PLANS, CREDIT_COSTS } from '@/lib/constants';
 import type { NextRequest } from 'next/server';
+import { logAuditEvent } from '@/lib/server/audit-log';
 
 type PlanType = keyof typeof PLANS;
 type FeatureName = 'analyze' | 'reverse' | 'web_builder' | 'zero_knowledge' | 'priority_ai'
@@ -73,6 +74,24 @@ export async function checkRateLimit(userId: string, action: RateLimitAction): P
     // If we can't read rate-limit logs, fail open (the edge functions still meter credits).
     return { allowed: true, current: 0, limit: planConfig.rateLimit };
   }
+
+  // Optional global throttle override (admin-controlled) so ops can clamp traffic without redeploying.
+  // Applied as a hard ceiling on top of plan limits.
+  let effectiveLimit: number = planConfig.rateLimit;
+  try {
+    const { data } = await supabase
+      .from('throttle_config')
+      .select('value')
+      .eq('key', 'rate_limit_per_minute')
+      .maybeSingle();
+    const override = Number(data?.value);
+    if (Number.isFinite(override) && override > 0) {
+      effectiveLimit = Math.min(effectiveLimit, override);
+    }
+  } catch {
+    // Best-effort: ignore if table missing or inaccessible
+  }
+
   const windowStart = new Date(Date.now() - 60_000).toISOString();
 
   const { count, error } = await supabase
@@ -83,7 +102,7 @@ export async function checkRateLimit(userId: string, action: RateLimitAction): P
     .gte('created_at', windowStart);
 
   const current = count ?? 0;
-  return { allowed: current < planConfig.rateLimit, current, limit: planConfig.rateLimit };
+  return { allowed: current < effectiveLimit, current, limit: effectiveLimit };
 }
 
 function getClientIp(req?: NextRequest): string | null {
@@ -126,6 +145,12 @@ export async function withRateLimit(
   const result = await checkRateLimit(userId, action);
 
   if (!result.allowed) {
+    // Best-effort audit event for ops visibility.
+    logAuditEvent(userId, 'rate_limit.hit', {
+      action,
+      limit: result.limit,
+      current: result.current,
+    }).catch(() => {});
     return {
       allowed: false,
       status: 429,
