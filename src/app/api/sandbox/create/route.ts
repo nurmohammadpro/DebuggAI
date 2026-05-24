@@ -14,6 +14,7 @@ import { sandboxManager } from '@/lib/sandbox/sandbox';
 import { requireFeature, getUserPlan, getActionCost, withRateLimit } from '@/lib/server/plan-enforcement';
 import { spawnSync } from 'child_process';
 import * as Sentry from '@sentry/nextjs';
+import { getThrottleFlag } from '@/lib/server/throttle-config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,15 @@ export async function POST(req: NextRequest) {
   if (!user) return errorResponse;
 
   try {
+    // Prefer admin-controlled kill switch (throttle_config) so ops can disable previews without redeploy.
+    const sandboxEnabled = await getThrottleFlag('sandbox_enabled', true);
+    if (!sandboxEnabled) {
+      return NextResponse.json(
+        { error: 'Live preview is temporarily disabled.' },
+        { status: 503 },
+      );
+    }
+
     if (process.env.SANDBOX_DISABLED === '1' || process.env.SANDBOX_DISABLED === 'true') {
       return NextResponse.json(
         { error: 'Live preview is temporarily disabled.' },

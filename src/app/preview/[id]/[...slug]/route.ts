@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
+import { getThrottleFlag } from '@/lib/server/throttle-config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; slug?: string[] }> },
 ) {
+  const sandboxEnabled = await getThrottleFlag('sandbox_enabled', true);
+  if (!sandboxEnabled) {
+    return new NextResponse('Sandbox not available', { status: 503 });
+  }
+
   const { id, slug } = await params;
   const sandbox = await sandboxManager.get(id);
 
