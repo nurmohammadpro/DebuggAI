@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, X, ExternalLink, LayoutPanelTop, Database } from 'lucide-react';
+import { ChevronRight, X, ExternalLink, LayoutPanelTop, Database, Code2, Eye, Files, Terminal, ListChecks, GitBranch, Settings, Plug } from 'lucide-react';
 import { ErrorConsole } from '@/components/web-builder/error-console';
 import { WorkspaceGitPanel } from '@/components/workspace/workspace-git-panel';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
@@ -36,6 +36,7 @@ interface WorkspaceRightPanelProps {
 
 export function WorkspaceRightPanel({
   activeTab,
+  onTabChange,
   collapsed,
   onToggleCollapsed,
   width,
@@ -56,6 +57,18 @@ export function WorkspaceRightPanel({
     schema: 'Schema Generator',
   }[activeTab];
   const contentWidth = mobile ? 360 : width;
+  const tabs: Array<{ id: WorkspaceRightTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+    { id: 'code', label: 'Code', icon: Code2 },
+    { id: 'preview', label: 'Preview', icon: Eye },
+    { id: 'files', label: 'Files', icon: Files },
+    { id: 'console', label: 'Console', icon: Terminal },
+    { id: 'runs', label: 'Runs', icon: ListChecks },
+    { id: 'git', label: 'Git', icon: GitBranch },
+    { id: 'env', label: 'Env', icon: Settings },
+    { id: 'connections', label: 'Connect', icon: Plug },
+    { id: 'visual', label: 'Visual', icon: LayoutPanelTop },
+    { id: 'schema', label: 'Schema', icon: Database },
+  ];
 
   const panelContent = (
     <>
@@ -79,6 +92,30 @@ export function WorkspaceRightPanel({
             <ChevronRight className="h-4 w-4 rotate-180 text-[var(--app-text-muted)]" />
           )}
         </button>
+      </div>
+
+      <div className="h-11 border-b border-[var(--app-border)] px-2 flex items-center gap-1 overflow-x-auto">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const isActive = t.id === activeTab;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onTabChange(t.id)}
+              className={`shrink-0 h-8 px-2.5 rounded-[7px] inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
+                isActive
+                  ? 'bg-[var(--app-surface)] text-[var(--app-text)] border border-[var(--app-border)]'
+                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] border border-transparent'
+              }`}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={t.label}
+              title={t.label}
+            >
+              <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-[var(--app-text)]' : ''}`} />
+              <span className="hidden lg:inline">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">

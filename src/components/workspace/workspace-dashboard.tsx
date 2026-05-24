@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { Code2, Eye, Files, GitBranch, LayoutPanelTop, Database, ListChecks, Menu, MoreVertical, Play, Plug, Rocket, Settings, Share2, Terminal, Zap, LibraryBig, CheckCircle2, PanelRight, Save } from 'lucide-react';
+import { CheckCircle2, ListChecks, Menu, MoreVertical, PanelRight, Play, Rocket, Save, Share2, Zap } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
@@ -300,19 +300,6 @@ export function WorkspaceDashboard() {
     </>
   );
 
-  const toolTabs = [
-    { id: 'code' as const, label: 'Code', icon: Code2 },
-    { id: 'visual' as const, label: 'Visual', icon: LayoutPanelTop },
-    { id: 'preview' as const, label: 'Preview', icon: Eye },
-    { id: 'schema' as const, label: 'Schema', icon: Database },
-    { id: 'files' as const, label: 'Files', icon: Files },
-    { id: 'console' as const, label: 'Console', icon: Terminal },
-    { id: 'runs' as const, label: 'Runs', icon: ListChecks },
-    { id: 'git' as const, label: 'Git', icon: GitBranch },
-    { id: 'env' as const, label: 'Env', icon: Settings },
-    { id: 'connections' as const, label: 'Connect', icon: Plug },
-  ];
-
   return (
     <div className="min-h-[100dvh] w-full overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
       <CollabCursorOverlay cursors={remoteCursors} />
@@ -395,14 +382,6 @@ export function WorkspaceDashboard() {
           actions={headerActions}
           showHelp={false}
           showAccountMenu={false}
-          toolTabs={toolTabs}
-          toolTabsClassName="hidden lg:flex"
-          activeToolTab={rightTab}
-          onToolTabChange={(tab) => {
-            setRightCollapsed(false);
-            setRightTab(tab);
-            setMobilePanelOpen(true);
-          }}
           mobileMenuButton={
             <button
               className="md:hidden w-8 h-8 flex items-center justify-center rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all"
