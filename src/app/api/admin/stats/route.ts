@@ -43,6 +43,12 @@ export async function GET(request: NextRequest) {
     // Get recent activity (last 24 hours)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
+    const { count: rateLimitHits24h } = await supabase
+      .from('audit_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('action', 'rate_limit.hit')
+      .gte('created_at', oneDayAgo);
+
     const { data: recentAudit } = await supabase
       .from('audit_events')
       .select('*, profiles(email)')
@@ -66,6 +72,7 @@ export async function GET(request: NextRequest) {
         totalCredits,
         debugSessions: debugSessions || 0,
         builderSessions: builderSessions || 0,
+        rateLimitHits24h: rateLimitHits24h || 0,
         actionDistribution,
       },
       recentActivity: (recentAudit || []).map((event: any) => ({

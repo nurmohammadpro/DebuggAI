@@ -22,6 +22,7 @@ interface StatsData {
     totalCredits: number;
     debugSessions: number;
     builderSessions: number;
+    rateLimitHits24h?: number;
     actionDistribution: Record<string, number>;
   };
   recentActivity: Array<{
@@ -114,7 +115,7 @@ export function AdminMonitoring() {
           {stats?.stats && (
             <section>
               <h2 className="text-[13px] font-medium mb-3 text-[var(--app-text)]">Usage Overview</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div className="p-4 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel)]">
                   <Users className="h-4 w-4 text-[var(--app-text-dim)] mb-2" />
                   <div className="text-[16px] font-semibold text-[var(--app-text)]">
@@ -142,6 +143,13 @@ export function AdminMonitoring() {
                     {stats.stats.builderSessions}
                   </div>
                   <div className="text-[11px] text-[var(--app-text-muted)] mt-0.5">Builder Sessions</div>
+                </div>
+                <div className="p-4 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel)]">
+                  <Activity className="h-4 w-4 text-[var(--app-text-dim)] mb-2" />
+                  <div className="text-[16px] font-semibold text-[var(--app-text)]">
+                    {(stats.stats.rateLimitHits24h || 0).toLocaleString()}
+                  </div>
+                  <div className="text-[11px] text-[var(--app-text-muted)] mt-0.5">Rate Limits (24h)</div>
                 </div>
               </div>
             </section>
