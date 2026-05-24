@@ -23,14 +23,6 @@ export async function POST(req: NextRequest) {
   if (!user) return errorResponse;
 
   try {
-    const rateLimit = await withRateLimit(user.id, 'web_builder');
-    if (!rateLimit.allowed) {
-      return NextResponse.json(rateLimit.body, {
-        status: rateLimit.status,
-        headers: { 'Retry-After': '60' },
-      });
-    }
-
     if (process.env.SANDBOX_DISABLED === '1' || process.env.SANDBOX_DISABLED === 'true') {
       return NextResponse.json(
         { error: 'Live preview is temporarily disabled.' },
@@ -82,6 +74,17 @@ export async function POST(req: NextRequest) {
     const cost = fileCount > 20 ? getActionCost('web_builder_large')
       : fileCount > 10 ? getActionCost('web_builder_medium')
       : getActionCost('web_builder_small');
+
+    const rateLimit = await withRateLimit(user.id, 'web_builder', {
+      req,
+      creditsUsed: cost,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(rateLimit.body, {
+        status: rateLimit.status,
+        headers: { 'Retry-After': '60' },
+      });
+    }
 
     // Charge credits atomically (production only, when admin key is configured).
     if (enforceBilling) {

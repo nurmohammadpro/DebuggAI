@@ -21,7 +21,7 @@ export async function GET(
   const { user, errorResponse } = await requireUser(req);
   if (!user) return errorResponse;
 
-  const rateLimit = await withRateLimit(user.id, 'web_builder');
+  const rateLimit = await withRateLimit(user.id, 'web_builder', { req });
   if (!rateLimit.allowed) {
     return new Response(JSON.stringify(rateLimit.body), {
       status: rateLimit.status,

@@ -22,7 +22,7 @@ export async function POST(
   const { id } = await params;
 
   try {
-    const rateLimit = await withRateLimit(user.id, 'web_builder');
+    const rateLimit = await withRateLimit(user.id, 'web_builder', { req });
     if (!rateLimit.allowed) {
       return NextResponse.json(rateLimit.body, {
         status: rateLimit.status,

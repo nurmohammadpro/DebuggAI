@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { PLANS, CREDIT_COSTS } from '@/lib/constants';
+import type { NextRequest } from 'next/server';
 
 type PlanType = keyof typeof PLANS;
 type FeatureName = 'analyze' | 'reverse' | 'web_builder' | 'zero_knowledge' | 'priority_ai'
@@ -85,12 +86,31 @@ export async function checkRateLimit(userId: string, action: RateLimitAction): P
   return { allowed: current < planConfig.rateLimit, current, limit: planConfig.rateLimit };
 }
 
-export async function logUsage(userId: string, action: RateLimitAction): Promise<void> {
+function getClientIp(req?: NextRequest): string | null {
+  if (!req) return null;
+  const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('X-Forwarded-For');
+  if (forwarded) {
+    const first = forwarded.split(',')[0]?.trim();
+    return first || null;
+  }
+  // NextRequest may expose ip in some runtimes, but it's not guaranteed.
+  // @ts-expect-error - runtime dependent
+  return (req.ip as string | undefined) || null;
+}
+
+export async function logUsage(
+  userId: string,
+  action: RateLimitAction,
+  opts?: { req?: NextRequest; creditsUsed?: number; modelUsed?: string | null }
+): Promise<void> {
   try {
     const supabase = createSupabaseAdmin();
     await supabase.from('analytics_usage_logs').insert({
       user_id: userId,
       action_type: action,
+      ip_address: getClientIp(opts?.req),
+      credits_used: typeof opts?.creditsUsed === 'number' ? opts.creditsUsed : 1,
+      model_used: opts?.modelUsed || null,
     });
   } catch {
     // Best-effort logging — never block the request
@@ -100,6 +120,8 @@ export async function logUsage(userId: string, action: RateLimitAction): Promise
 export async function withRateLimit(
   userId: string,
   action: RateLimitAction
+  ,
+  opts?: { req?: NextRequest; creditsUsed?: number; modelUsed?: string | null }
 ): Promise<{ allowed: true } | { allowed: false; status: number; body: object }> {
   const result = await checkRateLimit(userId, action);
 
@@ -116,7 +138,7 @@ export async function withRateLimit(
     };
   }
 
-  await logUsage(userId, action);
+  await logUsage(userId, action, opts);
   return { allowed: true };
 }
 
