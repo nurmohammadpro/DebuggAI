@@ -5,7 +5,7 @@ import { PreviewPane } from '@/components/web-builder/preview-pane';
 import { WorkspaceEditorTabs } from '@/components/workspace/workspace-editor-tabs';
 import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
-import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 
 export type EditorView = 'code' | 'preview';
 
@@ -21,6 +21,19 @@ export function WorkspaceEditor({
 
   const sandbox = useSandbox();
   const sandboxStartingRef = useRef(false);
+  const [dockerFallback, setDockerFallback] = useState(false);
+
+  // When sandbox creation fails due to Docker being unavailable, fall back to Sandpack.
+  useEffect(() => {
+    if (
+      sandbox.error &&
+      (sandbox.error.includes('Docker is required') ||
+        sandbox.error.includes('Live preview is temporarily disabled'))
+    ) {
+      setDockerFallback(true);
+      sandbox.clearError();
+    }
+  }, [sandbox.error, sandbox.clearError]);
 
   const dockerFiles = useMemo(() => {
     if (!files?.files) return null;
@@ -124,11 +137,10 @@ export function WorkspaceEditor({
   }, [files]);
 
   const shouldUseDockerSandbox = useMemo(() => {
-    // Sandpack runtime frequently fails on restricted networks (TIME_OUT),
-    // and it can't run Next.js / multi-package stacks anyway.
-    // Use Docker preview by default whenever the user is in Preview.
+    // Fall back to Sandpack when Docker isn't available (e.g. production).
+    if (dockerFallback) return false;
     return editorView === 'preview';
-  }, [editorView]);
+  }, [editorView, dockerFallback]);
 
   const ensureSandboxRunning = useCallback(async () => {
     if (!shouldUseDockerSandbox) return;
