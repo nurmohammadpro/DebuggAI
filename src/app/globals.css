@@ -1158,57 +1158,6 @@
   }
 }
 
-@keyframes type-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.typing-line {
-  opacity: 0;
-  animation: type-in 0.4s ease forwards;
-}
-
-/* Fade Up Animation */
-.fade-up {
-  /* Progressive enhancement: content is visible by default.
-     When JS runs it adds `html.js`, which enables the reveal animation. */
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.fade-up.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.js .fade-up {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.js .fade-up.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.fade-up-delay-1 {
-  transition-delay: 0.1s;
-}
-
-.fade-up-delay-2 {
-  transition-delay: 0.2s;
-}
-
-.fade-up-delay-3 {
-  transition-delay: 0.3s;
-}
 
 /* Safe Area Insets for Mobile */
 @supports (padding: env(safe-area-inset-bottom)) {

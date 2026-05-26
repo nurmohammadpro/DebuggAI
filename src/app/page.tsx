@@ -1,649 +1,405 @@
-/**
- * Landing Page - DeBuggAI
- *
- * Professional · Minimal · Developer-focused · Dark-first
- */
-
 import Link from 'next/link';
-import {
-  ArrowRight,
-  Check,
-  Play,
-  Star,
-  Zap,
-  Bug,
-  Globe,
-  RefreshCw,
-  Shield,
-  Activity,
-  X,
-} from 'lucide-react';
+import { Send, Check } from 'lucide-react';
 import { PublicLayout } from '@/components/public-layout';
-import { HomeFadeUpInit } from '@/components/public/home/home-fadeup-init';
-import { HomeTerminalDemo } from '@/components/public/home/home-terminal-demo';
-import { HomeFaq } from '@/components/public/home/home-faq';
-
-/* Map feature color names to --app-* variable suffixes */
-const featureColorVars: Record<string, string> = {
-  blue: '--app-info',
-  purple: '--app-purple',
-  amber: '--app-warning',
-  red: '--app-danger',
-  green: '--app-accent',
-};
 
 export default function LandingPage() {
   return (
     <PublicLayout>
-      <HomeFadeUpInit />
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-20 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="fade-up visible inline-flex items-center gap-2 mb-5 rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" style={{ animation: 'dot-pulse 2s infinite' }} />
-            AI-Powered Development Platform
+      {/* Hero + Debug Demo */}
+      <section className="mx-auto max-w-[960px] px-6 pt-16 pb-16 md:pt-20 md:pb-20">
+        <h1 className="text-[40px] font-semibold leading-[1.15] tracking-[-1.2px] max-w-[640px] max-sm:text-[32px] max-sm:tracking-[-0.7px]">
+          Debug and build, <span className="text-[var(--app-accent)]">faster</span>
+        </h1>
+        <p className="mt-4 text-[15px] text-[var(--app-text-muted)] max-w-[500px] leading-relaxed">
+          Paste code, describe a bug, get an explained fix in seconds. Then build and deploy from the same workspace.
+        </p>
+        <div className="flex items-center gap-3.5 mt-7">
+          <Link
+            href="/signup"
+            className="inline-flex items-center h-11 px-6 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Start debugging
+          </Link>
+          <Link
+            href="#pricing"
+            className="inline-flex items-center h-11 px-6 rounded-[6px] bg-transparent text-[var(--app-text)] text-sm font-medium border border-[var(--app-border-strong)] hover:bg-[var(--app-panel-2)] transition-colors"
+          >
+            See pricing
+          </Link>
+        </div>
+
+        {/* Debug Demo Panel */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-px rounded-[6px] overflow-hidden border border-[var(--app-border-strong)] bg-[var(--app-border-strong)]">
+          {/* Left: Input */}
+          <div className="bg-[var(--app-panel)] p-5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
+              Input
+            </div>
+            <textarea
+              readOnly
+              className="w-full h-[140px] resize-y rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border-strong)] text-[var(--app-text)] font-mono text-[11px] p-3 leading-relaxed outline-none"
+              defaultValue={`def get_user(id):
+    user = db.query(f"SELECT * FROM users WHERE id = {id}")
+    return user.name
+
+# Usage
+name = get_user(42)
+print(f"Hello, {name}")`}
+            />
+            <textarea
+              readOnly
+              className="w-full h-20 mt-2.5 resize-y rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border-strong)] text-[var(--app-text)] font-mono text-[11px] p-3 leading-relaxed outline-none"
+              defaultValue={`Traceback (most recent call last):
+  File "app.py", line 7, in <module>
+    print(f"Hello, {name}")
+NameError: name 'name' is not defined`}
+            />
+            <a
+              href="#demo-result"
+              className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-xs font-semibold no-underline"
+            >
+              <Send className="h-3.5 w-3.5" />
+              Analyze
+            </a>
           </div>
 
-          <h1 className="fade-up visible fade-up-delay-1 mb-4 text-[40px] font-bold tracking-[-0.8px] leading-[1.1] text-[var(--app-text)]">
-            Debug Code & Build<br />
-            <span className="text-[var(--app-accent)]">Apps with AI</span>
-          </h1>
+          {/* Right: Result */}
+          <div id="demo-result" className="bg-[var(--app-panel)] p-5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
+              Result
+            </div>
+            <pre className="font-mono text-[11px] leading-[1.8] text-[var(--app-text-muted)] whitespace-pre-wrap">
+              <span className="text-[var(--app-text-dim)]">## Summary</span>{'\n'}
+              <span className="text-[var(--app-danger)]">NameError</span>: <span className="text-[var(--app-text-dim)]">variable</span> name <span className="text-[var(--app-text-dim)]">referenced before assignment</span>{'\n\n'}
+              <span className="text-[var(--app-text-dim)]">## Root Cause</span>{'\n'}
+              get_user() <span className="text-[var(--app-text-dim)]">may return</span> None <span className="text-[var(--app-text-dim)]">when the query finds no row.</span>{'\n'}
+              <span className="text-[var(--app-text-dim)]">The</span> NameError <span className="text-[var(--app-text-dim)]">at line 7 is a cascade: the try/except swallowed the</span>{'\n'}
+              <span className="text-[var(--app-text-dim)]">original error, so</span> name <span className="text-[var(--app-text-dim)]">was never assigned.</span>{'\n\n'}
+              <span className="text-[var(--app-text-dim)]">## Fix</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+ def get_user(user_id: int) -&gt; dict | None:</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+     result = db.query("SELECT * FROM users WHERE id = ?", [user_id])</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+     return result[0] if result else None</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+ </span>{'\n'}
+              <span className="text-[var(--app-accent)]">+ user = get_user(42)</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+ if user is None:</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+     print("User not found")</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+ else:</span>{'\n'}
+              <span className="text-[var(--app-accent)]">+     print(f"Hello, {'{'}user['name']{'}'}")</span>
+            </pre>
+          </div>
+        </div>
+      </section>
 
-          <p className="fade-up visible fade-up-delay-2 text-[15px] text-[var(--app-text-muted)] mb-8 max-w-2xl mx-auto leading-relaxed">
-            Instant debugging for 10+ languages and a visual web builder powered by AI. Ship faster with DeBuggAI.
+      {/* Capabilities */}
+      <section id="features" className="bg-[var(--app-panel)]">
+        <div className="mx-auto max-w-[960px] px-6 py-20">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
+            Capabilities
+          </div>
+          <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">Everything you need to ship</h2>
+          <p className="text-sm text-[var(--app-text-muted)] max-w-[480px] mb-10">
+            Three surfaces, one workspace. Debug, build, and deploy without leaving the tool.
           </p>
 
-          <div className="fade-up visible fade-up-delay-3 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/signup" className="w-full sm:w-auto">
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
-                Start Debugging Now
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </Link>
-            <Link href="/demo" className="w-full sm:w-auto">
-              <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
-                Watch Demo
-                <Play className="h-3.5 w-3.5" />
-              </button>
-            </Link>
-          </div>
-
-          <div className="fade-up visible fade-up-delay-3 flex items-center justify-center gap-4 flex-wrap mt-5">
-            <span className="text-[11px] text-[var(--app-text-muted)] flex items-center gap-1">
-              <Check className="h-3 w-3 text-[var(--app-accent)]" /> Free forever plan
-            </span>
-            <span className="w-1 h-1 rounded-full bg-[var(--app-text-dim)]" />
-            <span className="text-[11px] text-[var(--app-text-muted)] flex items-center gap-1">
-              <Check className="h-3 w-3 text-[var(--app-accent)]" /> No credit card required
-            </span>
-            <span className="w-1 h-1 rounded-full bg-[var(--app-text-dim)]" />
-            <span className="text-[11px] text-[var(--app-text-muted)] flex items-center gap-1">
-              <Check className="h-3 w-3 text-[var(--app-accent)]" /> Setup in 2 minutes
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Activity Feed */}
-      <section className="container mx-auto px-4 pb-16">
-        <div className="fade-up max-w-2xl mx-auto">
-          <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)]" style={{ animation: 'dot-pulse 2s infinite' }} />
-              <span className="text-[10px] font-mono text-[var(--app-text-dim)] uppercase tracking-[0.12em]">Live Activity</span>
-            </div>
-            {[
-              { name: 'Sarah K.', action: 'fixed a', error: 'NullPointerException', lang: 'Java', color: 'var(--app-danger)', time: '12s ago' },
-              { name: 'Mike R.', action: 'debugged a', error: 'TypeError', lang: 'TypeScript', color: 'var(--app-info)', time: '34s ago' },
-              { name: 'Alex T.', action: 'built a landing page with the', error: 'Web Builder', lang: '', color: 'var(--app-warning)', time: '1m ago' },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2.5 py-2"
-                style={{ borderBottom: i < 2 ? '1px solid var(--app-border)' : 'none' }}
-              >
-                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                <div className="text-[11px] text-[var(--app-text-muted)] min-w-0">
-                  <strong className="text-[var(--app-text)]">{item.name}</strong>{' '}
-                  {item.action}{' '}
-                  <span style={{ color: item.color }}>{item.error}</span>
-                  {item.lang && <> in {item.lang}</>}
-                </div>
-                <span className="text-[10px] text-[var(--app-text-dim)] ml-auto flex-shrink-0">{item.time}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px rounded-[6px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)]">
+            {/* Debug */}
+            <div className="bg-[var(--app-panel-2)] p-7 flex flex-col">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-accent)] mb-3">
+                Debug
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              Features
-            </div>
-            <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
-              Everything you need to build faster
-            </h2>
-            <p className="text-[15px] text-[var(--app-text-muted)] max-w-2xl mx-auto fade-up">
-              Powerful AI tools to debug, analyze, and generate production-ready code
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-            {[
-              { icon: Bug, title: 'AI Debugging', desc: 'Paste your error and get instant fixes with explanations. Supports 10+ languages out of the box.', badge: 'Most Used', color: 'blue' },
-              { icon: Globe, title: 'Web Builder', desc: 'Describe what you want and watch AI create it live. Monaco editor + iframe preview.', badge: 'New', color: 'purple' },
-              { icon: Zap, title: 'Instant Answers', desc: 'Code reviews, best practices, and explanations in seconds. No more Stack Overflow.', badge: 'Fast', color: 'amber' },
-              { icon: RefreshCw, title: 'Project Templates', desc: 'Generate MERN, Laravel, Django, Flask, Rails, and Go stacks in seconds.', badge: '6 Stacks', color: 'purple' },
-              { icon: Shield, title: 'Zero-Knowledge Mode', desc: 'Your code is never stored. All analysis happens in-memory and is discarded immediately.', badge: 'Pro', color: 'red' },
-              { icon: Activity, title: 'SSE Streaming', desc: 'Watch the AI think in real-time with server-sent events. No loading spinners.', badge: 'Live', color: 'green' },
-            ].map((feature, i) => {
-              const varName = featureColorVars[feature.color] || '--app-accent';
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={i}
-                  className="group rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] hover:border-[var(--app-border-strong)] transition-colors p-5 fade-up"
-                  style={{ animationDelay: `${i * 100}ms` }}
-                >
-                  <div className="mb-4">
-                    <div
-                      className="inline-flex p-2.5 rounded-[6px]"
-                      style={{
-                        background: `rgb(from var(${varName}) r g b / 0.12)`,
-                        color: `var(${varName})`,
-                      }}
-                    >
-                      <Icon className="w-5 h-5" />
-                    </div>
-                  </div>
-                  <h3 className="text-[16px] font-medium tracking-[-0.02em] mb-2 text-[var(--app-text)]">{feature.title}</h3>
-                  <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed mb-3">{feature.desc}</p>
-                  <span className="inline-flex rounded-[6px] px-2.5 py-0.5 text-[10px] font-medium bg-[var(--app-surface)] text-[var(--app-text-muted)] border border-[var(--app-border)]">
-                    {feature.badge}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Live Demo Terminal */}
-      <section id="demo" className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              Live Demo
-            </div>
-            <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
-              See it in action
-            </h2>
-            <p className="text-[15px] text-[var(--app-text-muted)] max-w-2xl mx-auto fade-up">
-              Watch how DeBuggAI identifies and fixes a real error in real time
-            </p>
-          </div>
-
-          <HomeTerminalDemo />
-        </div>
-      </section>
-
-      {/* Supported Languages */}
-      <section id="languages" className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              Languages
-            </div>
-            <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
-              10+ languages supported
-            </h2>
-            <p className="text-[15px] text-[var(--app-text-muted)] fade-up">
-              Automatic detection: paste your code and go
-            </p>
-          </div>
-
-          <div className="fade-up grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
-            {[
-              { name: 'JavaScript', color: '#F7DF1E' },
-              { name: 'Python', color: '#3776AB' },
-              { name: 'PHP', color: '#4F5D95' },
-              { name: 'Go', color: '#00ADD8' },
-              { name: 'Ruby', color: '#CC342D' },
-              { name: 'TypeScript', color: '#3178C6' },
-              { name: 'Java', color: '#B07219' },
-              { name: 'C#', color: '#A8B9CC' },
-              { name: 'HTML/CSS', color: '#E34F26' },
-              { name: 'C++', color: '#00599C' },
-              { name: 'Dart', color: '#68217A' },
-              { name: '+ more', color: 'var(--app-text-dim)' },
-            ].map((lang, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2.5 rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] px-4 py-3 text-[13px] text-[var(--app-text)]"
-              >
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: lang.color }} />
-                {lang.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              How It Works
-            </div>
-            <h2 className="text-[24px] font-semibold tracking-tight text-[var(--app-text)] fade-up">
-              Three steps to better code
-            </h2>
-          </div>
-
-          <div className="fade-up max-w-3xl mx-auto grid md:grid-cols-3 gap-6">
-            {[
-              { step: 1, title: 'Paste Your Code', desc: 'Copy your error or code snippet into DeBuggAI' },
-              { step: 2, title: 'AI Analyzes', desc: 'Identifies the root cause and generates a fix in real-time' },
-              { step: 3, title: 'Copy & Deploy', desc: 'Get corrected code with explanations and ship it' },
-            ].map((item, index) => (
-              <div key={index} className="text-center relative">
-                {index < 2 && (
-                  <div className="hidden md:block absolute top-12 left-0 w-[calc(50%+12px)] h-px bg-[var(--app-border-strong)]" />
-                )}
-                <div
-                  className="w-12 h-12 rounded-[6px] flex items-center justify-center mx-auto mb-3.5 text-lg font-semibold text-[#071006] font-mono"
-                  style={{
-                    background: 'var(--app-accent)',
-                  }}
-                >
-                  {item.step}
-                </div>
-                <h3 className="text-[16px] font-medium tracking-[-0.02em] mb-2 text-[var(--app-text)]">{item.title}</h3>
-                <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="border-t border-[var(--app-border)] bg-[var(--app-panel)] py-16">
-        <div className="container mx-auto px-4">
-          <div className="fade-up grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-            {[
-              { value: '10K+', label: 'Happy Developers' },
-              { value: '10x', label: 'Faster Debugging' },
-              { value: '2.1s', label: 'Avg. Fix Time' },
-            ].map((stat, i) => (
-              <div
-                key={i}
-                className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] text-center p-6 hover:border-[var(--app-border-strong)] transition-colors"
-              >
-                <div className="text-[28px] font-semibold tracking-tight text-[var(--app-accent)]">{stat.value}</div>
-                <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-dim)] mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Before & After Code Preview */}
-      <section className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="fade-up grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
-            <div>
-              <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
-                Before & After
-              </div>
-              <h2 className="text-[22px] font-semibold tracking-tight mb-3 text-[var(--app-text)]">
-                See the difference
-              </h2>
-              <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed mb-5">
-                DeBuggAI does not just point out errors, it rewrites the code with best practices and explains every change.
+              <h3 className="text-[17px] font-semibold tracking-[-0.2px] mb-1.5">AI-powered analysis</h3>
+              <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed flex-1">
+                Paste code and an error. Get root cause, explained fix, and suggested tests. 10+ languages, streaming responses.
               </p>
-              <div className="flex flex-col gap-2.5">
-                {[
-                  { icon: X, color: 'var(--app-danger)', text: 'Removes dead code paths' },
-                  { icon: Check, color: 'var(--app-success)', text: 'Adds proper error handling' },
-                  { icon: Check, color: 'var(--app-success)', text: 'Follows language conventions' },
-                  { icon: Check, color: 'var(--app-success)', text: 'Explains each change' },
-                ].map((item, i) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={i} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                      <Icon style={{ color: item.color }} className="w-4 h-4" />
-                      {item.text}
-                    </div>
-                  );
-                })}
-              </div>
+              <pre className="mt-4 rounded-[6px] bg-[var(--app-bg)] border border-[var(--app-border)] p-3 font-mono text-[10px] leading-[1.7] text-[var(--app-text-muted)] overflow-x-auto">
+                <span className="text-[var(--app-danger)]">- user = db.query(f&quot;SELECT * FROM</span>{'\n'}
+                <span className="text-[var(--app-danger)]">  users WHERE id = {'{'}id{'}'}&quot;)</span>{'\n'}
+                <span className="text-[var(--app-accent)]">+ import re; sanitized =</span>{'\n'}
+                <span className="text-[var(--app-accent)]">  re.sub(r&apos;[^\w]&apos;,&apos;&apos;,str(id))</span>{'\n'}
+                <span className="text-[var(--app-accent)]">+ db.query(&quot;SELECT * FROM users</span>{'\n'}
+                <span className="text-[var(--app-accent)]">  WHERE id = ?&quot;, [sanitized])</span>
+              </pre>
             </div>
-            <div className="rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
-                </div>
-                <span className="text-[10px] font-mono text-[var(--app-text-dim)] ml-2">python</span>
+
+            {/* Build */}
+            <div className="bg-[var(--app-panel-2)] p-7 flex flex-col">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-info)] mb-3">
+                Build
               </div>
-              <div className="p-4 font-mono text-[12px] leading-relaxed">
-                <div className="mb-3">
-                  <div className="text-[10px] mb-1.5 flex items-center gap-1 text-[var(--app-danger)]">
-                    <X className="w-3 h-3" /> Before
-                  </div>
-                  <div className="text-[var(--app-text-muted)]">
-                    <span className="text-[#FF7777]">def get_user(id):</span><br />
-                    <span className="text-[#FF7777]">&nbsp;&nbsp;user = db.find(id)</span><br />
-                    <span className="text-[#FF7777]">&nbsp;&nbsp;return user.name</span>
-                  </div>
-                </div>
-                <div className="border-t border-[var(--app-border)] pt-3">
-                  <div className="text-[10px] mb-1.5 flex items-center gap-1 text-[var(--app-success)]">
-                    <Check className="w-4 h-4" /> After
-                  </div>
-                  <div>
-                    <span className="text-[var(--app-info)]">def </span><span className="text-[var(--app-text)]">get_user</span><span className="text-[var(--app-text-dim)]">(user_id: int) -&gt; str:</span><br />
-                    <span className="text-[var(--app-text-dim)]">&nbsp;&nbsp;&quot;&quot;&quot;Fetch username by ID.&quot;&quot;&quot;</span><br />
-                    <span className="text-[var(--app-info)]">if not </span><span className="text-[var(--app-text)]">isinstance</span><span className="text-[var(--app-text-dim)]">(user_id, int):</span><br />
-                    <span className="text-[var(--app-info)]">&nbsp;&nbsp;&nbsp;&nbsp;raise </span><span className="text-[var(--app-danger)]">TypeError</span><span className="text-[var(--app-text-dim)]">(</span><span className="text-[var(--app-success)]">&quot;id must be int&quot;</span><span className="text-[var(--app-text-dim)]">)</span><br />
-                    <span className="text-[var(--app-text)]">&nbsp;&nbsp;user</span><span className="text-[var(--app-text-dim)]"> = </span><span className="text-[var(--app-text)]">db.find_one</span><span className="text-[var(--app-text-dim)]">(user_id)</span><br />
-                    <span className="text-[var(--app-info)]">if not </span><span className="text-[var(--app-text)]">user</span><span className="text-[var(--app-text-dim)]">:</span><br />
-                    <span className="text-[var(--app-info)]">&nbsp;&nbsp;&nbsp;&nbsp;raise </span><span className="text-[var(--app-danger)]">ValueError</span><span className="text-[var(--app-text-dim)]">(</span><span className="text-[var(--app-success)]">&quot;User not found&quot;</span><span className="text-[var(--app-text-dim)]">)</span><br />
-                    <span className="text-[var(--app-info)]">return </span><span className="text-[var(--app-text)]">user</span><span className="text-[var(--app-text-dim)]">.name</span>
-                  </div>
-                </div>
+              <h3 className="text-[17px] font-semibold tracking-[-0.2px] mb-1.5">Visual web builder</h3>
+              <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed flex-1">
+                Describe what you want. The AI generates a full app with live Monaco editor and instant iframe preview.
+              </p>
+              <pre className="mt-4 rounded-[6px] bg-[var(--app-bg)] border border-[var(--app-border)] p-3 font-mono text-[10px] leading-[1.7] text-[var(--app-text-muted)] overflow-x-auto">
+                <span className="text-[var(--app-info)]">&gt; Build a todo app with dark</span>{'\n'}
+                <span className="text-[var(--app-info)]">  mode toggle and localStorage</span>{'\n'}
+                <span className="text-[var(--app-info)]">  persistence</span>{'\n\n'}
+                <span className="text-[var(--app-text-dim)]">→ Generated index.html,</span>{'\n'}
+                <span className="text-[var(--app-text-dim)]">   style.css, app.js</span>{'\n'}
+                <span className="text-[var(--app-text-dim)]">   Ready in 4.2s</span>
+              </pre>
+            </div>
+
+            {/* Deploy */}
+            <div className="bg-[var(--app-panel-2)] p-7 flex flex-col">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-purple)] mb-3">
+                Deploy
               </div>
+              <h3 className="text-[17px] font-semibold tracking-[-0.2px] mb-1.5">Ship from the workspace</h3>
+              <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed flex-1">
+                One-click deploy to Vercel or Netlify. Export as zip. Project versioning and team branches built in.
+              </p>
+              <pre className="mt-4 rounded-[6px] bg-[var(--app-bg)] border border-[var(--app-border)] p-3 font-mono text-[10px] leading-[1.7] overflow-x-auto">
+                <span className="text-[var(--app-text-dim)]">{'$'} debuggai deploy</span>{'\n'}
+                <span className="text-[var(--app-text-dim)]">  Building project...</span>{'\n'}
+                <span className="text-[var(--app-text-dim)]">  Uploading to Vercel</span>{'\n'}
+                <span className="text-[var(--app-accent)]">  Live at →</span>{'\n'}
+                <span className="text-[var(--app-accent)]">  myapp.vercel.app</span>
+              </pre>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              Testimonials
-            </div>
-            <h2 className="text-[24px] font-semibold tracking-tight text-[var(--app-text)] fade-up">
-              Loved by developers
-            </h2>
-          </div>
-
-          <div className="fade-up grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            {[
-              {
-                name: 'Sarah Kim',
-                role: 'Backend Engineer · Stripe',
-                quote: 'Fixed a null pointer in my Java Spring app in 3 seconds. Would have taken me 30 minutes easy. This is insane.',
-                color: 'var(--app-info)',
-                initial: 'S'
-              },
-              {
-                name: 'Mike Rodriguez',
-                role: 'Full-Stack Dev · Freelance',
-                quote: 'The web builder is magic. I described a dashboard UI and it built the whole thing with working charts in under a minute.',
-                color: 'var(--app-purple)',
-                initial: 'M'
-              },
-              {
-                name: 'Alex Torres',
-                role: 'Senior Engineer · Goldman Sachs',
-                quote: 'Zero-Knowledge Mode is the killer feature. I debug proprietary code at work without any compliance concerns.',
-                color: 'var(--app-accent)',
-                initial: 'A'
-              },
-            ].map((testimonial, i) => (
-              <div key={i} className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-6">
-                <div className="flex gap-0.5 mb-3">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="h-3 w-3 text-[var(--app-warning)] fill-[var(--app-warning)]" />
-                  ))}
-                </div>
-                <p className="text-[13px] text-[var(--app-text-muted)] leading-relaxed mb-4">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-8 h-8 rounded-[6px] flex items-center justify-center text-[11px] font-semibold"
-                    style={{ background: `color-mix(in srgb, ${testimonial.color} 15%, transparent)`, color: testimonial.color }}
-                  >
-                    {testimonial.initial}
-                  </div>
-                  <div>
-                    <div className="text-[13px] font-medium text-[var(--app-text)]">{testimonial.name}</div>
-                    <div className="text-[11px] text-[var(--app-text-muted)]">{testimonial.role}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Web Builder Demo */}
+      <section className="mx-auto max-w-[960px] px-6 py-20 max-sm:pt-0">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
+          Live Demo
         </div>
-      </section>
 
-      {/* Pricing Preview */}
-      <section id="pricing" className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              Pricing
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px rounded-[6px] overflow-hidden border border-[var(--app-border-strong)] bg-[var(--app-border-strong)]">
+          {/* Left: prompt + generated code */}
+          <div className="bg-[var(--app-panel)] flex flex-col">
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--app-border)]">
+              <input
+                readOnly
+                type="text"
+                value="Build a dark-mode todo app with localStorage persistence"
+                className="flex-1 h-9 px-3 rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border-strong)] text-[var(--app-text)] font-mono text-[11px] outline-none"
+              />
+              <button className="h-9 w-9 rounded-[6px] bg-[var(--app-accent)] text-[#071006] inline-flex items-center justify-center flex-shrink-0">
+                <Send className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <h2 className="text-[24px] font-semibold tracking-tight mb-3 text-[var(--app-text)] fade-up">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-[15px] text-[var(--app-text-muted)] fade-up">
-              Start free, upgrade when you need more power. No hidden fees.
-            </p>
-          </div>
-
-          <div className="fade-up grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 items-start">
-            {/* Free */}
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
-              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">FREE</div>
-              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $0<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
-              </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For individuals learning</p>
-              <div className="flex flex-col gap-2.5 mb-5">
-                {['30 credits/month', 'Basic debugging', '7-day history'].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
-                  </div>
-                ))}
-                <div className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                  <X className="h-4 w-4" /> Web Builder
-                </div>
-              </div>
-              <Link href="/signup" className="block">
-                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
-                  Get Started
+            <div className="flex border-b border-[var(--app-border)]">
+              {['index.html', 'style.css', 'app.js'].map((tab, i) => (
+                <button
+                  key={tab}
+                  className={`h-8 px-3.5 text-[10px] font-semibold uppercase tracking-[0.12em] border-b-2 transition-colors ${
+                    i === 0
+                      ? 'text-[var(--app-accent)] border-[var(--app-accent)]'
+                      : 'text-[var(--app-text-dim)] border-transparent'
+                  }`}
+                >
+                  {tab}
                 </button>
+              ))}
+            </div>
+            <pre className="flex-1 min-h-[220px] p-5 font-mono text-[10px] leading-[1.8] text-[var(--app-text-muted)] overflow-auto whitespace-pre">
+              <span className="text-[var(--app-text-dim)] italic">{'<!-- index.html -->'}</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;!DOCTYPE html&gt;</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;html</span> <span className="text-[var(--app-warning)]">lang</span>=<span className="text-[var(--app-accent)]">&quot;en&quot;</span><span className="text-[var(--app-danger)]">&gt;</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;head&gt;</span>{'\n'}
+              {'  '}<span className="text-[var(--app-danger)]">&lt;meta</span> <span className="text-[var(--app-warning)]">charset</span>=<span className="text-[var(--app-accent)]">&quot;UTF-8&quot;</span><span className="text-[var(--app-danger)]">&gt;</span>{'\n'}
+              {'  '}<span className="text-[var(--app-danger)]">&lt;title&gt;</span>Tasks<span className="text-[var(--app-danger)]">&lt;/title&gt;</span>{'\n'}
+              {'  '}<span className="text-[var(--app-danger)]">&lt;link</span> <span className="text-[var(--app-warning)]">rel</span>=<span className="text-[var(--app-accent)]">&quot;stylesheet&quot;</span> <span className="text-[var(--app-warning)]">href</span>=<span className="text-[var(--app-accent)]">&quot;style.css&quot;</span><span className="text-[var(--app-danger)]">&gt;</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;/head&gt;</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;body&gt;</span>{'\n'}
+              {'  '}<span className="text-[var(--app-danger)]">&lt;div</span> <span className="text-[var(--app-warning)]">class</span>=<span className="text-[var(--app-accent)]">&quot;container&quot;</span><span className="text-[var(--app-danger)]">&gt;</span>{'\n'}
+              {'    '}<span className="text-[var(--app-danger)]">&lt;h1&gt;</span>Tasks<span className="text-[var(--app-danger)]">&lt;/h1&gt;</span>{'\n'}
+              {'    '}<span className="text-[var(--app-danger)]">&lt;div</span> <span className="text-[var(--app-warning)]">class</span>=<span className="text-[var(--app-accent)]">&quot;add-row&quot;</span><span className="text-[var(--app-danger)]">&gt;</span>{'\n'}
+              {'      '}<span className="text-[var(--app-danger)]">&lt;input</span> <span className="text-[var(--app-warning)]">placeholder</span>=<span className="text-[var(--app-accent)]">&quot;Add a task...&quot;</span><span className="text-[var(--app-danger)]">&gt;</span>{'\n'}
+              {'      '}<span className="text-[var(--app-danger)]">&lt;button&gt;</span>Add<span className="text-[var(--app-danger)]">&lt;/button&gt;</span>{'\n'}
+              {'    '}<span className="text-[var(--app-danger)]">&lt;/div&gt;</span>{'\n'}
+              {'    '}<span className="text-[var(--app-danger)]">&lt;ul</span> <span className="text-[var(--app-warning)]">id</span>=<span className="text-[var(--app-accent)]">&quot;taskList&quot;</span><span className="text-[var(--app-danger)]">&gt;&lt;/ul&gt;</span>{'\n'}
+              {'  '}<span className="text-[var(--app-danger)]">&lt;/div&gt;</span>{'\n'}
+              {'  '}<span className="text-[var(--app-danger)]">&lt;script</span> <span className="text-[var(--app-warning)]">src</span>=<span className="text-[var(--app-accent)]">&quot;app.js&quot;</span><span className="text-[var(--app-danger)]">&gt;&lt;/script&gt;</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;/body&gt;</span>{'\n'}
+              <span className="text-[var(--app-danger)]">&lt;/html&gt;</span>
+            </pre>
+          </div>
+
+          {/* Right: live preview */}
+          <div className="bg-[var(--app-panel)] flex flex-col">
+            <div className="h-7 px-3 flex items-center gap-1.5 bg-[var(--app-panel-2)] border-b border-[var(--app-border)]">
+              <span className="w-2 h-2 rounded-full bg-[#FF5F56]" />
+              <span className="w-2 h-2 rounded-full bg-[#FFBD2E]" />
+              <span className="w-2 h-2 rounded-full bg-[#27C93F]" />
+              <span className="ml-2 text-[10px] font-mono text-[var(--app-text-dim)] bg-[var(--app-panel)] px-2 py-0.5 rounded-[4px] flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                localhost:3000/preview
+              </span>
+            </div>
+            <div className="flex-1 min-h-[340px] max-sm:min-h-[260px] bg-white flex items-center justify-center">
+              <div className="w-full h-full p-6 bg-[#fafafa] text-[#1a1a1a] font-sans overflow-auto">
+                <div className="max-w-[360px] mx-auto bg-white rounded-[10px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-6">
+                  <h4 className="text-lg font-semibold mb-4 text-[#1a1a1a]">Tasks</h4>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      readOnly
+                      type="text"
+                      value="Write unit tests"
+                      className="flex-1 h-9 px-2.5 rounded-[6px] border border-[#e0e0e0] text-[13px] outline-none"
+                    />
+                    <button className="h-9 px-3.5 rounded-[6px] bg-[#00C853] text-white text-xs font-semibold">
+                      Add
+                    </button>
+                  </div>
+                  {[
+                    { text: 'Set up project', done: true },
+                    { text: 'Install dependencies', done: true },
+                    { text: 'Write unit tests', done: false },
+                    { text: 'Add dark mode toggle', done: false },
+                    { text: 'Deploy to production', done: false },
+                  ].map((task) => (
+                    <div
+                      key={task.text}
+                      className={`flex items-center gap-2.5 py-2 border-b border-[#f0f0f0] text-[13px] ${
+                        task.done ? 'text-[#aaa] line-through' : 'text-[#333]'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        readOnly
+                        checked={task.done}
+                        className="w-4 h-4 accent-[#00C853]"
+                      />
+                      {task.text}
+                    </div>
+                  ))}
+                  <div className="text-[11px] text-[#999] mt-3 text-center">5 tasks, 3 remaining</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Languages + How it works */}
+      <section className="mx-auto max-w-[960px] px-6 py-10 pb-20 text-center">
+        <h2 className="text-[22px] font-semibold tracking-[-0.3px] mb-6">12 languages, one tool</h2>
+        <div className="flex flex-wrap justify-center gap-2">
+          {[
+            { name: 'JavaScript', color: '#F7DF1E' },
+            { name: 'Python', color: '#3776AB' },
+            { name: 'PHP', color: '#777BB4' },
+            { name: 'Go', color: '#00ADD8' },
+            { name: 'Ruby', color: '#CC342D' },
+            { name: 'TypeScript', color: '#3178C6' },
+            { name: 'Java', color: '#ED8B00' },
+            { name: 'C#', color: '#9B4F96' },
+            { name: 'HTML/CSS', color: '#E34F26' },
+            { name: 'C++', color: '#00599C' },
+            { name: 'Dart', color: '#00B4AB' },
+            { name: 'Rust', color: '#CE422B' },
+          ].map((lang) => (
+            <span
+              key={lang.name}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[6px] border border-[var(--app-border-strong)] bg-[var(--app-panel-2)] text-[11px] font-medium text-[var(--app-text-muted)]"
+            >
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: lang.color }} />
+              {lang.name}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-16">
+          <p className="text-[15px] text-[var(--app-text-muted)] leading-[1.8]">
+            <strong className="text-[var(--app-text)] font-semibold">Paste code and error</strong> →{' '}
+            <strong className="text-[var(--app-text)] font-semibold">AI analyzes in real-time</strong> →{' '}
+            <strong className="text-[var(--app-text)] font-semibold">Apply the fix or iterate.</strong>{' '}
+            Or <strong className="text-[var(--app-text)] font-semibold">describe an app</strong> →{' '}
+            <strong className="text-[var(--app-text)] font-semibold">AI generates it live</strong> →{' '}
+            <strong className="text-[var(--app-text)] font-semibold">preview instantly.</strong>{' '}
+            Two loops, one tool. No setup, no config.
+          </p>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="bg-[var(--app-panel)]">
+        <div className="mx-auto max-w-[960px] px-6 py-20">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
+            Pricing
+          </div>
+          <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">Start free, upgrade when you need more</h2>
+          <p className="text-sm text-[var(--app-text-muted)] mb-8">No credit card required. Cancel anytime.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px rounded-[6px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)]">
+            {/* Free */}
+            <div className="bg-[var(--app-panel-2)] p-8 flex flex-col">
+              <h3 className="text-[17px] font-semibold mb-1">Free</h3>
+              <div className="text-[36px] font-semibold text-[var(--app-accent)] tracking-[-1px] mt-3 mb-1">
+                $0<span className="text-sm font-normal text-[var(--app-text-muted)]">/month</span>
+              </div>
+              <p className="text-xs text-[var(--app-text-muted)] mb-5">30 credits per month</p>
+              <ul className="text-xs text-[var(--app-text-muted)] leading-[2] flex-1 space-y-0">
+                {[
+                  'Basic debugging features',
+                  '7-day session history',
+                  'Web builder templates',
+                  '10 requests per minute',
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-1.5">
+                    <Check className="h-3 w-3 text-[var(--app-accent)]" /> {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center h-11 px-6 mt-5 rounded-[6px] border border-[var(--app-border-strong)] text-sm font-medium text-[var(--app-text-muted)] hover:bg-[var(--app-panel)] transition-colors"
+              >
+                Get started
               </Link>
             </div>
 
             {/* Pro */}
-            <div
-              className="relative rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 flex flex-col"
-              style={{
-                border: '1px solid var(--app-accent)',
-                zIndex: 10,
-              }}
-            >
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                <span className="font-medium text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]">
-                  Most Popular
-                </span>
+            <div className="bg-[var(--app-panel-2)] p-8 flex flex-col">
+              <h3 className="text-[17px] font-semibold mb-1">Pro</h3>
+              <div className="text-[36px] font-semibold text-[var(--app-accent)] tracking-[-1px] mt-3 mb-1">
+                $9<span className="text-sm font-normal text-[var(--app-text-muted)]">/month</span>
               </div>
-              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-accent)] mb-1 mt-4">PRO</div>
-              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-accent)] mb-1">
-                $9<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
-              </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For serious developers</p>
-              <div className="flex flex-col gap-2.5 mb-5">
-                {['300 credits/month', 'Priority AI responses', '90-day history', 'Web Builder + Templates', 'Zero-Knowledge Mode', 'Referral program'].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
-                  </div>
-                ))}
-              </div>
-              <Link href="/signup?plan=pro" className="block mt-auto">
-                <button className="w-full inline-flex items-center justify-center gap-2 rounded-[6px] px-4 py-2.5 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
-                  Start Free Trial
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </Link>
-            </div>
-
-            {/* Team */}
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
-              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">TEAM</div>
-              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $99<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
-              </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For small teams</p>
-              <div className="flex flex-col gap-2.5 mb-5">
-                {['2,500 credits/month', '3 seats included', 'Shared team dashboard', 'Web Builder + Export', 'Priority queue'].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
-                  </div>
-                ))}
-              </div>
-              <Link href="/contact?plan=team" className="block mt-auto">
-                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
-                  Contact Sales
-                </button>
-              </Link>
-            </div>
-
-            {/* Business */}
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
-              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">BUSINESS</div>
-              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $299<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
-              </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For growing organizations</p>
-              <div className="flex flex-col gap-2.5 mb-5">
-                {['10,000 credits/month', '10 seats included', 'Team analytics', 'Priority AI routing', 'Integrations (Git + Deploy)'].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
-                  </div>
-                ))}
-              </div>
-              <Link href="/contact?plan=business" className="block mt-auto">
-                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
-                  Contact Sales
-                </button>
-              </Link>
-            </div>
-
-            {/* Enterprise */}
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5 hover:border-[var(--app-border-strong)] transition-colors">
-              <div className="text-[11px] tracking-[0.12em] uppercase text-[var(--app-text-dim)] mb-1">ENTERPRISE</div>
-              <div className="text-[28px] font-semibold tracking-tight text-[var(--app-text)] mb-1">
-                $999+<span className="text-[13px] font-normal text-[var(--app-text-muted)]">/mo</span>
-              </div>
-              <p className="text-[13px] text-[var(--app-text-muted)] mb-4">For large orgs and security needs</p>
-              <div className="flex flex-col gap-2.5 mb-5">
-                {['Starts at 40,000 credits/month', 'Dedicated workspace', 'Admin controls + audit logs', 'SLA support', 'Private deployment option'].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-[13px] text-[var(--app-text-muted)]">
-                    <Check className="h-4 w-4 text-[var(--app-success)]" /> {f}
-                  </div>
-                ))}
-              </div>
-              <Link href="/contact?plan=enterprise" className="block mt-auto">
-                <button className="w-full rounded-[6px] px-4 py-2.5 text-[13px] font-medium border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors">
-                  Contact Sales
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="border-t border-[var(--app-border)] py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <div className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4 fade-up">
-              FAQ
-            </div>
-            <h2 className="text-[24px] font-semibold tracking-tight text-[var(--app-text)] fade-up">
-              Frequently asked questions
-            </h2>
-          </div>
-
-          <HomeFaq />
-        </div>
-      </section>
-
-      {/* Keyboard Shortcuts */}
-      <section className="border-t border-[var(--app-border)] py-12">
-        <div className="container mx-auto px-4">
-          <div className="fade-up max-w-lg mx-auto">
-            <div className="rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] p-5">
-              <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
-                Keyboard Shortcuts
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+              <p className="text-xs text-[var(--app-text-muted)] mb-5">300 credits per month</p>
+              <ul className="text-xs text-[var(--app-text-muted)] leading-[2] flex-1 space-y-0">
                 {[
-                  { key: '⌘K', action: 'New session' },
-                  { key: '⌘⏎', action: 'Analyze' },
-                  { key: '⌘⇧C', action: 'Copy result' },
-                  { key: 'Esc', action: 'Cancel' },
-                ].map((shortcut, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[11px] text-[var(--app-text-muted)]">
-                    <span className="rounded-[6px] px-1.5 py-0.5 text-[10px] font-mono bg-[var(--app-surface)] text-[var(--app-text-muted)] border border-[var(--app-border)]">
-                      {shortcut.key}
-                    </span>
-                    {shortcut.action}
-                  </div>
+                  'Priority AI processing',
+                  '90-day session history',
+                  'Full web builder access',
+                  'Zero-knowledge mode',
+                  'Priority support',
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-1.5">
+                    <Check className="h-3 w-3 text-[var(--app-accent)]" /> {f}
+                  </li>
                 ))}
-              </div>
+              </ul>
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center h-11 px-6 mt-5 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                Start free trial
+              </Link>
             </div>
           </div>
+
+          <Link
+            href="/pricing"
+            className="block text-center mt-5 text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors"
+          >
+            See all plans → Team, Business, Enterprise
+          </Link>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="fade-up max-w-2xl mx-auto">
-            <div
-              className="rounded-[6px] bg-[var(--app-panel)] p-10 text-center relative overflow-hidden"
-              style={{ border: '1px solid var(--app-accent)' }}
-            >
-              <div className="relative z-10">
-                <span className="inline-flex rounded-[6px] px-3 py-1 bg-[var(--app-accent-soft)] text-[11px] font-medium text-[var(--app-accent)] mb-4">
-                  Ready?
-                </span>
-                <h2 className="text-[24px] font-semibold tracking-tight mb-2 text-[var(--app-text)]">
-                  Start building faster today
-                </h2>
-                <p className="text-[13px] text-[var(--app-text-muted)] mb-6 max-w-md mx-auto">
-                  Join 10,000+ developers using DeBuggAI to ship better code, faster.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/signup">
-                    <button className="inline-flex items-center gap-2 rounded-[6px] px-6 py-3 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
-                      Start Free Trial
-                      <ArrowRight className="h-5 w-5" />
-                    </button>
-                  </Link>
-                  <Link href="/pricing">
-                    <button className="inline-flex items-center rounded-[6px] px-6 py-3 text-[13px] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
-                      View Pricing
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* CTA */}
+      <section className="mx-auto max-w-[960px] px-6 py-16 pb-24 text-center">
+        <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">Start debugging for free</h2>
+        <p className="text-sm text-[var(--app-text-muted)] mb-6">No credit card required. Setup takes under two minutes.</p>
+        <Link
+          href="/signup"
+          className="inline-flex items-center h-12 px-8 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-[15px] font-semibold hover:opacity-90 transition-opacity"
+        >
+          Create free account
+        </Link>
       </section>
     </PublicLayout>
   );
