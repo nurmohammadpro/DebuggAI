@@ -301,7 +301,7 @@ export function WorkspaceDashboard() {
   );
 
   return (
-    <div className="min-h-[100dvh] w-full overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
+    <div className="h-[100dvh] w-full overflow-hidden bg-[var(--app-bg)] text-[var(--app-text)] flex">
       <CollabCursorOverlay cursors={remoteCursors} />
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
 
@@ -477,10 +477,9 @@ export function WorkspaceDashboard() {
 	            </div>
 
             <ChatPanel
-              height="100%"
               chromeless
               mode="build"
-              className="h-full rounded-none border-0 bg-transparent"
+              className="flex-1 min-h-0 rounded-none border-0 bg-transparent"
             />
           </section>
 

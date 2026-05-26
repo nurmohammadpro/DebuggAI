@@ -214,6 +214,7 @@ ${languageHint}`;
         temperature: 0.3, // Lower temperature for debugging (more precise)
         max_tokens: 4096,
       }),
+      signal: AbortSignal.timeout(55_000),
     });
 
     if (!aiResponse.ok) {

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Bug, Loader2, Sparkles, History, Code2 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
+import { csrfHeader } from '@/lib/csrf-client';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore } from '@/store/debug-store';
 import {
@@ -69,6 +70,7 @@ export function DebugScreen() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
+          ...csrfHeader(),
         },
         body: JSON.stringify({
           code,

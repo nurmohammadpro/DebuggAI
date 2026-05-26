@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { getSession } from '@/hooks/use-session';
+import { csrfHeader } from '@/lib/csrf-client';
 
 export function DeleteProjectDialog({
   open,
@@ -32,7 +33,7 @@ export function DeleteProjectDialog({
 
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, ...csrfHeader() },
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'Failed to delete');

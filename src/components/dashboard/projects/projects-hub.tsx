@@ -12,6 +12,7 @@ import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { supabase } from '@/lib/supabase';
+import { csrfHeader } from '@/lib/csrf-client';
 import { getProjectKey } from '@/lib/project/project-key';
 import { RecentDebugSessions } from '@/components/dashboard/home/recent-debug-sessions';
 import { RecentTransactions } from '@/components/dashboard/home/recent-transactions';
@@ -79,6 +80,7 @@ export function ProjectsHub() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+          ...csrfHeader(),
         },
         body: JSON.stringify({
           description: duplicateName,

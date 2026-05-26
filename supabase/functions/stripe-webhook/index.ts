@@ -85,10 +85,34 @@ serve(async (req) => {
       );
     }
 
-    // 2. Create Supabase client
+    // 2. Idempotency check — Stripe may deliver the same event more than once.
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: existing } = await supabase
+      .from('audit_events')
+      .select('id')
+      .eq('action', 'stripe.webhook.received')
+      .eq('target_id', event.id)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`Duplicate webhook ${event.id} (${event.type}), skipping`);
+      return new Response(
+        JSON.stringify({ received: true, duplicate: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Record webhook receipt for idempotency
+    await supabase.from('audit_events').insert({
+      user_id: '00000000-0000-0000-0000-000000000000', // system actor
+      action: 'stripe.webhook.received',
+      target_type: 'stripe_event',
+      target_id: event.id,
+      details: { type: event.type },
+    });
 
     // 3. Handle different event types
     switch (event.type) {

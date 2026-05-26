@@ -1,10 +1,28 @@
 {
-  # Keep logs reasonably small by default; adjust for your needs.
-  # debug
+  # Structured access logs to stdout for log aggregation (Docker json-file driver).
+  log {
+    output stdout
+    format json
+  }
+
+  # Guard against excessively large requests.
+  request_body {
+    max_size 50MB
+  }
 }
 
 debuggaidemo.appbrainer.tech {
   encode zstd gzip
+
+  # Per-IP rate limiting at the reverse-proxy level — defense-in-depth with the
+  # app-level per-user rate limiting.
+  rate_limit {
+    zone dynamic {
+      key {remote_host}
+      events 120
+      window 60s
+    }
+  }
 
   # Harden headers — CSP is set by the app, so we don't duplicate it here.
   header {
@@ -25,6 +43,10 @@ debuggaidemo.appbrainer.tech {
   #   reverse_proxy 127.0.0.1:{http.request.header.X-Sandbox-Port}
   # }
 
-  reverse_proxy app:3000
+  reverse_proxy app:3000 {
+    # Health check so Caddy can route around unhealthy instances
+    health_uri /api/health
+    health_interval 30s
+    health_timeout 10s
+  }
 }
-

@@ -19,14 +19,12 @@ type ChatMessage = {
 };
 
 interface ChatPanelProps {
-  height?: string;
   className?: string;
   chromeless?: boolean;
   mode?: 'build' | 'debug';
 }
 
 export function ChatPanel({
-  height = '600px',
   className,
   chromeless = false,
   mode = 'build',
@@ -185,7 +183,6 @@ export function ChatPanel({
         "flex flex-col overflow-hidden rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)]",
         className
       )}
-      style={{ height }}
     >
       {/* Header */}
       {!chromeless && (

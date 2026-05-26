@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getSession } from '@/hooks/use-session';
+import { csrfHeader } from '@/lib/csrf-client';
 
 export function RenameProjectDialog({
   open,
@@ -46,6 +47,7 @@ export function RenameProjectDialog({
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+        ...csrfHeader(),
         },
         body: JSON.stringify({ description: name.trim() }),
       });

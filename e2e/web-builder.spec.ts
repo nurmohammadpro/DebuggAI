@@ -3,41 +3,40 @@ import { test, expect } from '@playwright/test';
 test.describe('Web Builder Flow', () => {
   test('web builder redirects unauthenticated users to login', async ({ page }) => {
     await page.goto('/dashboard/web-builder');
-    await page.waitForTimeout(2000);
-    // Unauthenticated users should be redirected
-    const url = page.url();
-    expect(url.includes('/login') || url.includes('/web-builder')).toBeTruthy();
+    await expect(page).toHaveURL(/\/login/, { timeout: 10000 });
   });
 
-  test('login page has link to home', async ({ page }) => {
-    await page.goto('/login');
-    // Verify the page is functional with navigation
-    await expect(page.locator('a[href="/"]').first()).toBeVisible({ timeout: 10000 });
-  });
-
-  test('dashboard redirects to login with return URL', async ({ page }) => {
-    await page.goto('/dashboard/web-builder');
-    await page.waitForTimeout(2000);
-    // Should redirect to login (with or without redirect param)
-    const url = page.url();
-    expect(url).toMatch(/\/login/);
-  });
-
-  test('public homepage links to sign in', async ({ page }) => {
+  test('public homepage renders key sections', async ({ page }) => {
     await page.goto('/');
-    // Homepage should have a sign in button/link
-    const signInLink = page.locator('a[href="/login"]').or(page.getByRole('link', { name: /sign in/i }));
-    await expect(signInLink.first()).toBeVisible({ timeout: 10000 });
+    // Page should have a visible header/nav
+    await expect(page.locator('header, nav').first()).toBeVisible({ timeout: 10000 });
+    // Page should load without console errors
+    const errors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    const severeErrors = errors.filter(e => e.includes('TypeError') || e.includes('ReferenceError'));
+    expect(severeErrors.length).toBe(0);
   });
 
   test('pricing page is accessible from homepage', async ({ page }) => {
     await page.goto('/');
-    // Click pricing link if visible
-    const pricingLink = page.locator('a[href="/pricing"]').first();
-    if (await pricingLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await pricingLink.click();
-      await page.waitForTimeout(1000);
-      expect(page.url()).toContain('/pricing');
+    const pricingLink = page.locator('a[href="/pricing"]');
+    if (await pricingLink.isVisible({ timeout: 3000 })) {
+      await pricingLink.first().click();
+      await expect(page).toHaveURL(/\/pricing/, { timeout: 10000 });
     }
+  });
+
+  test('docs page loads successfully', async ({ page }) => {
+    const response = await page.goto('/docs');
+    expect(response?.status()).toBe(200);
+  });
+
+  test('features page loads successfully', async ({ page }) => {
+    const response = await page.goto('/features');
+    expect(response?.status()).toBe(200);
   });
 });

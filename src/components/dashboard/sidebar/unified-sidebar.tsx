@@ -7,6 +7,7 @@ import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2,
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import type { ThreadRow } from '@/hooks/queries/use-my-threads';
 import { getSession } from '@/hooks/use-session';
+import { csrfHeader } from '@/lib/csrf-client';
 import { useGenerationStore } from '@/store/generation-store';
 
 interface UnifiedSidebarProps {
@@ -44,7 +45,7 @@ export function UnifiedSidebar({
 
     const res = await fetch('/api/threads', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
       body: JSON.stringify({ title: null, projectId: activeProjectId || null, workspaceId: null, metadata: { source: 'sidebar' } }),
     });
     if (!res.ok) return;
@@ -191,7 +192,7 @@ export function UnifiedSidebar({
                       if (!token) return;
                       await fetch(`/api/threads/${thread.id}`, {
                         method: 'PATCH',
-                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
                         body: JSON.stringify({ title: next }),
                       });
                       // Best-effort refresh: navigate to same URL to retrigger queries.

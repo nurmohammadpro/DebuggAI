@@ -250,6 +250,7 @@ Hard rules:
         temperature: 0.7,
         max_tokens: 8192,
       }),
+      signal: AbortSignal.timeout(55_000),
     });
 
     if (!aiResponse.ok) {

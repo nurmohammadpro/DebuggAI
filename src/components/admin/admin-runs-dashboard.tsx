@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, XCircle, RefreshCw, ChevronLeft, ChevronRight, Loader2, Play, AlertCircle } from 'lucide-react';
+import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
 
 interface Run {
   id: string;
@@ -93,9 +94,10 @@ export function AdminRunsDashboard() {
 
   const performAction = async (runId: string, action: 'cancel' | 'retry') => {
     try {
+      const headers = await getAdminAuthHeaders();
       const res = await fetch(`/api/admin/runs/${runId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ action }),
       });
       if (!res.ok) throw new Error(`Failed to ${action} run`);

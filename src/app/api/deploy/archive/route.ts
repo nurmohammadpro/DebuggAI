@@ -105,10 +105,15 @@ export async function POST(request: NextRequest) {
     // Write project files to disk
     await fs.mkdir(workDir, { recursive: true });
     for (const [filePath, content] of Object.entries(files)) {
-      const sanitized = path.normalize(filePath).replace(/^(\..(\/|\\|$))+/, '');
-      const fullPath = path.join(workDir, sanitized);
-      await fs.mkdir(path.dirname(fullPath), { recursive: true });
-      await fs.writeFile(fullPath, content, 'utf-8');
+      // Resolve the intended path and verify it stays within workDir
+      const resolved = path.resolve(workDir, filePath);
+      const resolvedWorkDir = path.resolve(workDir);
+      if (!resolved.startsWith(resolvedWorkDir + path.sep) && resolved !== resolvedWorkDir) {
+        console.error('Path traversal blocked:', { filePath, resolved, workDir: resolvedWorkDir });
+        continue;
+      }
+      await fs.mkdir(path.dirname(resolved), { recursive: true });
+      await fs.writeFile(resolved, content, 'utf-8');
     }
 
     // Write .env file (local build only; for platform it stays in config)

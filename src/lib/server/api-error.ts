@@ -74,11 +74,16 @@ export function handleApiError(err: unknown): Response {
   const message = err instanceof Error ? err.message : 'Internal server error';
   console.error('Unhandled API error:', err);
 
+  // In production, don't leak internal error details to the client
+  const clientMessage = process.env.NODE_ENV === 'production'
+    ? 'An unexpected error occurred'
+    : message;
+
   return new Response(
     JSON.stringify({
       error: {
         code: 'INTERNAL_ERROR',
-        message,
+        message: clientMessage,
       },
     }),
     {

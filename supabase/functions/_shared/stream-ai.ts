@@ -79,6 +79,7 @@ export function createSSEStream(opts: StreamAIOptions): ReadableStream {
             temperature,
             max_tokens: maxTokens,
           }),
+          signal: AbortSignal.timeout(55_000),
         });
 
         if (!aiResponse.ok) {

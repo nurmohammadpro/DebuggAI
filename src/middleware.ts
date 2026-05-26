@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { generateCsrfToken, getCsrfCookieHeader, validateCsrfToken, requiresCsrfValidation } from '@/lib/server/csrf';
 
 const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/verify-email', '/auth/callback'];
 const PUBLIC_PREFIXES = ['/api/', '/_next/', '/favicon.ico'];
@@ -55,6 +56,28 @@ export async function middleware(request: NextRequest) {
       "frame-ancestors 'self'",
     ].join('; ')
   );
+
+  // Set CSRF token cookie on every response that doesn't already have one.
+  // The client reads this cookie and sends it back as an X-CSRF-Token header on
+  // state-changing requests. Combined with SameSite=Strict this prevents CSRF.
+  if (!request.cookies.get('csrf_token')?.value) {
+    const csrfToken = generateCsrfToken();
+    response.headers.set('Set-Cookie', getCsrfCookieHeader(csrfToken));
+  }
+
+  // CSRF validation for state-changing API routes.
+  // Read-only methods (GET, HEAD, OPTIONS) are excluded.
+  if (pathname.startsWith('/api/') && requiresCsrfValidation(request)) {
+    // Skip CSRF check for Stripe webhooks (external caller) and health endpoints.
+    const skipCsrfPaths = ['/api/health', '/api/contact', '/api/newsletter'];
+    const isSkipPath = skipCsrfPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
+    if (!isSkipPath && !validateCsrfToken(request)) {
+      return new NextResponse(JSON.stringify({ error: { code: 'CSRF_ERROR', message: 'CSRF token missing or invalid' } }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
 
   // Auth guard for dashboard routes.
   // /dashboard/admin* is excluded because admin routes have their own server-side

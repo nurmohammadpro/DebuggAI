@@ -6,6 +6,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
+import { withRateLimit } from '@/lib/server/plan-enforcement';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireUser(req);
   if (auth.errorResponse) return auth.errorResponse;
+
+  const rateLimit = await withRateLimit(auth.user!.id, 'web_builder', { req });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(rateLimit.body, { status: rateLimit.status });
+  }
 
   const body = await req.json().catch(() => null) as null | {
     title?: string;

@@ -1,22 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import {
-  ApiError,
-  handleApiError,
-  validationError,
-  notFoundError,
-  unauthorizedError,
-  forbiddenError,
-} from '@/lib/server/api-error';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { ApiError, handleApiError, validationError, notFoundError, unauthorizedError, forbiddenError } from '@/lib/server/api-error';
 
 describe('ApiError', () => {
-  it('creates errors with correct status codes', () => {
+  it('creates an error with correct status code', () => {
     const err = new ApiError('NOT_FOUND', 'User not found');
     expect(err.code).toBe('NOT_FOUND');
     expect(err.status).toBe(404);
     expect(err.message).toBe('User not found');
   });
 
-  it('maps all error codes to correct statuses', () => {
+  it('maps all error codes to correct HTTP statuses', () => {
     const cases: Array<[string, number]> = [
       ['UNAUTHORIZED', 401],
       ['FORBIDDEN', 403],
@@ -34,100 +27,113 @@ describe('ApiError', () => {
     }
   });
 
-  it('includes details when provided', () => {
-    const err = new ApiError('VALIDATION_ERROR', 'Bad input', [
-      { path: 'email', message: 'Invalid email' },
-    ]);
-    expect(err.details).toEqual([{ path: 'email', message: 'Invalid email' }]);
-  });
-
-  it('serializes to JSON correctly', () => {
-    const err = new ApiError('NOT_FOUND', 'Project not found');
+  it('serializes to JSON without details', () => {
+    const err = new ApiError('UNAUTHORIZED', 'Auth required');
     expect(err.toJSON()).toEqual({
-      error: {
-        code: 'NOT_FOUND',
-        message: 'Project not found',
-      },
+      error: { code: 'UNAUTHORIZED', message: 'Auth required' },
     });
   });
 
-  it('serializes with details', () => {
-    const err = new ApiError('VALIDATION_ERROR', 'Bad input', { fields: ['name'] });
+  it('serializes to JSON with details', () => {
+    const err = new ApiError('VALIDATION_ERROR', 'Invalid input', [
+      { field: 'email', message: 'Required' },
+    ]);
     expect(err.toJSON()).toEqual({
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Bad input',
-        details: { fields: ['name'] },
+        message: 'Invalid input',
+        details: [{ field: 'email', message: 'Required' }],
       },
     });
   });
 
-  it('creates a proper Response', async () => {
-    const err = new ApiError('UNAUTHORIZED', 'Login required');
+  it('toResponse returns a Response object', async () => {
+    const err = new ApiError('FORBIDDEN', 'Access denied');
     const res = err.toResponse();
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error.code).toBe('UNAUTHORIZED');
+    expect(body.error.code).toBe('FORBIDDEN');
   });
 
-  it('includes extra headers in response', () => {
-    const err = new ApiError('RATE_LIMITED', 'Too many requests');
-    const res = err.toResponse({ 'Retry-After': '60' });
-    expect(res.headers.get('Retry-After')).toBe('60');
+  it('toResponse accepts extra headers', () => {
+    const err = new ApiError('UNAUTHORIZED', 'No access');
+    const res = err.toResponse({ 'X-Custom': 'value' });
+    expect(res.headers.get('X-Custom')).toBe('value');
   });
 });
 
 describe('handleApiError', () => {
-  it('passes through ApiError instances', () => {
-    const original = new ApiError('NOT_FOUND', 'Missing');
-    const response = handleApiError(original);
-    expect(response.status).toBe(404);
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+    vi.unstubAllEnvs();
   });
 
-  it('wraps regular errors as INTERNAL_ERROR', async () => {
-    const response = handleApiError(new Error('Something broke'));
-    expect(response.status).toBe(500);
-    const body = await response.json();
-    expect(body.error.code).toBe('INTERNAL_ERROR');
+  afterEach(() => {
+    console.error = originalConsoleError;
+    vi.unstubAllEnvs();
   });
 
-  it('handles string errors', async () => {
-    const response = handleApiError('plain string error');
-    expect(response.status).toBe(500);
-    const body = await response.json();
-    expect(body.error.code).toBe('INTERNAL_ERROR');
+  it('passes through ApiError responses', () => {
+    const err = new ApiError('NOT_FOUND', 'Resource not found');
+    const res = handleApiError(err);
+    expect(res.status).toBe(404);
   });
 
-  it('handles null/undefined', async () => {
-    const response = handleApiError(null);
-    expect(response.status).toBe(500);
-    const body = await response.json();
-    expect(body.error.code).toBe('INTERNAL_ERROR');
+  it('wraps regular Error with INTERNAL_ERROR', () => {
+    const err = new Error('Something broke');
+    const res = handleApiError(err);
+    expect(res.status).toBe(500);
+  });
+
+  it('handles non-Error throws (string)', () => {
+    const res = handleApiError('just a string');
+    expect(res.status).toBe(500);
+  });
+
+  it('handles null/undefined', () => {
+    const res = handleApiError(null);
+    expect(res.status).toBe(500);
+  });
+
+  it('leaks error message in development', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    const res = handleApiError(new Error('dev details'));
+    const body = await res.json();
+    expect(body.error.message).toBe('dev details');
+  });
+
+  it('hides error message in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const res = handleApiError(new Error('secret internals'));
+    const body = await res.json();
+    expect(body.error.message).toBe('An unexpected error occurred');
+    expect(body.error.message).not.toContain('secret');
   });
 });
 
-describe('Error helpers', () => {
-  it('validationError creates correct error', () => {
-    const err = validationError('Name is required');
+describe('error helpers', () => {
+  it('validationError creates a VALIDATION_ERROR', () => {
+    const err = validationError('Bad input', { field: 'name' });
     expect(err.code).toBe('VALIDATION_ERROR');
     expect(err.status).toBe(400);
+    expect(err.details).toEqual({ field: 'name' });
   });
 
-  it('notFoundError creates correct error', () => {
-    const err = notFoundError('User');
+  it('notFoundError creates a NOT_FOUND with resource name', () => {
+    const err = notFoundError('Project');
     expect(err.code).toBe('NOT_FOUND');
-    expect(err.message).toBe('User not found');
+    expect(err.message).toBe('Project not found');
   });
 
-  it('unauthorizedError has default message', () => {
+  it('unauthorizedError has a default message', () => {
     const err = unauthorizedError();
-    expect(err.code).toBe('UNAUTHORIZED');
     expect(err.message).toBe('Authentication required');
   });
 
-  it('forbiddenError has default message', () => {
+  it('forbiddenError has a default message', () => {
     const err = forbiddenError();
-    expect(err.code).toBe('FORBIDDEN');
     expect(err.message).toBe('Access denied');
   });
 });

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { GitPullRequest, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { csrfHeader } from '@/lib/csrf-client';
 
 interface Branch {
   id: string;
@@ -43,6 +44,7 @@ export function WorkspacePRCreate({
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+        ...csrfHeader(),
         },
         body: JSON.stringify({
           from_branch_id: fromBranch,

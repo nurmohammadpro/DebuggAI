@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { GitBranch, Plus, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useWorkspaceStore } from '@/store/workspace-store';
+import { csrfHeader } from '@/lib/csrf-client';
 
 interface Branch {
   id: string;
@@ -29,7 +30,7 @@ export function WorkspaceBranchManager({ projectId }: { projectId: string }) {
       if (!session) return;
 
       const res = await fetch(`/api/projects/${projectId}/branches`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}`, ...csrfHeader() },
       });
       if (res.ok) {
         const json = await res.json();
@@ -60,6 +61,7 @@ export function WorkspaceBranchManager({ projectId }: { projectId: string }) {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+        ...csrfHeader(),
         },
         body: JSON.stringify({ name }),
       });

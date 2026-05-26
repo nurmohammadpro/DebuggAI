@@ -161,6 +161,12 @@ export async function withRateLimit(
   ,
   opts?: { req?: NextRequest; creditsUsed?: number; modelUsed?: string | null }
 ): Promise<{ allowed: true } | { allowed: false; status: number; body: object }> {
+  // Log usage FIRST to minimise the TOCTOU race window between check and insert.
+  // Two concurrent requests will both log before counting, so neither slips through
+  // unseen. A count-after-insert is still not strictly atomic, but the window is
+  // far smaller than the original check-then-insert order.
+  await logUsage(userId, action, opts);
+
   const result = await checkRateLimit(userId, action);
 
   if (!result.allowed) {
@@ -189,7 +195,6 @@ export async function withRateLimit(
     };
   }
 
-  await logUsage(userId, action, opts);
   return { allowed: true };
 }
 

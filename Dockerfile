@@ -27,8 +27,14 @@ COPY --from=builder /app/.next/standalone ./
 
 # Runtime dirs (bind mount in compose in production)
 ENV PROJECTS_DIR=/var/lib/debuggai/projects
-RUN mkdir -p /var/lib/debuggai/projects
+RUN mkdir -p /var/lib/debuggai/projects && chown -R node:node /var/lib/debuggai/projects /app
+
+# Run as non-root user for security
+USER node
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "--max-old-space-size=4096", "server.js"]
 

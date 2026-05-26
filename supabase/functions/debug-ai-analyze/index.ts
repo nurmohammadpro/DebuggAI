@@ -259,6 +259,7 @@ ${languageHint ? `\nCommon ${detectedLanguage} errors to check for:\n${languageH
         temperature: 0.5,
         max_tokens: 4096,
       }),
+      signal: AbortSignal.timeout(55_000),
     });
 
     if (!aiResponse.ok) {

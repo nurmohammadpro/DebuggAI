@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { csrfHeader } from '@/lib/csrf-client';
 
 interface Notification {
   id: string;
@@ -62,6 +63,7 @@ export function NotificationCenter() {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+          ...csrfHeader(),
         },
         body: JSON.stringify({ readAll: true }),
       });

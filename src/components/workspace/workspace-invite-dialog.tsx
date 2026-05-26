@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { csrfHeader } from '@/lib/csrf-client';
 
 export function WorkspaceInviteDialog({
   workspaceId,
@@ -29,6 +30,7 @@ export function WorkspaceInviteDialog({
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
+        ...csrfHeader(),
         },
         body: JSON.stringify({ email: email.trim(), role }),
       });

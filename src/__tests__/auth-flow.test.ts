@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getBearerToken } from '@/lib/server/auth';
+import { validateCsrfToken, requiresCsrfValidation, generateCsrfToken } from '@/lib/server/csrf';
 import { NextRequest } from 'next/server';
 
 function createMockRequest(authHeader?: string): NextRequest {
@@ -42,5 +43,40 @@ describe('Auth Utilities', () => {
       const req = createMockRequest(`Bearer ${token}`);
       expect(getBearerToken(req)).toBe(token);
     });
+
+    it('handles Bearer with extra whitespace', () => {
+      const req = createMockRequest('Bearer   token_with_spaces');
+      expect(getBearerToken(req)).toBe('token_with_spaces');
+    });
+
+    it('case insensitive on Bearer keyword', () => {
+      const req = createMockRequest('bEaReR case_insensitive_token');
+      expect(getBearerToken(req)).toBe('case_insensitive_token');
+    });
+  });
+});
+
+describe('CSRF protection integration', () => {
+  it('CSRF validation rejects state-changing requests without proper tokens', () => {
+    const req = new NextRequest('http://localhost/api/projects', { method: 'POST' });
+    expect(requiresCsrfValidation(req)).toBe(true);
+    expect(validateCsrfToken(req)).toBe(false);
+  });
+
+  it('CSRF validation allows safe methods without tokens', () => {
+    const req = new NextRequest('http://localhost/api/projects', { method: 'GET' });
+    expect(requiresCsrfValidation(req)).toBe(false);
+  });
+
+  it('full CSRF round-trip: generate, set cookie, validate', () => {
+    const token = generateCsrfToken();
+    const headers = new Headers();
+    headers.set('x-csrf-token', token);
+    const req = new NextRequest('http://localhost/api/projects', {
+      method: 'POST',
+      headers,
+    });
+    req.cookies.set('csrf_token', token);
+    expect(validateCsrfToken(req)).toBe(true);
   });
 });

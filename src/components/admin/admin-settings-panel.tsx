@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Settings, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
 
 interface ThrottleConfig {
   key: string;
@@ -39,9 +40,10 @@ export function AdminSettingsPanel() {
     try {
       setSaving(true);
       setSaved(false);
+      const headers = await getAdminAuthHeaders();
       const res = await fetch('/api/admin/throttles', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(edits),
       });
       if (!res.ok) throw new Error('Failed to save');

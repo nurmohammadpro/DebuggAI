@@ -120,7 +120,14 @@ export function useGeneration(options: UseGenerationOptions = {}) {
   const getAuthHeaders = async () => {
     const { session } = await getSession();
     if (!session?.access_token) return null;
-    return { Authorization: `Bearer ${session.access_token}` };
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${session.access_token}`,
+    };
+    if (typeof document !== 'undefined') {
+      const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+      if (m?.[1]) headers['x-csrf-token'] = m[1];
+    }
+    return headers;
   };
 
   const ensureThread = useCallback(async (): Promise<string> => {

@@ -5,6 +5,7 @@ import { getSession } from '@/hooks/use-session';
 import { useGenerationStore } from '@/store/generation-store';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { csrfHeader } from '@/lib/csrf-client';
 
 type RunStep = {
   id: string;
@@ -53,7 +54,7 @@ export function WorkspaceRunsPanel() {
     setLoading(true);
     try {
       const res = await fetch(`/api/runs?threadId=${encodeURIComponent(currentThreadId)}&limit=25`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, ...csrfHeader() },
       });
       if (!res.ok) return;
       const j = await res.json().catch(() => ({}));
@@ -62,7 +63,7 @@ export function WorkspaceRunsPanel() {
       for (const run of (j?.runs || [])) {
         try {
           const dr = await fetch(`/api/runs/${encodeURIComponent(run.id)}`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${token}`, ...csrfHeader() },
           });
           if (dr.ok) {
             const dj = await dr.json().catch(() => null);
@@ -94,7 +95,7 @@ export function WorkspaceRunsPanel() {
     try {
       const res = await fetch('/api/runs', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
         body: JSON.stringify({
           threadId: currentThreadId,
           objective,
@@ -121,7 +122,7 @@ export function WorkspaceRunsPanel() {
     try {
       const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/execute`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
         body: JSON.stringify({ limit: 10, leaseSeconds: 60 }),
       });
 
@@ -149,7 +150,7 @@ export function WorkspaceRunsPanel() {
     try {
       const res = await fetch(`/api/runs/${encodeURIComponent(runId)}/cancel`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
       });
 
       const j = await res.json().catch(() => ({}));

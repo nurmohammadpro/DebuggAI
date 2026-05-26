@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Loader2, Sparkles, History, Copy, Check, LayoutPanelTop } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
+import { csrfHeader } from '@/lib/csrf-client';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore } from '@/store/debug-store';
 import {
@@ -91,6 +92,7 @@ export function MinimalDebugContent() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
+          ...csrfHeader(),
         },
         body: JSON.stringify({
           code,
