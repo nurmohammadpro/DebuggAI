@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Send, Check } from 'lucide-react';
+import { Send, Check, X } from 'lucide-react';
 import { PublicLayout } from '@/components/public-layout';
 
 export default function LandingPage() {
@@ -331,16 +331,21 @@ NameError: name 'name' is not defined`}
               <div className="text-[36px] font-semibold text-[var(--app-accent)] tracking-[-1px] mt-3 mb-1">
                 $0<span className="text-sm font-normal text-[var(--app-text-muted)]">/month</span>
               </div>
-              <p className="text-xs text-[var(--app-text-muted)] mb-5">30 credits per month</p>
+              <p className="text-xs text-[var(--app-text-muted)] mb-5">For individuals learning</p>
               <ul className="text-xs text-[var(--app-text-muted)] leading-[2] flex-1 space-y-0">
                 {[
-                  'Basic debugging features',
-                  '7-day session history',
-                  'Web builder templates',
-                  '10 requests per minute',
+                  { text: '30 credits/month', included: true },
+                  { text: 'Basic debugging', included: true },
+                  { text: '30-day history', included: true },
+                  { text: 'Web Builder', included: false },
                 ].map((f) => (
-                  <li key={f} className="flex items-center gap-1.5">
-                    <Check className="h-3 w-3 text-[var(--app-accent)]" /> {f}
+                  <li key={f.text} className="flex items-center gap-1.5">
+                    {f.included ? (
+                      <Check className="h-3 w-3 text-[var(--app-accent)]" />
+                    ) : (
+                      <X className="h-3 w-3 text-[var(--app-text-dim)]" />
+                    )}
+                    <span className={f.included ? '' : 'text-[var(--app-text-dim)]'}>{f.text}</span>
                   </li>
                 ))}
               </ul>
@@ -353,19 +358,25 @@ NameError: name 'name' is not defined`}
             </div>
 
             {/* Pro */}
-            <div className="bg-[var(--app-panel-2)] p-8 flex flex-col">
-              <h3 className="text-[17px] font-semibold mb-1">Pro</h3>
+            <div className="bg-[var(--app-panel-2)] p-8 flex flex-col relative">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
+                <span className="font-medium text-[11px] bg-[var(--app-accent)] text-[#071006] px-4 py-1 rounded-[6px]">
+                  Most Popular
+                </span>
+              </div>
+              <h3 className="text-[17px] font-semibold mb-1 mt-3">Pro</h3>
               <div className="text-[36px] font-semibold text-[var(--app-accent)] tracking-[-1px] mt-3 mb-1">
                 $9<span className="text-sm font-normal text-[var(--app-text-muted)]">/month</span>
               </div>
-              <p className="text-xs text-[var(--app-text-muted)] mb-5">300 credits per month</p>
+              <p className="text-xs text-[var(--app-text-muted)] mb-5">For serious developers</p>
               <ul className="text-xs text-[var(--app-text-muted)] leading-[2] flex-1 space-y-0">
                 {[
-                  'Priority AI processing',
-                  '90-day session history',
-                  'Full web builder access',
-                  'Zero-knowledge mode',
-                  'Priority support',
+                  '300 credits/month',
+                  'Priority AI responses',
+                  '365-day history',
+                  'Web Builder + Templates',
+                  'Zero-Knowledge Mode',
+                  'Referral program',
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-1.5">
                     <Check className="h-3 w-3 text-[var(--app-accent)]" /> {f}
