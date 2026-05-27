@@ -72,12 +72,20 @@ export const useSessionStore = create<SessionState>()(
 
       setIsLoading: (isLoading) => set({ isLoading }),
 
-      logout: () =>
+      logout: () => {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('session-storage');
+          } catch {
+            // localStorage may be unavailable in some environments
+          }
+        }
         set({
           user: null,
           isAuthenticated: false,
           isLoading: false,
-        }),
+        });
+      },
 
       decrementCredits: (amount) =>
         set((state) => {

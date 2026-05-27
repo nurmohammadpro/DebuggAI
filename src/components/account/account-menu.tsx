@@ -50,9 +50,14 @@ export function AccountMenu({
   }, [user?.displayName, user?.email]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Proceed with local signout even if the Supabase API call fails
+    }
     logout();
-    router.push('/');
+    // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
+    window.location.href = '/';
   };
 
   return (

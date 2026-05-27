@@ -58,8 +58,14 @@ export function Navigation() {
 
   const handleLogout = async () => {
     setMenuOpen(false);
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Proceed with local signout even if the Supabase API call fails
+    }
     logout();
+    // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
+    window.location.href = '/';
   };
 
   const closeMenu = () => setMenuOpen(false);

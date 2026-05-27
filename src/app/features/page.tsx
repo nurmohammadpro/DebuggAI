@@ -1,159 +1,186 @@
+'use client';
+
+import { useRef } from 'react';
 import Link from 'next/link';
-import { Bug, Zap, Globe, Code2, Shield, Target, Check } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
+import { Bug, Zap, Globe, Code2, Shield, Target, Check, ArrowRight } from 'lucide-react';
+import { InViewStagger, FadeItem, SectionHeader } from '@/components/animations';
 import { PublicLayout } from '@/components/public-layout';
 
 const features = [
   {
     icon: Bug,
     title: 'AI-Powered Debugging',
-    description: 'Instantly identify and fix errors in your code with advanced AI analysis that understands context, not just syntax.',
+    desc: 'Instantly identify and fix errors with advanced AI analysis that understands context, not just syntax.',
+    color: 'var(--app-accent)',
   },
   {
     icon: Zap,
     title: 'Lightning Fast',
-    description: 'Get results in seconds, not minutes. Our optimized AI pipelines analyze your codebase instantly.',
+    desc: 'Get results in seconds, not minutes. Our optimized AI pipelines analyze your codebase instantly.',
+    color: 'var(--app-warning)',
   },
   {
     icon: Globe,
     title: 'Web Builder',
-    description: 'Build production-ready web apps visually with our AI-powered web builder and starter templates.',
+    desc: 'Build production-ready web apps visually with our AI-powered web builder and starter templates.',
+    color: 'var(--app-info)',
   },
   {
     icon: Code2,
     title: '10+ Languages',
-    description: 'First-class support for JavaScript, Python, TypeScript, Go, Rust, Java, and more.',
+    desc: 'First-class support for JavaScript, Python, TypeScript, Go, Rust, Java, and more.',
+    color: 'var(--app-purple)',
   },
   {
     icon: Shield,
     title: 'Secure & Private',
-    description: 'Your code is never stored permanently. We analyze it in real-time and forget it immediately.',
+    desc: 'Your code is never stored permanently. We analyze it in real-time and forget it immediately.',
+    color: 'var(--app-accent)',
   },
   {
     icon: Target,
     title: 'Best Practices',
-    description: 'Get suggestions that follow industry standards, ensuring your codebase remains clean and maintainable.',
+    desc: 'Get suggestions that follow industry standards, ensuring your codebase stays clean and maintainable.',
+    color: 'var(--app-warning)',
   },
 ];
 
 export default function FeaturesPage() {
+  const dxRef = useRef(null);
+  const dxInView = useInView(dxRef, { once: true, margin: '-60px' });
+
   return (
     <PublicLayout>
-      <main className="container mx-auto px-4 pt-16 pb-24">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
-            Features
-          </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
-            Everything you need to debug faster
-          </h1>
-          <p className="text-body max-w-lg mx-auto" style={{ color: 'var(--app-text-muted)' }}>
-            Built for developers who value their time. DeBuggAI integrates seamlessly into your workflow to eliminate tedious troubleshooting.
-          </p>
-        </div>
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+          <SectionHeader
+            tag="Features"
+            title="Everything you need to debug faster"
+            subtitle="Built for developers who value their time. DeBuggAI integrates seamlessly into your workflow."
+          />
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div key={feature.title} className="card card-interactive flex flex-col">
-                {/* Card Icon matching global hover state styles */}
-                <div 
-                  className="card-icon mb-4 flex items-center justify-center"
-                  style={{ 
-                    width: '40px', 
-                    height: '40px', 
-                    borderRadius: '6px', 
-                    background: 'var(--app-accent-soft)',
-                    transition: 'background 0.15s'
-                  }}
-                >
-                  <Icon className="h-5 w-5" style={{ color: 'var(--app-accent)' }} />
-                </div>
-                
-                <h3 className="card-title">{feature.title}</h3>
-                <p className="card-sub mt-1 flex-1">{feature.description}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Developer Experience / Terminal Section */}
-        <section className="mt-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Text */}
-            <div>
-              <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
-                Developer Experience
-              </p>
-              <h2 className="text-h1 mb-4" style={{ color: 'var(--app-text)' }}>
-                Fits right into your workflow
-              </h2>
-              <p className="text-body mb-6" style={{ color: 'var(--app-text-muted)' }}>
-                Do not change how you work. DeBuggAI works with your existing setup, analyzing stack traces, logs, or raw code blocks directly from your terminal or IDE.
-              </p>
-              <div className="flex flex-col gap-3">
-                {['Copy-paste errors for instant fixes', 'Context-aware variable tracking', 'Zero configuration required'].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--app-accent)', flexShrink: 0 }}></div>
-                    <span className="text-body" style={{ color: 'var(--app-text)' }}>{item}</span>
+          <InViewStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)] mt-10">
+            {features.map((f) => (
+              <FadeItem key={f.title}>
+                <div className="bg-[var(--app-panel-2)] p-7 flex flex-col h-full">
+                  <div className="w-9 h-9 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)] flex items-center justify-center">
+                    <f.icon size={16} style={{ color: f.color }} />
                   </div>
-                ))}
-              </div>
-            </div>
+                  <h3 className="mt-4 text-[16px] font-semibold tracking-[-0.2px]">{f.title}</h3>
+                  <p className="mt-2 text-[13px] text-[var(--app-text-muted)] leading-relaxed flex-1">{f.desc}</p>
+                </div>
+              </FadeItem>
+            ))}
+          </InViewStagger>
+        </section>
 
-            {/* Right Terminal UI */}
-            <div className="terminal">
-              <div className="terminal-header">
-                <div className="flex gap-1.5">
-                  <div className="code-dot" style={{ background: 'var(--app-danger)' }}></div>
-                  <div className="code-dot" style={{ background: 'var(--app-warning)' }}></div>
-                  <div className="code-dot" style={{ background: 'var(--app-accent)' }}></div>
+        {/* Developer Experience */}
+        <section ref={dxRef} className="bg-[var(--app-panel)]">
+          <div className="max-w-7xl mx-auto px-6 py-24">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -24 }}
+                animate={dxInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5, type: 'spring', stiffness: 70, damping: 16 }}
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-accent)] mb-3">
+                  Developer Experience
                 </div>
-                <span className="terminal-title">debuggai-cli</span>
-              </div>
-              <div className="terminal-body">
-                <div>
-                  <span className="term-prompt">$ </span>
-                  <span className="term-cmd">debuggai analyze --file app.js</span>
+                <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-3">
+                  Fits right into your workflow
+                </h2>
+                <p className="text-sm text-[var(--app-text-muted)] leading-relaxed mb-6 max-w-[480px]">
+                  Do not change how you work. DeBuggAI works with your existing setup, analyzing
+                  stack traces, logs, or raw code blocks directly from your terminal or IDE.
+                </p>
+                <div className="flex flex-col gap-3">
+                  {[
+                    'Copy-paste errors for instant fixes',
+                    'Context-aware variable tracking',
+                    'Zero configuration required',
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-2.5">
+                      <Check size={14} className="text-[var(--app-accent)] shrink-0" />
+                      <span className="text-sm text-[var(--app-text)]">{item}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="term-output mt-2">  Initializing analysis engine...</div>
-                <div className="term-output">  Scanning 248 lines of code...</div>
-                <div className="term-success mt-2 flex items-center gap-2">  <Check className="w-3.5 h-3.5" /> Issue found: TypeError on line 142</div>
-                <div className="term-output mt-1">  → Fix: Converted string to integer before calculation.</div>
-                <div className="term-success flex items-center gap-2">  <Check className="w-3.5 h-3.5" /> Patch applied successfully.</div>
-                <div className="mt-4">
-                  <span className="term-prompt">$ </span>
-                  <span className="term-cursor"></span>
+              </motion.div>
+
+              {/* Terminal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={dxInView ? { opacity: 1, scale: 1 } : {}}
+                transition={{ duration: 0.5, delay: 0.15, type: 'spring', stiffness: 60, damping: 14 }}
+                className="rounded-[10px] overflow-hidden border border-[var(--app-border-strong)] bg-[var(--app-panel-2)] shadow-2xl"
+              >
+                <div className="flex items-center gap-1.5 h-9 px-4 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
+                  <span className="ml-3 text-[10px] font-mono text-[var(--app-text-dim)]">debuggai-cli</span>
                 </div>
-              </div>
+                <div className="p-5 font-mono text-[12px] leading-relaxed">
+                  <div className="flex gap-3">
+                    <span className="text-[var(--app-accent)]">$</span>
+                    <span className="text-[var(--app-text)]">debuggai analyze --file app.js</span>
+                  </div>
+                  <div className="mt-4 space-y-1.5 text-[var(--app-text-dim)]">
+                    <div>Initializing analysis engine...</div>
+                    <div>Scanning 248 lines of code...</div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 text-[var(--app-accent)]">
+                    <Check size={13} />
+                    <span>Issue found: TypeError on line 142</span>
+                  </div>
+                  <div className="mt-1 text-[var(--app-text-dim)] ml-5">
+                    &rarr; Fix: Converted string to integer before calculation.
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-[var(--app-accent)] ml-5">
+                    <Check size={13} />
+                    <span>Patch applied successfully.</span>
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <span className="text-[var(--app-accent)]">$</span>
+                    <span className="inline-block w-1.5 h-4 bg-[var(--app-accent)] animate-pulse align-middle" />
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Bottom CTA Section */}
-        <div className="text-center mt-24">
-          <div style={{ borderTop: '1px solid var(--app-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
-          <h2 className="text-h1 mb-3" style={{ color: 'var(--app-text)' }}>
-            Ready to ship faster?
-          </h2>
-          <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--app-text-muted)' }}>
-            Join thousands of developers who debug smarter, not harder.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/signup">
-              <button className="btn btn-lg btn-primary">
-                Get Started Free
-              </button>
-            </Link>
-            <Link href="/demo">
-              <button className="btn btn-lg btn-ghost">
+        {/* CTA */}
+        <section className="max-w-7xl mx-auto px-6 py-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ type: 'spring', stiffness: 70, damping: 14 }}
+          >
+            <div className="w-20 h-px bg-[var(--app-border)] mx-auto mb-6" />
+            <h2 className="text-[32px] font-semibold tracking-[-0.8px] mb-3">Ready to ship faster?</h2>
+            <p className="text-sm text-[var(--app-text-muted)] mb-8 max-w-md mx-auto">
+              Join thousands of developers who debug smarter, not harder.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-1.5 h-11 px-6 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-sm font-semibold hover:opacity-90 transition-all active:scale-[0.97]"
+              >
+                Get Started Free <ArrowRight size={15} />
+              </Link>
+              <Link
+                href="/demo"
+                className="inline-flex items-center gap-1.5 h-11 px-6 rounded-[6px] border border-[var(--app-border-strong)] text-sm font-medium hover:bg-[var(--app-panel-2)] transition-all active:scale-[0.97]"
+              >
                 Watch Demo
-              </button>
-            </Link>
-          </div>
-        </div>
+              </Link>
+            </div>
+          </motion.div>
+        </section>
       </main>
     </PublicLayout>
   );

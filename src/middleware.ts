@@ -91,6 +91,12 @@ export async function middleware(request: NextRequest) {
           get(name: string) {
             return request.cookies.get(name)?.value;
           },
+          set() {
+            // middleware only reads — cookies are set by the browser client
+          },
+          remove(name: string) {
+            response.cookies.set(name, '', { maxAge: 0, path: '/' });
+          },
         },
       }
     );

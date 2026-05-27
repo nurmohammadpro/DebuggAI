@@ -1,91 +1,150 @@
 'use client';
 
-import { Mail, Headphones, MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { InViewStagger, FadeItem, SectionHeader } from '@/components/animations';
 import { PublicLayout } from '@/components/public-layout';
+import { Mail, Headphones, MessageCircle, Send, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+
+const channels = [
+  {
+    icon: Mail,
+    label: 'Email',
+    value: 'hello@debuggai.com',
+    href: 'mailto:hello@debuggai.com',
+    color: 'var(--app-accent)',
+  },
+  {
+    icon: Headphones,
+    label: 'Support',
+    value: 'support@debuggai.com',
+    href: 'mailto:support@debuggai.com',
+    color: 'var(--app-info)',
+  },
+  {
+    icon: MessageCircle,
+    label: 'Twitter',
+    value: '@debuggai',
+    href: 'https://twitter.com/debuggai',
+    color: 'var(--app-purple)',
+  },
+];
 
 export default function ContactPage() {
   return (
     <PublicLayout>
-      <main className="container mx-auto px-4 pt-16 pb-24">
-        <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
-            Contact
-          </p>
-          <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
-            Get in touch
-          </h1>
-          <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--app-text-muted)' }}>
-            Have questions, enterprise inquiries, or feedback? We&apos;d love to hear from you.
-          </p>
-        </div>
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, type: 'spring', stiffness: 70, damping: 16 }}
+            >
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-accent)] mb-3">
+                Contact
+              </div>
+              <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-1.5px] leading-[1.08] max-w-[580px]">
+                Get in{" "}
+                <span className="text-[var(--app-accent)]">touch</span>
+              </h1>
+              <p className="mt-5 text-[15px] text-[var(--app-text-muted)] leading-relaxed max-w-[460px]">
+                Have questions, enterprise inquiries, or feedback? We&apos;d love to hear from you.
+              </p>
+            </motion.div>
 
-        {/* Contact Form */}
-        <section className="mb-16">
-          <div className="card">
-            <form className="p-6 flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid md:grid-cols-2 gap-5">
-                <div>
-                  <label htmlFor="name" className="text-caption block mb-2" style={{ color: 'var(--app-text-dim)' }}>Name</label>
-                  <input id="name" type="text" placeholder="Your name" className="inp" />
+            {/* Form */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.15, type: 'spring', stiffness: 60, damping: 14 }}
+              className="rounded-[10px] border border-[var(--app-border-strong)] bg-[var(--app-panel)] p-6"
+            >
+              <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] block mb-1.5">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      className="h-10 w-full rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] block mb-1.5">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      className="h-10 w-full rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)] transition-colors"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label htmlFor="email" className="text-caption block mb-2" style={{ color: 'var(--app-text-dim)' }}>Email</label>
-                  <input id="email" type="email" placeholder="your@email.com" className="inp" />
+                  <label className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] block mb-1.5">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="How can we help?"
+                    className="h-10 w-full rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)] transition-colors"
+                  />
                 </div>
-              </div>
-              <div>
-                <label htmlFor="subject" className="text-caption block mb-2" style={{ color: 'var(--app-text-dim)' }}>Subject</label>
-                <input id="subject" type="text" placeholder="How can we help?" className="inp" />
-              </div>
-              <div>
-                <label htmlFor="message" className="text-caption block mb-2" style={{ color: 'var(--app-text-dim)' }}>Message</label>
-                <textarea
-                  id="message"
-                  rows={5}
-                  placeholder="Tell us more..."
-                  className="inp"
-                  style={{ height: 'auto', resize: 'vertical', paddingTop: '10px', paddingBottom: '10px' }}
-                ></textarea>
-              </div>
-              <div>
-                <button type="submit" className="btn btn-primary">
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] block mb-1.5">
+                    Message
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="Tell us more..."
+                    className="w-full rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)] transition-colors resize-y"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-xs font-semibold hover:opacity-90 transition-all active:scale-[0.97] self-start"
+                >
+                  <Send size={14} />
                   Send Message
                 </button>
-              </div>
-            </form>
+              </form>
+            </motion.div>
           </div>
         </section>
 
-        {/* Quick Links */}
-        <section>
-          <h2 className="text-h1 mb-6" style={{ color: 'var(--app-text)' }}>Other Ways to Reach Us</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="card-sm card-interactive">
-              <Mail className="h-5 w-5 mb-3" style={{ color: 'var(--app-accent)' }} />
-              <h3 className="card-title">Email</h3>
-              <p className="card-sub">
-                <a href="mailto:hello@debuggai.com" className="footer-link">hello@debuggai.com</a>
-              </p>
-            </div>
-            <div className="card-sm card-interactive">
-              <Headphones className="h-5 w-5 mb-3" style={{ color: 'var(--app-accent)' }} />
-              <h3 className="card-title">Support</h3>
-              <p className="card-sub">
-                <a href="mailto:support@debuggai.com" className="footer-link">support@debuggai.com</a>
-              </p>
-            </div>
-            <div className="card-sm card-interactive">
-              <MessageCircle className="h-5 w-5 mb-3" style={{ color: 'var(--app-accent)' }} />
-              <h3 className="card-title">Twitter</h3>
-              <p className="card-sub">
-                <a href="https://twitter.com/debuggai" className="footer-link" target="_blank" rel="noopener noreferrer">@debuggai</a>
-              </p>
-            </div>
+        {/* Other Ways */}
+        <section className="bg-[var(--app-panel)]">
+          <div className="max-w-7xl mx-auto px-6 py-24">
+            <SectionHeader
+              tag="Connect"
+              title="Other ways to reach us"
+              subtitle="Choose the channel that works best for you."
+            />
+
+            <InViewStagger className="grid grid-cols-1 md:grid-cols-3 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)] mt-10">
+              {channels.map((ch) => (
+                <FadeItem key={ch.label}>
+                  <Link
+                    href={ch.href}
+                    target={ch.href.startsWith('http') ? '_blank' : undefined}
+                    rel={ch.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className="bg-[var(--app-panel-2)] p-7 flex flex-col h-full group"
+                  >
+                    <div className="w-9 h-9 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)] flex items-center justify-center group-hover:border-[var(--app-accent)] transition-colors">
+                      <ch.icon size={16} style={{ color: ch.color }} />
+                    </div>
+                    <h3 className="mt-4 text-[16px] font-semibold tracking-[-0.2px]">{ch.label}</h3>
+                    <p className="mt-2 text-[13px] text-[var(--app-text-muted)] leading-relaxed group-hover:text-[var(--app-text)] transition-colors">{ch.value}</p>
+                  </Link>
+                </FadeItem>
+              ))}
+            </InViewStagger>
           </div>
         </section>
-        </div>
       </main>
     </PublicLayout>
   );

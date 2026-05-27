@@ -24,7 +24,20 @@ function createMissingEnvProxy() {
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey
-  ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get(name) {
+          const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+          return match?.[1];
+        },
+        set(name, value, options) {
+          document.cookie = `${name}=${value}; Path=/; SameSite=Lax; Max-Age=${options?.maxAge ?? 3600}`;
+        },
+        remove(name) {
+          document.cookie = `${name}=; Path=/; SameSite=Lax; Max-Age=0`;
+        },
+      },
+    })
   : createMissingEnvProxy();
 
 /**
