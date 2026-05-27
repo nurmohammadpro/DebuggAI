@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
 import { useSessionStore } from '@/store/session-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
 import { useProject } from '@/hooks/queries/use-project';
-import { useMyRuns } from '@/hooks/queries/use-my-runs';
 import { useGenerationStore } from '@/store/generation-store';
 import { getProjectKey } from '@/lib/project/project-key';
 import { WorkspaceRightPanel } from '@/components/workspace/workspace-right-panel';
@@ -17,8 +16,9 @@ import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
 import { ChatPanel } from '@/components/web-builder/chat-panel';
-import { CheckCircle2, ListChecks, Menu, MoreVertical, PanelRight, Play, Rocket, Save, Share2, Zap } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { Panel } from '@/components/panel/panel';
+import { Menu, MoreVertical, PanelRight, Play, Rocket, Save, Share2, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
@@ -34,7 +34,7 @@ export function WorkspaceDashboard() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, getProjectCode, savedSnapshot, currentCode, files, setThreadId } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, files, setThreadId } = useGenerationStore();
   const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
   const { sidebarCollapsed, toggleSidebar } = useShellStore();
 
@@ -44,7 +44,6 @@ export function WorkspaceDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rightWidth, setRightWidth] = useState(980);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
-  const [stage, setStage] = useState<'seed' | 'sprout' | 'sapling' | 'tree'>('sapling');
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
   const saveButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -55,20 +54,6 @@ export function WorkspaceDashboard() {
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
 
   const { remoteCursors, broadcastCursor } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
-
-  const { data: latestRuns } = useMyRuns(1, !!effectiveProjectId, {
-    // Keep the workspace status reasonably fresh without being noisy.
-    refetchInterval: 5000,
-  });
-  const latestRun = latestRuns?.[0];
-
-  const unsavedCount = useMemo(() => {
-    const currentSnapshot = getProjectCode();
-    const a = (savedSnapshot || '').trim();
-    const b = (currentSnapshot || '').trim();
-    return a && b && a !== b ? 1 : 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCode, files, savedSnapshot]);
 
   useEffect(() => {
     if (urlProjectId && urlProjectId !== selectedProjectId) {
@@ -110,7 +95,6 @@ export function WorkspaceDashboard() {
   }, [project, setProjectKey]);
 
   useEffect(() => {
-    // Keep the code surface visible by default; the chat is now the center panel.
     setRightCollapsed(false);
     setRightTab('code');
   }, []);
@@ -156,7 +140,6 @@ export function WorkspaceDashboard() {
 
   if (!isAuthenticated) return null;
 
-  // If no project, show DashboardHome (handled by the caller)
   if (!effectiveProjectId) {
     return null;
   }
@@ -177,33 +160,12 @@ export function WorkspaceDashboard() {
     }
   };
 
-  const stageTone =
-    stage === 'seed'
-      ? 'bg-[var(--app-info-soft)] text-[var(--app-info)] border-[var(--app-info)]/20'
-      : stage === 'sprout'
-        ? 'bg-[var(--app-warning-soft)] text-[var(--app-warning)] border-[var(--app-warning)]/20'
-        : stage === 'tree'
-          ? 'bg-[var(--app-success-soft)] text-[var(--app-success)] border-[var(--app-success)]/20'
-          : 'bg-[var(--app-accent-soft)] text-[var(--app-accent)] border-[var(--app-accent)]/20';
-
-  const runTone =
-    latestRun?.status === 'failed'
-      ? 'bg-[var(--app-danger-soft)] text-[var(--app-danger)] border-[var(--app-danger)]/20'
-      : latestRun?.status === 'succeeded'
-        ? 'bg-[var(--app-success-soft)] text-[var(--app-success)] border-[var(--app-success)]/20'
-        : latestRun?.status === 'canceled'
-          ? 'bg-[var(--app-surface)] text-[var(--app-text-dim)] border-[var(--app-border)]'
-          : latestRun?.status === 'queued' || latestRun?.status === 'running'
-            ? 'bg-[var(--app-warning-soft)] text-[var(--app-warning)] border-[var(--app-warning)]/20'
-            : 'bg-[var(--app-surface)] text-[var(--app-text-dim)] border-[var(--app-border)]';
-
   const headerActions = (
     <>
-      {/* Hidden button to reuse the save logic for the mobile overflow menu */}
       <WorkspaceSaveVersionButton className="hidden" ref={saveButtonRef} />
 
       {/* Credits Display */}
-      <div className="hidden sm:flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)]">
+      <div className="hidden sm:flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-[6px] bg-[var(--app-surface)]">
         <Zap className="h-3.5 w-3.5 text-[var(--ds-green)]" />
         <span className="font-semibold text-[var(--app-text)]">
           {useSessionStore.getState().user?.credits === -1 ? '∞' : useSessionStore.getState().user?.credits ?? 0}
@@ -211,12 +173,10 @@ export function WorkspaceDashboard() {
         <span className="text-[var(--app-text-muted)]">credits</span>
       </div>
 
-      {/* Collab Status */}
       <div className="hidden sm:block">
         <CollabStatusBar cursors={remoteCursors} />
       </div>
 
-      {/* Deploy Button */}
       <button
         className="hidden sm:inline-flex h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
         onClick={() => setDeployModalOpen(true)}
@@ -225,10 +185,8 @@ export function WorkspaceDashboard() {
         <span className="hidden sm:inline">Deploy</span>
       </button>
 
-      {/* Save Version */}
       <WorkspaceSaveVersionButton className="hidden sm:inline-flex" />
 
-      {/* Share Button */}
       <button
         className="hidden sm:inline-flex h-8 px-3 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors items-center gap-2 text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
         onClick={handleShare}
@@ -237,16 +195,16 @@ export function WorkspaceDashboard() {
         <span className="hidden sm:inline">Share</span>
       </button>
 
-      {/* Run Button */}
-      <button
-        className="hidden sm:inline-flex h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-[#071006] hover:bg-[var(--ds-green-bright)] transition items-center gap-2 text-[11px] font-semibold uppercase tracking-tight"
+      <Button
+        variant="green"
+        size="sm"
+        className="hidden sm:inline-flex h-8 px-3 text-[11px] font-semibold uppercase tracking-tight"
         onClick={handleRun}
       >
         <Play className="h-3.5 w-3.5" />
         <span>Run</span>
-      </button>
+      </Button>
 
-      {/* Mobile: open the right panel drawer */}
       <button
         className="sm:hidden h-8 w-8 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center justify-center text-[var(--app-text-muted)] hover:text-[var(--app-text)]"
         onClick={() => setMobilePanelOpen(true)}
@@ -255,7 +213,6 @@ export function WorkspaceDashboard() {
         <PanelRight className="h-4 w-4" />
       </button>
 
-      {/* Mobile: overflow menu for actions */}
       <div className="sm:hidden">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -295,7 +252,6 @@ export function WorkspaceDashboard() {
         </DropdownMenu>
       </div>
 
-      {/* Account Menu */}
       <WorkspaceAccountMenu />
     </>
   );
@@ -305,7 +261,6 @@ export function WorkspaceDashboard() {
       <CollabCursorOverlay cursors={remoteCursors} />
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
 
-      {/* Deploy Modal */}
       <DeployModal
         open={deployModalOpen}
         onOpenChange={setDeployModalOpen}
@@ -315,67 +270,26 @@ export function WorkspaceDashboard() {
         ) : {}}
         projectName={project?.prompt || project?.description || 'my-app'}
       />
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <UnifiedSidebar
-          recentThreads={recentThreads}
-          recentProjects={recentProjects}
-          collapsed={sidebarCollapsed}
-          onToggleCollapsed={toggleSidebar}
-        />
-      </div>
 
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            key="sidebar-overlay"
-            className="fixed inset-0 z-40 md:hidden pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16, ease: 'easeOut' }}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            {/* Keep the header visible; the scrim starts below it. */}
-            <div
-              className="absolute top-12 bottom-0 left-0 right-0 bg-black/45 pointer-events-auto"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <motion.div
-              className="absolute top-12 bottom-2 left-2 w-[min(320px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--app-panel)_92%,black)] border border-[var(--app-border)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-y-auto"
-              initial={{ x: -24, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -24, opacity: 0 }}
-              transition={{ type: 'tween', duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-              onClick={(e) => e.stopPropagation()}
-              style={{ pointerEvents: 'auto' }}
-            >
-              <UnifiedSidebar
-                recentThreads={recentThreads}
-                recentProjects={recentProjects}
-                collapsed={false}
-                onToggleCollapsed={() => setMobileMenuOpen(false)}
-                mobile
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Sidebar — mobile overlay handled internally by UnifiedSidebar via Panel */}
+      <UnifiedSidebar
+        recentThreads={recentThreads}
+        recentProjects={recentProjects}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleSidebar}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+      />
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
-        {/* Unified Header */}
         <UnifiedHeader
           title={project?.description || project?.prompt || 'Untitled Project'}
           subtitle={effectiveProjectId}
           titleBadge={
             <div className="hidden sm:flex items-center gap-2">
-              <span className="inline-flex rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-0.5 text-[10px] font-semibold text-[var(--app-text)]">
+              <span className="inline-flex rounded-[6px] bg-[var(--app-panel-2)] px-2 py-0.5 text-[10px] font-semibold text-[var(--app-text)]">
                 Web Builder
-              </span>
-              <span className={`inline-flex items-center rounded-[6px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${stageTone}`}>
-                {stage}
               </span>
             </div>
           }
@@ -397,85 +311,6 @@ export function WorkspaceDashboard() {
         <div className="flex-1 min-h-0 flex min-w-0">
           {/* Primary conversation surface */}
           <section className="flex-1 min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0">
-            <div className="h-11 border-b border-[var(--app-border)] bg-[var(--app-panel)] flex items-center justify-between px-4 shrink-0">
-              <div className="min-w-0">
-                <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text)]">
-                  Assistant
-                </h2>
-                <p className="text-[11px] text-[var(--app-text-dim)] truncate">
-                  Build, debug, and revise this project from one thread.
-                </p>
-              </div>
-              {unsavedCount > 0 && (
-                <span className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-0.5 text-[10px] font-semibold text-[var(--app-text)]">
-                  Unsaved
-                </span>
-              )}
-            </div>
-
-            <div className="border-b border-[var(--app-border)] bg-[var(--app-panel)] px-4 py-3 shrink-0">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-[12px] font-semibold text-[var(--app-text)]">Progress narrative</div>
-                  <div className="text-[11px] text-[var(--app-text-dim)] truncate">
-                    Plan, edit, verify, export. Keep the loop visible.
-                  </div>
-                </div>
-                <button
-                  onClick={() =>
-                    setStage((s) => (s === 'seed' ? 'sprout' : s === 'sprout' ? 'sapling' : s === 'sapling' ? 'tree' : 'seed'))
-                  }
-                  className="h-7 px-2 rounded-[6px] border border-[var(--app-border)] text-[11px] font-medium text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
-                >
-                  Advance
-                </button>
-              </div>
-
-	              <div className="mt-2 grid grid-cols-2 gap-2">
-	                {[
-	                  { label: 'Plan', done: stage !== 'seed' },
-	                  { label: 'Edit', done: stage === 'sapling' || stage === 'tree' },
-	                  { label: 'Verify', done: stage === 'tree' },
-	                  { label: 'Export', done: false },
-	                ].map((s) => (
-	                  <div
-	                    key={s.label}
-	                    className="flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2 py-1.5"
-	                  >
-	                    <CheckCircle2
-	                      className={`h-4 w-4 ${s.done ? 'text-[var(--app-success)]' : 'text-[var(--app-text-dim)]'}`}
-	                    />
-	                    <div className="text-[12px] text-[var(--app-text)]">{s.label}</div>
-	                  </div>
-	                ))}
-	              </div>
-
-	              {latestRun && (
-	                <div className="mt-2 flex items-center justify-between gap-2 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-2.5 py-2">
-	                  <div className="min-w-0 flex items-center gap-2">
-	                    <span className={`shrink-0 inline-flex items-center rounded-[6px] border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${runTone}`}>
-	                      {latestRun.status}
-	                    </span>
-	                    <div className="min-w-0">
-	                      <div className="flex items-center gap-1.5 text-[11px] text-[var(--app-text-dim)]">
-	                        <ListChecks className="h-3.5 w-3.5" />
-	                        <span className="font-semibold text-[var(--app-text)]">Latest run</span>
-	                      </div>
-	                      <div className="text-[12px] text-[var(--app-text)] truncate">
-	                        {latestRun.objective || 'Workspace run'}
-	                      </div>
-	                    </div>
-	                  </div>
-	                  <button
-	                    onClick={() => router.push(`/dashboard/runs/${latestRun.id}`)}
-	                    className="shrink-0 h-7 px-2 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors text-[11px] font-semibold text-[var(--app-text)]"
-	                  >
-	                    Open
-	                  </button>
-	                </div>
-	              )}
-	            </div>
-
             <ChatPanel
               chromeless
               mode="build"
@@ -483,27 +318,58 @@ export function WorkspaceDashboard() {
             />
           </section>
 
-          {/* Splitter */}
-          <WorkspaceSplitter
-            ariaLabel="Resize right panel"
-            onResize={(dx) =>
-              setRightWidth((w) => clamp(w - dx, 420, 1400))
-            }
-          />
+          {/* Splitter — hidden when right panel is collapsed or on mobile */}
+          {!rightCollapsed && (
+            <div className="hidden sm:block">
+              <WorkspaceSplitter
+                ariaLabel="Resize right panel"
+                onResize={(dx) =>
+                  setRightWidth((w) => clamp(w - dx, 420, 1400))
+                }
+              />
+            </div>
+          )}
 
-          {/* Code, preview, files, and project tools */}
-          <div className="hidden sm:block transition-all duration-200 ease-out" style={{ width: rightCollapsed ? undefined : clamp(rightWidth, 420, 1400) }}>
+          {/* Right panel — desktop (Panel handles collapsed state) */}
+          <Panel
+            id="workspace-right"
+            side="right"
+            defaultWidth={clamp(rightWidth, 420, 1400)}
+            minWidth={420}
+            collapsed={rightCollapsed}
+            onToggleCollapsed={() => setRightCollapsed((v) => !v)}
+            className="hidden sm:flex transition-all duration-200 ease-out"
+          >
             <WorkspaceRightPanel
               activeTab={rightTab}
               onTabChange={setRightTab}
-              collapsed={rightCollapsed}
-              onToggleCollapsed={() => setRightCollapsed((v) => !v)}
               width={clamp(rightWidth, 420, 1400)}
+              onToggleCollapsed={() => setRightCollapsed((v) => !v)}
               onEditorViewChange={(view) => {
                 setRightTab(view);
               }}
             />
-          </div>
+          </Panel>
+
+          {/* Right panel — mobile overlay (Panel handles the animated drawer) */}
+          <Panel
+            id="workspace-right-mobile"
+            side="right"
+            mobile
+            mobileOpen={mobilePanelOpen}
+            onMobileClose={() => setMobilePanelOpen(false)}
+          >
+            <WorkspaceRightPanel
+              activeTab={rightTab}
+              onTabChange={setRightTab}
+              width={0}
+              mobile
+              onMobileClose={() => setMobilePanelOpen(false)}
+              onEditorViewChange={(view) => {
+                setRightTab(view);
+              }}
+            />
+          </Panel>
         </div>
 
         {/* Mobile Bottom Tabs */}
@@ -515,49 +381,6 @@ export function WorkspaceDashboard() {
             setMobilePanelOpen(true);
           }}
         />
-
-        {/* Mobile Panel Overlay */}
-        <AnimatePresence>
-          {mobilePanelOpen && (
-            <motion.div
-              key="mobile-panel-overlay"
-              className="fixed inset-0 z-50 md:hidden pointer-events-none"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.16, ease: 'easeOut' }}
-              onClick={() => setMobilePanelOpen(false)}
-            >
-              {/* Keep the header visible; the scrim starts below it. */}
-              <div
-                className="absolute top-12 bottom-0 left-0 right-0 bg-black/45 pointer-events-auto"
-                onClick={() => setMobilePanelOpen(false)}
-              />
-              <motion.div
-                className="absolute top-12 bottom-2 right-2 w-[min(720px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--app-panel)_92%,black)] border border-[var(--app-border)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] flex flex-col"
-                initial={{ x: 24, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 24, opacity: 0 }}
-                transition={{ type: 'tween', duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-                onClick={(e) => e.stopPropagation()}
-                style={{ pointerEvents: 'auto' }}
-              >
-                <WorkspaceRightPanel
-                  activeTab={rightTab}
-                  onTabChange={setRightTab}
-                  collapsed={false}
-                  onToggleCollapsed={() => {}}
-                  width={0}
-                  mobile
-                  onMobileClose={() => setMobilePanelOpen(false)}
-                  onEditorViewChange={(view) => {
-                    setRightTab(view);
-                  }}
-                />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </main>
     </div>
   );

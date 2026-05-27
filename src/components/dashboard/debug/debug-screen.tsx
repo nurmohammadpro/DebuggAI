@@ -9,13 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { csrfHeader } from '@/lib/csrf-client';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore } from '@/store/debug-store';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ReactSelect } from '@/components/ui/react-select';
 
 export function DebugScreen() {
   const router = useRouter();
@@ -142,21 +136,14 @@ export function DebugScreen() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <Select
-              value={currentLanguage}
-              onValueChange={(v) => setCurrentLanguage(v as any)}
-            >
-              <SelectTrigger className="w-full sm:w-[200px] rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent className="rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
-                {DEBUG_LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.id} value={lang.id}>
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ReactSelect
+              value={currentLanguage ? { value: currentLanguage, label: DEBUG_LANGUAGES.find(l => l.id === currentLanguage)?.name || currentLanguage } : null}
+              onChange={(opt) => setCurrentLanguage((opt?.value || '') as any)}
+              options={DEBUG_LANGUAGES.map((lang) => ({ value: lang.id, label: lang.name }))}
+              placeholder="Select language"
+              isSearchable
+              className="w-full sm:w-[200px]"
+            />
 
             <button
               onClick={() => router.push('/dashboard/debug/history')}

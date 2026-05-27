@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, ExternalLink, CheckCircle2, Lock, Shield } from 'lucide-react';
+import { ReactSelect } from '@/components/ui/react-select';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -569,22 +570,15 @@ function IntegrationFormModal({
             {!isEditing && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Service</label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => {
-                    setSelectedType(e.target.value);
+                <ReactSelect
+                  value={selectedType ? { value: selectedType, label: availableConfigs.find(i => i.type === selectedType)?.name || selectedType } : null}
+                  onChange={(opt) => {
+                    setSelectedType(opt?.value || '');
                     setConfig({});
                   }}
-                  className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                >
-                  <option value="">Select a service...</option>
-                  {availableConfigs.map((i) => (
-                    <option key={i.id} value={i.type}>
-                      {i.name}
-                    </option>
-                  ))}
-                </select>
+                  options={availableConfigs.map((i) => ({ value: i.type, label: i.name }))}
+                  placeholder="Select a service..."
+                />
               </div>
             )}
 

@@ -12,13 +12,7 @@ import { queryKeys } from '@/hooks/queries/query-keys';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore, type Language } from '@/store/debug-store';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ReactSelect } from '@/components/ui/react-select';
 
 export function DebugHistory() {
   const router = useRouter();
@@ -125,22 +119,16 @@ export function DebugHistory() {
 
           <div className="space-y-1.5">
             <label className="text-[13px] font-medium text-[var(--app-text-muted)]">Filter by Language</label>
-            <Select
-              value={languageFilter}
-              onValueChange={(v) => setLanguageFilter(v || 'all')}
-            >
-              <SelectTrigger className="rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px]">
-                <SelectValue placeholder="All languages" />
-              </SelectTrigger>
-              <SelectContent className="rounded-[6px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
-                <SelectItem value="all">All Languages</SelectItem>
-                {DEBUG_LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.id} value={lang.id}>
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ReactSelect
+              value={languageFilter === 'all' ? { value: 'all', label: 'All Languages' } : { value: languageFilter, label: DEBUG_LANGUAGES.find(l => l.id === languageFilter)?.name || languageFilter }}
+              onChange={(opt) => setLanguageFilter(opt?.value || 'all')}
+              options={[
+                { value: 'all', label: 'All Languages' },
+                ...DEBUG_LANGUAGES.map((lang) => ({ value: lang.id, label: lang.name })),
+              ]}
+              placeholder="All languages"
+              isSearchable
+            />
           </div>
         </div>
       </div>

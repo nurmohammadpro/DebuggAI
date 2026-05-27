@@ -40,7 +40,7 @@ export function UnifiedHeader({
   toolTabsClassName,
 }: UnifiedHeaderProps) {
   return (
-    <header className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-4 bg-[var(--app-panel)] shrink-0">
+    <header className="h-12 flex items-center justify-between px-4 bg-[var(--app-panel)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.06)] shrink-0">
       {/* Left: Mobile Menu Button + Title + Tool Tabs */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Mobile Menu Button */}

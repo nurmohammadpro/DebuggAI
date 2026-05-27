@@ -75,7 +75,7 @@ export function CreateProjectDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {children ? (
-        <DialogTrigger className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--app-accent)] px-3 py-1.5 text-[13px] font-medium text-black transition-colors hover:opacity-90">
+        <DialogTrigger className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--ds-green)] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[var(--ds-green-bright)]">
           {children}
         </DialogTrigger>
       ) : null}
@@ -153,7 +153,7 @@ export function CreateProjectDialog({
               <button
                 onClick={onCreate}
                 disabled={creating}
-                className="flex-1 sm:flex-none inline-flex items-center gap-2 rounded-[8px] bg-[var(--app-accent)] px-4 py-2 text-[13px] font-medium text-black transition-colors hover:opacity-90 disabled:opacity-50"
+                className="flex-1 sm:flex-none inline-flex items-center gap-2 rounded-[8px] bg-[var(--ds-green)] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[var(--ds-green-bright)] disabled:opacity-50"
               >
                 {creating ? (
                   <>

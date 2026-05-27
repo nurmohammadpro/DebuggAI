@@ -84,7 +84,7 @@ export default function WorkspaceConceptDemo() {
                   <button className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] hover:bg-[var(--app-surface)] text-[11px] font-semibold uppercase tracking-tight text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors">
                     Share
                   </button>
-                  <button className="h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-[#071006] hover:bg-[var(--ds-green-bright)] transition inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight">
+                  <button className="h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-tight">
                     <Play className="h-3.5 w-3.5" />
                     Run
                   </button>

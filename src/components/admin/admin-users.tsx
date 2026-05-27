@@ -6,13 +6,7 @@ import { Search, Shield, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ReactSelect } from '@/components/ui/react-select';
 import {
   Dialog,
   DialogContent,
@@ -310,16 +304,15 @@ export function AdminUsers() {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-[var(--app-text-muted)]">Plan</label>
-              <Select value={editPlan} onValueChange={(v) => setEditPlan(v || 'free')}>
-                <SelectTrigger className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel)]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-[8px] border-[var(--app-border)] bg-[var(--app-panel-2)]">
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
-                </SelectContent>
-              </Select>
+              <ReactSelect
+                value={editPlan === 'free' ? { value: 'free', label: 'Free' } : editPlan === 'pro' ? { value: 'pro', label: 'Pro' } : { value: 'enterprise', label: 'Enterprise' }}
+                onChange={(opt) => setEditPlan(opt?.value || 'free')}
+                options={[
+                  { value: 'free', label: 'Free' },
+                  { value: 'pro', label: 'Pro' },
+                  { value: 'enterprise', label: 'Enterprise' },
+                ]}
+              />
             </div>
             <div className="flex items-center justify-between rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel)] px-3 py-2.5">
               <span className="text-sm text-[var(--app-text)]">Admin access</span>

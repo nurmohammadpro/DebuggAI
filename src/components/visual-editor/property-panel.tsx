@@ -7,6 +7,7 @@ import { getComponentDefinition } from './types';
 import {
   Trash2, Copy, RotateCcw, ArrowUp, ArrowDown, Eye, EyeOff,
 } from 'lucide-react';
+import { ReactSelect } from '@/components/ui/react-select';
 
 interface PropertyPanelProps {
   component: ComponentInstance | null;
@@ -218,41 +219,32 @@ function renderPropInput(key: string, value: unknown, onChange: (value: unknown)
       );
     case 'variant':
       return (
-        <select
-          value={String(value ?? 'primary')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['primary', 'secondary', 'outline', 'ghost', 'danger', 'info', 'success', 'warning'].map((v) => (
-            <option key={v} value={v}>{v}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'primary'), label: String(value ?? 'primary') }}
+          onChange={(opt) => onChange(opt?.value || 'primary')}
+          options={['primary', 'secondary', 'outline', 'ghost', 'danger', 'info', 'success', 'warning'].map((v) => ({ value: v, label: v }))}
+        />
       );
     case 'size':
     case 'level':
       if (key === 'level') {
         return (
-          <select
-            value={String(value ?? 2)}
-            onChange={(e) => onChange(Number(e.target.value))}
-            className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-          >
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <option key={n} value={n}>H{n}</option>
-            ))}
-          </select>
+          <ReactSelect
+            size="sm"
+            value={{ value: String(value ?? 2), label: `H${value ?? 2}` }}
+            onChange={(opt) => onChange(Number(opt?.value || 2))}
+            options={[1, 2, 3, 4, 5, 6].map((n) => ({ value: String(n), label: `H${n}` }))}
+          />
         );
       }
       return (
-        <select
-          value={String(value ?? 'md')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['xs', 'sm', 'md', 'lg', 'xl'].map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'md'), label: String(value ?? 'md') }}
+          onChange={(opt) => onChange(opt?.value || 'md')}
+          options={['xs', 'sm', 'md', 'lg', 'xl'].map((s) => ({ value: s, label: s }))}
+        />
       );
     case 'fontSize':
     case 'padding':
@@ -272,40 +264,31 @@ function renderPropInput(key: string, value: unknown, onChange: (value: unknown)
     case 'align':
     case 'textAlign':
       return (
-        <select
-          value={String(value ?? 'left')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['left', 'center', 'right', 'justify'].map((a) => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'left'), label: String(value ?? 'left') }}
+          onChange={(opt) => onChange(opt?.value || 'left')}
+          options={['left', 'center', 'right', 'justify'].map((a) => ({ value: a, label: a }))}
+        />
       );
     case 'type':
       if (typeof value === 'string' && ['button', 'submit', 'reset', 'text', 'email', 'password', 'number'].includes(value)) {
         return (
-          <select
-            value={String(value)}
-            onChange={(e) => onChange(e.target.value)}
-            className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-          >
-            {['text', 'email', 'password', 'number'].map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+          <ReactSelect
+            size="sm"
+            value={{ value: String(value), label: String(value) }}
+            onChange={(opt) => onChange(opt?.value || 'text')}
+            options={['text', 'email', 'password', 'number'].map((t) => ({ value: t, label: t }))}
+          />
         );
       }
       return (
-        <select
-          value={String(value ?? 'static')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['static', 'fixed', 'sticky', 'absolute', 'relative'].map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'static'), label: String(value ?? 'static') }}
+          onChange={(opt) => onChange(opt?.value || 'static')}
+          options={['static', 'fixed', 'sticky', 'absolute', 'relative'].map((p) => ({ value: p, label: p }))}
+        />
       );
     case 'color':
     case 'background':
@@ -352,15 +335,12 @@ function renderPropInput(key: string, value: unknown, onChange: (value: unknown)
       );
     case 'shadow':
       return (
-        <select
-          value={String(value ?? 'none')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['none', 'sm', 'md', 'lg', 'xl'].map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'none'), label: String(value ?? 'none') }}
+          onChange={(opt) => onChange(opt?.value || 'none')}
+          options={['none', 'sm', 'md', 'lg', 'xl'].map((s) => ({ value: s, label: s }))}
+        />
       );
     case 'checked':
     case 'disabled':
@@ -378,27 +358,21 @@ function renderPropInput(key: string, value: unknown, onChange: (value: unknown)
       );
     case 'position':
       return (
-        <select
-          value={String(value ?? 'static')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['static', 'fixed', 'sticky', 'absolute', 'relative'].map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'static'), label: String(value ?? 'static') }}
+          onChange={(opt) => onChange(opt?.value || 'static')}
+          options={['static', 'fixed', 'sticky', 'absolute', 'relative'].map((p) => ({ value: p, label: p }))}
+        />
       );
     case 'objectFit':
       return (
-        <select
-          value={String(value ?? 'cover')}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-full rounded-[4px] bg-[var(--app-surface)] border border-[var(--app-border)] px-2 text-[11px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-        >
-          {['cover', 'contain', 'fill', 'none', 'scale-down'].map((f) => (
-            <option key={f} value={f}>{f}</option>
-          ))}
-        </select>
+        <ReactSelect
+          size="sm"
+          value={{ value: String(value ?? 'cover'), label: String(value ?? 'cover') }}
+          onChange={(opt) => onChange(opt?.value || 'cover')}
+          options={['cover', 'contain', 'fill', 'none', 'scale-down'].map((f) => ({ value: f, label: f }))}
+        />
       );
     default:
       return (

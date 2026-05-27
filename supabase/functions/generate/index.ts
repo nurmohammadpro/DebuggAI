@@ -162,7 +162,9 @@ Hard rules:
 8. Dependencies in \`package.json\` MUST be consistent with the imports used in your code files. Every import must resolve to a dependency listed in package.json.
 9. Default to Tailwind CSS for styling. Include the necessary Tailwind config and PostCSS files.
 10. Use the \`@/\` import alias for local imports (e.g. \`import { Button } from "@/components/button"\`).
-11. You MAY use either a root-level layout (\`app/\`) OR a \`src/\` layout (\`src/app\`). Pick one and be consistent across all files, config, and import paths.`;
+11. **Decision confirmation**: Before making structural changes that affect the project (installing new dependencies, modifying database schema, deleting code, restructuring files, or changing the app framework), ASK the user for confirmation first. State clearly what you want to do and why, then wait for their response. Do NOT proceed with the change until the user confirms. For simple code additions or UI changes within existing patterns, no confirmation is needed.
+
+12. You MAY use either a root-level layout (\`app/\`) OR a \`src/\` layout (\`src/app\`). Pick one and be consistent across all files, config, and import paths.`;
 
     const aiMessages = [
       { role: 'system', content: systemPrompt },

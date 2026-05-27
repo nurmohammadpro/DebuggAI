@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, XCircle, RefreshCw, ChevronLeft, ChevronRight, Loader2, Play, AlertCircle } from 'lucide-react';
+import { ReactSelect } from '@/components/ui/react-select';
 import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
 
 interface Run {
@@ -145,18 +146,19 @@ export function AdminRunsDashboard() {
             className="w-full h-9 pl-8 pr-3 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
-          className="h-9 px-3 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[13px] text-[var(--app-text)] outline-none"
-        >
-          <option value="">All Statuses</option>
-          <option value="queued">Queued</option>
-          <option value="running">Running</option>
-          <option value="succeeded">Succeeded</option>
-          <option value="failed">Failed</option>
-          <option value="canceled">Canceled</option>
-        </select>
+        <ReactSelect
+          value={statusFilter ? { value: statusFilter, label: statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) } : { value: '', label: 'All Statuses' }}
+          onChange={(opt) => { setStatusFilter(opt?.value || ''); setPage(0); }}
+          options={[
+            { value: '', label: 'All Statuses' },
+            { value: 'queued', label: 'Queued' },
+            { value: 'running', label: 'Running' },
+            { value: 'succeeded', label: 'Succeeded' },
+            { value: 'failed', label: 'Failed' },
+            { value: 'canceled', label: 'Canceled' },
+          ]}
+          className="w-[180px]"
+        />
         <button
           onClick={fetchRuns}
           className="h-9 w-9 rounded-[6px] inline-flex items-center justify-center border border-[var(--app-border)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors"

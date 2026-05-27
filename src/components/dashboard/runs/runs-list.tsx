@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Search, RefreshCw } from 'lucide-react';
 
+import { ReactSelect } from '@/components/ui/react-select';
 import { useMyRuns } from '@/hooks/queries/use-my-runs';
 
 function tone(status: string) {
@@ -60,18 +61,19 @@ export function RunsList() {
               className="h-9 w-full pl-10 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
             />
           </div>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-9 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
-          >
-            <option value="all">All statuses</option>
-            <option value="queued">Queued</option>
-            <option value="running">Running</option>
-            <option value="succeeded">Succeeded</option>
-            <option value="failed">Failed</option>
-            <option value="canceled">Canceled</option>
-          </select>
+          <ReactSelect
+            value={{ value: status, label: status === 'all' ? 'All statuses' : status.charAt(0).toUpperCase() + status.slice(1) }}
+            onChange={(opt) => setStatus(opt?.value || 'all')}
+            options={[
+              { value: 'all', label: 'All statuses' },
+              { value: 'queued', label: 'Queued' },
+              { value: 'running', label: 'Running' },
+              { value: 'succeeded', label: 'Succeeded' },
+              { value: 'failed', label: 'Failed' },
+              { value: 'canceled', label: 'Canceled' },
+            ]}
+            className="w-[180px]"
+          />
         </div>
       </div>
 

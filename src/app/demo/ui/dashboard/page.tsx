@@ -35,7 +35,7 @@ export default function DashboardConceptDemo() {
               <button className="h-8 w-8 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:bg-[var(--app-panel-2)] hover:text-[var(--app-text)] transition-colors inline-flex items-center justify-center">
                 <Bell className="h-4 w-4" />
               </button>
-              <button className="h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-[#071006] hover:bg-[var(--ds-green-bright)] transition-colors inline-flex items-center gap-2 text-[12px] font-medium">
+              <button className="h-8 px-3 rounded-[6px] bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-colors inline-flex items-center gap-2 text-[12px] font-medium">
                 <Plus className="h-4 w-4" />
                 New project
               </button>

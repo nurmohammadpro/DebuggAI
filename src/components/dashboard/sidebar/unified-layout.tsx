@@ -30,42 +30,17 @@ export function UnifiedLayout({
   return (
     <div className="h-[100dvh] w-full overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex">
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
-      {/* Sidebar */}
-      {showSidebar && (
-        <>
-          {/* Desktop Sidebar */}
-          <div className="hidden md:block">
-            <UnifiedSidebar
-              recentThreads={recentThreads}
-              recentProjects={recentProjects}
-              collapsed={sidebarCollapsed}
-              onToggleCollapsed={toggleSidebar}
-            />
-          </div>
 
-          {/* Mobile Sidebar Overlay */}
-          {mobileMenuOpen && (
-            <>
-              <div
-                className="fixed top-12 bottom-0 left-0 right-0 bg-black/45 z-40 md:hidden"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              {/* wrapper is header-aware; keep the top bar clickable by not covering it */}
-              <div className="fixed inset-0 z-50 md:hidden pointer-events-none">
-                <div className="fixed top-12 bottom-0 left-0 right-0 bg-transparent pointer-events-none" />
-                <div className="fixed top-12 bottom-2 left-2 w-[min(320px,calc(100vw-16px))] rounded-[10px] bg-[color-mix(in_srgb,var(--bg-secondary)_92%,black)] border border-[var(--border-default)] shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-y-auto pointer-events-auto">
-                <UnifiedSidebar
-                  recentThreads={recentThreads}
-                  recentProjects={recentProjects}
-                  collapsed={false}
-                  onToggleCollapsed={() => setMobileMenuOpen(false)}
-                  mobile
-                />
-                </div>
-              </div>
-            </>
-          )}
-        </>
+      {/* Sidebar — mobile overlay handled internally */}
+      {showSidebar && (
+        <UnifiedSidebar
+          recentThreads={recentThreads}
+          recentProjects={recentProjects}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={toggleSidebar}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={() => setMobileMenuOpen(false)}
+        />
       )}
 
       {/* Main Content */}

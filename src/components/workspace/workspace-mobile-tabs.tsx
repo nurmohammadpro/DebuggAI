@@ -17,7 +17,7 @@ const tabs = [
 
 export function WorkspaceMobileTabs({ activeTab, onTabChange }: WorkspaceMobileTabsProps) {
   return (
-    <div className="sm:hidden border-t border-[var(--app-border)] bg-[var(--app-panel)] flex items-center justify-around px-1 py-1 pb-[env(safe-area-inset-bottom)]">
+    <div className="sm:hidden bg-[var(--app-panel)] flex items-center justify-around px-1 py-1 pb-[env(safe-area-inset-bottom)]">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;

@@ -14,13 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { csrfHeader } from '@/lib/csrf-client';
 import { DEBUG_LANGUAGES } from '@/lib/constants';
 import { useDebugStore } from '@/store/debug-store';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ReactSelect } from '@/components/ui/react-select';
 
 type DebugSectionId = 'summary' | 'root-cause' | 'fix' | 'tests' | 'raw';
 
@@ -192,21 +186,13 @@ export function MinimalDebugContent() {
             <div className="flex items-center justify-between mb-2">
               <label className="text-[12px] font-medium text-[var(--text-secondary)]">Language</label>
             </div>
-            <Select
-              value={currentLanguage}
-              onValueChange={(v) => setCurrentLanguage(v as any)}
-            >
-              <SelectTrigger className="w-full rounded-[var(--radius-md)] border-[var(--border-default)] bg-[var(--bg-primary)] text-[12px]">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent className="rounded-[var(--radius-md)] border-[var(--border-default)] bg-[var(--bg-primary)]">
-                {DEBUG_LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.id} value={lang.id}>
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ReactSelect
+              value={currentLanguage ? { value: currentLanguage, label: DEBUG_LANGUAGES.find(l => l.id === currentLanguage)?.name || currentLanguage } : null}
+              onChange={(opt) => setCurrentLanguage((opt?.value || '') as any)}
+              options={DEBUG_LANGUAGES.map((lang) => ({ value: lang.id, label: lang.name }))}
+              placeholder="Select language"
+              isSearchable
+            />
           </div>
 
           <div>

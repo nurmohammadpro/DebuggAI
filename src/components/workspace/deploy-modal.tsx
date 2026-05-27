@@ -9,6 +9,7 @@ import {
   Rocket, Globe, Settings, Check, Loader2, ExternalLink,
   AlertTriangle, ChevronRight, Copy, Eye
 } from 'lucide-react';
+import { ReactSelect } from '@/components/ui/react-select';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { csrfHeader } from '@/lib/csrf-client';
@@ -416,15 +417,11 @@ export function DeployModal({
             {/* Region */}
             <div className="space-y-1.5">
               <label className="text-[12px] font-medium text-[var(--app-text-muted)]">Deployment Region</label>
-              <select
-                value={config.region}
-                onChange={(e) => setConfig((prev) => ({ ...prev, region: e.target.value }))}
-                className="w-full h-9 rounded-[6px] bg-[var(--app-panel)] border border-[var(--app-border)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]"
-              >
-                {REGIONS.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
+              <ReactSelect
+                value={{ value: config.region, label: REGIONS.find(r => r.id === config.region)?.name || config.region }}
+                onChange={(opt) => setConfig((prev) => ({ ...prev, region: opt?.value || 'auto' }))}
+                options={REGIONS.map((r) => ({ value: r.id, label: r.name }))}
+              />
             </div>
 
             {/* Environment Variables */}

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGeneration } from '@/hooks/use-generation';
 import { Send, Loader2, Sparkles, Layers, X } from 'lucide-react';
+import { MarkdownRenderer } from './markdown-renderer';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
 import { PromptTemplates } from '@/components/visual-editor/prompt-templates';
@@ -180,13 +181,13 @@ export function ChatPanel({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)]",
+        "flex flex-col overflow-hidden rounded-[6px] bg-[var(--app-panel)]",
         className
       )}
     >
       {/* Header */}
       {!chromeless && (
-        <div className="border-b border-[var(--app-border)] flex items-center justify-between px-4 h-10 shrink-0 bg-[var(--app-panel-2)]">
+        <div className="flex items-center justify-between px-4 h-10 shrink-0 bg-[var(--app-panel-2)]">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-[var(--app-text-muted)] uppercase tracking-[0.12em]">AI</span>
           </div>
@@ -245,13 +246,17 @@ export function ChatPanel({
               className={cn(
                 "max-w-[85%] rounded-[6px] px-4 py-3",
                 message.role === 'user'
-                  ? 'bg-[var(--app-accent)] text-[#071006]'
+                  ? 'bg-[var(--app-accent)]/10 text-[var(--app-text)]'
                   : 'bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]'
               )}
             >
-              <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
-                {message.content}
-              </p>
+              {message.role === 'user' ? (
+                <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
+                  {message.content}
+                </p>
+              ) : (
+                <MarkdownRenderer content={message.content} />
+              )}
             </div>
             <span className="text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1 font-medium">
               {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -263,10 +268,8 @@ export function ChatPanel({
         {isLoading && accumulated && (
           <div className="flex flex-col items-start animate-in fade-in duration-300">
             <div className="max-w-[85%] rounded-[6px] px-4 py-3 bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]">
-              <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
-                {accumulated}
-                <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle" />
-              </p>
+              <MarkdownRenderer content={accumulated} />
+              <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle" />
             </div>
           </div>
         )}
@@ -320,22 +323,22 @@ export function ChatPanel({
       )}
 
       {/* Input */}
-      <div className="p-3 shrink-0 bg-[var(--app-panel-2)] border-t border-[var(--app-border)]">
-        <div className="flex items-end gap-2 bg-[var(--app-surface)] rounded-[6px] border border-[var(--app-border)] transition-colors p-2">
+      <div className="p-3 pt-0 shrink-0">
+        <div className="flex items-center gap-2 rounded-[8px] border border-[var(--app-border)] transition-all duration-150 p-2 focus-within:border-[var(--app-accent)]/40">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             data-dashboard-composer
-            className="min-h-[0] max-h-[120px] resize-none bg-transparent border-0 text-[13px] leading-relaxed p-1 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none w-full"
-            rows={1}
+            className="min-h-[0] max-h-[160px] resize-none bg-transparent border-0 text-[13px] leading-relaxed p-1 text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:outline-none focus-visible:outline-none focus:ring-0 w-full"
+            rows={3}
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="h-7 w-7 p-0 rounded-[6px] shrink-0 bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+            className="h-8 w-8 p-0 rounded-[6px] shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
           >
             {isLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

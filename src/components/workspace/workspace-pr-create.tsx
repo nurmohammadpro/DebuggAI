@@ -5,6 +5,7 @@ import { GitPullRequest, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { csrfHeader } from '@/lib/csrf-client';
+import { ReactSelect } from '@/components/ui/react-select';
 
 interface Branch {
   id: string;
@@ -80,32 +81,24 @@ export function WorkspacePRCreate({
           <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-1">
             From
           </label>
-          <select
-            value={fromBranch}
-            onChange={(e) => setFromBranch(e.target.value)}
-            className="w-full h-9 rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]/30"
-          >
-            <option value="">Select source branch</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+          <ReactSelect
+            value={fromBranch ? { value: fromBranch, label: branches.find(b => b.id === fromBranch)?.name || fromBranch } : null}
+            onChange={(opt) => setFromBranch(opt?.value || '')}
+            options={branches.map((b) => ({ value: b.id, label: b.name }))}
+            placeholder="Select source branch"
+          />
         </div>
 
         <div>
           <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-1">
             To
           </label>
-          <select
-            value={toBranch}
-            onChange={(e) => setToBranch(e.target.value)}
-            className="w-full h-9 rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]/30"
-          >
-            <option value="">Select target branch</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
+          <ReactSelect
+            value={toBranch ? { value: toBranch, label: branches.find(b => b.id === toBranch)?.name || toBranch } : null}
+            onChange={(opt) => setToBranch(opt?.value || '')}
+            options={branches.map((b) => ({ value: b.id, label: b.name }))}
+            placeholder="Select target branch"
+          />
         </div>
 
         <div>

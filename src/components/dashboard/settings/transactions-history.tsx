@@ -10,13 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ReactSelect } from '@/components/ui/react-select';
 import { useMyTransactions } from '@/hooks/queries/use-my-transactions';
 
 export function TransactionsHistory() {
@@ -110,22 +104,17 @@ export function TransactionsHistory() {
 
               <div className="space-y-2">
                 <Label>Filter by Type</Label>
-                <Select
-                  value={typeFilter}
-                  onValueChange={(v) =>
-                    setTypeFilter(v as 'all' | 'earned' | 'spent' | 'refunded')
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="earned">Earned</SelectItem>
-                    <SelectItem value="spent">Spent</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ReactSelect
+                  value={{ value: typeFilter, label: typeFilter === 'all' ? 'All Types' : typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) }}
+                  onChange={(opt) => setTypeFilter((opt?.value || 'all') as 'all' | 'earned' | 'spent' | 'refunded')}
+                  options={[
+                    { value: 'all', label: 'All Types' },
+                    { value: 'earned', label: 'Earned' },
+                    { value: 'spent', label: 'Spent' },
+                    { value: 'refunded', label: 'Refunded' },
+                  ]}
+                  placeholder="All types"
+                />
               </div>
             </div>
           </div>

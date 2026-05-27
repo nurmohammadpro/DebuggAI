@@ -178,7 +178,7 @@ return items.map(...);`}
 }`}
                   </pre>
                   <div className="flex items-center gap-2">
-                    <button className="h-9 px-4 rounded-[6px] bg-[var(--ds-green)] text-[#071006] hover:bg-[var(--ds-green-bright)] transition-colors text-[13px] font-medium inline-flex items-center gap-2">
+                    <button className="h-9 px-4 rounded-[6px] bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-colors text-[13px] font-medium inline-flex items-center gap-2">
                       <Check className="h-4 w-4" />
                       Apply patch
                     </button>

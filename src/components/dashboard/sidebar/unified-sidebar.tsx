@@ -4,18 +4,24 @@ import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
 import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, X, Zap, ListChecks } from 'lucide-react';
+import { toast } from 'sonner';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import type { ThreadRow } from '@/hooks/queries/use-my-threads';
 import { getSession } from '@/hooks/use-session';
 import { csrfHeader } from '@/lib/csrf-client';
 import { useGenerationStore } from '@/store/generation-store';
+import { Panel } from '@/components/panel/panel';
+import { useConfirmDialog } from '@/components/admin/confirm-dialog';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UnifiedSidebarProps {
   recentThreads?: ThreadRow[];
   recentProjects?: GenerationRow[];
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
-  mobile?: boolean;
+  /** Mobile overlay state — parent controls this via the header hamburger button */
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 export function UnifiedSidebar({
@@ -23,13 +29,16 @@ export function UnifiedSidebar({
   recentProjects = [],
   collapsed = false,
   onToggleCollapsed,
-  mobile = false,
+  mobileOpen = false,
+  onMobileClose,
 }: UnifiedSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useSessionStore();
   const { setThreadId, clearThread } = useGenerationStore();
+  const { confirm, ConfirmDialogComponent } = useConfirmDialog();
+  const queryClient = useQueryClient();
 
   // Check if we're on the dashboard home (not viewing a project)
   const isDashboardHome = pathname === '/dashboard' && !searchParams?.has('project');
@@ -58,16 +67,12 @@ export function UnifiedSidebar({
     else router.push(`/dashboard?thread=${id}`);
   };
 
-  return (
-    <aside
-      className={`${mobile ? 'flex' : 'hidden md:flex'} shrink-0 flex-col h-full bg-[var(--app-panel)] border-r border-[var(--app-border)] transition-all duration-200 ${
-        mobile ? 'w-full' : collapsed ? 'w-[64px]' : 'w-[264px]'
-      }`}
-    >
+  const sidebarContent = (
+    <>
       {/* Top Content - Navigation and Recent Items */}
       <div className="flex-1 min-h-0 flex flex-col">
         {/* Header */}
-        <div className="h-12 border-b border-[var(--app-border)] flex items-center justify-between px-3 shrink-0">
+        <div className="h-12 flex items-center justify-between px-3 shrink-0">
           {!collapsed && (
             <Link href="/dashboard" className="font-semibold text-xs text-[var(--app-text)]">
               DeBuggAI
@@ -77,16 +82,14 @@ export function UnifiedSidebar({
             <button
               onClick={onToggleCollapsed}
               className="p-1 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text-muted)] transition-all"
-              aria-label={mobile ? 'Close sidebar' : 'Toggle sidebar'}
+              aria-label="Toggle sidebar"
             >
-              {mobile ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M9 3v18" />
-                </svg>
-              )}
+              {/* On desktop in the inline sidebar show the collapse/expand icon; on mobile overlay show X */}
+              <X className="h-4 w-4 md:hidden" />
+              <svg className="hidden md:block" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M9 3v18" />
+              </svg>
             </button>
           )}
         </div>
@@ -97,7 +100,7 @@ export function UnifiedSidebar({
             <div className="px-3 pb-3 grid grid-cols-2 gap-2">
               <Link
                 href="/dashboard/home?create=1"
-                className="h-8 rounded-[6px] bg-[var(--ds-green)] px-2 text-[11px] font-medium text-[#071006] hover:bg-[var(--ds-green-bright)] transition-colors inline-flex items-center justify-center gap-1.5"
+                className="h-8 rounded-[6px] bg-[var(--ds-green)] px-2 text-[11px] font-medium text-white hover:bg-[var(--ds-green-bright)] transition-colors inline-flex items-center justify-center gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Project
@@ -195,25 +198,29 @@ export function UnifiedSidebar({
                         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
                         body: JSON.stringify({ title: next }),
                       });
-                      // Best-effort refresh: navigate to same URL to retrigger queries.
                       router.refresh();
                     }}
                     onDelete={async () => {
-                      const ok = window.confirm('Delete this thread? This cannot be undone.');
+                      const ok = await confirm('Delete thread?', 'This cannot be undone.', { confirmText: 'Delete', variant: 'destructive' });
                       if (!ok) return;
                       const session = await getSession();
                       const token = session.session?.access_token;
                       if (!token) return;
-                      await fetch(`/api/threads/${thread.id}`, {
+                      const res = await fetch(`/api/threads/${thread.id}`, {
                         method: 'DELETE',
-                        headers: { Authorization: `Bearer ${token}` },
+                        headers: { Authorization: `Bearer ${token}`, ...csrfHeader() },
                       });
+                      if (!res.ok) {
+                        toast.error('Failed to delete thread');
+                        return;
+                      }
+                      toast.success('Thread deleted');
+                      await queryClient.refetchQueries({ queryKey: ['threads', 'mine'] });
                       if (searchParams?.get('thread') === thread.id) {
                         clearThread();
                         if (activeProjectId) router.push(`/dashboard?project=${activeProjectId}`);
                         else router.push('/dashboard');
                       }
-                      router.refresh();
                     }}
                   />
                 ))
@@ -224,7 +231,7 @@ export function UnifiedSidebar({
       </div>
 
       {/* Bottom Content - User Profile */}
-      <div className="p-3 border-t border-[var(--app-border)] shrink-0">
+      <div className="p-3 shrink-0">
         {collapsed ? (
           <Link
             href="/dashboard/settings"
@@ -251,7 +258,34 @@ export function UnifiedSidebar({
           </Link>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      <ConfirmDialogComponent />
+      {/* Desktop sidebar — full viewport height */}
+      <aside
+        className={`hidden md:flex shrink-0 flex-col h-full bg-[var(--app-panel)] drop-shadow-[1px_0_4px_rgba(0,0,0,0.06)] transition-all duration-200 ${
+          collapsed ? 'w-[64px]' : 'w-[264px]'
+        }`}
+      >
+          {sidebarContent}
+        </aside>
+
+      {/* Mobile overlay — rendered inside a Panel that handles scrim + animation */}
+      <Panel
+        id="main-sidebar"
+        side="left"
+        mobile
+        mobileOpen={mobileOpen}
+        onMobileClose={onMobileClose}
+      >
+        <div className="flex flex-col h-full bg-[var(--app-panel)]">
+          {sidebarContent}
+        </div>
+      </Panel>
+    </>
   );
 }
 
@@ -359,7 +393,7 @@ function formatTimeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
   if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 3600) return `${Math.floor(seconds / 3600)}m`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
   return `${Math.floor(seconds / 604800)}w`;

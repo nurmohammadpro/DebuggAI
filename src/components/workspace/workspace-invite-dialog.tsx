@@ -5,6 +5,7 @@ import { UserPlus, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { csrfHeader } from '@/lib/csrf-client';
+import { ReactSelect } from '@/components/ui/react-select';
 
 export function WorkspaceInviteDialog({
   workspaceId,
@@ -73,15 +74,15 @@ export function WorkspaceInviteDialog({
           <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-1">
             Role
           </label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full h-9 rounded-[6px] bg-[var(--app-panel-2)] border border-[var(--app-border)] px-3 text-[13px] text-[var(--app-text)] outline-none focus:border-[var(--app-accent)]/30"
-          >
-            <option value="member">Member</option>
-            <option value="admin">Admin</option>
-            <option value="viewer">Viewer</option>
-          </select>
+          <ReactSelect
+            value={{ value: role, label: role.charAt(0).toUpperCase() + role.slice(1) }}
+            onChange={(opt) => setRole(opt?.value || 'member')}
+            options={[
+              { value: 'member', label: 'Member' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'viewer', label: 'Viewer' },
+            ]}
+          />
         </div>
       </div>
 
