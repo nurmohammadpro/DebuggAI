@@ -75,7 +75,7 @@ export function Navigation() {
       <div className="container mx-auto px-4 flex items-center">
         {/* Logo & Brand - JetBrains Mono font */}
         <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo flex items-center gap-2.5">
-          <Logo className="h-6 w-auto" />
+          <Logo className="h-5 w-auto" />
           <span className="font-semibold text-base font-mono" style={{ color: 'var(--app-text)' }}>
             DeBuggAI
           </span>

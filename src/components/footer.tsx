@@ -13,7 +13,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center space-x-2 mb-3">
-              <Logo className="h-8 w-auto" />
+              <Logo className="h-6 w-auto" />
             </Link>
             <p className="text-xs text-[var(--app-text-dim)] leading-relaxed max-w-xs">
               AI-powered debugging and web building platform for developers. Ship faster, stress less.
