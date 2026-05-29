@@ -107,7 +107,7 @@ export function SessionBootstrapper() {
             email,
             displayName:
               session.user.user_metadata.full_name ||
-              session.user.user.email ||
+              session.user.email ||
               'Developer',
             avatarUrl: session.user.user_metadata.avatar_url,
             plan: session.user.user_metadata.plan || 'free',
