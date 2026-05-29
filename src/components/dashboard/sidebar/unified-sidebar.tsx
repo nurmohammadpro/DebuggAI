@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
-import { Activity, Bug, Database, Home, MessageSquarePlus, Pencil, Plus, Trash2, X, Zap, ListChecks } from 'lucide-react';
+import { Activity, Bug, Database, GitBranch, Home, MessageSquarePlus, Pencil, Plus, Trash2, X, Zap, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import type { ThreadRow } from '@/hooks/queries/use-my-threads';
@@ -147,8 +147,15 @@ export function UnifiedSidebar({
             collapsed={collapsed}
             active={isDebug}
             icon={<Bug className="w-3.5 h-3.5" />}
-            label="Debug Session"
+            label="Debug Tracer"
             href="/dashboard/debug"
+          />
+          <NavItem
+            collapsed={collapsed}
+            active={pathname === '/dashboard/branches'}
+            icon={<GitBranch className="w-3.5 h-3.5" />}
+            label="Branches"
+            href="/dashboard/branches"
           />
 
           {/* Recent Projects */}

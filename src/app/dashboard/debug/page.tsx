@@ -1,5 +1,7 @@
-import { MinimalDebugContent } from '@/components/dashboard/debug/minimal-debug-content';
+'use client';
+
+import { EnhancedDebugTracer } from '@/components/dashboard/debug/enhanced-debug-tracer';
 
 export default function DebugScreenPage() {
-  return <MinimalDebugContent />;
+  return <EnhancedDebugTracer />;
 }

@@ -1,6 +1,5 @@
-import SettingsPage from '@/components/dashboard/settings/settings-page';
+import EnhancedSettingsPage from '@/components/dashboard/settings/enhanced-settings-page';
 
 export default function DashboardSettingsPage() {
-  return <SettingsPage />;
+  return <EnhancedSettingsPage />;
 }
-

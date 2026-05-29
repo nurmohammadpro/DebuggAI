@@ -4,12 +4,10 @@
  * Professional · Minimal · Developer-focused · Dark-first
  */
 
-// Note: the main dashboard route now renders the workspace UI. This page is kept at `/dashboard/home`.
-
 'use client';
 
-import { ProjectsHub } from '@/components/dashboard/projects/projects-hub';
+import { EnhancedDashboardHome } from '@/components/dashboard/home/enhanced-dashboard-home';
 
 export default function DashboardPage() {
-  return <ProjectsHub />;
+  return <EnhancedDashboardHome />;
 }
