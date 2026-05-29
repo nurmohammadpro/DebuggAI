@@ -16,6 +16,20 @@ export function SessionBootstrapper() {
   const { setUser, updateUser, setCredits, logout } = useSessionStore();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  // Use refs to avoid infinite loops with changing function dependencies
+  const logoutRef = useRef(logout);
+  const setUserRef = useRef(setUser);
+  const setCreditsRef = useRef(setCredits);
+  const updateUserRef = useRef(updateUser);
+
+  // Update refs when functions change
+  useEffect(() => {
+    logoutRef.current = logout;
+    setUserRef.current = setUser;
+    setCreditsRef.current = setCredits;
+    updateUserRef.current = updateUser;
+  });
+
   const unsubscribeCredits = useCallback(async () => {
     if (channelRef.current) {
       await channelRef.current.unsubscribe();
@@ -39,14 +53,14 @@ export function SessionBootstrapper() {
           },
           (payload: RealtimePostgresUpdatePayload<{ balance: number }>) => {
             const newBalance = payload.new.balance;
-            setCredits(newBalance);
+            setCreditsRef.current(newBalance);
           }
         );
 
       channel.subscribe();
       channelRef.current = channel;
     },
-    [setCredits, unsubscribeCredits]
+    [unsubscribeCredits]
   );
 
   const hydrateUser = useCallback(
@@ -64,16 +78,16 @@ export function SessionBootstrapper() {
         ]);
 
       if (!walletError && wallet?.balance !== undefined) {
-        setCredits(wallet.balance);
+        setCreditsRef.current(wallet.balance);
         await subscribeToCredits(userId);
       } else {
-        setCredits(0);
+        setCreditsRef.current(0);
       }
 
       const dbAdmin = !profileError ? profile?.is_admin ?? false : false;
-      updateUser({ isAdmin: allowlistedAdmin || dbAdmin });
+      updateUserRef.current({ isAdmin: allowlistedAdmin || dbAdmin });
     },
-    [setCredits, subscribeToCredits, updateUser]
+    [subscribeToCredits]
   );
 
   useEffect(() => {
@@ -88,12 +102,12 @@ export function SessionBootstrapper() {
         hydrating = true;
         try {
           const email = session.user.email || '';
-          setUser({
+          setUserRef.current({
             id: session.user.id,
             email,
             displayName:
               session.user.user_metadata.full_name ||
-              session.user.email ||
+              session.user.user.email ||
               'Developer',
             avatarUrl: session.user.user_metadata.avatar_url,
             plan: session.user.user_metadata.plan || 'free',
@@ -106,7 +120,7 @@ export function SessionBootstrapper() {
         }
       } else {
         await unsubscribeCredits();
-        logout();
+        logoutRef.current();
       }
     };
 
@@ -124,7 +138,7 @@ export function SessionBootstrapper() {
       subscription.unsubscribe();
       unsubscribeCredits();
     };
-  }, [hydrateUser, logout, setUser, unsubscribeCredits]);
+  }, []);
 
   return null;
 }
