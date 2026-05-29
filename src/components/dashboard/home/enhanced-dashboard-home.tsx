@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
@@ -60,22 +60,6 @@ export function EnhancedDashboardHome() {
     })) || []),
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
 
-  const handleCreateProject = () => {
-    router.push('/dashboard/home?create=1');
-  };
-
-  const handleStartDebug = () => {
-    router.push('/dashboard/debug');
-  };
-
-  const handleOpenSettings = () => {
-    router.push('/dashboard/settings');
-  };
-
-  const handleViewBranches = () => {
-    router.push('/dashboard/branches');
-  };
-
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -126,9 +110,9 @@ export function EnhancedDashboardHome() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <button
-          onClick={handleCreateProject}
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all"
+        <Link
+          href="/dashboard/home?create=1"
+          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-accent-soft)] flex items-center justify-center">
@@ -138,11 +122,11 @@ export function EnhancedDashboardHome() {
           </div>
           <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">New Project</h3>
           <p className="text-xs text-[var(--app-text-muted)]">Create a new project from scratch</p>
-        </button>
+        </Link>
 
-        <button
-          onClick={handleStartDebug}
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all"
+        <Link
+          href="/dashboard/debug"
+          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-warning-soft)] flex items-center justify-center">
@@ -152,11 +136,11 @@ export function EnhancedDashboardHome() {
           </div>
           <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">Debug Code</h3>
           <p className="text-xs text-[var(--app-text-muted)]">Start a new debugging session</p>
-        </button>
+        </Link>
 
-        <button
-          onClick={handleViewBranches}
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all"
+        <Link
+          href="/dashboard/branches"
+          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-info-soft)] flex items-center justify-center">
@@ -166,11 +150,11 @@ export function EnhancedDashboardHome() {
           </div>
           <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">Branches</h3>
           <p className="text-xs text-[var(--app-text-muted)]">Manage project branches</p>
-        </button>
+        </Link>
 
-        <button
-          onClick={handleOpenSettings}
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all"
+        <Link
+          href="/dashboard/settings"
+          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-purple-soft)] flex items-center justify-center">
@@ -180,7 +164,7 @@ export function EnhancedDashboardHome() {
           </div>
           <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">Settings</h3>
           <p className="text-xs text-[var(--app-text-muted)]">Manage your preferences</p>
-        </button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
@@ -236,17 +220,15 @@ export function EnhancedDashboardHome() {
           <div className="space-y-4">
             {recentActivity.map((activity) => {
               const Icon = activity.icon;
+              const activityHref = activity.type === 'project'
+                ? `/dashboard?project=${activity.id}`
+                : `/dashboard/debug?session=${activity.id}`;
+
               return (
-                <div
+                <Link
                   key={activity.id}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors cursor-pointer"
-                  onClick={() => {
-                    if (activity.type === 'project') {
-                      router.push(`/dashboard?project=${activity.id}`);
-                    } else if (activity.type === 'debug') {
-                      router.push(`/dashboard/debug?session=${activity.id}`);
-                    }
-                  }}
+                  href={activityHref}
+                  className="flex items-center gap-4 p-3 rounded-lg bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors"
                 >
                   <div className="w-10 h-10 rounded-lg bg-[var(--app-accent-soft)] flex items-center justify-center flex-shrink-0">
                     <Icon className="w-5 h-5 text-[var(--app-accent)]" />
@@ -260,7 +242,7 @@ export function EnhancedDashboardHome() {
                     </p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[var(--app-text-dim)]" />
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -273,19 +255,19 @@ export function EnhancedDashboardHome() {
         <div className="bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-[var(--app-text)]">Recent Projects</h3>
-            <button
-              onClick={() => router.push('/dashboard/home')}
+            <Link
+              href="/dashboard/home"
               className="text-xs text-[var(--app-accent)] hover:underline"
             >
               View All
-            </button>
+            </Link>
           </div>
           <div className="space-y-3">
             {projects?.slice(0, 3).map((project) => (
-              <div
+              <Link
                 key={project.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors cursor-pointer"
-                onClick={() => router.push(`/dashboard?project=${project.id}`)}
+                href={`/dashboard?project=${project.id}`}
+                className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors block"
               >
                 <div className="w-8 h-8 rounded bg-[var(--app-accent-soft)] flex items-center justify-center">
                   <FolderKanban className="w-4 h-4 text-[var(--app-accent)]" />
@@ -299,7 +281,7 @@ export function EnhancedDashboardHome() {
                   </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--app-text-dim)]" />
-              </div>
+              </Link>
             ))}
             {(!projects || projects.length === 0) && (
               <p className="text-xs text-[var(--app-text-muted)] text-center py-4">No projects yet</p>
@@ -311,19 +293,19 @@ export function EnhancedDashboardHome() {
         <div className="bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-[var(--app-text)]">Debug Sessions</h3>
-            <button
-              onClick={() => router.push('/dashboard/debug')}
+            <Link
+              href="/dashboard/debug"
               className="text-xs text-[var(--app-accent)] hover:underline"
             >
               View All
-            </button>
+            </Link>
           </div>
           <div className="space-y-3">
             {debugSessions?.slice(0, 3).map((session) => (
-              <div
+              <Link
                 key={session.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors cursor-pointer"
-                onClick={() => router.push(`/dashboard/debug?session=${session.id}`)}
+                href={`/dashboard/debug?session=${session.id}`}
+                className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors block"
               >
                 <div className="w-8 h-8 rounded bg-[var(--app-warning-soft)] flex items-center justify-center">
                   <Bug className="w-4 h-4 text-[var(--app-warning)]" />
@@ -337,7 +319,7 @@ export function EnhancedDashboardHome() {
                   </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--app-text-dim)]" />
-              </div>
+              </Link>
             ))}
             {(!debugSessions || debugSessions.length === 0) && (
               <p className="text-xs text-[var(--app-text-muted)] text-center py-4">No debug sessions yet</p>
