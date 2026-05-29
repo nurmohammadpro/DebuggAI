@@ -366,7 +366,7 @@ function StatCard({ icon: Icon, label, value, change, trend, color }: StatCardPr
     success: 'bg-[var(--app-success-soft)] text-[var(--app-success)]',
   };
 
-  const trendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingUp : Clock;
+  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingUp : Clock;
   const trendColor = trend === 'up' ? 'text-[var(--app-success)]' : trend === 'down' ? 'text-[var(--app-danger)]' : 'text-[var(--app-text-muted)]';
 
   return (
@@ -376,7 +376,7 @@ function StatCard({ icon: Icon, label, value, change, trend, color }: StatCardPr
           <Icon className="w-5 h-5" />
         </div>
         <div className={`flex items-center gap-1 text-xs ${trendColor}`}>
-          {trend !== 'neutral' && <trendIcon className="w-3 h-3" />}
+          {trend !== 'neutral' && <TrendIcon className="w-3 h-3" />}
           <span>{change}</span>
         </div>
       </div>
