@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { FileText, Folder, FileCode, FileJson, Settings, Shield, Image, Video, Music, Archive, Palette, Hash, File } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { buildFileTree, getFileIcon as getFileIconName, type FileTreeNode } from '@/lib/project/file-tree';
 import { useGenerationStore } from '@/store/generation-store';
 
@@ -56,9 +57,8 @@ export function WorkspaceFileTreeView({ query = '' }: { query?: string }) {
           key={n.path}
           node={n}
           activeFilePath={activeFilePath}
-          onSelectFile={setActiveFilePath}
-          files={files}
-        />
+          onSelectFile={setActiveFilePath}            files={files?.files}
+          />
       ))}
     </div>
   );
@@ -129,7 +129,7 @@ function NodeRow({
             key={c.path}
             node={c}
             activeFilePath={activeFilePath}
-            onSelectFile={setActiveFilePath}
+            onSelectFile={onSelectFile}
             files={files}
             depth={depth + 1}
           />

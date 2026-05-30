@@ -159,26 +159,44 @@ export function buildFileTree(paths: string[]): FileTreeNode[] {
  * Get file icon based on extension
  * Returns appropriate Lucide React icon component
  */
-export function getFileIcon(name: string, isFolder: boolean = false): React.ComponentType<{ className?: string }> {
+export function getFileIcon(name: string, isFolder: boolean = false): string {
   if (isFolder) {
-    return Folder; // Will be imported by caller
+    return 'Folder';
   }
 
   const ext = name.split('.').pop()?.toLowerCase();
 
-  // Import icons dynamically or map to component names
   switch (ext) {
-    // TypeScript/JavaScript
     case 'tsx':
     case 'ts':
     case 'jsx':
     case 'js':
-      return 'FileCode';
     case 'cjs':
     case 'mjs':
+    case 'html':
+    case 'htm':
+    case 'xml':
+    case 'py':
+    case 'pyc':
+    case 'pyd':
+    case 'go':
+    case 'rs':
+    case 'rb':
+    case 'php':
+    case 'java':
+    case 'jar':
+    case 'kt':
+    case 'kts':
+    case 'swift':
+    case 'c':
+    case 'cpp':
+    case 'cc':
+    case 'cxx':
+    case 'vue':
+    case 'svelte':
+    case 'astro':
       return 'FileCode';
 
-    // Styles
     case 'css':
     case 'scss':
     case 'sass':
@@ -186,96 +204,23 @@ export function getFileIcon(name: string, isFolder: boolean = false): React.Comp
     case 'less':
       return 'FileJson';
 
-    // Markup
-    case 'html':
-    case 'htm':
-    case 'svg':
-      return 'FileCode';
-
-    // Data
     case 'json':
-      return 'FileJson';
-    case 'xml':
-      return 'FileCode';
     case 'yaml':
     case 'yml':
       return 'FileJson';
 
-    // Docs
     case 'md':
     case 'markdown':
     case 'txt':
-      return 'FileText';
     case 'pdf':
       return 'FileText';
 
-    // Config
     case 'config':
-      return 'Settings';
     case 'conf':
       return 'Settings';
     case 'env':
       return 'Shield';
 
-    // Python
-    case 'py':
-      return 'FileCode';
-    case 'pyc':
-    case 'pyd':
-      return 'FileCode';
-
-    // Go
-    case 'go':
-      return 'FileCode';
-
-    // Rust
-    case 'rs':
-      return 'FileCode';
-
-    // Ruby
-    case 'rb':
-      return 'FileCode';
-
-    // PHP
-    case 'php':
-      return 'FileCode';
-
-    // Java
-    case 'java':
-    case 'jar':
-      return 'FileCode';
-
-    // Kotlin
-    case 'kt':
-    case 'kts':
-      return 'FileCode';
-
-    // Swift
-    case 'swift':
-      return 'FileCode';
-
-    // C/C++
-    case 'c':
-    case 'cpp':
-    case 'cc':
-    case 'cxx':
-    case 'h':
-    case 'hpp':
-      return 'FileCode';
-
-    // Vue
-    case 'vue':
-      return 'FileCode';
-
-    // Svelte
-    case 'svelte':
-      return 'FileCode';
-
-    // Astro
-    case 'astro':
-      return 'FileCode';
-
-    // Image
     case 'png':
     case 'jpg':
     case 'jpeg':
@@ -285,26 +230,22 @@ export function getFileIcon(name: string, isFolder: boolean = false): React.Comp
     case 'webp':
       return 'Image';
 
-    // Video
     case 'mp4':
     case 'webm':
     case 'mov':
     case 'avi':
       return 'Video';
 
-    // Audio
     case 'mp3':
     case 'wav':
     case 'ogg':
       return 'Music';
 
-    // Archive
     case 'zip':
     case 'tar':
     case 'gz':
       return 'Archive';
 
-    // Lockfiles
     case 'lock':
     case 'yarn':
       return 'Shield';
