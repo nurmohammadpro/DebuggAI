@@ -89,7 +89,8 @@ export function EnhancedChatPanel({
       setStreaming(false);
       toast.success('Code generated successfully!');
 
-      const text = (accumulated || '').trim();
+      const { accumulated: latestAccumulated } = useGenerationStore.getState();
+      const text = (latestAccumulated || '').trim();
       if (text) {
         const { text: cleanedText, codeBlocks } = extractCodeBlocks(text);
 

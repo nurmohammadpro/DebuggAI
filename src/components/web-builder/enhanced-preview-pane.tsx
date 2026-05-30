@@ -250,6 +250,24 @@ export function EnhancedPreviewPane({
             '',
           ].join('\n'),
         );
+      } else if (result['/app/page.tsx'] || result['/app/page.jsx']) {
+        const isTsApp = !!result['/app/page.tsx'];
+        put(
+          isTsApp ? '/index.tsx' : '/index.js',
+          [
+            "import React from 'react';",
+            isTsApp ? "import ReactDOM from 'react-dom/client';" : "import { createRoot } from 'react-dom/client';",
+            "import Page from './app/page';",
+            '',
+            isTsApp ? "const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);" : "const root = createRoot(document.getElementById('root'));",
+            'root.render(',
+            '  <React.StrictMode>',
+            '    <Page />',
+            '  </React.StrictMode>',
+            ');',
+            '',
+          ].join('\n'),
+        );
       }
     }
 

@@ -62,7 +62,8 @@ export function ChatPanel({
     onDone: async () => {
       setIsLoading(false);
       toast.success('Code generated successfully!');
-      const text = (accumulated || '').trim();
+      const { accumulated: latestAccumulated } = useGenerationStore.getState();
+      const text = (latestAccumulated || '').trim();
       if (text) {
         setMessages((prev) => [
           ...prev,
