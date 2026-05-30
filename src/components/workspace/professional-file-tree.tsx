@@ -64,7 +64,7 @@ import { useGenerationStore } from '@/store/generation-store';
 import type { VirtualFile, VirtualProjectFiles } from '@/lib/project/virtual-files';
 import { buildFileTree, detectEntryPoint, type FileTreeNode } from '@/lib/project/file-tree';
 
-// File type detection with comprehensive icon mapping
+// File type detection with comprehensive icon mapping (no duplicate keys)
 const FILE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   // React/TypeScript
   'tsx': FileType2,
@@ -159,18 +159,11 @@ const FILE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   'next.config.js': Layers,
   'next.config.mjs': Layers,
 
-  // Web
-  'html': Globe,
-  'htm': Globe,
-  'css': Palette,
-  'js': FileCode,
-
-  // Images
+  // Images (svg already mapped under Markup)
   'png': Image,
   'jpg': Image,
   'jpeg': Image,
   'gif': Image,
-  'svg': Image,
   'ico': Image,
   'webp': Image,
   'avif': Image,
@@ -219,32 +212,29 @@ const FILE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   'prisma': Database,
 };
 
-// Folder-specific icons
+// Folder-specific icons (no duplicate keys)
 const FOLDER_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  'src': FileCode,           // Source code
-  'app': FileType2,          // Next.js app directory
-  'pages': FileType2,        // Next.js pages
-  'components': Layers,    // React components
-  'lib': FileCode,         // Library code
-  'utils': Hash,            // Utilities
-  'hooks': Braces,           // React hooks
-  'hooks.ts': Braces,
-  'hooks.tsx': Braces,
-  'api': Globe,             // API routes
-  'routes': Globe,          // Route files
-  'styles': Palette,        // Style files
-  'assets': Image,          // Assets
-  'public': FolderOpen,     // Public folder
+  'src': FileCode,
+  'app': FileType2,
+  'pages': FileType2,
+  'components': Layers,
   'lib': FileCode,
-  'types': FileJson,        // TypeScript types
-  'test': FileText,          // Test files
+  'utils': Hash,
+  'hooks': Braces,
+  'api': Globe,
+  'routes': Globe,
+  'styles': Palette,
+  'assets': Image,
+  'public': FolderOpen,
+  'types': FileJson,
+  'test': FileText,
   'tests': FileText,
   '__tests__': FileText,
   'spec': FileText,
   'specs': FileText,
-  'stories': FileImage,     // Storybook stories
+  'stories': FileImage,
   '__mocks__': FileCode,
-  'node_modules': Folder,   // Dependencies
+  'node_modules': Folder,
   '.next': Folder,
   '.vite': Folder,
   'dist': Folder,
@@ -269,13 +259,10 @@ const FOLDER_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   'services': Cpu,
   'controllers': Cpu,
   'middleware': FileSymlink,
-  'utils': Hash,
   'helpers': Hash,
   'constants': Braces,
   'context': Braces,
   'providers': Shield,
-  'hooks': Braces,
-  'types': FileJson,
   'interfaces': FileJson,
   'models': Database,
   'schemas': Database,
@@ -283,10 +270,8 @@ const FOLDER_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   'entities': Database,
   'views': FileImage,
   'layouts': FileType2,
-  'components': Layers,
   'elements': Hash,
   'ui': Palette,
-  'styles': Palette,
   'themes': Palette,
   'colors': Palette,
   'icons': FileImage,
@@ -298,7 +283,6 @@ const FOLDER_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   'locales': Globe,
   'translations': Globe,
   'i18n': Globe,
-  'config': Settings,
 };
 
 interface FileNode {
