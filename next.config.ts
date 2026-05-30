@@ -39,13 +39,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Cache static assets aggressively (fingerprinted by Next.js)
-        source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
         // Cache public pages at the CDN level for 5 minutes, stale-revalidate for 1 hour
         source: '/((?!api|dashboard|admin|preview|auth|monitoring).*)',
         headers: [
@@ -69,6 +62,7 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-  disableLogger: true,
-  automaticVercelMonitors: true,
+  // Removed disableLogger (→ webpack.treeshake.removeDebugLogging) and
+  // automaticVercelMonitors (→ webpack.automaticVercelMonitors) because both
+  // are webpack-only. This project uses Turbopack, which ignores them.
 });

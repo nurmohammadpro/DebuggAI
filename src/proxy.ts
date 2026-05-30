@@ -11,7 +11,7 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Security headers
@@ -93,7 +93,7 @@ export async function middleware(request: NextRequest) {
             return request.cookies.get(name)?.value;
           },
           set() {
-            // middleware only reads — cookies are set by the browser client
+            // proxy only reads — cookies are set by the browser client
           },
           remove(name: string) {
             response.cookies.set(name, '', { maxAge: 0, path: '/' });

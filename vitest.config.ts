@@ -20,7 +20,7 @@ export default defineConfig({
         'src/app/**/loading.tsx',
         'src/app/**/error.tsx',
         'src/app/**/not-found.tsx',
-        'src/middleware.ts',
+        'src/proxy.ts',
       ],
       thresholds: {
         // Floor: keep coverage from regressing below current levels.

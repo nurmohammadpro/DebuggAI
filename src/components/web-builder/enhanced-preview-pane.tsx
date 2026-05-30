@@ -447,7 +447,7 @@ export function EnhancedPreviewPane({
               template={sandpackTemplate}
               theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
               files={sandpackFiles}
-              dependencies={dependencies}
+              customSetup={{ dependencies }}
               options={{
                 recompileMode: 'delayed',
                 recompileDelay: 500,
