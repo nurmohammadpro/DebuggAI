@@ -81,7 +81,7 @@ function NodeRow({
 
   if (node.type === 'file') {
     const active = activeFilePath === node.path;
-    const Icon = iconMap[getFileIconName(node.name, false) || FileText;
+    const Icon = iconMap[getFileIconName(node.name, false)] || FileText;
     const statusColor = {
       added: 'text-[var(--app-success)]',
       modified: 'text-[var(--app-warning)]',
