@@ -254,7 +254,7 @@ export function EnhancedChatPanel({
       const session = await getSession();
       const token = session.session?.access_token;
       if (token && currentThreadId) {
-        await fetch(`/api/threads/${threadId}/messages`, {
+        await fetch(`/api/threads/${currentThreadId}/messages`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
