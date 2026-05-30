@@ -9,7 +9,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useGeneration } from '@/hooks/use-generation';
-import { Send, Loader2, Sparkles, Layers, X, Copy, RotateCcw, Trash2, Check, Edit2, CheckCheck2 } from 'lucide-react';
+import { Send, Loader2, Sparkles, Layers, X, Copy, RotateCcw, Trash2, Check, Edit2, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
 import { PromptTemplates } from '@/components/visual-editor/prompt-templates';
@@ -487,7 +487,7 @@ export function EnhancedChatPanel({
                       onClick={handleSaveEdit}
                       className="h-7 px-3 rounded-[4px] text-[10px] font-medium bg-[var(--app-accent)] text-white hover:opacity-90 transition-colors flex items-center gap-1.5"
                     >
-                      <CheckCheck2 className="h-3 w-3" />
+                      <CheckCheck className="h-3 w-3" />
                       Save
                     </button>
                   </div>
