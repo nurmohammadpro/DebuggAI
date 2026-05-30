@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 import { csrfHeader } from '@/lib/csrf-client';
 
 export async function createProjectFromGeneration({
@@ -17,7 +17,7 @@ export async function createProjectFromGeneration({
   const projectKey = crypto.randomUUID();
   const code = starterCode(name.trim());
 
-  const token = providedToken ?? (await supabase.auth.getSession()).data.session?.access_token ?? null;
+  const token = providedToken ?? (await getSession()).session?.access_token ?? null;
   if (!token) throw new Error('Please sign in again');
 
   const res = await fetch('/api/projects', {
