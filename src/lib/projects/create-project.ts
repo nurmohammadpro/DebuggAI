@@ -6,17 +6,18 @@ export async function createProjectFromGeneration({
   stack,
   prompt,
   createdFrom = 'dashboard',
+  token: providedToken,
 }: {
   name: string;
   stack: string;
   prompt: string;
   createdFrom?: string;
+  token?: string;
 }) {
   const projectKey = crypto.randomUUID();
   const code = starterCode(name.trim());
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token;
+  const token = providedToken ?? (await supabase.auth.getSession()).data.session?.access_token ?? null;
   if (!token) throw new Error('Please sign in again');
 
   const res = await fetch('/api/projects', {

@@ -54,6 +54,7 @@ export function CreateProjectDialog({
         stack: selectedStack,
         prompt: `Create a Next.js App Router app: ${name.trim()}`,
         createdFrom: 'dashboard-dialog',
+        token: session.access_token,
       });
 
       const clientDurationMs = Math.round(performance.now() - startedAt);
