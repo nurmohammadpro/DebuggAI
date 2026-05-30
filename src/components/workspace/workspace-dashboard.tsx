@@ -15,7 +15,7 @@ import { WorkspaceMobileTabs } from '@/components/workspace/workspace-mobile-tab
 import { toast } from 'sonner';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
-import { ChatPanel } from '@/components/web-builder/chat-panel';
+import { EnhancedChatPanel } from '@/components/web-builder/enhanced-chat-panel';
 import { Panel } from '@/components/panel/panel';
 import { Menu, MoreVertical, PanelRight, Play, Rocket, Save, Share2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -311,7 +311,7 @@ export function WorkspaceDashboard() {
         <div className="flex-1 min-h-0 flex min-w-0">
           {/* Primary conversation surface */}
           <section className="flex-1 min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0">
-            <ChatPanel
+            <EnhancedChatPanel
               chromeless
               mode="build"
               className="flex-1 min-h-0 rounded-none border-0 bg-transparent"

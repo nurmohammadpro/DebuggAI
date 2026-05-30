@@ -182,7 +182,10 @@ export function EnhancedPreviewPane({
           const dep = match[1];
           // Only include npm packages (not relative imports)
           if (!dep.startsWith('.') && !dep.startsWith('/')) {
-            const packageName = dep.split('/')[0]; // Get root package name
+            const parts = dep.split('/');
+            const packageName = dep.startsWith('@') && parts.length > 1 
+              ? `${parts[0]}/${parts[1]}` 
+              : parts[0];
             if (!foundDeps[packageName]) {
               // Use known version or default to latest
               foundDeps[packageName] = commonPackages[packageName] || 'latest';

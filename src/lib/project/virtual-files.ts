@@ -37,14 +37,16 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 
   // 1) Markdown code fences with optional filename=...
   const fenceRegex =
-    /```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/g;
+    /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
   for (const match of raw.matchAll(fenceRegex)) {
-    const language = match[1] || undefined;
-    const hintedName = match[2] || undefined;
-    const code = (match[3] || '').trimEnd();
+    const precedingName = match[1] || undefined;
+    const language = match[2] || undefined;
+    const hintedName = match[3] || undefined;
+    const code = (match[4] || '').trimEnd();
     if (!code) continue;
 
     const extractedName =
+      precedingName ||
       hintedName ||
       extractLeadingFilenameComment(code) ||
       extractFileHeaderMarker(code);
