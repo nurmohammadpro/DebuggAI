@@ -1,7 +1,7 @@
 'use client';
 
 import { CodeEditor } from '@/components/web-builder/code-editor';
-import { PreviewPane } from '@/components/web-builder/preview-pane';
+import { EnhancedPreviewPane } from '@/components/web-builder/enhanced-preview-pane';
 import { WorkspaceEditorTabs } from '@/components/workspace/workspace-editor-tabs';
 import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
@@ -208,7 +208,7 @@ export function WorkspaceEditor({
       {/* Content area */}
       <div className="flex-1 min-h-0 h-full">
         {editorView === 'preview' ? (
-          <PreviewPane
+          <EnhancedPreviewPane
             height="100%"
             chromeless
             className="h-full"

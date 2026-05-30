@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WorkspaceFileTreeView } from '@/components/workspace/workspace-file-tree-view';
 import { WorkspaceVersionsList } from '@/components/workspace/workspace-versions-list';
+import { ProfessionalFileTree } from '@/components/workspace/professional-file-tree';
 import { useGenerationStore } from '@/store/generation-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
 
@@ -89,6 +90,125 @@ export function WorkspaceFileTree({
     }
   };
 
+  const handleFileSelect = (path: string) => {
+    useGenerationStore.setState({ activeFilePath: path });
+  };
+
+  const handleCreateFile = (path: string, type: 'file' | 'folder') => {
+    const state = useGenerationStore.getState();
+    if (!state.files) {
+      toast.error('No project files loaded');
+      return;
+    }
+
+    if (type === 'file') {
+      if (state.files.files[path]) {
+        toast.error('File already exists');
+        return;
+      }
+      useGenerationStore.setState({
+        files: {
+          ...state.files,
+          files: {
+            ...state.files.files,
+            [path]: { path, content: '', status: 'added' as const },
+          },
+        },
+        activeFilePath: path,
+      });
+    } else {
+      const markerPath = `${path}/.gitkeep`;
+      if (state.files.files[markerPath]) {
+        toast.error('Folder already exists');
+        return;
+      }
+      useGenerationStore.setState({
+        files: {
+          ...state.files,
+          files: {
+            ...state.files.files,
+            [markerPath]: { path: markerPath, content: '', status: 'added' as const },
+          },
+        },
+      });
+    }
+  };
+
+  const handleRename = (oldPath: string, newPath: string) => {
+    const state = useGenerationStore.getState();
+    if (!state.files) {
+      toast.error('No project files loaded');
+      return;
+    }
+
+    const file = state.files.files[oldPath];
+    if (!file) return;
+
+    const newFiles = { ...state.files.files };
+    delete newFiles[oldPath];
+    newFiles[newPath] = { ...file, path: newPath };
+
+    useGenerationStore.setState({
+      files: {
+        ...state.files,
+        files: newFiles,
+      },
+      activeFilePath: state.activeFilePath === oldPath ? newPath : state.activeFilePath,
+    });
+  };
+
+  const handleDelete = (path: string) => {
+    const state = useGenerationStore.getState();
+    if (!state.files) {
+      toast.error('No project files loaded');
+      return;
+    }
+
+    const newFiles = { ...state.files.files };
+    delete newFiles[path];
+
+    useGenerationStore.setState({
+      files: {
+        ...state.files,
+        files: newFiles,
+      },
+      activeFilePath: state.activeFilePath === path ? null : state.activeFilePath,
+    });
+  };
+
+  const handleDuplicate = (path: string) => {
+    const state = useGenerationStore.getState();
+    if (!state.files) {
+      toast.error('No project files loaded');
+      return;
+    }
+
+    const file = state.files.files[path];
+    if (!file) return;
+
+    const parts = path.split('/');
+    const fileName = parts[parts.length - 1];
+    const dotIndex = fileName?.lastIndexOf('.');
+    const baseName = dotIndex && dotIndex > 0 ? fileName?.slice(0, dotIndex) : fileName;
+    const ext = dotIndex && dotIndex > 0 ? fileName?.slice(dotIndex) : '';
+    const newPath = path.replace(/(\.[^.]+)?$/, ` (copy)${ext || ''}`);
+
+    if (state.files.files[newPath]) {
+      toast.error('File already exists');
+      return;
+    }
+
+    useGenerationStore.setState({
+      files: {
+        ...state.files,
+        files: {
+          ...state.files.files,
+          [newPath]: { ...file, path: newPath, status: 'added' as const },
+        },
+      },
+    });
+  };
+
   return (
     <aside
       className="bg-[var(--app-panel)] flex flex-col min-w-[220px]"
@@ -106,21 +226,21 @@ export function WorkspaceFileTree({
                 title="New file"
                 onClick={handleNewFile}
               >
-                <FilePlus className="h-4 w-4 text-[var(--app-text-dim)]" />
+                <FilePlus className="h-4 w-4 text-[var(--app-text-muted)]" />
               </button>
               <button
                 className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="New folder"
                 onClick={handleNewFolder}
               >
-                <FolderPlus className="h-4 w-4 text-[var(--app-text-dim)]" />
+                <FolderPlus className="h-4 w-4 text-[var(--app-text-muted)]" />
               </button>
               <button
                 className="h-8 w-8 rounded-[6px] hover:bg-[var(--app-surface)] flex items-center justify-center transition-colors"
                 title="Refresh"
                 onClick={handleRefresh}
               >
-                <RefreshCw className="h-4 w-4 text-[var(--app-text-dim)]" />
+                <RefreshCw className="h-4 w-4 text-[var(--app-text-muted)]" />
               </button>
             </>
           )}
@@ -133,7 +253,7 @@ export function WorkspaceFileTree({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search files..."
-            className="w-full h-9 rounded-[6px] bg-[var(--app-panel-2)] border-0 px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+            className="w-full h-9 rounded-[6px] bg-[var(--app-panel-2)] border-0 px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-muted)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
           />
         </div>
       )}
@@ -151,8 +271,14 @@ export function WorkspaceFileTree({
                 Versions
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="files">
-              <WorkspaceFileTreeView />
+            <TabsContent value="files" className="m-0">
+              <ProfessionalFileTree
+                onFileSelect={handleFileSelect}
+                onCreateFile={handleCreateFile}
+                onRename={handleRename}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+              />
             </TabsContent>
             <TabsContent value="versions">
               <WorkspaceVersionsList />

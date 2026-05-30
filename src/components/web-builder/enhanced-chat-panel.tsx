@@ -9,7 +9,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useGeneration } from '@/hooks/use-generation';
-import { Send, Loader2, Sparkles, Layers, X } from 'lucide-react';
+import { Send, Loader2, Sparkles, Layers, X, Copy, RotateCcw, Trash2, Check, Edit2, CheckCheck2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
 import { PromptTemplates } from '@/components/visual-editor/prompt-templates';
@@ -42,6 +42,9 @@ export function EnhancedChatPanel({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
@@ -206,6 +209,101 @@ export function EnhancedChatPanel({
     }
   };
 
+  const handleCopyMessage = async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      toast.success('Message copied');
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch {
+      toast.error('Failed to copy message');
+    }
+  };
+
+  const handleRetryMessage = async (originalPrompt: string) => {
+    setInput(originalPrompt);
+    setMessages((prev) => prev.filter(m => m.role !== 'assistant' || !m.content.startsWith('Error')));
+    await new Promise(resolve => setTimeout(resolve, 100));
+    handleSend();
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages((prev) => prev.filter(m => m.id !== messageId));
+    toast.success('Message deleted');
+  };
+
+  const handleEditMessage = (messageId: string, content: string) => {
+    setEditingMessageId(messageId);
+    setEditingContent(content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMessageId || !editingContent.trim()) return;
+
+    // Update the message in the list
+    setMessages((prev) =>
+      prev.map(m =>
+        m.id === editingMessageId
+          ? { ...m, content: editingContent }
+          : m
+      )
+    );
+
+    // Sync to server
+    try {
+      const session = await getSession();
+      const token = session.session?.access_token;
+      if (token && currentThreadId) {
+        await fetch(`/api/threads/${threadId}/messages`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            role: 'user',
+            content: editingContent,
+            metadata: { source: 'chat-panel', edited: true },
+          }),
+        });
+      }
+      toast.success('Message updated');
+    } catch {
+      toast.error('Failed to update message');
+    }
+
+    setEditingMessageId(null);
+    setEditingContent('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent('');
+  };
+
+  const handleRegenerate = async () => {
+    const lastUserMessage = messages
+      .filter(m => m.role === 'user')
+      .pop();
+
+    if (!lastUserMessage) {
+      toast.error('No message to regenerate');
+      return;
+    }
+
+    // Remove the last assistant message
+    setMessages((prev) => {
+      const lastAssistantIndex = prev.findLastIndex(m => m.role === 'assistant');
+      if (lastAssistantIndex !== -1) {
+        return prev.slice(0, lastAssistantIndex);
+      }
+      return prev;
+    });
+
+    // Retry with the same prompt
+    await handleRetryMessage(lastUserMessage.content);
+  };
+
   const starterPrompts =
     mode === 'debug'
       ? [
@@ -287,41 +385,143 @@ export function EnhancedChatPanel({
           </div>
         )}
 
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300",
-              message.role === 'user' ? 'items-end' : 'items-start'
-            )}
-          >
+        {messages.map((message, index) => {
+          const isLastMessage = index === messages.length - 1;
+          const canRegenerate = message.role === 'assistant' && isLastMessage && !isLoading;
+
+          return (
             <div
+              key={message.id}
               className={cn(
-                "max-w-[85%] rounded-[6px] px-4 py-3",
-                message.role === 'user'
-                  ? 'bg-[var(--app-accent)]/10 text-[var(--app-text)]'
-                  : 'bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]'
+                "flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300 group",
+                message.role === 'user' ? 'items-end' : 'items-start'
               )}
             >
-              {message.role === 'user' ? (
-                <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
-                  {message.content}
-                </p>
+              {/* Message Actions */}
+              <div className={cn(
+                "flex items-center gap-1 mb-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                message.role === 'user' ? 'justify-end' : 'justify-start'
+              )}>
+                {message.role === 'assistant' && (
+                  <>
+                    <button
+                      onClick={() => handleCopyMessage(message.content, message.id)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      title="Copy message"
+                    >
+                      {copiedMessageId === message.id ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </button>
+                    {canRegenerate && (
+                      <button
+                        onClick={handleRegenerate}
+                        className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                        title="Regenerate response"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                      </button>
+                    )}
+                  </>
+                )}
+                {message.role === 'user' && (
+                  <>
+                    <button
+                      onClick={() => handleEditMessage(message.id, message.content)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      title="Edit message"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleRetryMessage(message.content)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      title="Retry with this message"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => handleDeleteMessage(message.id)}
+                  className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors"
+                  title="Delete message"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+
+              {/* Message Content */}
+              {editingMessageId === message.id ? (
+                <div className={cn(
+                  "max-w-[85%] rounded-[6px] px-4 py-3 border-2 border-[var(--app-accent)]",
+                  message.role === 'user'
+                    ? 'bg-[var(--app-accent)]/10'
+                    : 'bg-[var(--app-surface)]'
+                )}>
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      } else if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="w-full bg-transparent text-[13px] leading-relaxed whitespace-pre-wrap break-words resize-none outline-none text-[var(--app-text)]"
+                    rows={Math.max(2, editingContent.split('\n').length)}
+                    autoFocus
+                  />
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="h-7 px-3 rounded-[4px] text-[10px] font-medium bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="h-7 px-3 rounded-[4px] text-[10px] font-medium bg-[var(--app-accent)] text-white hover:opacity-90 transition-colors flex items-center gap-1.5"
+                    >
+                      <CheckCheck2 className="h-3 w-3" />
+                      Save
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <div className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
-                  {message.content || (
-                    <span className="text-[var(--app-text-muted)] italic">
-                      Code blocks extracted to code pane →
-                    </span>
+                <div
+                  className={cn(
+                    "max-w-[85%] rounded-[6px] px-4 py-3",
+                    message.role === 'user'
+                      ? 'bg-[var(--app-accent)]/10 text-[var(--app-text)]'
+                      : 'bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text)]'
+                  )}
+                >
+                  {message.role === 'user' ? (
+                    <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
+                      {message.content}
+                    </p>
+                  ) : (
+                    <div className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
+                      {message.content || (
+                        <span className="text-[var(--app-text-muted)] italic">
+                          Code blocks extracted to code pane →
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
+              <span className="text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1 font-medium">
+                {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
-            <span className="text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1 font-medium">
-              {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Streaming response - without code blocks */}
         {isLoading && accumulated && (
