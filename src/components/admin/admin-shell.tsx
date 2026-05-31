@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Users, CreditCard, Activity, Menu, X, PanelLeftClose, PanelLeftOpen, LogOutIcon, Play } from 'lucide-react';
+import { BarChart3, Users, CreditCard, Activity, Menu, X, PanelLeftClose, PanelLeftOpen, LogOutIcon, Play, Bot } from 'lucide-react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useSessionStore } from '@/store/session-store';
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/dashboard/admin/credits', label: 'Credits', icon: CreditCard, description: 'Transactions and balances' },
   { href: '/dashboard/admin/runs', label: 'Runs', icon: Play, description: 'Agent runs and job inspection' },
   { href: '/dashboard/admin/monitoring', label: 'Monitoring', icon: Activity, description: 'System health and metrics' },
+  { href: '/dashboard/admin/ai', label: 'AI Provider', icon: Bot, description: 'LLM API settings and keys' },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

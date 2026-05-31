@@ -37,6 +37,13 @@ function extractPlainChatText(full: string) {
   return out.join('\n').trim();
 }
 
+type DbAiProviderConfig = {
+  enabled: boolean;
+  base_url: string;
+  model: string;
+  api_key: string | null;
+};
+
 interface GenerateRequest {
   threadId: string;
   prompt: string;
@@ -77,6 +84,36 @@ serve(async (req) => {
         headers: { Authorization: authHeader },
       },
     });
+
+    // Admin-managed AI provider config (service role).
+    // Falls back to env vars for backwards compatibility.
+    let aiApiKey = (Deno.env.get('AI_API_KEY') || '').trim();
+    let aiBaseUrl = (Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1').trim();
+    let aiModel = (Deno.env.get('AI_MODEL') || 'deepseek-chat').trim();
+
+    try {
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+      if (serviceKey) {
+        const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+        const { data } = await supabaseAdmin
+          .from('ai_provider_config')
+          .select('enabled, base_url, model, api_key')
+          .eq('key', 'primary')
+          .maybeSingle();
+
+        const cfg = data as DbAiProviderConfig | null;
+        if (cfg && cfg.enabled) {
+          const base = String(cfg.base_url || '').trim();
+          const model = String(cfg.model || '').trim();
+          const key = typeof cfg.api_key === 'string' ? cfg.api_key.trim() : '';
+          if (base) aiBaseUrl = base;
+          if (model) aiModel = model;
+          if (key) aiApiKey = key;
+        }
+      }
+    } catch {
+      // best-effort: keep env fallback
+    }
 
     // Verify user is authenticated
     const {
@@ -204,11 +241,7 @@ After all code blocks, add a short bullet list of the key files and what they do
     ];
 
     // 5. Call AI API with streaming
-    const apiKey = Deno.env.get('AI_API_KEY');
-    const baseUrl = Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1';
-    const model = Deno.env.get('AI_MODEL') || 'deepseek-chat';
-
-    if (!apiKey) {
+    if (!aiApiKey) {
       return new Response(
         JSON.stringify({ error: 'AI API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -235,7 +268,7 @@ After all code blocks, add a short bullet list of the key files and what they do
         objective: 'generate',
         idempotency_key: idempotencyKey || null,
         started_at: new Date().toISOString(),
-        metadata: { model, credits: creditsToSpend },
+        metadata: { model: aiModel, credits: creditsToSpend },
       })
       .select('id')
       .single();
@@ -269,14 +302,14 @@ After all code blocks, add a short bullet list of the key files and what they do
       });
     }
 
-    const aiResponse = await fetch(`${baseUrl}/chat/completions`, {
+    const aiResponse = await fetch(`${aiBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${aiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
+        model: aiModel,
         messages: aiMessages,
         stream: true,
         temperature: 0.7,
@@ -371,7 +404,7 @@ After all code blocks, add a short bullet list of the key files and what they do
               user_id: user.id,
               role: 'assistant',
               content: chatText || 'Generated files → code pane',
-              model,
+              model: aiModel,
               tokens_in: usage?.input_tokens ?? null,
               tokens_out: usage?.output_tokens ?? null,
               metadata: { source: 'generate', run_id: runId },
@@ -387,7 +420,7 @@ After all code blocks, add a short bullet list of the key files and what they do
             await supabase.from('ai_usage_ledger').insert({
               user_id: user.id,
               run_id: runId,
-              model,
+              model: aiModel,
               input_tokens: usage?.input_tokens ?? null,
               output_tokens: usage?.output_tokens ?? null,
               cost_usd: null,
@@ -417,7 +450,7 @@ After all code blocks, add a short bullet list of the key files and what they do
             await supabase.from('audit_events').insert({
               user_id: user.id,
               action: 'run.completed',
-              details: { source: 'generate', credits: creditsToSpend, model },
+              details: { source: 'generate', credits: creditsToSpend, model: aiModel },
               target_type: 'run',
               target_id: runId,
             });
