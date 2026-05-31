@@ -19,6 +19,32 @@ export interface SandpackBundle {
   template: 'react' | 'react-ts';
 }
 
+// Sandpack runs in the browser. Exclude Node-only and build-time dependencies that
+// frequently appear in generated Next.js projects (Tailwind/PostCSS/etc.) and
+// crash the in-browser bundler with missing Node builtins like `fs`.
+const SANDBACK_BROWSER_BLOCKED_DEPS = new Set<string>([
+  'next',
+  'typescript',
+  'eslint',
+  'eslint-config-next',
+  // Tailwind / PostCSS toolchain (Node-only)
+  'tailwindcss',
+  '@tailwindcss/postcss',
+  'postcss',
+  'autoprefixer',
+  // Common transitive offenders when Tailwind/PostCSS slip in
+  '@swc/helpers',
+  'browserslist',
+  'caniuse-lite',
+]);
+
+function shouldIncludeDepForSandpack(name: string): boolean {
+  if (!name) return false;
+  if (SANDBACK_BROWSER_BLOCKED_DEPS.has(name)) return false;
+  if (name.startsWith('@types/')) return false;
+  return true;
+}
+
 // Known Next.js packages that should be stubbed for Sandpack
 const NEXTJS_STUBS: Record<string, string> = {
   'next/link': `
@@ -259,6 +285,7 @@ function detectDepsFromCode(code: string): Record<string, string> {
 
       // Skip Next.js itself (we stub it)
       if (pkgName === 'next') continue;
+      if (!shouldIncludeDepForSandpack(pkgName)) continue;
 
       deps[pkgName] = KNOWN_VERSIONS[pkgName] || 'latest';
     }
@@ -385,9 +412,9 @@ export default function App() {
         const pkg = JSON.parse(sanitized);
         const pkgDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
         for (const [name, version] of Object.entries(pkgDeps)) {
-          if (name !== 'next' && typeof version === 'string') {
-            allDeps[name] = version;
-          }
+          if (typeof version !== 'string') continue;
+          if (!shouldIncludeDepForSandpack(name)) continue;
+          allDeps[name] = version;
         }
       } catch { /* ignore */ }
       continue;
