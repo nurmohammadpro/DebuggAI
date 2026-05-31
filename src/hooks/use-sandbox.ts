@@ -199,8 +199,18 @@ export function useSandbox(options: UseSandboxOptions = {}) {
         });
 
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || 'Failed to create sandbox');
+          // In production, upstreams (edge/CDN) sometimes return non-JSON error bodies.
+          // Prefer parsing JSON, but fall back to plain text so callers can still
+          // detect known messages like "Docker is required" / "Live preview is temporarily disabled".
+          let message = 'Failed to create sandbox';
+          try {
+            const err = await res.json();
+            if (err && typeof err.error === 'string' && err.error.trim()) message = err.error.trim();
+          } catch {
+            const text = await res.text().catch(() => '');
+            if (text.trim()) message = text.trim();
+          }
+          throw new Error(message);
         }
 
         const data = await res.json();

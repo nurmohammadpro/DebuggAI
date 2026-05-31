@@ -275,7 +275,10 @@ export function WorkspaceEditor({
     if (
       sandbox.error &&
       (sandbox.error.includes('Docker is required') ||
-        sandbox.error.includes('Live preview is temporarily disabled'))
+        sandbox.error.includes('Live preview is temporarily disabled') ||
+        sandbox.error.includes('Web Builder requires a Pro plan') ||
+        sandbox.error.toLowerCase().includes('insufficient') ||
+        sandbox.error.includes('Sandbox not available'))
     ) {
       setDockerFallback(true);
       sandbox.clearError();
