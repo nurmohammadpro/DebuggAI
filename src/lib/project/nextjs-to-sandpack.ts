@@ -121,6 +121,13 @@ export const AMP_STATE = '__NEXT_AMP_INITED';
 `,
 };
 
+function toSandpackNodeModulesPath(moduleSpecifier: string): string {
+  // Sandpack resolves bare imports from `/node_modules/**`.
+  // Example: `import Link from "next/link"` → `/node_modules/next/link.js`
+  const clean = moduleSpecifier.replace(/^\//, '');
+  return `/node_modules/${clean}.js`;
+}
+
 // Common npm package versions known to work well in Sandpack
 const KNOWN_VERSIONS: Record<string, string> = {
   'react': '^18.3.1',
@@ -170,14 +177,46 @@ const KNOWN_VERSIONS: Record<string, string> = {
 };
 
 /**
+ * Rewrite @/ path alias imports to relative paths for Sandpack.
+ * Next.js @/ maps to the project root (./ or src/), which in Sandpack
+ * corresponds to the root filesystem (/).
+ */
+function rewriteAliasImports(code: string, sandpackPath: string): string {
+  // Compute the relative path from this file's directory to the Sandpack root
+  const dir = sandpackPath.includes('/') ? sandpackPath.substring(0, sandpackPath.lastIndexOf('/')) : '';
+  const depth = dir.split('/').filter(Boolean).length;
+  const relativeRoot = depth === 0 ? './' : '../'.repeat(depth);
+
+  // Rewrite static imports: from '@/...'
+  let result = code.replace(
+    /from\s+['"]@\/([^'"]+)['"]/g,
+    (_match, importPath) => `from '${relativeRoot}${importPath}'`
+  );
+
+  // Rewrite dynamic imports: import('@/...')
+  result = result.replace(
+    /import\s*\(\s*['"]@\/([^'"]+)['"]\s*\)/g,
+    (_match, importPath) => `import('${relativeRoot}${importPath}')`
+  );
+
+  // Rewrite require: require('@/...')
+  result = result.replace(
+    /require\s*\(\s*['"]@\/([^'"]+)['"]\s*\)/g,
+    (_match, importPath) => `require('${relativeRoot}${importPath}')`
+  );
+
+  return result;
+}
+
+/**
  * Sanitize a code file by removing/replacing Next.js-specific constructs
  */
-function sanitizeCode(code: string): string {
+function sanitizeCode(code: string, sandpackPath?: string): string {
   // Remove 'use client' / 'use server' directives (they're just strings, harmless but messy)
   let result = code.replace(/^['"]use (client|server)['"];?\s*\n?/gm, '');
 
-  // Replace import 'next/...' with nothing (stubs are added as separate files)
-  // We DON'T remove these — we provide stub files instead via aliases
+  // We DON'T remove `next/*` imports. Instead we provide compatible stubs under
+  // `/node_modules/next/**` so Sandpack can resolve them.
 
   // Replace metadata exports (Next.js specific, not needed for preview)
   result = result.replace(/^export\s+(?:const|let)\s+metadata\s*=\s*\{[\s\S]*?\};\s*\n?/gm, '');
@@ -187,6 +226,11 @@ function sanitizeCode(code: string): string {
 
   // Strip generateStaticParams
   result = result.replace(/^export\s+(?:async\s+)?function\s+generateStaticParams[\s\S]*?\}\s*\n?/gm, '');
+
+  // Rewrite @/ path alias imports to relative paths for Sandpack
+  if (sandpackPath) {
+    result = rewriteAliasImports(result, sandpackPath);
+  }
 
   return result.trim();
 }
@@ -293,11 +337,10 @@ export default function App() {
   const files = project.files;
   const isTs = Object.keys(files).some((p) => p.endsWith('.ts') || p.endsWith('.tsx'));
 
-  // Add Next.js stub files
+  // Add Next.js stub files (as `/node_modules/next/**` so bare imports resolve)
   for (const [stubPath, stubCode] of Object.entries(NEXTJS_STUBS)) {
-    // Convert 'next/link' → '/next/link.js' for Sandpack file-based resolution
-    const sandpackPath = '/' + stubPath.replace(/\//g, '__') + '.js';
-    result[sandpackPath] = { code: stubCode };
+    const sandpackPath = toSandpackNodeModulesPath(stubPath);
+    result[sandpackPath] = { code: stubCode.trim() };
   }
 
   // Process each project file
@@ -309,9 +352,15 @@ export default function App() {
     if (file.status === 'deleted') continue;
 
     const normalized = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
-    const sanitized = sanitizeCode(file.content);
 
-    // Detect deps from this file
+    // Pre-compute the Sandpack path so we can rewrite @/ path alias imports
+    const sandpackPath = '/' + normalized
+      .replace(/^src\/app\//, 'app/')
+      .replace(/^src\//, '');
+
+    const sanitized = sanitizeCode(file.content, sandpackPath);
+
+    // Detect deps from this file (only npm packages, not @/ aliases or relative paths)
     const fileDeps = detectDepsFromCode(sanitized);
     Object.assign(allDeps, fileDeps);
 
@@ -374,10 +423,6 @@ export default function App() {
     }
 
     // Map src/components → /components
-    const sandpackPath = '/' + normalized
-      .replace(/^src\/app\//, 'app/')
-      .replace(/^src\//, '');
-
     result[sandpackPath] = { code: sanitized };
 
     if (normalized.startsWith('components/') || normalized.startsWith('src/components/')) {
@@ -393,7 +438,8 @@ export default function App() {
     ];
     for (const candidate of candidates) {
       if (files[candidate]) {
-        const sanitized = sanitizeCode(files[candidate].content);
+        const candidateSandpackPath = '/' + candidate.replace(/^src\//, '');
+        const sanitized = sanitizeCode(files[candidate].content, candidateSandpackPath);
         result[isTs ? '/App.tsx' : '/App.jsx'] = { code: sanitized };
         appPageContent = sanitized;
         hasAppPage = true;
