@@ -10,7 +10,7 @@ export type VirtualProjectFiles = {
   files: Record<string, VirtualFile>;
 };
 
-const DEFAULT_ENTRY = 'src/App.tsx';
+const DEFAULT_ENTRY = 'app/page.tsx';
 
 export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): VirtualProjectFiles {
   const files = new Map<string, VirtualFile>();

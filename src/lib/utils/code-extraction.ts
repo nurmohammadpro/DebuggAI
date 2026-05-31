@@ -25,16 +25,18 @@ export function extractCodeBlocks(content: string): ParsedContent {
   let cleanedContent = content;
 
   // Regex to match code blocks with optional language and filename
-  // Matches: ```language filename="..." or ```language or just ```
-  const codeBlockRegex = /```(\w+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/g;
+  const codeBlockRegex = /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
 
   let matchIndex = 0;
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
-    const language = match[1] || 'text';
-    const filename = match[2] || undefined;
-    const code = match[3] || '';
+    const precedingName = match[1] || undefined;
+    const language = match[2] || 'text';
+    const filenameAttr = match[3] || undefined;
+    const code = match[4] || '';
+
+    const filename = precedingName || filenameAttr || extractFilenameFromCodeBlock(code) || generateDefaultFilename(language, matchIndex);
 
     // Generate a unique ID for this code block
     const blockId = `code-block-${matchIndex}-${Date.now()}`;
