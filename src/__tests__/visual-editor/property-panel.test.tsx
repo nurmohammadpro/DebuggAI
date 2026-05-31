@@ -394,7 +394,7 @@ describe('PropertyPanel', () => {
     expect(onUpdateProps).toHaveBeenCalledWith('btn-1', expect.objectContaining({ text: 'Submit' }));
   });
 
-  it('calls onUpdateProps when a select prop changes', () => {
+  it('calls onUpdateProps when a select prop changes', async () => {
     const button = createComponent('button', { id: 'btn-1' });
     render(
       <PropertyPanel
@@ -408,9 +408,12 @@ describe('PropertyPanel', () => {
       />
     );
 
-    // Find the variant select and change it
-    const variantSelect = screen.getByDisplayValue('primary');
-    fireEvent.change(variantSelect, { target: { value: 'secondary' } });
+    // ReactSelect renders the selected value as visible text
+    // Open the dropdown by mousedown on the value text
+    fireEvent.mouseDown(screen.getByText('primary'));
+
+    // Click the 'secondary' option
+    fireEvent.click(screen.getByText('secondary'));
 
     expect(onUpdateProps).toHaveBeenCalledWith('btn-1', expect.objectContaining({ variant: 'secondary' }));
   });
@@ -606,9 +609,8 @@ describe('PropertyPanel', () => {
       />
     );
 
-    const sizeSelect = screen.getByDisplayValue('md');
-    expect(sizeSelect).toBeInTheDocument();
-    expect(sizeSelect.tagName).toBe('SELECT');
+    // ReactSelect renders the selected value as visible text
+    expect(screen.getByText('md')).toBeInTheDocument();
   });
 
   // ── Level Select for Heading ──
@@ -627,10 +629,16 @@ describe('PropertyPanel', () => {
       />
     );
 
-    // Check that the select has H1 option
+    // The select title says 'Level' — verify the section renders
+    expect(screen.getByText('Level')).toBeInTheDocument();
+
+    // Open the select dropdown so options are rendered
+    fireEvent.mouseDown(screen.getByText('H2'));
+
+    // H1 and H6 only appear as menu options (control shows H2)
     expect(screen.getByText('H1')).toBeInTheDocument();
-    // Should have H2 as a selectable option too
-    expect(screen.getByText('H2')).toBeInTheDocument();
+    // H2 matches both the control value and the menu option
+    expect(screen.getAllByText('H2').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('H6')).toBeInTheDocument();
   });
 
@@ -732,7 +740,7 @@ describe('PropertyPanel', () => {
 
   // ── Props Preserve Existing Values ──
 
-  it('preserves existing props when updating a single prop', () => {
+  it('preserves existing props when updating a single prop', async () => {
     const button = createComponent('button', {
       id: 'btn-1',
       props: { text: 'Submit', variant: 'primary', size: 'lg', disabled: true },
@@ -749,9 +757,11 @@ describe('PropertyPanel', () => {
       />
     );
 
-    // Change the variant
-    const variantSelect = screen.getByDisplayValue('primary');
-    fireEvent.change(variantSelect, { target: { value: 'danger' } });
+    // Open the variant select dropdown
+    fireEvent.mouseDown(screen.getByText('primary'));
+
+    // Select 'danger' from the dropdown
+    fireEvent.click(screen.getByText('danger'));
 
     // Should preserve all other props
     expect(onUpdateProps).toHaveBeenCalledWith('btn-1', {

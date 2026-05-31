@@ -93,6 +93,32 @@ const dynamic = (fn, opts) => {
 };
 export default dynamic;
 `,
+  'next/script': `
+import React from 'react';
+const Script = ({ src, strategy, onLoad, children, ...rest }) => {
+  React.useEffect(() => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = strategy !== 'lazyOnload';
+    if (onLoad) script.onload = onLoad;
+    document.body.appendChild(script);
+    return () => { document.body.removeChild(script); };
+  }, [src]);
+  return children ? <>{children}</> : null;
+};
+export default Script;
+`,
+  'next/head': `
+import React from 'react';
+const Head = ({ children }) => <>{children}</>;
+export default Head;
+export const defaultHead = () => null;
+`,
+  'next/amp': `
+export const useAmp = () => false;
+export const withAmp = (Component) => Component;
+export const AMP_STATE = '__NEXT_AMP_INITED';
+`,
 };
 
 // Common npm package versions known to work well in Sandpack

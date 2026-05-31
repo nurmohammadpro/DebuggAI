@@ -19,18 +19,21 @@ export interface ParsedContent {
 
 /**
  * Extract code blocks from markdown content
+ *
+ * Uses separate regex instances for extraction and replacement to avoid
+ * the global regex state issue where .exec() modifies lastIndex.
+ * When all content is code blocks (no prose), generates a brief summary.
  */
 export function extractCodeBlocks(content: string): ParsedContent {
   const codeBlocks: CodeBlock[] = [];
-  let cleanedContent = content;
 
-  // Regex to match code blocks with optional language and filename
-  const codeBlockRegex = /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
+  // ── Extract code blocks (separate regex instance) ────────────────────────
+  const extractRegex = /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
 
   let matchIndex = 0;
   let match;
 
-  while ((match = codeBlockRegex.exec(content)) !== null) {
+  while ((match = extractRegex.exec(content)) !== null) {
     const precedingName = match[1] || undefined;
     const language = match[2] || 'text';
     const filenameAttr = match[3] || undefined;
@@ -38,7 +41,6 @@ export function extractCodeBlocks(content: string): ParsedContent {
 
     const filename = precedingName || filenameAttr || extractFilenameFromCodeBlock(code) || generateDefaultFilename(language, matchIndex);
 
-    // Generate a unique ID for this code block
     const blockId = `code-block-${matchIndex}-${Date.now()}`;
 
     codeBlocks.push({
@@ -52,15 +54,33 @@ export function extractCodeBlocks(content: string): ParsedContent {
     matchIndex++;
   }
 
-  // Remove code blocks from the content for chat display
-  cleanedContent = content.replace(codeBlockRegex, '');
+  // ── Remove code blocks from content (fresh regex, untainted lastIndex) ───
+  const replaceRegex = /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```[a-zA-Z0-9_-]*(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n[\s\S]*?```/gi;
+  let cleanedContent = content.replace(replaceRegex, '');
 
-  // Clean up extra whitespace
+  // ── Clean up whitespace (preserve single blank lines between paragraphs) ──
   cleanedContent = cleanedContent
     .split('\n')
-    .filter(line => line.trim())
+    .map(line => line.trimEnd())
     .join('\n')
+    .replace(/\n{3,}/g, '\n\n') // max two consecutive newlines
+    .replace(/^\n+|\n+$/g, '')   // trim leading/trailing
     .trim();
+
+  // ── If all content was code blocks, generate a brief summary ─────────────
+  if (!cleanedContent && codeBlocks.length > 0) {
+    const filenames = codeBlocks
+      .map(b => b.filename)
+      .filter(Boolean)
+      .slice(0, 5);
+
+    let summary = `Generated **${codeBlocks.length} file${codeBlocks.length !== 1 ? 's' : ''}**`;
+    if (filenames.length > 0) {
+      const fileList = filenames.map(f => `\`${f}\``).join(', ');
+      summary += `: ${fileList}`;
+    }
+    cleanedContent = summary;
+  }
 
   return {
     text: cleanedContent,

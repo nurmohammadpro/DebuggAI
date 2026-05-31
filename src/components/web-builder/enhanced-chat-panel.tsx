@@ -412,8 +412,18 @@ export function EnhancedChatPanel({
 
   const streamingText = (() => {
     if (!accumulated) return '';
-    const { text } = extractCodeBlocks(accumulated);
-    return text;
+    const { text, codeBlocks } = extractCodeBlocks(accumulated);
+    // If there's prose, show it. If only code blocks, generate a summary.
+    if (text) return text;
+    if (codeBlocks.length > 0) {
+      return `Generating **${codeBlocks.length} file${codeBlocks.length !== 1 ? 's' : ''}**…`;
+    }
+    // Check if we're inside an unclosed code block (streaming in progress)
+    const openFences = (accumulated.match(/```/g) || []).length;
+    if (openFences > 0 && openFences % 2 === 1) {
+      return null; // still inside a code block, show indicator
+    }
+    return '';
   })();
 
   return (

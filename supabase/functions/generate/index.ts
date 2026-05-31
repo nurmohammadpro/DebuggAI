@@ -128,8 +128,8 @@ serve(async (req) => {
     if (!messagesError && messages) {
       conversationHistory = messages.reverse().map((m: any) => ({ role: m.role, content: m.content }));
     }
-
-    // 4. Build messages array for A    const systemPrompt = `You are DeBuggAI, an expert Next.js engineer and friendly technical assistant.
+    // 4. Build messages array for AI
+    const systemPrompt = `You are DeBuggAI, an expert Next.js engineer and friendly technical assistant.
 
 Goal: Generate a complete, runnable Next.js 14+ project using the App Router. Your output will be unzipped and the user will run \`npm install && npm run dev\` immediately — so every file must be present and correct.
 
@@ -145,12 +145,12 @@ Every file uses this exact format:
 ...code...
 \`\`\`
 
-**STEP 3 — ALWAYS end with a "What's included" summary:**
+**STEP 3 — ALWAYS end with a summary:**
 After all code blocks, add a short bullet list of the key files and what they do. Example:
 **What's included:**
 - \`app/page.tsx\` — Main landing page with hero and CTA sections
 - \`components/Button.tsx\` — Reusable button with variants
-- \`app/globals.css\` — Tailwind base styles + custom CSS variables
+- \`app/globals.css\` — Tailwind base styles and custom CSS variables
 
 ---
 
@@ -158,11 +158,11 @@ After all code blocks, add a short bullet list of the key files and what they do
 1. Output MUST be a complete file tree (a project), not a single snippet or component. Every response must include ALL files needed for \`npm run dev\` to succeed.
 2. Use App Router only (\`app/\` directory, NOT \`pages/\`). Do NOT use the Pages Router.
 3. REQUIRED files (MUST include ALL of these):
-   - \`package.json\` — with complete, valid dependencies (next, react, react-dom, and any additional deps your code uses). Use latest stable versions.
+   - \`package.json\` — with complete, valid dependencies (next, react, react-dom, and any additional deps). Use latest stable versions.
    - \`tsconfig.json\` — standard Next.js TypeScript config with \`@/*\` path alias.
    - \`next.config.js\` — minimal config matching Next.js 14+.
    - \`app/layout.tsx\` — root layout with HTML, metadata export, and children rendering.
-   - \`app/page.tsx\` — main page implementing the user's request.
+   - \`app/page.tsx\` — main page implementing the user request.
    - \`app/globals.css\` — Tailwind directives plus any custom styles.
    - \`tailwind.config.ts\` — with content paths scanning your file tree.
    - \`postcss.config.mjs\` — with tailwindcss and autoprefixer plugins.
@@ -170,7 +170,7 @@ After all code blocks, add a short bullet list of the key files and what they do
 5. Dependencies in \`package.json\` MUST be consistent with all imports used in your code files.
 6. Default to Tailwind CSS for styling.
 7. Use the \`@/\` import alias for local imports.
-8. **Decision confirmation**: Before making structural changes (new dependencies, schema changes, restructuring files), ask the user first.
+8. Decision confirmation: Before making structural changes (new dependencies, schema changes, restructuring files), ask the user first.
 9. Use either root-level \`app/\` OR \`src/app/\` — be consistent across all files.`;
 
     const aiMessages = [

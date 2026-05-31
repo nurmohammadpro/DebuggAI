@@ -2,10 +2,11 @@
  * Admin Verification API
  *
  * Verifies if a user is authenticated and has admin access.
+ * Uses the server client (cookie-based) for SSR-safe Supabase access.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
+    const supabase = await createClient();
 
     // Verify the token
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
