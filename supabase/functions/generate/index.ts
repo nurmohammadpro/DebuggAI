@@ -14,6 +14,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function extractPlainChatText(full: string) {
+  // The system prompt requires:
+  // 1) plain-text explanation
+  // 2) file blocks using `// File: ...` + code fences
+  // 3) a summary
+  //
+  // For chat history, we only want the plain-text explanation so the chat pane
+  // doesn't get flooded with code.
+  const trimmed = (full || '').trim();
+  if (!trimmed) return '';
+
+  const lines = trimmed.split('\n');
+  const out: string[] = [];
+  for (const line of lines) {
+    const isFileMarker = /^\s*\/\/\s*File:\s+[\w./-]+\.[a-zA-Z0-9]+\s*$/.test(line);
+    const isFence = /^\s*```/.test(line);
+    if (isFileMarker || isFence) break;
+    out.push(line);
+  }
+
+  return out.join('\n').trim();
+}
+
 interface GenerateRequest {
   threadId: string;
   prompt: string;
@@ -342,11 +365,12 @@ After all code blocks, add a short bullet list of the key files and what they do
 
           const finalText = assistantBuffer.trim();
           if (finalText) {
+            const chatText = extractPlainChatText(finalText);
             await supabase.from('thread_messages').insert({
               thread_id: threadId,
               user_id: user.id,
               role: 'assistant',
-              content: finalText,
+              content: chatText || 'Generated files → code pane',
               model,
               tokens_in: usage?.input_tokens ?? null,
               tokens_out: usage?.output_tokens ?? null,

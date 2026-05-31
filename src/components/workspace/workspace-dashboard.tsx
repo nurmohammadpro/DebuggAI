@@ -34,7 +34,7 @@ export function WorkspaceDashboard() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, files, setThreadId } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId } = useGenerationStore();
   const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
   const { sidebarCollapsed, toggleSidebar } = useShellStore();
 
@@ -70,6 +70,10 @@ export function WorkspaceDashboard() {
   useEffect(() => {
     if (urlThreadId) setThreadId(urlThreadId);
   }, [setThreadId, urlThreadId]);
+
+  useEffect(() => {
+    if (effectiveProjectId) setProjectId(effectiveProjectId);
+  }, [effectiveProjectId, setProjectId]);
 
   useEffect(() => {
     if (project?.code) {

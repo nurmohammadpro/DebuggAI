@@ -38,8 +38,6 @@ import { useGenerationStore } from '@/store/generation-store';
 import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 type MessageRole = 'user' | 'assistant' | 'system' | 'tool';
 
@@ -60,95 +58,12 @@ interface EnhancedChatPanelProps {
 
 // ── Markdown renderer ─────────────────────────────────────────────────────
 function MarkdownContent({ content }: { content: string }) {
+  // Chat pane should be clean, plain text. Code is extracted into the code pane.
+  const lines = (content || '').split('\n');
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        // Paragraphs
-        p: ({ children }) => (
-          <p className="text-[13px] leading-relaxed mb-2 last:mb-0 text-[var(--app-text)]">
-            {children}
-          </p>
-        ),
-        // Headings
-        h1: ({ children }) => (
-          <h1 className="text-[15px] font-bold mb-2 mt-3 first:mt-0 text-[var(--app-text)]">
-            {children}
-          </h1>
-        ),
-        h2: ({ children }) => (
-          <h2 className="text-[14px] font-semibold mb-2 mt-3 first:mt-0 text-[var(--app-text)]">
-            {children}
-          </h2>
-        ),
-        h3: ({ children }) => (
-          <h3 className="text-[13px] font-semibold mb-1.5 mt-2 first:mt-0 text-[var(--app-text)]">
-            {children}
-          </h3>
-        ),
-        // Lists
-        ul: ({ children }) => (
-          <ul className="list-disc list-inside space-y-1 mb-2 text-[13px] text-[var(--app-text)] pl-2">
-            {children}
-          </ul>
-        ),
-        ol: ({ children }) => (
-          <ol className="list-decimal list-inside space-y-1 mb-2 text-[13px] text-[var(--app-text)] pl-2">
-            {children}
-          </ol>
-        ),
-        li: ({ children }) => (
-          <li className="text-[13px] leading-relaxed text-[var(--app-text)]">{children}</li>
-        ),
-        // Inline code
-        code: ({ children, className }) => {
-          const isBlock = className?.startsWith('language-');
-          if (isBlock) {
-            // Block-level code (these are already stripped by extractCodeBlocks,
-            // but just in case any slip through, render them compactly)
-            return (
-              <code className="block bg-[var(--app-panel-2)] border border-[var(--app-border)] rounded-[4px] p-2 text-[11px] font-mono text-[var(--app-accent)] overflow-x-auto my-2 whitespace-pre">
-                {children}
-              </code>
-            );
-          }
-          return (
-            <code className="bg-[var(--app-panel-2)] border border-[var(--app-border)] rounded-[3px] px-1 py-0.5 text-[12px] font-mono text-[var(--app-accent)]">
-              {children}
-            </code>
-          );
-        },
-        pre: ({ children }) => <>{children}</>,
-        // Blockquote
-        blockquote: ({ children }) => (
-          <blockquote className="border-l-2 border-[var(--app-accent)]/40 pl-3 italic text-[var(--app-text-muted)] text-[13px] my-2">
-            {children}
-          </blockquote>
-        ),
-        // Strong / em
-        strong: ({ children }) => (
-          <strong className="font-semibold text-[var(--app-text)]">{children}</strong>
-        ),
-        em: ({ children }) => (
-          <em className="italic text-[var(--app-text-muted)]">{children}</em>
-        ),
-        // Links
-        a: ({ href, children }) => (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--app-accent)] underline underline-offset-2 hover:opacity-80 transition-opacity"
-          >
-            {children}
-          </a>
-        ),
-        // Horizontal rule
-        hr: () => <hr className="border-[var(--app-border)] my-3" />,
-      }}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap break-words">
+      {lines.join('\n').trim()}
+    </div>
   );
 }
 
