@@ -132,6 +132,15 @@ export function EnhancedChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, accumulated]);
 
+  // When switching to a project without a thread, clear the chat UI.
+  useEffect(() => {
+    if (currentThreadId) return;
+    setMessages([]);
+    resetAccumulated();
+    resetCodeBlocks();
+    setStreaming(false);
+  }, [currentThreadId, resetAccumulated, resetCodeBlocks, setStreaming]);
+
   const loadThreadMessages = useCallback(async (threadId: string) => {
     const session = await getSession();
     const token = session.session?.access_token;

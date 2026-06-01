@@ -34,7 +34,7 @@ export function WorkspaceDashboard() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, clearThread } = useGenerationStore();
   const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
   const { sidebarCollapsed, toggleSidebar } = useShellStore();
 
@@ -74,6 +74,15 @@ export function WorkspaceDashboard() {
   useEffect(() => {
     if (effectiveProjectId) setProjectId(effectiveProjectId);
   }, [effectiveProjectId, setProjectId]);
+
+  useEffect(() => {
+    // If the URL doesn't specify a thread, don't carry the previous project's thread
+    // into a newly opened project. This keeps the chat pane empty until the user
+    // actually sends a prompt (which creates a new thread).
+    if (!effectiveProjectId) return;
+    if (urlThreadId) return;
+    clearThread();
+  }, [clearThread, effectiveProjectId, urlThreadId]);
 
   useEffect(() => {
     if (project?.code) {
