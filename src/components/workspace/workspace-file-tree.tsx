@@ -47,8 +47,8 @@ export function WorkspaceFileTree({
           [path]: { path, content: '', status: 'added' as const },
         },
       },
-      activeFilePath: path,
     });
+    useGenerationStore.getState().setActiveFilePath(path);
   };
 
   const handleNewFolder = () => {
@@ -91,7 +91,7 @@ export function WorkspaceFileTree({
   };
 
   const handleFileSelect = (path: string) => {
-    useGenerationStore.setState({ activeFilePath: path });
+    useGenerationStore.getState().setActiveFilePath(path);
   };
 
   const handleCreateFile = (path: string, type: 'file' | 'folder') => {
@@ -114,8 +114,8 @@ export function WorkspaceFileTree({
             [path]: { path, content: '', status: 'added' as const },
           },
         },
-        activeFilePath: path,
       });
+      useGenerationStore.getState().setActiveFilePath(path);
     } else {
       const markerPath = `${path}/.gitkeep`;
       if (state.files.files[markerPath]) {
@@ -155,6 +155,9 @@ export function WorkspaceFileTree({
       },
       activeFilePath: state.activeFilePath === oldPath ? newPath : state.activeFilePath,
     });
+    if (state.activeFilePath === oldPath) {
+      useGenerationStore.getState().setActiveFilePath(newPath);
+    }
   };
 
   const handleDelete = (path: string) => {
@@ -174,6 +177,9 @@ export function WorkspaceFileTree({
       },
       activeFilePath: state.activeFilePath === path ? null : state.activeFilePath,
     });
+    if (state.activeFilePath === path) {
+      useGenerationStore.getState().setCurrentCode('');
+    }
   };
 
   const handleDuplicate = (path: string) => {

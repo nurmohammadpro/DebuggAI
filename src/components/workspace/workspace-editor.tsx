@@ -273,17 +273,18 @@ export function WorkspaceEditor({
   // Fall back to Sandpack when Docker isn't available
   useEffect(() => {
     if (
-      sandbox.error &&
-      (sandbox.error.includes('Docker is required') ||
-        sandbox.error.includes('Live preview is temporarily disabled') ||
-        sandbox.error.includes('Web Builder requires a Pro plan') ||
-        sandbox.error.toLowerCase().includes('insufficient') ||
-        sandbox.error.includes('Sandbox not available'))
+      (sandbox.status === 'error' && !!sandbox.error) ||
+      (sandbox.error &&
+        (sandbox.error.includes('Docker is required') ||
+          sandbox.error.includes('Live preview is temporarily disabled') ||
+          sandbox.error.includes('Web Builder requires a Pro plan') ||
+          sandbox.error.toLowerCase().includes('insufficient') ||
+          sandbox.error.includes('Sandbox not available')))
     ) {
       setDockerFallback(true);
       sandbox.clearError();
     }
-  }, [sandbox.error, sandbox.clearError]);
+  }, [sandbox.error, sandbox.clearError, sandbox.status]);
 
   // Build file tree from project files
   const fileTree = useMemo(() => {
