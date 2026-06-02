@@ -39,6 +39,7 @@ import { PromptTemplates } from '@/components/visual-editor/prompt-templates';
 import { useShellStore } from '@/store/shell-store';
 import { cn } from '@/lib/utils';
 import { useGenerationStore } from '@/store/generation-store';
+import { serializeVirtualFiles } from '@/lib/project/virtual-files';
 import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
@@ -514,6 +515,42 @@ export function EnhancedChatPanel({
     }
   }, [accumulated, isLoading, addCodeBlocks, setStreaming]);
 
+  const autoSaveCode = useCallback(async () => {
+    try {
+      const state = useGenerationStore.getState();
+      const { currentProjectId, files } = state;
+      if (!currentProjectId || !files || Object.keys(files.files).length === 0) return;
+
+      // Serialize current files and save to generations table
+      const serializedCode = serializeVirtualFiles(files);
+      if (!serializedCode || serializedCode.length < 20) return;
+
+      const session = await getSession();
+      const token = session.session?.access_token;
+      if (!token) return;
+
+      const prompt = state.accumulated?.slice(0, 200) || undefined;
+
+      await fetch(`/api/projects/${currentProjectId}/save-code`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: serializedCode,
+          prompt,
+          description: `Auto-saved ${new Date().toLocaleString()}`,
+          stack: undefined,
+        }),
+      }).catch(() => {
+        // Silent fail — manual save via button still works
+      });
+    } catch {
+      // Silent fail
+    }
+  }, []);
+
   const { generate, ensureThreadId } = useGeneration({
     onDone: async () => {
       setIsLoading(false);
@@ -549,6 +586,10 @@ export function EnhancedChatPanel({
 
       resetAccumulated();
       const tid = currentThreadId;
+
+      // Auto-save generated code to generations table for project persistence
+      await autoSaveCode();
+
       if (tid) setTimeout(() => void loadThreadMessages(tid), 1500);
     },
     onError: (error) => {

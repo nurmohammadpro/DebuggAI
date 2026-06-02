@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
@@ -24,13 +24,15 @@ import { CommandPalette } from '@/components/dashboard/command-palette';
 import { useCursorTracking, CollabCursorOverlay, CollabStatusBar } from '@/components/workspace/collab-cursors';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/hooks/use-session';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, clearThread } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId } = useGenerationStore();
   const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
   const [rightView, setRightView] = useState<V0RightView>('code');
@@ -39,8 +41,10 @@ export function WorkspaceDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rightWidth, setRightWidth] = useState(980);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
+  const [loadingThread, setLoadingThread] = useState(false);
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
+  const threadBootedRef = useRef<string | null>(null);
   const saveButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const urlProjectId = searchParams.get('project');
@@ -63,34 +67,87 @@ export function WorkspaceDashboard() {
   }, [effectiveProjectId]);
 
   useEffect(() => {
-    if (urlThreadId) setThreadId(urlThreadId);
-  }, [setThreadId, urlThreadId]);
+    if (urlThreadId) {
+      setThreadId(urlThreadId);
+    } else if (effectiveProjectId && threadBootedRef.current !== effectiveProjectId) {
+      // No thread in URL — find the latest thread for this project
+      threadBootedRef.current = effectiveProjectId;
+      setLoadingThread(true);
+      (async () => {
+        try {
+          const { session } = await getSession();
+          const token = session?.access_token;
+          if (!token) return;
+          const res = await fetch(
+            `/api/threads?projectId=${encodeURIComponent(effectiveProjectId!)}&limit=1`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (!res.ok) return;
+          const j = await res.json();
+          const threads = (j?.threads || []) as Array<{ id: string }>;
+          if (threads.length > 0) {
+            setThreadId(threads[0]!.id);
+          }
+        } catch {
+          // Silently fail — chat will start fresh
+        } finally {
+          setLoadingThread(false);
+        }
+      })();
+    }
+  }, [setThreadId, effectiveProjectId, urlThreadId]);
 
   useEffect(() => {
     if (effectiveProjectId) setProjectId(effectiveProjectId);
   }, [effectiveProjectId, setProjectId]);
 
   useEffect(() => {
-    if (!effectiveProjectId) return;
-    if (urlThreadId) return;
-    clearThread();
-  }, [clearThread, effectiveProjectId, urlThreadId]);
-
-  useEffect(() => {
     if (project?.code) {
       loadFromProject(project.code, project.description || 'Loaded project');
-      if (
-        effectiveProjectId &&
-        projectBootLoggedRef.current !== effectiveProjectId &&
-        projectBootStartedAtRef.current != null
-      ) {
-        const elapsed = Math.round(performance.now() - projectBootStartedAtRef.current);
-        console.info('[workspace] project boot duration (ms)', {
-          projectId: effectiveProjectId,
-          elapsed,
-        });
-        projectBootLoggedRef.current = effectiveProjectId;
+    } else if (effectiveProjectId && threadBootedRef.current === effectiveProjectId) {
+      // No saved code yet — try to restore files from the latest assistant message
+      const generationStore = useGenerationStore.getState();
+      if (!generationStore.files || Object.keys(generationStore.files.files).length <= 1) {
+        (async () => {
+          try {
+            const { session } = await getSession();
+            const token = session?.access_token;
+            const tid = generationStore.currentThreadId;
+            if (!token || !tid) return;
+            const res = await fetch(`/api/threads/${tid}/messages?limit=50`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!res.ok) return;
+            const j = await res.json();
+            const msgs = (j?.messages || []) as Array<{ role: string; content: string }>;
+            // Find the last assistant message with code blocks
+            for (let i = msgs.length - 1; i >= 0; i--) {
+              const msg = msgs[i];
+              if (msg.role !== 'assistant') continue;
+              const content = String(msg.content || '');
+              if (content.includes('```') || content.includes('<code_block')) {
+                loadFromProject(content, project?.description || 'Restored from chat');
+                break;
+              }
+            }
+          } catch {
+            // No files to restore — user will generate new code
+          }
+        })();
       }
+    }
+
+    if (
+      effectiveProjectId &&
+      projectBootLoggedRef.current !== effectiveProjectId &&
+      projectBootStartedAtRef.current != null
+    ) {
+      const elapsed = Math.round(performance.now() - projectBootStartedAtRef.current);
+      console.info('[workspace] project boot duration (ms)', {
+        projectId: effectiveProjectId,
+        elapsed,
+      });
+      projectBootLoggedRef.current = effectiveProjectId;
     }
   }, [effectiveProjectId, loadFromProject, project?.code, project?.description]);
 
@@ -177,8 +234,10 @@ export function WorkspaceDashboard() {
         projectName={projectName}
       />
 
-      {/* v0-style sidebar — 48px dark icon rail */}
-      <V0Sidebar />
+      {/* v0-style sidebar — 48px dark icon rail, hidden on mobile */}
+      <div className="hidden sm:block">
+        <V0Sidebar />
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 flex flex-col">
@@ -249,7 +308,7 @@ export function WorkspaceDashboard() {
         {/* IDE Workspace — 3-column: chat | splitter | right panel */}
         <div className="flex-1 min-h-0 flex min-w-0">
           {/* Center: Chat surface */}
-          <section className="flex-1 min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0">
+          <section className="flex-1 min-w-0 sm:min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0">
             <EnhancedChatPanel
               chromeless
               mode="build"
@@ -308,6 +367,19 @@ export function WorkspaceDashboard() {
             />
           </Panel>
         </div>
+
+        {/* Mobile sidebar drawer */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setMobileMenuOpen(false)}>
+            <div className="absolute inset-0 bg-black/60" />
+            <div
+              className="absolute left-0 top-0 bottom-0 w-64 bg-zinc-950 border-r border-zinc-800 shadow-xl animate-in slide-in-from-left duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <V0Sidebar vertical onClose={() => setMobileMenuOpen(false)} />
+            </div>
+          </div>
+        )}
 
         {/* Mobile Bottom Tabs */}
         <WorkspaceMobileTabs
