@@ -19,6 +19,7 @@ import type { V0RightView } from '@/components/workspace/v0-right-panel';
 import { Panel } from '@/components/panel/panel';
 import { MoreVertical, PanelRight } from 'lucide-react';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
+import { ExportActions } from '@/components/workspace/export-actions';
 import { DeployModal } from '@/components/workspace/deploy-modal';
 import { CommandPalette } from '@/components/dashboard/command-palette';
 import { useCursorTracking, CollabCursorOverlay, CollabStatusBar } from '@/components/workspace/collab-cursors';
@@ -263,7 +264,8 @@ export function WorkspaceDashboard() {
 
           <div className="flex-1" />
 
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex items-center gap-1.5">
+            <ExportActions />
             <CollabStatusBar cursors={remoteCursors} />
           </div>
 
@@ -285,14 +287,12 @@ export function WorkspaceDashboard() {
                   Actions
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleRun} className="cursor-pointer">
-                  Run Preview
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDeployModalOpen(true)} className="cursor-pointer">
-                  Deploy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
-                  Share
+                <DropdownMenuItem onClick={handleRun} className="cursor-pointer">Run Preview</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDeployModalOpen(true)} className="cursor-pointer">Deploy</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleShare} className="cursor-pointer">Share Link</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-default px-3 py-1">
+                  <ExportActions />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
