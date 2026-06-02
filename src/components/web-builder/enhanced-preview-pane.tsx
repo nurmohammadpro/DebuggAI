@@ -10,7 +10,6 @@
 import {
   SandpackProvider,
   SandpackPreview,
-  SandpackLayout,
   SandpackConsole,
 } from '@codesandbox/sandpack-react';
 import { useGenerationStore } from '@/store/generation-store';
@@ -89,6 +88,11 @@ export function EnhancedPreviewPane({
   const sandpackTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
 
   // ── Docker / iframe sandbox ──────────────────────────────────────────────
+  const previewViewportClassName =
+    deviceMode === 'desktop'
+      ? 'flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-stretch justify-stretch p-0'
+      : 'flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-4';
+
   if (forceSandbox) {
     return (
       <div
@@ -111,10 +115,16 @@ export function EnhancedPreviewPane({
           label="Docker Preview"
         />
 
-        <div className="flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-4">
+        <div className={previewViewportClassName}>
           <div
-            className="bg-white shadow-lg rounded-[4px] overflow-hidden transition-all duration-300"
-            style={{ width: currentDevice.width, maxWidth: '100%', height: '100%' }}
+            className="bg-white shadow-lg rounded-[4px] overflow-hidden transition-all duration-300 flex flex-col min-h-0"
+            style={{
+              width: currentDevice.width,
+              maxWidth: '100%',
+              height: '100%',
+              minHeight: 0,
+              flex: 1,
+            }}
           >
             {sandboxError ? (
               <ErrorState message={sandboxError} onRetry={onRefresh} />
@@ -167,14 +177,20 @@ export function EnhancedPreviewPane({
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-3">
-        <div
-          className="bg-white rounded-[4px] shadow-lg overflow-hidden transition-all duration-300 flex flex-col"
-          style={{ width: currentDevice.width, maxWidth: '100%', height: '100%' }}
-        >
-          <SandpackProvider
-            key={nonce}
-            template={sandpackBundle.template}
+        <div className={previewViewportClassName}>
+          <div
+            className="bg-white rounded-[4px] shadow-lg overflow-hidden transition-all duration-300 flex flex-col min-h-0"
+            style={{
+              width: currentDevice.width,
+              maxWidth: '100%',
+              height: '100%',
+              minHeight: 0,
+              flex: 1,
+            }}
+          >
+            <SandpackProvider
+              key={nonce}
+              template={sandpackBundle.template}
             theme={sandpackTheme}
             files={sandpackBundle.files}
             customSetup={{
@@ -189,25 +205,27 @@ export function EnhancedPreviewPane({
               ],
             }}
           >
-            <SandpackLayout style={{ height: '100%', border: 'none' }}>
-              {viewMode === 'preview' ? (
-                <SandpackPreview
-                  style={{ height: '100%', border: 'none', width: '100%' }}
-                  showNavigator={false}
-                  showOpenInCodeSandbox={false}
-                  showRefreshButton={false}
-                  onLoad={() => setIsLoadingPreview(false)}
-                />
-              ) : (
-                <SandpackConsole
-                  style={{ height: '100%', border: 'none', width: '100%' }}
-                  showHeader={false}
-                />
-              )}
-            </SandpackLayout>
-          </SandpackProvider>
+              <div className="flex-1 min-h-0 w-full h-full">
+                {viewMode === 'preview' ? (
+                  <SandpackPreview
+                    style={{ height: '100%', border: 'none', width: '100%', minHeight: 0 }}
+                    className="h-full w-full"
+                    showNavigator={false}
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton={false}
+                    onLoad={() => setIsLoadingPreview(false)}
+                  />
+                ) : (
+                  <SandpackConsole
+                    style={{ height: '100%', border: 'none', width: '100%', minHeight: 0 }}
+                    className="h-full w-full"
+                    showHeader={false}
+                  />
+                )}
+              </div>
+            </SandpackProvider>
+          </div>
         </div>
-      </div>
 
       {/* Runtime error from iframe */}
       {lastError && (

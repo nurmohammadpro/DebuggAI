@@ -217,7 +217,7 @@ export function WorkspaceFileTree({
 
   return (
     <aside
-      className="bg-[var(--app-panel)] flex flex-col min-w-[220px]"
+      className="h-full bg-[var(--app-panel)] flex flex-col min-w-[220px]"
       style={{ width }}
     >
       <div className="h-11 px-3 border-b border-[var(--app-border)] flex items-center gap-2">

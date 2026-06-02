@@ -2,7 +2,7 @@
  * Enhanced Chat Panel v3
  *
  * Google AI Studio-style chat pane:
- * - Full markdown rendering (headers, bold, lists, inline code)
+ * - Plain-text assistant rendering with code blocks stripped into the code pane
  * - Streaming prose shown live (code blocks removed, shown in code pane)
  * - "N files generated" badge when generation completes
  * - Animated typing indicator
@@ -57,9 +57,23 @@ interface EnhancedChatPanelProps {
 }
 
 // ── Markdown renderer ─────────────────────────────────────────────────────
+function toPlainText(content: string) {
+  return (content || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s*[-*+]\s+/gm, '• ')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function MarkdownContent({ content }: { content: string }) {
   // Chat pane should be clean, plain text. Code is extracted into the code pane.
-  const lines = (content || '').split('\n');
+  const lines = toPlainText(content).split('\n');
   return (
     <div className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap break-words">
       {lines.join('\n').trim()}
