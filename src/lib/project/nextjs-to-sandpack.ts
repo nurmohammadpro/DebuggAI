@@ -253,8 +253,10 @@ function sanitizeCode(code: string, sandpackPath?: string): string {
   // Remove 'use client' / 'use server' directives (they're just strings, harmless but messy)
   let result = code.replace(/^['"]use (client|server)['"];?\s*\n?/gm, '');
 
-  // We DON'T remove `next/*` imports. Instead we provide compatible stubs under
-  // `/node_modules/next/**` so Sandpack can resolve them.
+  // Rewrite bare `next/*` imports to absolute `/node_modules/next/*` paths
+  // so Sandpack's bundler can resolve them against our stub files.
+  result = result.replace(/from\s+['"]next\/([^'"]+)['"]\s*/g, "from '/node_modules/next/$1' ");
+  result = result.replace(/require\(['"]next\/([^'"]+)['"]\)/g, "require('/node_modules/next/$1')");
 
   // Replace metadata exports (Next.js specific, not needed for preview)
   result = result.replace(/^export\s+(?:const|let)\s+metadata\s*=\s*\{[\s\S]*?\};\s*\n?/gm, '');
