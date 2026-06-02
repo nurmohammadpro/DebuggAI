@@ -11,6 +11,12 @@ import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
 import { setCachedSession } from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
+import {
+  INTERNAL_TEST_COUPON_CODE,
+  INTERNAL_TEST_COUPON_EMAIL,
+} from '@/lib/coupons/internal-test-coupon';
+
+const AUTO_APPLY_KEY = 'debuggai.internal-test-coupon.applied';
 
 export function SessionBootstrapper() {
   const { setUser, updateUser, setCredits, logout } = useSessionStore();
@@ -86,6 +92,41 @@ export function SessionBootstrapper() {
 
       const dbAdmin = !profileError ? profile?.is_admin ?? false : false;
       updateUserRef.current({ isAdmin: allowlistedAdmin || dbAdmin });
+
+      // Auto-apply the internal testing coupon for the approved email only.
+      // This keeps the flow invisible for the test user while remaining scoped.
+      if (email.toLowerCase() === INTERNAL_TEST_COUPON_EMAIL) {
+        try {
+          const appliedKey = `${AUTO_APPLY_KEY}:${userId}`;
+          const alreadyApplied =
+            typeof window !== 'undefined' && window.localStorage.getItem(appliedKey) === '1';
+
+          const alreadyUnlimited =
+            (wallet?.balance ?? 0) >= 1_000_000 || (profile as { plan_type?: string } | null)?.plan_type === 'enterprise';
+
+          if (!alreadyApplied && !alreadyUnlimited) {
+            const response = await fetch('/api/coupons/redeem', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ couponCode: INTERNAL_TEST_COUPON_CODE }),
+            });
+
+            if (response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              if (typeof payload?.credits === 'number') {
+                setCreditsRef.current(payload.credits);
+              }
+              updateUserRef.current({ plan: 'enterprise', credits: payload?.credits ?? 1_000_000 });
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem(appliedKey, '1');
+              }
+            }
+          }
+        } catch {
+          // best-effort: keep login working even if the coupon endpoint is unavailable
+        }
+      }
     },
     [subscribeToCredits]
   );
