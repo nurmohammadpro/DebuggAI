@@ -147,11 +147,23 @@ export const AMP_STATE = '__NEXT_AMP_INITED';
 `,
 };
 
+// Stubs that contain JSX — must use .jsx so Sandpack parses them correctly.
+const JSX_STUBS = new Set([
+  'next/link',
+  'next/image',
+  'next/navigation',
+  'next/dynamic',
+  'next/script',
+  'next/head',
+  'next/amp',
+  'next/font/google',
+  'next/font/local',
+]);
+
 function toSandpackNodeModulesPath(moduleSpecifier: string): string {
-  // Sandpack resolves bare imports from `/node_modules/**`.
-  // Example: `import Link from "next/link"` → `/node_modules/next/link.js`
   const clean = moduleSpecifier.replace(/^\//, '');
-  return `/node_modules/${clean}.js`;
+  const ext = JSX_STUBS.has(clean) ? '.jsx' : '.js';
+  return `/node_modules/${clean}${ext}`;
 }
 
 // Common npm package versions known to work well in Sandpack

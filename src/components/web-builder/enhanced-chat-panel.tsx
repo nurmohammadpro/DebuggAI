@@ -169,20 +169,98 @@ function detectImplicitSteps(text: string): StepData[] {
   return steps;
 }
 
-// ── Markdown / Text Helpers ─────────────────────────────────────────────────
+// ── Rich Text Renderer ─────────────────────────────────────────────────────
 
-function toPlainText(content: string) {
-  return (content || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/__(.*?)__/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/^\s*[-*+]\s+/gm, '• ')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+function RichTextContent({ content }: { content: string }) {
+  if (!content || !content.trim()) {
+    return <p className="text-[13px] text-[var(--app-text-dim)] italic">Done.</p>;
+  }
+
+  // Split content into paragraphs, preserve inline code and basic formatting
+  const paragraphs = content.split(/\n{2,}/);
+
+  return (
+    <div className="text-[13px] leading-relaxed text-[var(--app-text)] space-y-2">
+      {paragraphs.map((para, i) => {
+        if (!para.trim()) return null;
+
+        // Check if this paragraph is a heading
+        const headingMatch = para.match(/^#{1,3}\s+(.+)/);
+        if (headingMatch) {
+          return (
+            <h3 key={i} className="text-[14px] font-bold text-[var(--app-text)] mt-3 first:mt-0">
+              {formatInline(headingMatch[1])}
+            </h3>
+          );
+        }
+
+        // Check if this is a list item
+        if (/^[-*+]\s/.test(para.trim())) {
+          const items = para.split(/\n/).filter((l) => /^[-*+]\s/.test(l.trim()));
+          return (
+            <ul key={i} className="space-y-0.5 pl-4">
+              {items.map((item, j) => (
+                <li key={j} className="text-[13px] leading-relaxed flex items-start gap-1.5">
+                  <span className="text-[var(--app-text-dim)] mt-0.5 shrink-0">•</span>
+                  <span>{formatInline(item.replace(/^[-*+]\s+/, ''))}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+
+        // Regular paragraph with inline formatting
+        return <p key={i}>{formatInline(para)}</p>;
+      })}
+    </div>
+  );
+}
+
+/** Format bold, inline code, and links within a text fragment */
+function formatInline(text: string): React.ReactNode {
+  // Split on inline elements and reconstruct
+  const parts: React.ReactNode[] = [];
+  const regex = /(`[^`]+`|\*\*[^*]+\*\*|\[([^\]]+)\]\(([^)]+)\))/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before this match
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    const found = match[1];
+    if (found.startsWith('`') && found.endsWith('`')) {
+      parts.push(
+        <code key={match.index} className="px-1 py-0.5 rounded-[3px] bg-[var(--app-surface)] text-[11px] font-mono text-[var(--app-accent)]">
+          {found.slice(1, -1)}
+        </code>
+      );
+    } else if (found.startsWith('**') && found.endsWith('**')) {
+      parts.push(
+        <strong key={match.index} className="font-semibold">
+          {found.slice(2, -2)}
+        </strong>
+      );
+    } else if (match[2] && match[3]) {
+      // Link: [text](url)
+      parts.push(
+        <span key={match.index} className="text-[var(--app-accent)] underline cursor-pointer">
+          {match[2]}
+        </span>
+      );
+    }
+
+    lastIndex = match.index + found.length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? <>{parts}</> : text;
 }
 
 // ── Step Renderers ───────────────────────────────────────────────────────────
@@ -326,19 +404,6 @@ function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: numbe
   );
 }
 
-// ── File Badge ───────────────────────────────────────────────────────────────
-
-function FileBadge({ count }: { count: number }) {
-  return (
-    <div className="flex items-center gap-1.5 mt-2 p-2 rounded-[6px] bg-[var(--app-accent)]/8 border border-[var(--app-accent)]/20">
-      <FileCode2 className="h-3.5 w-3.5 text-[var(--app-accent)] shrink-0" />
-      <span className="text-[11px] font-semibold text-[var(--app-accent)]">
-        {count} file{count !== 1 ? 's' : ''} generated
-      </span>
-    </div>
-  );
-}
-
 // ── Typing Indicator ────────────────────────────────────────────────────────
 
 function TypingIndicator({ label = 'Thinking' }: { label?: string }) {
@@ -462,19 +527,20 @@ export function EnhancedChatPanel({
         const { steps } = parseStepsFromText(fullText);
         const implicitSteps = steps.length === 0 ? detectImplicitSteps(cleanedText) : [];
         const resolvedSteps = steps.length > 0 ? steps : implicitSteps;
-        const fileCount = codeBlocks.length;
+
+        // Show the AI's actual response text, not a summary badge.
+        // Code was already extracted to the code pane during streaming.
+        const displayContent = cleanedText || fullText;
 
         setMessages((prev) => [
           ...prev,
           {
             id: `local_assistant_${Date.now()}`,
             role: 'assistant',
-            content: cleanedText || (fileCount > 0
-              ? `I've generated **${fileCount} file${fileCount !== 1 ? 's' : ''}** for your project.`
-              : 'Done! Check the code and preview panes.'),
+            content: displayContent,
             steps: resolvedSteps,
             created_at: new Date().toISOString(),
-            fileCount: fileCount > 0 ? fileCount : undefined,
+            fileCount: codeBlocks.length > 0 ? codeBlocks.length : undefined,
           },
         ]);
 
@@ -792,19 +858,19 @@ export function EnhancedChatPanel({
                         if (step.type === 'completion') return <CompletionStep key={stepIdx} step={step} fileCount={message.fileCount} />;
                         return null;
                       })}
-                      {message.fileCount && message.fileCount > 0 && !message.steps!.some((s) => s.type === 'completion') && (
-                        <FileBadge count={message.fileCount} />
-                      )}
                     </div>
                   )}
 
-                  {/* Fallback: plain text if no steps */}
+                  {/* Fallback: rich text when no structured steps */}
                   {!message.hasError && !hasSteps && (
                     <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
-                      <p className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap break-words">
-                        {toPlainText(message.content)}
-                      </p>
-                      {message.fileCount && message.fileCount > 0 && <FileBadge count={message.fileCount} />}
+                      <RichTextContent content={message.content} />
+                      {message.fileCount && message.fileCount > 0 && (
+                        <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px] text-[var(--app-text-dim)]">
+                          <FileCode2 className="h-3 w-3" />
+                          {message.fileCount} file{message.fileCount !== 1 ? 's' : ''} sent to code pane
+                        </div>
+                      )}
                     </div>
                   )}
 
