@@ -21,6 +21,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install Docker CLI for sandbox containers (requires docker.sock mount at runtime)
+# Also install gosu for dropping privileges in the entrypoint
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates curl gnupg && \
     install -m 0755 -d /etc/apt/keyrings && \
@@ -28,7 +29,7 @@ RUN apt-get update && \
     chmod a+r /etc/apt/keyrings/docker.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends docker-ce-cli && \
+    apt-get install -y --no-install-recommends docker-ce-cli gosu && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # App files
@@ -40,6 +41,12 @@ COPY --from=builder /app/.next/standalone ./
 ENV PROJECTS_DIR=/var/lib/debuggai/projects
 RUN mkdir -p /var/lib/debuggai/projects && chown -R node:node /var/lib/debuggai/projects /app
 
+# Copy entrypoint script (fixes Docker socket permissions at runtime)
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "--max-old-space-size=4096", "server.js"]
+
 # Run as non-root user for security
 USER node
 
@@ -47,5 +54,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
   CMD node -e "require('http').get('http://localhost:3000/api/health', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
 EXPOSE 3000
-CMD ["node", "--max-old-space-size=4096", "server.js"]
 
