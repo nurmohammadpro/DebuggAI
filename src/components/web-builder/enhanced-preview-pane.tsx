@@ -182,6 +182,7 @@ export function EnhancedPreviewPane({
               recompileDelay: 800,
               bundlerURL: 'https://sandpack-bundler.codesandbox.io',
               externalResources: [
+                'https://cdn.tailwindcss.com',
                 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
               ],
             }}
