@@ -6,7 +6,6 @@
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import {
   extractVirtualFiles,
   serializeVirtualFiles,
@@ -90,141 +89,126 @@ const initialState = {
 };
 
 export const useGenerationStore = create<GenerationState>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+  (set, get) => ({
+    ...initialState,
 
-      setCurrentCode: (code) =>
-        set((state) => {
-          if (!state.files || !state.activeFilePath) return { currentCode: code };
-          const existing = state.files.files[state.activeFilePath];
-          if (!existing) return { currentCode: code };
-          return {
-            currentCode: code,
+    setCurrentCode: (code) =>
+      set((state) => {
+        if (!state.files || !state.activeFilePath) return { currentCode: code };
+        const existing = state.files.files[state.activeFilePath];
+        if (!existing) return { currentCode: code };
+        return {
+          currentCode: code,
+          files: {
+            ...state.files,
             files: {
-              ...state.files,
-              files: {
-                ...state.files.files,
-                [state.activeFilePath]: { ...existing, content: code },
-              },
+              ...state.files.files,
+              [state.activeFilePath]: { ...existing, content: code },
             },
-          };
-        }),
-
-      setActiveFilePath: (path) =>
-        set((state) => {
-          const nextPath = path;
-          const nextContent = state.files?.files[nextPath]?.content;
-          return {
-            activeFilePath: nextPath,
-            currentCode: typeof nextContent === 'string' ? nextContent : state.currentCode,
-          };
-        }),
-
-      bumpPreviewNonce: () =>
-        set((state) => ({ previewNonce: (state.previewNonce + 1) % Number.MAX_SAFE_INTEGER })),
-
-      markSaved: (snapshot) =>
-        set((state) => ({ savedSnapshot: snapshot ?? serializeVirtualFiles(state.files || extractVirtualFiles(state.currentCode)) })),
-
-      setIsGenerating: (isGenerating) => set({ isGenerating }),
-
-      setAccumulated: (text) => set({ accumulated: text }),
-
-      appendAccumulated: (chunk) =>
-        set((state) => ({ accumulated: state.accumulated + chunk })),
-
-      resetAccumulated: () => set({ accumulated: '' }),
-
-      getProjectCode: () => {
-        const snapshot = get().files;
-        if (snapshot) return serializeVirtualFiles(snapshot);
-        return get().currentCode;
-      },
-
-      addVersion: (code, description) =>
-        set((state) => {
-          const newVersion: CodeVersion = {
-            id: Date.now().toString(),
-            code,
-            timestamp: Date.now(),
-            description,
-          };
-          return {
-            versions: [...state.versions, newVersion],
-            currentVersionId: newVersion.id,
-          };
-        }),
-
-      setCurrentVersion: (versionId) =>
-        set((state) => {
-          const version = state.versions.find((v) => v.id === versionId);
-          const parsed = version?.code ? extractVirtualFiles(version.code) : null;
-          return {
-            currentVersionId: versionId,
-            currentCode: parsed
-              ? parsed.files[parsed.entryPath]?.content || version?.code || state.currentCode
-              : version?.code || state.currentCode,
-            files: parsed,
-            activeFilePath: parsed?.entryPath || state.activeFilePath,
-          };
-        }),
-
-      deleteVersion: (versionId) =>
-        set((state) => ({
-          versions: state.versions.filter((v) => v.id !== versionId),
-          currentVersionId:
-            state.currentVersionId === versionId
-              ? null
-              : state.currentVersionId,
-        })),
-
-      setLastError: (error) => set({ lastError: error }),
-
-      clearError: () => set({ lastError: null }),
-
-      setProjectId: (id) => set({ currentProjectId: id }),
-      setThreadId: (id) => set({ currentThreadId: id }),
-      clearThread: () => set({ currentThreadId: null }),
-
-      reset: () => set(initialState),
-
-      loadFromProject: (code, description) =>
-        set((state) => {
-          const baseVersion: CodeVersion = {
-            id: Date.now().toString(),
-            code,
-            timestamp: Date.now(),
-            description: description || 'Loaded',
-          };
-          const parsed = extractVirtualFiles(code);
-          return {
-            ...initialState,
-            currentCode: parsed.files[parsed.entryPath]?.content || code,
-            files: parsed,
-            activeFilePath: parsed.entryPath,
-            savedSnapshot: code,
-            versions: [baseVersion],
-            currentVersionId: baseVersion.id,
-            // Preserve thread + project context; otherwise the chat panel "resets"
-            // when we reload the project code.
-            currentProjectId: state.currentProjectId,
-            currentThreadId: state.currentThreadId,
-          };
-        }),
-    }),
-    {
-      name: 'generation-storage',
-      partialize: (state) => ({
-        versions: state.versions,
-        currentVersionId: state.currentVersionId,
-        currentCode: state.currentCode,
-        activeFilePath: state.activeFilePath,
-        files: state.files,
-        savedSnapshot: state.savedSnapshot,
-        currentProjectId: state.currentProjectId,
-        currentThreadId: state.currentThreadId,
+          },
+        };
       }),
-    }
-  )
+
+    setActiveFilePath: (path) =>
+      set((state) => {
+        const nextPath = path;
+        const nextContent = state.files?.files[nextPath]?.content;
+        return {
+          activeFilePath: nextPath,
+          currentCode: typeof nextContent === 'string' ? nextContent : state.currentCode,
+        };
+      }),
+
+    bumpPreviewNonce: () =>
+      set((state) => ({ previewNonce: (state.previewNonce + 1) % Number.MAX_SAFE_INTEGER })),
+
+    markSaved: (snapshot) =>
+      set((state) => ({ savedSnapshot: snapshot ?? serializeVirtualFiles(state.files || extractVirtualFiles(state.currentCode)) })),
+
+    setIsGenerating: (isGenerating) => set({ isGenerating }),
+
+    setAccumulated: (text) => set({ accumulated: text }),
+
+    appendAccumulated: (chunk) =>
+      set((state) => ({ accumulated: state.accumulated + chunk })),
+
+    resetAccumulated: () => set({ accumulated: '' }),
+
+    getProjectCode: () => {
+      const snapshot = get().files;
+      if (snapshot) return serializeVirtualFiles(snapshot);
+      return get().currentCode;
+    },
+
+    addVersion: (code, description) =>
+      set((state) => {
+        const newVersion: CodeVersion = {
+          id: Date.now().toString(),
+          code,
+          timestamp: Date.now(),
+          description,
+        };
+        return {
+          versions: [...state.versions, newVersion],
+          currentVersionId: newVersion.id,
+        };
+      }),
+
+    setCurrentVersion: (versionId) =>
+      set((state) => {
+        const version = state.versions.find((v) => v.id === versionId);
+        const parsed = version?.code ? extractVirtualFiles(version.code) : null;
+        return {
+          currentVersionId: versionId,
+          currentCode: parsed
+            ? parsed.files[parsed.entryPath]?.content || version?.code || state.currentCode
+            : version?.code || state.currentCode,
+          files: parsed,
+          activeFilePath: parsed?.entryPath || state.activeFilePath,
+        };
+      }),
+
+    deleteVersion: (versionId) =>
+      set((state) => ({
+        versions: state.versions.filter((v) => v.id !== versionId),
+        currentVersionId:
+          state.currentVersionId === versionId
+            ? null
+            : state.currentVersionId,
+      })),
+
+    setLastError: (error) => set({ lastError: error }),
+
+    clearError: () => set({ lastError: null }),
+
+    setProjectId: (id) => set({ currentProjectId: id }),
+    setThreadId: (id) => set({ currentThreadId: id }),
+    clearThread: () => set({ currentThreadId: null }),
+
+    reset: () => set(initialState),
+
+    loadFromProject: (code, description) =>
+      set((state) => {
+        const baseVersion: CodeVersion = {
+          id: Date.now().toString(),
+          code,
+          timestamp: Date.now(),
+          description: description || 'Loaded',
+        };
+        const parsed = extractVirtualFiles(code);
+        return {
+          ...initialState,
+          currentCode: parsed.files[parsed.entryPath]?.content || code,
+          files: parsed,
+          activeFilePath: parsed.entryPath,
+          savedSnapshot: code,
+          versions: [baseVersion],
+          currentVersionId: baseVersion.id,
+          // Preserve thread + project context; otherwise the chat panel "resets"
+          // when we reload the project code.
+          currentProjectId: state.currentProjectId,
+          currentThreadId: state.currentThreadId,
+        };
+      }),
+  })
 );

@@ -32,7 +32,7 @@ export function WorkspaceDashboard() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, currentThreadId } = useGenerationStore();
   const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
   const [rightView, setRightView] = useState<V0RightView>('code');
@@ -111,8 +111,7 @@ export function WorkspaceDashboard() {
   // Fallback: restore files from thread messages when no saved code exists
   // Runs AFTER the thread is loaded (currentThreadId is set)
   useEffect(() => {
-    const tid = useGenerationStore.getState().currentThreadId;
-    if (!tid) return;
+    if (!currentThreadId) return;
     if (project?.code) return; // Already loaded from saved code
 
     const generationStore = useGenerationStore.getState();
@@ -123,7 +122,7 @@ export function WorkspaceDashboard() {
         const { session } = await getSession();
         const token = session?.access_token;
         if (!token) return;
-        const res = await fetch(`/api/threads/${tid}/messages?limit=100`, {
+        const res = await fetch(`/api/threads/${currentThreadId}/messages?limit=100`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) return;
@@ -146,7 +145,7 @@ export function WorkspaceDashboard() {
         // No files to restore
       }
     })();
-  }, [useGenerationStore.getState().currentThreadId, effectiveProjectId, project?.code, project?.description, loadFromProject]);
+  }, [currentThreadId, effectiveProjectId, project?.code, project?.description, loadFromProject]);
 
   useEffect(() => {
     if (

@@ -37,15 +37,22 @@ export function V0RightPanel({
   const { bumpPreviewNonce, files } = useGenerationStore();
   const sandbox = useSandbox();
   const lastFileSnapshot = useRef<string>('');
+  const hasBootedRef = useRef(false);
+  // Keep a ref to sandbox so the effect closure always has the latest methods
+  const sandboxRef = useRef(sandbox);
+  sandboxRef.current = sandbox;
 
   // Auto-create Docker sandbox when files are available (regardless of active view)
-  // This ensures the preview is ready by the time the user tabs to it
+  // This ensures the preview is ready by the time the user tabs to it.
+  // Only depends on files to avoid re-triggering on sandbox status transitions.
   useEffect(() => {
     if (!files || Object.keys(files.files).length === 0) return;
 
     const snapshot = serializeVirtualFiles(files);
-    if (snapshot === lastFileSnapshot.current) return;
+    // Guard: skip if we already booted for this exact snapshot
+    if (snapshot === lastFileSnapshot.current && hasBootedRef.current) return;
     lastFileSnapshot.current = snapshot;
+    hasBootedRef.current = true;
 
     // Build a flat file record for the sandbox
     const flatFiles: Record<string, string> = {};
@@ -58,17 +65,18 @@ export function V0RightPanel({
     const totalChars = Object.values(flatFiles).reduce((sum, c) => sum + c.length, 0);
     if (totalChars < 20) return;
 
+    const sb = sandboxRef.current;
     // Stop existing sandbox before creating a new one with updated files
-    if (sandbox.status === 'running' || sandbox.status === 'installing') {
-      sandbox.stopSandbox().then(() => {
-        sandbox.createSandbox(flatFiles);
+    if (sb.status === 'running' || sb.status === 'installing') {
+      sb.stopSandbox().then(() => {
+        sandboxRef.current.createSandbox(flatFiles);
       }).catch(() => {
-        sandbox.createSandbox(flatFiles);
+        sandboxRef.current.createSandbox(flatFiles);
       });
-    } else if (sandbox.status === 'idle' || sandbox.status === 'stopped' || sandbox.status === 'error') {
-      sandbox.createSandbox(flatFiles);
+    } else if (sb.status === 'idle' || sb.status === 'stopped' || sb.status === 'error') {
+      sb.createSandbox(flatFiles);
     }
-  }, [files, sandbox.createSandbox, sandbox.status, sandbox.stopSandbox]);
+  }, [files]);
 
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
