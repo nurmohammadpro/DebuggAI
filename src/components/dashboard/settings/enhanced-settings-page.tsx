@@ -33,6 +33,10 @@ import {
   Plus,
   Settings as SettingsIcon,
 } from 'lucide-react';
+import {
+  INTERNAL_TEST_COUPON_CODE,
+  INTERNAL_TEST_COUPON_EMAIL,
+} from '@/lib/coupons/internal-test-coupon';
 
 type SettingsTab = 'profile' | 'preferences' | 'security' | 'billing' | 'integrations' | 'danger';
 
@@ -46,6 +50,8 @@ export function EnhancedSettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('dark');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     displayName: user?.displayName || '',
@@ -111,6 +117,39 @@ export function EnhancedSettingsPage() {
   const handleCopyApiKey = () => {
     navigator.clipboard.writeText('dbg_ai_sk_1234567890abcdef');
     toast.success('API key copied to clipboard');
+  };
+
+  const handleRedeemInternalCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Enter a coupon code');
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const response = await fetch('/api/coupons/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponCode }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Coupon redemption failed');
+      }
+
+      useSessionStore.getState().updateUser({
+        plan: 'enterprise',
+        credits: payload?.credits ?? 1_000_000,
+      });
+
+      setCouponCode('');
+      toast.success('Internal test coupon redeemed');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Coupon redemption failed');
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   const tabs: Array<{ id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
@@ -448,6 +487,30 @@ export function EnhancedSettingsPage() {
                           className="px-4 py-2 text-sm font-medium bg-[var(--app-accent)] text-[#071006] rounded-lg hover:opacity-90 transition-opacity"
                         >
                           Upgrade Now
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {user?.email?.toLowerCase() === INTERNAL_TEST_COUPON_EMAIL && (
+                    <div className="border border-[var(--app-border)] rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">Internal Test Coupon</h3>
+                      <p className="text-xs text-[var(--app-text-muted)] mb-3">
+                        Redeem the internal test code for unlimited testing access.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          placeholder={INTERNAL_TEST_COUPON_CODE}
+                          className="flex-1 px-3 py-2 text-sm bg-[var(--app-surface)] border border-[var(--app-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20 text-[var(--app-text)]"
+                        />
+                        <button
+                          onClick={handleRedeemInternalCoupon}
+                          disabled={couponLoading}
+                          className="px-4 py-2 text-sm font-medium bg-[var(--app-accent)] text-[#071006] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+                        >
+                          {couponLoading ? 'Redeeming...' : 'Redeem'}
                         </button>
                       </div>
                     </div>
