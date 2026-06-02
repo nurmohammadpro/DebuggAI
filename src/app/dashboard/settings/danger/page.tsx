@@ -9,11 +9,10 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { useSessionStore } from '@/store/session-store';
+import { signOutCurrentUser } from '@/lib/client-auth';
 
 export default function DangerPage() {
   const router = useRouter();
-  const { logout } = useSessionStore();
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -38,8 +37,7 @@ export default function DangerPage() {
         .eq('id', session.user.id);
 
       // Sign out
-      await supabase.auth.signOut();
-      logout();
+      await signOutCurrentUser();
       toast.success('Account deleted');
       router.push('/');
     } catch (err) {

@@ -15,6 +15,7 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
+import { signOutCurrentUser } from '@/lib/client-auth';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   DropdownMenu,
@@ -34,7 +35,7 @@ export function AccountMenu({
   className?: string;
 }) {
   const router = useRouter();
-  const { user, logout } = useSessionStore();
+  const { user } = useSessionStore();
 
   const openPublicPage = (path: string) => {
     if (typeof window === 'undefined') return;
@@ -50,12 +51,7 @@ export function AccountMenu({
   }, [user?.displayName, user?.email]);
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Proceed with local signout even if the Supabase API call fails
-    }
-    logout();
+    await signOutCurrentUser();
     // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
     window.location.href = '/';
   };

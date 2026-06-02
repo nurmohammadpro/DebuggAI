@@ -20,13 +20,13 @@ import { Menu, Zap } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationCenter } from '@/components/dashboard/notification-center';
+import { signOutCurrentUser } from '@/lib/client-auth';
 
 export function Navigation() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useSessionStore();
+  const { user, isAuthenticated } = useSessionStore();
   const credits = user?.credits;
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,12 +58,7 @@ export function Navigation() {
 
   const handleLogout = async () => {
     setMenuOpen(false);
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Proceed with local signout even if the Supabase API call fails
-    }
-    logout();
+    await signOutCurrentUser();
     // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
     window.location.href = '/';
   };

@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { setCachedSession } from '@/hooks/use-session';
 
 export type PlanType = 'free' | 'pro' | 'team' | 'business' | 'enterprise';
 
@@ -80,6 +81,7 @@ export const useSessionStore = create<SessionState>()(
             // localStorage may be unavailable in some environments
           }
         }
+        setCachedSession(null);
         set({
           user: null,
           isAuthenticated: false,

@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
 import { setCachedSession } from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
+import { csrfHeader } from '@/lib/csrf-client';
 import {
   INTERNAL_TEST_COUPON_CODE,
   INTERNAL_TEST_COUPON_EMAIL,
@@ -107,7 +108,10 @@ export function SessionBootstrapper() {
           if (!alreadyApplied && !alreadyUnlimited) {
             const response = await fetch('/api/coupons/redeem', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                ...csrfHeader(),
+              },
               credentials: 'same-origin',
               body: JSON.stringify({ couponCode: INTERNAL_TEST_COUPON_CODE }),
             });

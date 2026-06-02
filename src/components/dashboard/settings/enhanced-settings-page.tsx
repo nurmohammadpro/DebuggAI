@@ -9,6 +9,8 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
+import { csrfHeader } from '@/lib/csrf-client';
+import { signOutCurrentUser } from '@/lib/client-auth';
 import { toast } from 'sonner';
 import {
   User,
@@ -45,7 +47,7 @@ export function EnhancedSettingsPage() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState<SettingsTab>((tabParam as SettingsTab) || 'profile');
-  const { user, logout } = useSessionStore();
+  const { user } = useSessionStore();
 
   const [isLoading, setIsLoading] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -100,7 +102,7 @@ export function EnhancedSettingsPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       toast.success('Account deleted successfully');
-      logout();
+      await signOutCurrentUser();
       router.push('/');
     } catch (error) {
       toast.error('Failed to delete account');
@@ -129,7 +131,10 @@ export function EnhancedSettingsPage() {
     try {
       const response = await fetch('/api/coupons/redeem', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...csrfHeader(),
+        },
         body: JSON.stringify({ couponCode }),
       });
 
