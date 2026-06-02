@@ -135,7 +135,15 @@ export function EnhancedSettingsPage() {
 
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload?.error || 'Coupon redemption failed');
+        const detectedEmail =
+          typeof payload?.detectedEmail === 'string' ? payload.detectedEmail : '';
+        const allowedEmail =
+          typeof payload?.allowedEmail === 'string' ? payload.allowedEmail : INTERNAL_TEST_COUPON_EMAIL;
+        throw new Error(
+          detectedEmail
+            ? `${payload?.error || 'Coupon redemption failed'} (detected: ${detectedEmail}, allowed: ${allowedEmail})`
+            : payload?.error || 'Coupon redemption failed'
+        );
       }
 
       useSessionStore.getState().updateUser({
@@ -495,8 +503,11 @@ export function EnhancedSettingsPage() {
                   {user?.email?.toLowerCase() === INTERNAL_TEST_COUPON_EMAIL && (
                     <div className="border border-[var(--app-border)] rounded-lg p-4">
                       <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">Internal Test Coupon</h3>
-                      <p className="text-xs text-[var(--app-text-muted)] mb-3">
-                        Redeem the internal test code for unlimited testing access.
+                    <p className="text-xs text-[var(--app-text-muted)] mb-3">
+                      Redeem the internal test code for unlimited testing access.
+                    </p>
+                      <p className="text-[11px] text-[var(--app-text-dim)] mb-3 font-mono break-all">
+                        Detected account: {user?.email || 'unknown'} · Allowed: {INTERNAL_TEST_COUPON_EMAIL}
                       </p>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <input

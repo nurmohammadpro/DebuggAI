@@ -24,7 +24,14 @@ export async function POST(req: NextRequest) {
 
   const email = (auth.user?.email || '').trim().toLowerCase();
   if (email !== INTERNAL_TEST_COUPON_EMAIL) {
-    return NextResponse.json({ error: 'This test coupon is not available for this account' }, { status: 403 });
+    return NextResponse.json(
+      {
+        error: 'This test coupon is not available for this account',
+        detectedEmail: email,
+        allowedEmail: INTERNAL_TEST_COUPON_EMAIL,
+      },
+      { status: 403 }
+    );
   }
 
   if (couponCode !== INTERNAL_TEST_COUPON_CODE) {
@@ -121,4 +128,3 @@ export async function POST(req: NextRequest) {
     credits: targetBalance,
   });
 }
-
