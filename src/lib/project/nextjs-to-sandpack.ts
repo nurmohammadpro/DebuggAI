@@ -299,7 +299,7 @@ function detectDepsFromCode(code: string): Record<string, string> {
  */
 function buildBrowserGlobals(): string {
   return `
-/* Tailwind CSS via CDN for Sandpack preview */
+/* Tailwind CSS is loaded via CDN <script> in the preview pane */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 *, *::before, *::after {
@@ -317,8 +317,22 @@ body {
   background: white;
   color: #111827;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 `.trim();
+}
+
+/**
+ * Strip Tailwind v4 directives that Sandpack's in-browser bundler can't process.
+ * The Tailwind CDN (loaded via externalResources) handles utility classes at runtime.
+ */
+function sanitizeGlobalsCss(css: string): string {
+  return css
+    .replace(/@import\s+["']tailwindcss["']\s*;?\s*/g, '/* tailwindcss import stripped — using CDN */')
+    .replace(/@tailwind\s+\w+\s*;?\s*/g, '/* @tailwind directive stripped — using CDN */')
+    .replace(/@layer\s+\w+\s*\{/g, '/* @layer stripped — using CDN */\n')
+    .replace(/@config\s+["'][^"']+["']\s*;?\s*/g, '/* @config stripped — using CDN */')
+    .trim();
 }
 
 /**
@@ -385,6 +399,18 @@ export default function App() {
       .replace(/^src\/app\//, 'app/')
       .replace(/^src\//, '');
 
+    // Handle CSS files BEFORE sanitizeCode (which is for JS/TS only)
+    if (normalized === 'app/globals.css' || normalized === 'src/app/globals.css') {
+      const cssContent = sanitizeGlobalsCss(file.content);
+      result['/index.css'] = { code: cssContent || buildBrowserGlobals() };
+      continue;
+    }
+
+    if (normalized.endsWith('.css')) {
+      result[sandpackPath] = { code: sanitizeGlobalsCss(file.content) };
+      continue;
+    }
+
     const sanitized = sanitizeCode(file.content, sandpackPath);
 
     // Detect deps from this file (only npm packages, not @/ aliases or relative paths)
@@ -439,13 +465,6 @@ export default function App() {
       if (cssImports) {
         result['/__layout_css_imports.js'] = { code: `// CSS imports from layout\n${cssImports}` };
       }
-      continue;
-    }
-
-    // Handle globals.css — replace Tailwind directives with browser-safe CSS
-    if (normalized === 'app/globals.css' || normalized === 'src/app/globals.css') {
-      const browserCss = buildBrowserGlobals();
-      result['/index.css'] = { code: browserCss };
       continue;
     }
 

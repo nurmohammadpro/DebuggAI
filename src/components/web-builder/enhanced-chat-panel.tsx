@@ -1,11 +1,10 @@
 /**
- * Enhanced Chat Panel v3
+ * Enhanced Chat Panel v4 — v0.dev-style step-by-step messages
  *
- * Google AI Studio-style chat pane:
- * - Plain-text assistant rendering with code blocks stripped into the code pane
- * - Streaming prose shown live (code blocks removed, shown in code pane)
- * - "N files generated" badge when generation completes
- * - Animated typing indicator
+ * Renders AI responses as structured steps:
+ *   Thought → Explore → Action → Code → Completion
+ *
+ * Falls back to plain text + code blocks for non-structured responses.
  */
 
 'use client';
@@ -28,6 +27,11 @@ import {
   User,
   Layers,
   AlertTriangle,
+  Brain,
+  FolderSearch,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
@@ -39,16 +43,35 @@ import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
 
+// ── Types ────────────────────────────────────────────────────────────────────
+
 type MessageRole = 'user' | 'assistant' | 'system' | 'tool';
 
-type ChatMessage = {
+type StepType = 'thought' | 'explore' | 'action' | 'code' | 'completion';
+
+interface StepData {
+  type: StepType;
+  content: string;
+  // For thought steps
+  duration?: string;
+  // For explore steps
+  files?: string[];
+  // For action steps
+  action?: string;
+  // For code steps
+  fileName?: string;
+  language?: string;
+}
+
+interface ChatMessage {
   id: string;
   role: MessageRole;
-  content: string; // text-only (code blocks stripped)
+  content: string;
+  steps?: StepData[];
   created_at: string;
-  fileCount?: number; // How many code blocks were extracted
+  fileCount?: number;
   hasError?: boolean;
-};
+}
 
 interface EnhancedChatPanelProps {
   className?: string;
@@ -56,7 +79,98 @@ interface EnhancedChatPanelProps {
   mode?: 'build' | 'debug';
 }
 
-// ── Markdown renderer ─────────────────────────────────────────────────────
+// ── Step Parser ──────────────────────────────────────────────────────────────
+
+function parseStepsFromText(text: string): { steps: StepData[]; remaining: string } {
+  const steps: StepData[] = [];
+
+  // Try to parse structured XML-like steps
+  const thoughtRegex = /<thought\s*(?:duration="([^"]*)")?\s*>([\s\S]*?)<\/thought>/gi;
+  const exploreRegex = /<explore\s*(?:files="([^"]*)")?\s*>([\s\S]*?)<\/explore>/gi;
+  const actionRegex = /<action\s*(?:type="([^"]*)")?\s*>([\s\S]*?)<\/action>/gi;
+  const codeRegex = /<code_block\s*(?:file="([^"]*)"|language="([^"]*)"|\s)*>([\s\S]*?)<\/code_block>/gi;
+
+  let remaining = text;
+
+  // Extract thought steps
+  let m: RegExpExecArray | null;
+  while ((m = thoughtRegex.exec(text)) !== null) {
+    steps.push({ type: 'thought', content: m[2].trim(), duration: m[1] || undefined });
+    remaining = remaining.replace(m[0], '');
+  }
+
+  // Extract explore steps
+  const exploreRegex2 = /<explore\s*(?:files="([^"]*)")?\s*>([\s\S]*?)<\/explore>/gi;
+  while ((m = exploreRegex2.exec(text)) !== null) {
+    const files = m[1] ? m[1].split(',').map((f) => f.trim()) : undefined;
+    steps.push({ type: 'explore', content: m[2].trim(), files });
+    remaining = remaining.replace(m[0], '');
+  }
+
+  // Extract action steps
+  const actionRegex2 = /<action\s*(?:type="([^"]*)")?\s*>([\s\S]*?)<\/action>/gi;
+  while ((m = actionRegex2.exec(text)) !== null) {
+    steps.push({ type: 'action', content: m[2].trim(), action: m[1] || undefined });
+    remaining = remaining.replace(m[0], '');
+  }
+
+  // Extract code blocks (markdown-style) as code steps
+  const codeBlockRegex = /```(\w+)?\s*\n([\s\S]*?)```/g;
+  while ((m = codeBlockRegex.exec(text)) !== null) {
+    const codeContent = m[2].trim();
+    const lang = m[1] || undefined;
+    // Try to detect filename from first line comment
+    const firstLine = codeContent.split('\n')[0] || '';
+    const fileMatch = firstLine.match(/\/\/\s*(.+\.(tsx?|jsx?|css|html))/);
+    steps.push({
+      type: 'code',
+      content: codeContent,
+      language: lang,
+      fileName: fileMatch ? fileMatch[1] : undefined,
+    });
+    remaining = remaining.replace(m[0], '');
+  }
+
+  // Also try to parse XML code blocks
+  while ((m = codeRegex.exec(text)) !== null) {
+    const file = m[1] || undefined;
+    const lang = m[2] || undefined;
+    steps.push({ type: 'code', content: m[3].trim(), fileName: file, language: lang });
+    remaining = remaining.replace(m[0], '');
+  }
+
+  return { steps, remaining: remaining.trim() };
+}
+
+/**
+ * Auto-detect steps from plain text when no XML structure is present.
+ * Heuristically identifies action-like lines and code blocks.
+ */
+function detectImplicitSteps(text: string): StepData[] {
+  const steps: StepData[] = [];
+
+  // Detect lines that look like action descriptions
+  const actionPatterns = [
+    /^(defined|built|created|added|updated|fixed|removed|implemented|set up|configured|installed|initialized)\s+.+/i,
+    /^(let me|i'll|i will|now let|first|next|then|finally|after that)\s+.+/i,
+  ];
+
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const isAction = actionPatterns.some((pattern) => pattern.test(trimmed));
+    if (isAction) {
+      steps.push({ type: 'action', content: trimmed, action: 'build' });
+    }
+  }
+
+  return steps;
+}
+
+// ── Markdown / Text Helpers ─────────────────────────────────────────────────
+
 function toPlainText(content: string) {
   return (content || '')
     .replace(/\r\n/g, '\n')
@@ -71,30 +185,163 @@ function toPlainText(content: string) {
     .trim();
 }
 
-function MarkdownContent({ content }: { content: string }) {
-  // Chat pane should be clean, plain text. Code is extracted into the code pane.
-  const lines = toPlainText(content).split('\n');
+// ── Step Renderers ───────────────────────────────────────────────────────────
+
+function ThoughtStep({ step, defaultExpanded }: { step: StepData; defaultExpanded?: boolean }) {
+  const [expanded, setExpanded] = useState(defaultExpanded ?? false);
+
   return (
-    <div className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap break-words">
-      {lines.join('\n').trim()}
+    <div className="rounded-[10px] border border-purple-500/20 bg-purple-500/5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-purple-500/10 transition-colors"
+      >
+        <Brain className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+        <span className="text-[12px] font-medium text-purple-300">Thought{step.duration ? ` for ${step.duration}` : ''}</span>
+        <span className="flex-1" />
+        {expanded ? (
+          <ChevronDown className="h-3 w-3 text-purple-400" />
+        ) : (
+          <ChevronRight className="h-3 w-3 text-purple-400" />
+        )}
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 pt-0 border-t border-purple-500/10">
+          <p className="text-[12px] text-purple-200/80 leading-relaxed whitespace-pre-wrap mt-2">{step.content}</p>
+        </div>
+      )}
     </div>
   );
 }
 
-// ── File generated badge ──────────────────────────────────────────────────
+function ExploreStep({ step }: { step: StepData }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-[10px] border border-blue-500/20 bg-blue-500/5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-500/10 transition-colors"
+      >
+        <FolderSearch className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+        <span className="text-[12px] font-medium text-blue-300">
+          Explore{step.files ? ` · ${step.files.length} file${step.files.length !== 1 ? 's' : ''}` : ''}
+        </span>
+        <span className="flex-1" />
+        {expanded ? (
+          <ChevronDown className="h-3 w-3 text-blue-400" />
+        ) : (
+          <ChevronRight className="h-3 w-3 text-blue-400" />
+        )}
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 border-t border-blue-500/10">
+          {step.files && step.files.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {step.files.map((f) => (
+                <span
+                  key={f}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-blue-300"
+                >
+                  <FileCode2 className="h-3 w-3" />
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+          {step.content && (
+            <p className="text-[12px] text-blue-200/80 leading-relaxed mt-2">{step.content}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActionStep({ step, index }: { step: StepData; index: number }) {
+  return (
+    <div className="flex items-start gap-2.5 px-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="w-5 h-5 rounded-full bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20 flex items-center justify-center shrink-0 mt-0.5">
+        <CheckCircle2 className="h-3 w-3 text-[var(--app-accent)]" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
+      </div>
+    </div>
+  );
+}
+
+function CodeStep({ step, onCopy }: { step: StepData; onCopy?: () => void }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(step.content).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    onCopy?.();
+  };
+
+  return (
+    <div className="rounded-[10px] border border-[var(--app-border)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300 bg-zinc-950">
+      {step.fileName && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800">
+          <FileCode2 className="h-3 w-3 text-zinc-400" />
+          <span className="text-[11px] font-mono text-zinc-400">{step.fileName}</span>
+        </div>
+      )}
+      <div className="relative">
+        <pre className="p-3 text-[12px] leading-relaxed font-mono text-zinc-300 overflow-x-auto whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+          {step.content}
+        </pre>
+        <button
+          onClick={handleCopy}
+          className="absolute top-2 right-2 h-7 w-7 rounded-[6px] flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
+          title="Copy code"
+        >
+          {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: number }) {
+  return (
+    <div className="rounded-[10px] border border-[var(--app-accent)]/20 bg-[var(--app-accent)]/5 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-start gap-2">
+        <Sparkles className="h-4 w-4 text-[var(--app-accent)] shrink-0 mt-0.5" />
+        <div>
+          <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
+          {fileCount && fileCount > 0 && (
+            <div className="flex items-center gap-1.5 mt-2">
+              <FileCode2 className="h-3.5 w-3.5 text-[var(--app-accent)] shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--app-accent)]">
+                {fileCount} file{fileCount !== 1 ? 's' : ''} generated
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── File Badge ───────────────────────────────────────────────────────────────
+
 function FileBadge({ count }: { count: number }) {
   return (
     <div className="flex items-center gap-1.5 mt-2 p-2 rounded-[6px] bg-[var(--app-accent)]/8 border border-[var(--app-accent)]/20">
       <FileCode2 className="h-3.5 w-3.5 text-[var(--app-accent)] shrink-0" />
       <span className="text-[11px] font-semibold text-[var(--app-accent)]">
-        {count} file{count !== 1 ? 's' : ''} generated → code pane
+        {count} file{count !== 1 ? 's' : ''} generated
       </span>
     </div>
   );
 }
 
-// ── Typing indicator ──────────────────────────────────────────────────────
-function TypingIndicator() {
+// ── Typing Indicator ────────────────────────────────────────────────────────
+
+function TypingIndicator({ label = 'Thinking' }: { label?: string }) {
   return (
     <div className="flex items-center gap-1.5 px-3 py-2 bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[8px] w-fit">
       <div className="flex gap-1">
@@ -107,13 +354,14 @@ function TypingIndicator() {
         ))}
       </div>
       <span className="text-[10px] font-semibold text-[var(--app-accent)]/70 uppercase tracking-widest">
-        Coding
+        {label}
       </span>
     </div>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────
+// ── Main Component ──────────────────────────────────────────────────────────
+
 export function EnhancedChatPanel({
   className,
   chromeless = false,
@@ -146,7 +394,7 @@ export function EnhancedChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, accumulated]);
 
-  // When switching to a project without a thread, clear the chat UI.
+  // Clear chat when switching projects without a thread
   useEffect(() => {
     if (currentThreadId) return;
     setMessages([]);
@@ -170,10 +418,15 @@ export function EnhancedChatPanel({
       const content = String(m.content || '');
       const { text, codeBlocks } = extractCodeBlocks(content);
       if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
+
+      const { steps } = parseStepsFromText(content);
+      const implicitSteps = steps.length === 0 ? detectImplicitSteps(text) : [];
+
       return {
         id: String(m.id),
         role: m.role as MessageRole,
         content: text,
+        steps: steps.length > 0 ? steps : implicitSteps,
         created_at: String(m.created_at || new Date().toISOString()),
         fileCount: codeBlocks.length > 0 ? codeBlocks.length : undefined,
       };
@@ -206,6 +459,9 @@ export function EnhancedChatPanel({
 
       if (fullText) {
         const { text: cleanedText, codeBlocks } = extractCodeBlocks(fullText);
+        const { steps } = parseStepsFromText(fullText);
+        const implicitSteps = steps.length === 0 ? detectImplicitSteps(cleanedText) : [];
+        const resolvedSteps = steps.length > 0 ? steps : implicitSteps;
         const fileCount = codeBlocks.length;
 
         setMessages((prev) => [
@@ -214,8 +470,9 @@ export function EnhancedChatPanel({
             id: `local_assistant_${Date.now()}`,
             role: 'assistant',
             content: cleanedText || (fileCount > 0
-              ? `I've generated **${fileCount} file${fileCount !== 1 ? 's'  : ''}** for your project. Check the code pane on the right to view and edit them, and hit **Preview** to see it live.`
+              ? `I've generated **${fileCount} file${fileCount !== 1 ? 's' : ''}** for your project.`
               : 'Done! Check the code and preview panes.'),
+            steps: resolvedSteps,
             created_at: new Date().toISOString(),
             fileCount: fileCount > 0 ? fileCount : undefined,
           },
@@ -234,7 +491,7 @@ export function EnhancedChatPanel({
         {
           id: `err_${Date.now()}`,
           role: 'assistant',
-          content: `**Something went wrong**\n\n${error.message}`,
+          content: `Something went wrong\n\n${error.message}`,
           created_at: new Date().toISOString(),
           hasError: true,
         },
@@ -351,15 +608,13 @@ export function EnhancedChatPanel({
   const streamingText = (() => {
     if (!accumulated) return '';
     const { text, codeBlocks } = extractCodeBlocks(accumulated);
-    // If there's prose, show it. If only code blocks, generate a summary.
     if (text) return text;
     if (codeBlocks.length > 0) {
-      return `Generating **${codeBlocks.length} file${codeBlocks.length !== 1 ? 's' : ''}**…`;
+      return `Generating ${codeBlocks.length} file${codeBlocks.length !== 1 ? 's' : ''}...`;
     }
-    // Check if we're inside an unclosed code block (streaming in progress)
     const openFences = (accumulated.match(/```/g) || []).length;
     if (openFences > 0 && openFences % 2 === 1) {
-      return null; // still inside a code block, show indicator
+      return null;
     }
     return '';
   })();
@@ -393,7 +648,7 @@ export function EnhancedChatPanel({
       )}
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
         {/* Empty state */}
         {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-8">
@@ -401,12 +656,12 @@ export function EnhancedChatPanel({
               <Sparkles className="h-10 w-10 text-[var(--app-accent)]" />
             </div>
             <h3 className="text-[15px] font-bold text-[var(--app-text)] mb-2">
-              {mode === 'debug' ? 'Debug your code' : 'Build something amazing'}
+              {mode === 'debug' ? 'Debug your code' : 'What do you want to build?'}
             </h3>
             <p className="text-[12px] text-[var(--app-text-muted)] mb-6 max-w-[260px] leading-relaxed">
               {mode === 'debug'
                 ? 'Paste your error or describe the bug you are seeing.'
-                : 'Describe what you want to build. I will generate a complete Next.js project.'}
+                : 'Describe the app you want and I will build it step by step.'}
             </p>
             <div className="w-full max-w-[320px] space-y-2">
               {starterPrompts.map((p) => (
@@ -429,135 +684,158 @@ export function EnhancedChatPanel({
           const isLast = index === messages.length - 1;
           const canRegen = message.role === 'assistant' && isLast && !isLoading;
           const isUser = message.role === 'user';
+          const hasSteps = message.steps && message.steps.length > 0;
 
           return (
             <div
               key={message.id}
               className={cn(
-                'flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-1 duration-200 group',
+                'flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-1 duration-200 group',
                 isUser ? 'items-end' : 'items-start'
               )}
             >
-              {/* Avatar + role */}
-              <div className={cn('flex items-center gap-1.5', isUser ? 'flex-row-reverse' : 'flex-row')}>
-                <div
-                  className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center shrink-0',
-                    isUser
-                      ? 'bg-[var(--app-accent)]/15 text-[var(--app-accent)]'
-                      : 'bg-[var(--app-surface)] border border-[var(--app-border)] text-[var(--app-text-muted)]'
-                  )}
-                >
-                  {isUser ? (
-                    <User className="h-3 w-3" />
+              {/* User message — simple bubble */}
+              {isUser && (
+                <>
+                  <div className="flex items-center gap-1.5 flex-row-reverse">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-[var(--app-accent)]/15 text-[var(--app-accent)]">
+                      <User className="h-3 w-3" />
+                    </div>
+                    <span className="text-[10px] font-medium text-[var(--app-text-dim)]">You</span>
+                  </div>
+                  {editingMessageId === message.id ? (
+                    <div className="max-w-[85%] rounded-[10px] px-4 py-3 border-2 border-[var(--app-accent)]/50 bg-[var(--app-panel)]">
+                      <textarea
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(); }
+                          if (e.key === 'Escape') { setEditingMessageId(null); setEditingContent(''); }
+                        }}
+                        className="w-full bg-transparent text-[13px] leading-relaxed resize-none outline-none text-[var(--app-text)]"
+                        rows={Math.max(2, editingContent.split('\n').length)}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button
+                          onClick={() => { setEditingMessageId(null); setEditingContent(''); }}
+                          className="h-6 px-2 text-[10px] font-medium rounded bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]"
+                        >Cancel</button>
+                        <button
+                          onClick={handleSaveEdit}
+                          className="h-6 px-2 text-[10px] font-semibold rounded bg-[var(--app-accent)] text-white flex items-center gap-1"
+                        >
+                          <CheckCheck className="h-3 w-3" /> Save
+                        </button>
+                      </div>
+                    </div>
                   ) : (
-                    <Bot className="h-3 w-3" />
+                    <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-accent)]/12 border border-[var(--app-accent)]/20 text-[var(--app-text)]">
+                      <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                    </div>
                   )}
-                </div>
-                <span className="text-[10px] font-medium text-[var(--app-text-dim)]">
-                  {isUser ? 'You' : 'DeBuggAI'}
-                </span>
-              </div>
-
-              {/* Bubble */}
-              {editingMessageId === message.id ? (
-                <div className="max-w-[85%] rounded-[10px] px-4 py-3 border-2 border-[var(--app-accent)]/50 bg-[var(--app-panel)]">
-                  <textarea
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(); }
-                      if (e.key === 'Escape') { setEditingMessageId(null); setEditingContent(''); }
-                    }}
-                    className="w-full bg-transparent text-[13px] leading-relaxed resize-none outline-none text-[var(--app-text)]"
-                    rows={Math.max(2, editingContent.split('\n').length)}
-                    autoFocus
-                  />
-                  <div className="flex justify-end gap-2 mt-2">
+                  {/* User message actions */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-row-reverse">
                     <button
-                      onClick={() => { setEditingMessageId(null); setEditingContent(''); }}
-                      className="h-6 px-2 text-[10px] font-medium rounded bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]"
-                    >Cancel</button>
-                    <button
-                      onClick={handleSaveEdit}
-                      className="h-6 px-2 text-[10px] font-semibold rounded bg-[var(--app-accent)] text-white flex items-center gap-1"
+                      onClick={() => handleCopyMessage(message.content, message.id)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      title="Copy"
                     >
-                      <CheckCheck className="h-3 w-3" /> Save
+                      {copiedMessageId === message.id ? <Check className="h-3 w-3 text-[var(--app-success)]" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                    <button
+                      onClick={() => handleEditMessage(message.id, message.content)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMessage(message.id)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div
-                  className={cn(
-                    'max-w-[85%] rounded-[10px] px-4 py-3',
-                    isUser
-                      ? 'bg-[var(--app-accent)]/12 border border-[var(--app-accent)]/20 text-[var(--app-text)]'
-                      : message.hasError
-                      ? 'bg-[var(--app-danger-soft)] border border-[var(--app-danger)]/20'
-                      : 'bg-[var(--app-panel)] border border-[var(--app-border)]'
-                  )}
-                >
-                  {isUser ? (
-                    <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
-                  ) : (
-                    <>
-                      {message.hasError && (
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <AlertTriangle className="h-3.5 w-3.5 text-[var(--app-danger)]" />
-                          <span className="text-[11px] font-semibold text-[var(--app-danger)]">Error</span>
-                        </div>
-                      )}
-                      <MarkdownContent content={message.content} />
-                      {message.fileCount && message.fileCount > 0 && (
-                        <FileBadge count={message.fileCount} />
-                      )}
-                    </>
-                  )}
-                </div>
+                </>
               )}
 
-              {/* Action buttons (hover) */}
-              <div
-                className={cn(
-                  'flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
-                  isUser ? 'flex-row-reverse' : 'flex-row'
-                )}
-              >
-                <button
-                  onClick={() => handleCopyMessage(message.content, message.id)}
-                  className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
-                  title="Copy"
-                >
-                  {copiedMessageId === message.id ? <Check className="h-3 w-3 text-[var(--app-success)]" /> : <Copy className="h-3 w-3" />}
-                </button>
-                {isUser && (
-                  <button
-                    onClick={() => handleEditMessage(message.id, message.content)}
-                    className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
-                    title="Edit"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
-                )}
-                {canRegen && (
-                  <button
-                    onClick={handleRegenerate}
-                    className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
-                    title="Regenerate"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDeleteMessage(message.id)}
-                  className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors"
-                  title="Delete"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
+              {/* Assistant message — steps or text */}
+              {!isUser && (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[var(--app-surface)] border border-[var(--app-border)]">
+                      <Bot className="h-3 w-3 text-[var(--app-text-muted)]" />
+                    </div>
+                    <span className="text-[10px] font-medium text-[var(--app-text-dim)]">DeBuggAI</span>
+                  </div>
+
+                  {message.hasError && (
+                    <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-danger-soft)] border border-[var(--app-danger)]/20">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <AlertTriangle className="h-3.5 w-3.5 text-[var(--app-danger)]" />
+                        <span className="text-[11px] font-semibold text-[var(--app-danger)]">Error</span>
+                      </div>
+                      <p className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  )}
+
+                  {/* Render steps if available */}
+                  {!message.hasError && hasSteps && (
+                    <div className="max-w-[90%] space-y-2.5 w-full">
+                      {message.steps!.map((step, stepIdx) => {
+                        if (step.type === 'thought') return <ThoughtStep key={stepIdx} step={step} />;
+                        if (step.type === 'explore') return <ExploreStep key={stepIdx} step={step} />;
+                        if (step.type === 'action') return <ActionStep key={stepIdx} step={step} index={stepIdx} />;
+                        if (step.type === 'code') return <CodeStep key={stepIdx} step={step} />;
+                        if (step.type === 'completion') return <CompletionStep key={stepIdx} step={step} fileCount={message.fileCount} />;
+                        return null;
+                      })}
+                      {message.fileCount && message.fileCount > 0 && !message.steps!.some((s) => s.type === 'completion') && (
+                        <FileBadge count={message.fileCount} />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Fallback: plain text if no steps */}
+                  {!message.hasError && !hasSteps && (
+                    <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
+                      <p className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap break-words">
+                        {toPlainText(message.content)}
+                      </p>
+                      {message.fileCount && message.fileCount > 0 && <FileBadge count={message.fileCount} />}
+                    </div>
+                  )}
+
+                  {/* Assistant message actions */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleCopyMessage(message.content, message.id)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      title="Copy"
+                    >
+                      {copiedMessageId === message.id ? <Check className="h-3 w-3 text-[var(--app-success)]" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                    {canRegen && (
+                      <button
+                        onClick={handleRegenerate}
+                        className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                        title="Regenerate"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteMessage(message.id)}
+                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
@@ -631,7 +909,7 @@ export function EnhancedChatPanel({
 
       {/* Input Area */}
       <div className="p-3 shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)]">
-        <div className="flex items-end gap-2 rounded-[10px] border border-[var(--app-border)] focus-within:border-[var(--app-accent)]/50 transition-colors bg-[var(--app-bg)] p-2.5">
+        <div className="flex items-end gap-2 rounded-xl border border-[var(--app-border)] focus-within:border-[var(--app-accent)]/50 focus-within:shadow-[0_0_0_2px_rgba(0,200,83,0.08)] transition-all bg-[var(--app-bg)] p-2.5">
           <textarea
             ref={textareaRef}
             value={input}
@@ -640,7 +918,7 @@ export function EnhancedChatPanel({
             placeholder={
               mode === 'debug'
                 ? 'Describe the bug or paste the error...'
-                : 'Describe what you want to build...'
+                : 'What do you want to build?'
             }
             data-dashboard-composer
             className="flex-1 min-h-[40px] max-h-[160px] resize-none bg-transparent text-[13px] leading-relaxed text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none"
@@ -650,7 +928,7 @@ export function EnhancedChatPanel({
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="h-9 w-9 rounded-[8px] shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 disabled:opacity-40 transition-all inline-flex items-center justify-center"
+            className="h-9 w-9 rounded-lg shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 disabled:opacity-40 transition-all inline-flex items-center justify-center"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
