@@ -38,10 +38,9 @@ export function V0RightPanel({
   const sandbox = useSandbox();
   const lastFileSnapshot = useRef<string>('');
 
-  // Use Docker as primary preview: auto-create sandbox when entering preview mode
-  // or when files change significantly
+  // Auto-create Docker sandbox when files are available (regardless of active view)
+  // This ensures the preview is ready by the time the user tabs to it
   useEffect(() => {
-    if (activeView !== 'preview') return;
     if (!files || Object.keys(files.files).length === 0) return;
 
     const snapshot = serializeVirtualFiles(files);
@@ -55,17 +54,21 @@ export function V0RightPanel({
       flatFiles[path] = file.content;
     }
 
-    // Only re-create if we have meaningful content
+    // Only create if we have meaningful content (more than just a default stub)
     const totalChars = Object.values(flatFiles).reduce((sum, c) => sum + c.length, 0);
     if (totalChars < 20) return;
 
-    // If sandbox already exists and is running, just pass the new files
+    // Stop existing sandbox before creating a new one with updated files
     if (sandbox.status === 'running' || sandbox.status === 'installing') {
-      return;
+      sandbox.stopSandbox().then(() => {
+        sandbox.createSandbox(flatFiles);
+      }).catch(() => {
+        sandbox.createSandbox(flatFiles);
+      });
+    } else if (sandbox.status === 'idle' || sandbox.status === 'stopped' || sandbox.status === 'error') {
+      sandbox.createSandbox(flatFiles);
     }
-
-    sandbox.createSandbox(flatFiles);
-  }, [activeView, files, sandbox.createSandbox, sandbox.status]);
+  }, [files, sandbox.createSandbox, sandbox.status, sandbox.stopSandbox]);
 
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();

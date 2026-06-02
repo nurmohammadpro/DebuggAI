@@ -101,42 +101,54 @@ export function WorkspaceDashboard() {
     if (effectiveProjectId) setProjectId(effectiveProjectId);
   }, [effectiveProjectId, setProjectId]);
 
+  // Load project code into generation store
   useEffect(() => {
     if (project?.code) {
       loadFromProject(project.code, project.description || 'Loaded project');
-    } else if (effectiveProjectId && threadBootedRef.current === effectiveProjectId) {
-      // No saved code yet — try to restore files from the latest assistant message
-      const generationStore = useGenerationStore.getState();
-      if (!generationStore.files || Object.keys(generationStore.files.files).length <= 1) {
-        (async () => {
-          try {
-            const { session } = await getSession();
-            const token = session?.access_token;
-            const tid = generationStore.currentThreadId;
-            if (!token || !tid) return;
-            const res = await fetch(`/api/threads/${tid}/messages?limit=50`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) return;
-            const j = await res.json();
-            const msgs = (j?.messages || []) as Array<{ role: string; content: string }>;
-            // Find the last assistant message with code blocks
-            for (let i = msgs.length - 1; i >= 0; i--) {
-              const msg = msgs[i];
-              if (msg.role !== 'assistant') continue;
-              const content = String(msg.content || '');
-              if (content.includes('```') || content.includes('<code_block')) {
-                loadFromProject(content, project?.description || 'Restored from chat');
-                break;
-              }
-            }
-          } catch {
-            // No files to restore — user will generate new code
-          }
-        })();
-      }
     }
+  }, [effectiveProjectId, loadFromProject, project?.code, project?.description]);
 
+  // Fallback: restore files from thread messages when no saved code exists
+  // Runs AFTER the thread is loaded (currentThreadId is set)
+  useEffect(() => {
+    const tid = useGenerationStore.getState().currentThreadId;
+    if (!tid) return;
+    if (project?.code) return; // Already loaded from saved code
+
+    const generationStore = useGenerationStore.getState();
+    if (generationStore.files && Object.keys(generationStore.files.files).length > 1) return; // Already has files
+
+    (async () => {
+      try {
+        const { session } = await getSession();
+        const token = session?.access_token;
+        if (!token) return;
+        const res = await fetch(`/api/threads/${tid}/messages?limit=100`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const j = await res.json();
+        const msgs = (j?.messages || []) as Array<{ role: string; content: string }>;
+        // Scan from last to first — find the richest assistant message with code
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          const msg = msgs[i];
+          if (msg.role !== 'assistant') continue;
+          const content = String(msg.content || '');
+          // Count code fences — we want the richest response
+          const fenceCount = (content.match(/```/g) || []).length;
+          if (fenceCount >= 4) {
+            // At least 2 complete code blocks
+            loadFromProject(content, project?.description || 'Restored from chat');
+            return;
+          }
+        }
+      } catch {
+        // No files to restore
+      }
+    })();
+  }, [useGenerationStore.getState().currentThreadId, effectiveProjectId, project?.code, project?.description, loadFromProject]);
+
+  useEffect(() => {
     if (
       effectiveProjectId &&
       projectBootLoggedRef.current !== effectiveProjectId &&
@@ -149,7 +161,7 @@ export function WorkspaceDashboard() {
       });
       projectBootLoggedRef.current = effectiveProjectId;
     }
-  }, [effectiveProjectId, loadFromProject, project?.code, project?.description]);
+  }, [effectiveProjectId, project?.code, project?.description]);
 
   useEffect(() => {
     if (!project) return;
@@ -235,7 +247,8 @@ export function WorkspaceDashboard() {
       />
 
       {/* v0-style sidebar — 48px dark icon rail, hidden on mobile */}
-      <div className="hidden sm:block">
+      {/* Use h-full so it stays within the parent h-[100dvh] container */}
+      <div className="hidden sm:block h-full">
         <V0Sidebar />
       </div>
 

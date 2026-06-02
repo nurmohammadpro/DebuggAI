@@ -126,7 +126,7 @@ export function V0Sidebar({ vertical = false, onClose }: V0SidebarProps) {
 
   // ── Desktop (icon rail) layout ──
   return (
-    <aside className="w-12 h-[100dvh] bg-zinc-950 border-r border-zinc-800 flex flex-col shrink-0 select-none">
+    <aside className="w-12 h-full bg-zinc-950 border-r border-zinc-800 flex flex-col shrink-0 select-none">
       {/* Logo */}
       <div className="h-12 flex items-center justify-center shrink-0 border-b border-zinc-800">
         <Link href="/dashboard/home" className="flex items-center justify-center" title="DeBuggAI Home">
