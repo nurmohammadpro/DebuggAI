@@ -42,12 +42,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Fail fast before charging credits if Docker isn't available.
-    const dockerCheck = spawnSync('docker', ['version'], { stdio: 'ignore' });
+    const dockerCheck = spawnSync('docker', ['version'], { encoding: 'utf-8' });
+    const dockerStderr = `${dockerCheck.stderr || ''}`.trim();
     if (dockerCheck.error || (typeof dockerCheck.status === 'number' && dockerCheck.status !== 0)) {
+      const permissionDenied =
+        dockerStderr.toLowerCase().includes('permission denied') ||
+        dockerStderr.toLowerCase().includes('got permission denied') ||
+        dockerStderr.toLowerCase().includes('cannot connect to the docker daemon') ||
+        dockerStderr.toLowerCase().includes('dial unix') ||
+        dockerStderr.toLowerCase().includes('connect: permission denied');
       return NextResponse.json(
         {
           error:
-            'Docker is required to run sandboxes. Install Docker Desktop and ensure the `docker` CLI is available, then restart the dev server.',
+            permissionDenied
+              ? 'Docker CLI is installed, but this app container cannot reach the Docker socket. Make sure /var/run/docker.sock is mounted and the app container is in the socket’s docker group.'
+              : 'Docker is required to run sandboxes. Install Docker Desktop and ensure the `docker` CLI is available, then restart the dev server.',
         },
         { status: 503 },
       );
