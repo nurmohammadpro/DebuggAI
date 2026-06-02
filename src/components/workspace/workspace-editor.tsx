@@ -265,26 +265,9 @@ export function WorkspaceEditor({
 
   const sandbox = useSandbox();
   const sandboxStartingRef = useRef(false);
-  const [dockerFallback, setDockerFallback] = useState(false);
 
   // Expanded dirs state — auto-expand top-level dirs
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['app', 'src', 'components', 'lib']));
-
-  // Fall back to Sandpack when Docker isn't available
-  useEffect(() => {
-    if (
-      (sandbox.status === 'error' && !!sandbox.error) ||
-      (sandbox.error &&
-        (sandbox.error.includes('Docker is required') ||
-          sandbox.error.includes('Live preview is temporarily disabled') ||
-          sandbox.error.includes('Web Builder requires a Pro plan') ||
-          sandbox.error.toLowerCase().includes('insufficient') ||
-          sandbox.error.includes('Sandbox not available')))
-    ) {
-      setDockerFallback(true);
-      sandbox.clearError();
-    }
-  }, [sandbox.error, sandbox.clearError, sandbox.status]);
 
   // Build file tree from project files
   const fileTree = useMemo(() => {
@@ -358,8 +341,8 @@ export function WorkspaceEditor({
   }, [files]);
 
   const shouldUseDockerSandbox = useMemo(
-    () => !dockerFallback && editorView === 'preview',
-    [editorView, dockerFallback]
+    () => editorView === 'preview',
+    [editorView]
   );
 
   const ensureSandboxRunning = useCallback(async () => {
@@ -447,7 +430,6 @@ export function WorkspaceEditor({
             height="100%"
             chromeless
             className="flex-1 min-h-0"
-            forceSandbox={shouldUseDockerSandbox}
             sandboxUrl={shouldUseDockerSandbox ? sandbox.previewUrl : null}
             sandboxError={shouldUseDockerSandbox ? sandbox.error : null}
             onRefresh={shouldUseDockerSandbox ? recreateSandbox : undefined}

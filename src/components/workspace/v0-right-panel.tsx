@@ -96,14 +96,10 @@ export function V0RightPanel({
     sandbox.status === 'creating' ? 'docker-creating' :
     sandbox.status === 'installing' ? 'docker-installing' :
     sandbox.status === 'running' ? 'docker' :
-    sandbox.status === 'error' && sandbox.error?.includes('Docker') ? 'sandpack' :
-    sandbox.status === 'error' ? 'sandpack' :
-    sandbox.status === 'stopped' ? 'sandpack' :
+    sandbox.status === 'error' ? 'error' :
+    sandbox.status === 'stopped' ? 'stopped' :
     sandbox.previewUrl ? 'docker' :
-    files && Object.keys(files.files).length > 1 ? 'sandpack' :
     'idle';
-
-  const showDockerPreview = previewEngine === 'docker' || previewEngine === 'docker-installing' || previewEngine === 'docker-creating';
 
   return (
     <div
@@ -149,19 +145,21 @@ export function V0RightPanel({
             previewEngine === 'docker' && 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
             previewEngine === 'docker-creating' && 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
             previewEngine === 'docker-installing' && 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-            previewEngine === 'sandpack' && 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+            previewEngine === 'error' && 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
+            previewEngine === 'stopped' && 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20',
           )}>
             {previewEngine === 'docker-creating' || previewEngine === 'docker-installing' ? (
               <Loader2 className="h-2.5 w-2.5 animate-spin" />
             ) : previewEngine === 'docker' ? (
               <Container className="h-2.5 w-2.5" />
-            ) : previewEngine === 'sandpack' ? (
+            ) : previewEngine === 'error' ? (
               <Terminal className="h-2.5 w-2.5" />
             ) : null}
             {previewEngine === 'docker-creating' ? 'Starting...' :
              previewEngine === 'docker-installing' ? 'Building...' :
              previewEngine === 'docker' ? 'Docker' :
-             previewEngine === 'sandpack' ? 'Sandpack' : 'Idle'}
+             previewEngine === 'error' ? 'Error' :
+             previewEngine === 'stopped' ? 'Stopped' : 'Idle'}
           </span>
         )}
 
@@ -263,7 +261,6 @@ export function V0RightPanel({
             height="100%"
             className="h-full border-0 rounded-none"
             chromeless
-            forceSandbox={showDockerPreview}
             sandboxUrl={sandbox.previewUrl}
             sandboxError={sandbox.error}
             onRefresh={handleRefresh}
