@@ -223,9 +223,12 @@ export function useSandbox(options: UseSandboxOptions = {}) {
         return data.id;
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Failed to create sandbox';
-        // Graceful fallback: if Docker isn't available, don't show error —
-        // the preview pane will fall through to Sandpack in-browser preview.
-        if (message.includes('Docker') || message.includes('docker')) {
+        // Graceful fallback: if Docker is unavailable, fall through to Sandpack.
+        if (
+          message.includes('Docker') || message.includes('docker') ||
+          message.includes('Pro plan') || message.includes('disabled') ||
+          message.includes('Payment') || message.includes('402')
+        ) {
           update({ status: 'error', error: null, previewUrl: null });
         } else {
           update({ status: 'error', error: message });
