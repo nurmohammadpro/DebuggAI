@@ -13,11 +13,11 @@ import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
 import { WorkspaceMobileTabs } from '@/components/workspace/workspace-mobile-tabs';
 import { toast } from 'sonner';
 import { EnhancedChatPanel } from '@/components/web-builder/enhanced-chat-panel';
-import { V0Sidebar } from '@/components/workspace/v0-sidebar';
+import { WorkspaceSidebar } from '@/components/workspace/workspace-sidebar';
 import { V0RightPanel } from '@/components/workspace/v0-right-panel';
 import type { V0RightView } from '@/components/workspace/v0-right-panel';
 import { Panel } from '@/components/panel/panel';
-import { Menu, MoreVertical, PanelRight } from 'lucide-react';
+import { MoreVertical, PanelRight } from 'lucide-react';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { DeployModal } from '@/components/workspace/deploy-modal';
 import { CommandPalette } from '@/components/dashboard/command-palette';
@@ -38,7 +38,6 @@ export function WorkspaceDashboard() {
   const [rightView, setRightView] = useState<V0RightView>('code');
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rightWidth, setRightWidth] = useState(980);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
@@ -245,23 +244,14 @@ export function WorkspaceDashboard() {
         projectName={projectName}
       />
 
-      {/* v0-style sidebar — 48px dark icon rail, hidden on mobile */}
-      {/* Use h-full so it stays within the parent h-[100dvh] container */}
-      <div className="hidden sm:block h-full">
-        <V0Sidebar />
-      </div>
+      {/* Absolute-positioned sidebar — doesn't affect flex layout */}
+      <WorkspaceSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 min-w-0 flex flex-col">
+      {/* Main Content — pl-[48px] accounts for absolute sidebar */}
+      <main className="flex-1 min-w-0 flex flex-col md:pl-12">
         {/* Thin top bar — project name + collab status + mobile menu */}
         <div className="h-10 flex items-center gap-2 px-4 shrink-0 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
-          <button
-            className="md:hidden w-7 h-7 flex items-center justify-center rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all shrink-0"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu className="w-4 h-4" />
-          </button>
+          {/* Hamburger moved to WorkspaceSidebar */}
 
           <span className="text-[12px] font-semibold text-[var(--app-text)] truncate">
             {projectName}
@@ -380,20 +370,7 @@ export function WorkspaceDashboard() {
           </Panel>
         </div>
 
-        {/* Mobile sidebar drawer */}
-        {mobileMenuOpen && (
-          <div className="fixed inset-0 z-40 sm:hidden" onClick={() => setMobileMenuOpen(false)}>
-            <div className="absolute inset-0 bg-black/60" />
-            <div
-              className="absolute left-0 top-0 bottom-0 w-64 bg-zinc-950 border-r border-zinc-800 shadow-xl animate-in slide-in-from-left duration-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <V0Sidebar vertical onClose={() => setMobileMenuOpen(false)} />
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Bottom Tabs */}
+          {/* Mobile Bottom Tabs */}
         <WorkspaceMobileTabs
           activeTab={rightView}
           onTabChange={(tab) => {
