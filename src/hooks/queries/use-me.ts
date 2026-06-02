@@ -10,7 +10,7 @@ export interface MeProfile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  plan: 'free' | 'pro' | 'enterprise';
+  plan: 'free' | 'pro' | 'team' | 'business' | 'enterprise';
   is_admin: boolean;
 }
 
@@ -24,13 +24,16 @@ export function useMeProfile(enabled = true) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id,email,full_name,avatar_url,plan,is_admin')
+        .select('id,email,full_name,avatar_url,plan_type,is_admin')
         .eq('id', session.user.id)
         .single();
 
       if (error) throw error;
-      return data as MeProfile;
+      const effectivePlan = (data as any).is_admin ? 'enterprise' : ((data as any).plan_type || 'free');
+      return {
+        ...data,
+        plan: effectivePlan,
+      } as MeProfile;
     },
   });
 }
-

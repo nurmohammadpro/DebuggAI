@@ -8,7 +8,7 @@ import type {
   Session,
 } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { useSessionStore } from '@/store/session-store';
+import { useSessionStore, type PlanType } from '@/store/session-store';
 import { setCachedSession } from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
 import { csrfHeader } from '@/lib/csrf-client';
@@ -81,7 +81,7 @@ export function SessionBootstrapper() {
             .select('balance')
             .eq('user_id', userId)
             .maybeSingle(),
-          supabase.from('profiles').select('is_admin').eq('id', userId).maybeSingle(),
+          supabase.from('profiles').select('is_admin, plan_type').eq('id', userId).maybeSingle(),
         ]);
 
       if (!walletError && wallet?.balance !== undefined) {
@@ -92,7 +92,10 @@ export function SessionBootstrapper() {
       }
 
       const dbAdmin = !profileError ? profile?.is_admin ?? false : false;
+      const dbPlan = !profileError ? (profile?.plan_type ?? 'free') : 'free';
+      const effectivePlan: PlanType = allowlistedAdmin || dbAdmin ? 'enterprise' : (dbPlan as PlanType);
       updateUserRef.current({ isAdmin: allowlistedAdmin || dbAdmin });
+      updateUserRef.current({ plan: effectivePlan });
 
       // Auto-apply the internal testing coupon for the approved email only.
       // This keeps the flow invisible for the test user while remaining scoped.
@@ -155,7 +158,7 @@ export function SessionBootstrapper() {
               session.user.email ||
               'Developer',
             avatarUrl: session.user.user_metadata.avatar_url,
-            plan: session.user.user_metadata.plan || 'free',
+            plan: 'free',
             credits: 0,
             isAdmin: null,
           });

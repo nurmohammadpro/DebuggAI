@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 
 import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
-import { isServerEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
+import { isEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
 
 export async function requireAdmin(req: NextRequest) {
   const auth = await requireUser(req);
@@ -12,7 +12,7 @@ export async function requireAdmin(req: NextRequest) {
   const user = auth.user!;
 
   // Temporary bootstrapping: allow env-based allowlist until DB is fully aligned.
-  if (isServerEmailAdminAllowlisted(user.email)) {
+  if (isEmailAdminAllowlisted(user.email)) {
     return { ...auth, isAdmin: true, errorResponse: null as null };
   }
 
@@ -38,4 +38,3 @@ export async function requireAdmin(req: NextRequest) {
     return { ...auth, isAdmin: false, errorResponse: new Response('Forbidden', { status: 403 }) };
   }
 }
-

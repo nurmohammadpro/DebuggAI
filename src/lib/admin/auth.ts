@@ -7,6 +7,7 @@
 'use server';
 
 import { createClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { isEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
 
 export interface AdminUser {
   id: string;
@@ -50,7 +51,7 @@ export async function getCurrentUser(): Promise<AdminUser | null> {
       id: profile.id,
       email: profile.email,
       full_name: profile.full_name,
-      is_admin: profile.is_admin,
+      is_admin: profile.is_admin || isEmailAdminAllowlisted(profile.email),
       plan_type: profile.plan_type,
     };
   } catch (error) {
@@ -113,7 +114,7 @@ export async function adminSignIn(formData: FormData): Promise<AdminAuthResult> 
     .eq('id', data.user.id)
     .maybeSingle();
 
-  if (!profile || !profile.is_admin) {
+  if (!profile || (!profile.is_admin && !isEmailAdminAllowlisted(profile.email))) {
     // Sign out the user since they're not an admin
     await supabase.auth.signOut();
     return { success: false, error: 'Admin access required. You do not have permission to access the admin console.' };

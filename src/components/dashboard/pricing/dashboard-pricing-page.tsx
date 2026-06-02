@@ -127,6 +127,7 @@ export default function PricingPage() {
   const { user, isAuthenticated } = useSessionStore();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const currentPlan = user?.isAdmin ? 'enterprise' : (user?.plan || 'free');
 
   const handleSubscribe = async (plan: Plan) => {
     if (!isAuthenticated) {
@@ -289,19 +290,19 @@ export default function PricingPage() {
               </ul>
 
               {/* CTA */}
-              <Button
-                onClick={() => handleSubscribe(plan)}
-                disabled={isLoading === plan.id || user?.plan === plan.id}
-                className="w-full"
-                variant={plan.id === 'free' ? 'outline' : 'default'}
-                size="sm"
-              >
-                {isLoading === plan.id ? (
-                  'Loading...'
-                ) : user?.plan === plan.id ? (
-                  'Current Plan'
-                ) : plan.id === 'free' ? (
-                  'Get Started'
+                <Button
+                  onClick={() => handleSubscribe(plan)}
+                  disabled={isLoading === plan.id || currentPlan === plan.id}
+                  className="w-full"
+                  variant={plan.id === 'free' ? 'outline' : 'default'}
+                  size="sm"
+                >
+                  {isLoading === plan.id ? (
+                    'Loading...'
+                  ) : currentPlan === plan.id ? (
+                    'Current Plan'
+                  ) : plan.id === 'free' ? (
+                    'Get Started'
                 ) : plan.cta === 'contact' ? (
                   'Contact Sales'
                 ) : plan.cta === 'coming-soon' ? (

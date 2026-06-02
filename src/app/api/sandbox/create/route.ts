@@ -15,6 +15,7 @@ import { requireFeature, getUserPlan, getActionCost, withRateLimit } from '@/lib
 import { spawnSync } from 'child_process';
 import * as Sentry from '@sentry/nextjs';
 import { getThrottleFlag } from '@/lib/server/throttle-config';
+import { isEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,11 +56,12 @@ export async function POST(req: NextRequest) {
     const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
     const isDev = process.env.NODE_ENV !== 'production';
     const enforceBilling = !isDev && hasServiceRoleKey;
+    const privilegedPreviewUser = isEmailAdminAllowlisted(user.email);
 
     // Enforce web_builder feature access based on plan.
     // If the service role key isn't configured, we can't reliably read plan state.
     // In that case (typically local dev), allow sandboxing without plan gating.
-    if (enforceBilling) {
+    if (enforceBilling && !privilegedPreviewUser) {
       const { allowed } = await requireFeature(user.id, 'web_builder');
       if (!allowed) {
         return NextResponse.json(
@@ -85,19 +87,21 @@ export async function POST(req: NextRequest) {
       : fileCount > 10 ? getActionCost('web_builder_medium')
       : getActionCost('web_builder_small');
 
-    const rateLimit = await withRateLimit(user.id, 'web_builder', {
-      req,
-      creditsUsed: cost,
-    });
-    if (!rateLimit.allowed) {
-      return NextResponse.json(rateLimit.body, {
-        status: rateLimit.status,
-        headers: { 'Retry-After': '60' },
+    if (!privilegedPreviewUser) {
+      const rateLimit = await withRateLimit(user.id, 'web_builder', {
+        req,
+        creditsUsed: cost,
       });
+      if (!rateLimit.allowed) {
+        return NextResponse.json(rateLimit.body, {
+          status: rateLimit.status,
+          headers: { 'Retry-After': '60' },
+        });
+      }
     }
 
     // Charge credits atomically (production only, when admin key is configured).
-    if (enforceBilling) {
+    if (enforceBilling && !privilegedPreviewUser) {
       const adminClient = createSupabaseAdmin();
       const { error: spendError } = await adminClient.rpc('spend_credits', {
         p_user_id: user.id,

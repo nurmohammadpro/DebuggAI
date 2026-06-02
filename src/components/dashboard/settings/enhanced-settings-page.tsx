@@ -54,6 +54,7 @@ export function EnhancedSettingsPage() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('dark');
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const isPaidPlan = Boolean(user?.isAdmin) || (user?.plan && user.plan !== 'free');
 
   const [profileForm, setProfileForm] = useState({
     displayName: user?.displayName || '',
@@ -466,9 +467,9 @@ export function EnhancedSettingsPage() {
                         <p className="text-xs text-[var(--app-text-muted)]">{user?.plan || 'Free'}</p>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded ${
-                        user?.plan === 'pro' ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)]' : 'bg-[var(--app-panel-2)] text-[var(--app-text-muted)]'
+                        isPaidPlan ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)]' : 'bg-[var(--app-panel-2)] text-[var(--app-text-muted)]'
                       }`}>
-                        {user?.plan === 'pro' ? 'Active' : 'Free'}
+                        {isPaidPlan ? 'Active' : 'Free'}
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-center">
@@ -477,7 +478,7 @@ export function EnhancedSettingsPage() {
                         <div className="text-xs text-[var(--app-text-muted)]">Credits</div>
                       </div>
                       <div className="p-3 bg-[var(--app-surface)] rounded">
-                        <div className="text-2xl font-semibold text-[var(--app-text)]">{user?.plan === 'pro' ? 'Unlimited' : '100'}</div>
+                        <div className="text-2xl font-semibold text-[var(--app-text)]">{isPaidPlan ? 'Unlimited' : '100'}</div>
                         <div className="text-xs text-[var(--app-text-muted)]">Daily Limit</div>
                       </div>
                       <div className="p-3 bg-[var(--app-surface)] rounded">
@@ -488,7 +489,7 @@ export function EnhancedSettingsPage() {
                   </div>
 
                   {/* Upgrade CTA */}
-                  {user?.plan !== 'pro' && (
+                  {!isPaidPlan && (
                     <div className="bg-gradient-to-r from-[var(--app-accent-soft)] to-[var(--app-surface)] border border-[var(--app-accent)] rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>

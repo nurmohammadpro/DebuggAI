@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { requireUser } from '@/lib/server/auth';
+import { isEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
 
 export async function GET(req: NextRequest) {
   const auth = await requireUser(req);
@@ -17,10 +18,19 @@ export async function GET(req: NextRequest) {
   try {
     const { data } = await auth.supabase
       .from('profiles')
-      .select('id, email, full_name, avatar_url, plan, is_admin, metadata')
+      .select('id, email, full_name, avatar_url, plan_type, is_admin, metadata')
       .eq('id', user.id)
       .maybeSingle();
-    response.profile = data || null;
+    response.profile = data
+      ? {
+          ...data,
+          plan:
+            (data as any).is_admin || isEmailAdminAllowlisted((data as any).email)
+              ? 'enterprise'
+              : ((data as any).plan_type || 'free'),
+          is_admin: (data as any).is_admin || isEmailAdminAllowlisted((data as any).email),
+        }
+      : null;
   } catch {
     response.profile = null;
   }
@@ -38,4 +48,3 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(response);
 }
-
