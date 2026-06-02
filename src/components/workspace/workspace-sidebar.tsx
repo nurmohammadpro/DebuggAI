@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
@@ -15,20 +15,14 @@ import {
   Moon,
   X,
   PanelLeft,
-  PanelLeftClose,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
 import { cn } from '@/lib/utils';
 
 /**
- * Clean workspace sidebar.
- *
- * Desktop: absolute-positioned 48px icon rail (no flex overlap issues).
- * Hover expands to 200px with labels.
- * Mobile: full-width drawer overlay.
+ * Clean workspace sidebar using design tokens (CSS variables).
+ * Desktop: absolute-positioned, hover-expands. Mobile: drawer overlay.
  */
 export function WorkspaceSidebar() {
   const pathname = usePathname();
@@ -56,10 +50,10 @@ export function WorkspaceSidebar() {
 
   const credits = user?.credits;
 
-  // ── Mobile hamburger button (rendered outside the sidebar) ──
+  // ── Mobile hamburger ──
   const hamburger = (
     <button
-      className="md:hidden fixed top-2 left-2 z-50 w-8 h-8 rounded-[8px] flex items-center justify-center bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors shadow-lg"
+      className="md:hidden fixed top-2 left-2 z-50 w-8 h-8 rounded-[8px] flex items-center justify-center bg-[var(--app-panel)] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors shadow-lg"
       onClick={() => setMobileOpen(true)}
       aria-label="Open menu"
     >
@@ -69,26 +63,23 @@ export function WorkspaceSidebar() {
 
   // ── Mobile drawer ──
   const mobileDrawer = mobileOpen && (
-    <div
-      className="fixed inset-0 z-50 md:hidden"
-      onClick={() => setMobileOpen(false)}
-    >
+    <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileOpen(false)}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="absolute left-0 top-0 bottom-0 w-64 bg-zinc-950 border-r border-zinc-800 shadow-xl animate-in slide-in-from-left duration-200 flex flex-col"
+        className="absolute left-0 top-0 bottom-0 w-64 bg-[var(--app-panel)] border-r border-[var(--app-border)] shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-12 px-4 border-b border-zinc-800 shrink-0">
+        <div className="flex items-center justify-between h-12 px-4 border-b border-[var(--app-border)] shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-[var(--app-accent)] flex items-center justify-center">
               <span className="text-[10px] font-black text-white leading-none">D</span>
             </div>
-            <span className="text-[12px] font-semibold text-zinc-200">DeBuggAI</span>
+            <span className="text-[12px] font-semibold text-[var(--app-text)]">DeBuggAI</span>
           </div>
           <button
             onClick={() => setMobileOpen(false)}
-            className="w-7 h-7 rounded-[6px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="w-7 h-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -106,8 +97,8 @@ export function WorkspaceSidebar() {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[13px] font-medium transition-colors',
                   item.active
-                    ? 'bg-zinc-800 text-white'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+                    ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                    : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)]'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -118,14 +109,14 @@ export function WorkspaceSidebar() {
         </nav>
 
         {/* Bottom */}
-        <div className="border-t border-zinc-800 py-2 px-2 space-y-0.5">
-          <div className="flex items-center gap-3 px-3 py-2 text-[12px] text-zinc-400">
-            <Zap className="h-3.5 w-3.5 shrink-0" />
+        <div className="border-t border-[var(--app-border)] py-2 px-2 space-y-0.5">
+          <div className="flex items-center gap-3 px-3 py-2 text-[12px] text-[var(--app-text-muted)]">
+            <Zap className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-dim)]" />
             {credits === -1 ? 'Unlimited credits' : `${credits ?? 0} credits`}
           </div>
           <button
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[13px] font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[13px] font-medium text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)] transition-colors"
           >
             {resolvedTheme === 'dark' ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
             {resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
@@ -138,24 +129,22 @@ export function WorkspaceSidebar() {
     </div>
   );
 
-  // ── Desktop icon rail (absolute positioned, no flex overlap) ──
-  // Using position:absolute so it overlays correctly without affecting main content layout.
-  // Main content gets padding-left: 48px via the workspace-dashboard container.
+  // ── Desktop icon rail (absolute, no flex overlap) ──
   const desktopRail = (
     <div
-      className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-zinc-950 border-r border-zinc-800 select-none transition-all duration-200 ease-out"
+      className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-[var(--app-panel)] border-r border-[var(--app-border)] select-none transition-all duration-200 ease-out"
       style={{ width: expanded ? 200 : 48 }}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
       {/* Logo */}
-      <div className="h-12 flex items-center justify-center shrink-0 border-b border-zinc-800 overflow-hidden">
+      <div className="h-12 flex items-center justify-center shrink-0 border-b border-[var(--app-border)] overflow-hidden">
         <Link href="/dashboard/home" className="flex items-center justify-center w-9 h-9 shrink-0" title="DeBuggAI Home">
           <div className="w-7 h-7 rounded-md bg-[var(--app-accent)] flex items-center justify-center shrink-0">
             <span className="text-[11px] font-black text-white leading-none">D</span>
           </div>
         </Link>
-        {expanded && <span className="ml-2 text-[13px] font-semibold text-zinc-200 whitespace-nowrap">DeBuggAI</span>}
+        {expanded && <span className="ml-2 text-[13px] font-semibold text-[var(--app-text)] whitespace-nowrap">DeBuggAI</span>}
       </div>
 
       {/* Nav */}
@@ -171,8 +160,8 @@ export function WorkspaceSidebar() {
                 'flex items-center rounded-[7px] transition-colors whitespace-nowrap',
                 expanded ? 'gap-3 px-3 py-2' : 'justify-center w-9 h-9 mx-auto',
                 item.active
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60'
+                  ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)]'
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -184,15 +173,15 @@ export function WorkspaceSidebar() {
 
       {/* Bottom */}
       <div className={cn(
-        'border-t border-zinc-800 py-2 space-y-0.5',
+        'border-t border-[var(--app-border)] py-2 space-y-0.5',
         expanded ? 'px-2' : 'flex flex-col items-center px-1'
       )}>
         {/* Credits */}
         <div className={cn(
-          'flex items-center text-zinc-400 rounded-[7px] transition-colors',
-          expanded ? 'gap-3 px-3 py-2 text-[12px]' : 'justify-center w-9 h-9 mx-auto text-[10px]'
+          'flex items-center text-[var(--app-text-muted)] rounded-[7px] transition-colors',
+          expanded ? 'gap-3 px-3 py-2 text-[12px]' : 'justify-center w-9 h-9 mx-auto'
         )}>
-          <Zap className="h-3.5 w-3.5 shrink-0" />
+          <Zap className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-dim)]" />
           {expanded && <span>{credits === -1 ? 'Unlimited' : `${credits ?? 0} credits`}</span>}
         </div>
 
@@ -200,7 +189,7 @@ export function WorkspaceSidebar() {
         <button
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           className={cn(
-            'rounded-[7px] text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors',
+            'rounded-[7px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface-subtle)] transition-colors',
             expanded ? 'flex items-center gap-3 px-3 py-2 w-full text-[13px]' : 'flex items-center justify-center w-9 h-9 mx-auto'
           )}
           title="Toggle theme"

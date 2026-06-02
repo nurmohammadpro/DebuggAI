@@ -1,8 +1,8 @@
 /**
- * Enhanced Preview Pane v3
+ * Enhanced Preview Pane v4 — fixed height for flex containers
  *
- * Uses the nextjs-to-sandpack converter so the AI-generated Next.js project
- * can actually be previewed in-browser via Sandpack (plain React SPA mode).
+ * Uses flex-1 min-h-0 instead of height: 100% to properly fill
+ * available space in the workspace's flex layout.
  */
 
 'use client';
@@ -35,10 +35,8 @@ interface EnhancedPreviewPaneProps {
   height?: string;
   className?: string;
   chromeless?: boolean;
-  /** Docker sandbox URL (if available) */
   sandboxUrl?: string | null;
   onRefresh?: () => void;
-  /** When true, renders the iframe sandbox (Docker) instead of Sandpack */
   forceSandbox?: boolean;
   sandboxError?: string | null;
 }
@@ -53,7 +51,7 @@ const DEVICE_CONFIG: Record<DeviceMode, { width: string; label: string }> = {
 };
 
 export function EnhancedPreviewPane({
-  height = '600px',
+  height,
   className,
   chromeless = false,
   sandboxUrl,
@@ -69,7 +67,6 @@ export function EnhancedPreviewPane({
   const [viewMode, setViewMode] = useState<ViewMode>('preview');
   const [isLoadingPreview, setIsLoadingPreview] = useState(true);
 
-  // Convert Next.js project → Sandpack-runnable React bundle
   const sandpackBundle = useMemo(
     () => convertNextjsToSandpack(files),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,23 +81,22 @@ export function EnhancedPreviewPane({
   }, [onRefresh, setLastError]);
 
   const currentDevice = DEVICE_CONFIG[deviceMode];
-
   const sandpackTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
 
-  // ── Docker / iframe sandbox ──────────────────────────────────────────────
   const previewViewportClassName =
     deviceMode === 'desktop'
       ? 'flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-stretch justify-stretch p-0'
       : 'flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-4';
 
+  // ── Docker / iframe sandbox ──
   if (forceSandbox) {
     return (
       <div
         className={cn(
-          'overflow-hidden flex flex-col bg-[var(--app-panel)]',
+          'flex flex-col bg-[var(--app-panel)] flex-1 min-h-0',
+          isFullscreen && 'fixed inset-0 z-50',
           className
         )}
-        style={{ height }}
       >
         <PreviewHeader
           deviceMode={deviceMode}
@@ -117,21 +113,15 @@ export function EnhancedPreviewPane({
 
         <div className={previewViewportClassName}>
           <div
-            className="bg-white shadow-lg rounded-[4px] overflow-hidden transition-all duration-300 flex flex-col min-h-0"
-            style={{
-              width: currentDevice.width,
-              maxWidth: '100%',
-              height: '100%',
-              minHeight: 0,
-              flex: 1,
-            }}
+            className="bg-white shadow-lg rounded-[4px] overflow-hidden transition-all duration-300 flex flex-col flex-1 min-h-0"
+            style={{ width: currentDevice.width, maxWidth: '100%' }}
           >
             {sandboxError ? (
               <ErrorState message={sandboxError} onRetry={onRefresh} />
             ) : sandboxUrl ? (
               <iframe
                 src={sandboxUrl}
-                className="w-full h-full border-0"
+                className="w-full h-full border-0 flex-1"
                 title="Docker Live Preview"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
               />
@@ -146,15 +136,14 @@ export function EnhancedPreviewPane({
     );
   }
 
-  // ── Sandpack (in-browser) preview ─────────────────────────────────────────
+  // ── Sandpack (in-browser) preview ──
   return (
     <div
       className={cn(
-        'overflow-hidden flex flex-col bg-[var(--app-panel)]',
+        'flex flex-col bg-[var(--app-panel)] flex-1 min-h-0',
         isFullscreen && 'fixed inset-0 z-50',
         className
       )}
-      style={isFullscreen ? undefined : { height }}
     >
       <PreviewHeader
         deviceMode={deviceMode}
@@ -173,29 +162,21 @@ export function EnhancedPreviewPane({
       <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--app-accent)]/5 border-b border-[var(--app-border)] shrink-0">
         <Info className="h-3 w-3 text-[var(--app-accent)] shrink-0" />
         <span className="text-[10px] text-[var(--app-text-muted)] leading-tight">
-          In-browser preview — Next.js server features are stubbed for compatibility
+          In-browser preview — Next.js server features are stubbed
         </span>
       </div>
 
-        <div className={previewViewportClassName}>
-          <div
-            className="bg-white rounded-[4px] shadow-lg overflow-hidden transition-all duration-300 flex flex-col min-h-0"
-            style={{
-              width: currentDevice.width,
-              maxWidth: '100%',
-              height: '100%',
-              minHeight: 0,
-              flex: 1,
-            }}
-          >
-            <SandpackProvider
-              key={nonce}
-              template={sandpackBundle.template}
+      <div className={previewViewportClassName}>
+        <div
+          className="bg-white rounded-[4px] shadow-lg overflow-hidden transition-all duration-300 flex flex-col flex-1 min-h-0"
+          style={{ width: currentDevice.width, maxWidth: '100%' }}
+        >
+          <SandpackProvider
+            key={nonce}
+            template={sandpackBundle.template}
             theme={sandpackTheme}
             files={sandpackBundle.files}
-            customSetup={{
-              dependencies: sandpackBundle.dependencies,
-            }}
+            customSetup={{ dependencies: sandpackBundle.dependencies }}
             options={{
               recompileMode: 'delayed',
               recompileDelay: 800,
@@ -205,27 +186,25 @@ export function EnhancedPreviewPane({
               ],
             }}
           >
-              <div className="flex-1 min-h-0 w-full h-full">
-                {viewMode === 'preview' ? (
-                  <SandpackPreview
-                    style={{ height: '100%', border: 'none', width: '100%', minHeight: 0 }}
-                    className="h-full w-full"
-                    showNavigator={false}
-                    showOpenInCodeSandbox={false}
-                    showRefreshButton={false}
-                    onLoad={() => setIsLoadingPreview(false)}
-                  />
-                ) : (
-                  <SandpackConsole
-                    style={{ height: '100%', border: 'none', width: '100%', minHeight: 0 }}
-                    className="h-full w-full"
-                    showHeader={false}
-                  />
-                )}
-              </div>
-            </SandpackProvider>
-          </div>
+            <div className="flex-1 min-h-0 w-full h-full">
+              {viewMode === 'preview' ? (
+                <SandpackPreview
+                  className="h-full w-full"
+                  showNavigator={false}
+                  showOpenInCodeSandbox={false}
+                  showRefreshButton={false}
+                  onLoad={() => setIsLoadingPreview(false)}
+                />
+              ) : (
+                <SandpackConsole
+                  className="h-full w-full"
+                  showHeader={false}
+                />
+              )}
+            </div>
+          </SandpackProvider>
         </div>
+      </div>
 
       {/* Runtime error from iframe */}
       {lastError && (
