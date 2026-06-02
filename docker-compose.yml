@@ -20,6 +20,8 @@ services:
       - debuggai_projects:/var/lib/debuggai/projects
     security_opt:
       - no-new-privileges:false
+    group_add:
+      - "988"
     cap_drop:
       - ALL
     cap_add:

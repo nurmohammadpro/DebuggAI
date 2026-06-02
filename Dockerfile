@@ -29,9 +29,8 @@ RUN apt-get update && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends docker-ce-cli && \
-    # Fix docker group GID to match host (988) so node user can access the socket
-    groupmod -g 988 docker && \
-    usermod -aG docker node && \
+    # Keep docker group for reference (group_add in compose handles runtime access)
+    groupadd -f docker || true && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # App files
