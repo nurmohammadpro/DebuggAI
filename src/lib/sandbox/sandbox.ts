@@ -183,16 +183,77 @@ fi
 
 echo "---SANDBOX_INSTALL_DONE---"
 
+probe_port() {
+  node -e "fetch('http://127.0.0.1:3000').then(() => process.exit(0)).catch(() => process.exit(1))" >/dev/null 2>&1
+}
+
+run_and_watch() {
+  NAME="$1"
+  shift
+  echo "---SANDBOX_DETECTED:$NAME---"
+  "$@" &
+  SERVER_PID=$!
+
+  ATTEMPTS=0
+  while [ "$ATTEMPTS" -lt 120 ]; do
+    if probe_port; then
+      echo "---SANDBOX_READY---"
+      break
+    fi
+
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      wait "$SERVER_PID"
+      EXIT_CODE=$?
+      echo "---SANDBOX_EXIT:$EXIT_CODE---"
+      if [ "$EXIT_CODE" -ne 0 ]; then
+        exit "$EXIT_CODE"
+      fi
+    fi
+
+    ATTEMPTS=$((ATTEMPTS + 1))
+    sleep 1
+  done
+
+  if ! probe_port; then
+    echo "---SANDBOX_READY_TIMEOUT---"
+    if kill -0 "$SERVER_PID" 2>/dev/null; then
+      kill "$SERVER_PID" 2>/dev/null || true
+      wait "$SERVER_PID" 2>/dev/null || true
+    fi
+    exit 1
+  fi
+
+  while probe_port; do
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      wait "$SERVER_PID"
+      EXIT_CODE=$?
+      echo "---SANDBOX_EXIT:$EXIT_CODE---"
+      if [ "$EXIT_CODE" -eq 0 ]; then
+        # Some package scripts daemonize the actual server. Keep the container
+        # alive as long as the port is still serving requests.
+        sleep 5
+        continue
+      fi
+      exit "$EXIT_CODE"
+    fi
+    sleep 5
+  done
+
+  if kill -0 "$SERVER_PID" 2>/dev/null; then
+    wait "$SERVER_PID"
+    EXIT_CODE=$?
+    echo "---SANDBOX_EXIT:$EXIT_CODE---"
+    exit "$EXIT_CODE"
+  fi
+}
+
 # Auto-detect framework and start dev server
 if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
-  echo "---SANDBOX_DETECTED:next---"
-  npx next dev -p 3000 -H 0.0.0.0
+  run_and_watch next sh -lc 'npx next dev -p 3000 -H 0.0.0.0'
 elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-  echo "---SANDBOX_DETECTED:vite---"
-  npx vite --port 3000 --host 0.0.0.0
+  run_and_watch vite sh -lc 'npx vite --port 3000 --host 0.0.0.0'
 elif [ -f "angular.json" ]; then
-  echo "---SANDBOX_DETECTED:angular---"
-  npx ng serve --port 3000 --host 0.0.0.0
+  run_and_watch angular sh -lc 'npx ng serve --port 3000 --host 0.0.0.0'
 elif [ -f "client/package.json" ]; then
   echo "---SANDBOX_DETECTED:client-server---"
   # Best-effort: start server in the background (not exposed), run client on port 3000.
@@ -202,22 +263,17 @@ elif [ -f "client/package.json" ]; then
 
   cd client
   if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
-    echo "---SANDBOX_DETECTED:next(client)---"
-    npx next dev -p 3000 -H 0.0.0.0
+    run_and_watch next(client) sh -lc 'npx next dev -p 3000 -H 0.0.0.0'
   elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-    echo "---SANDBOX_DETECTED:vite(client)---"
-    npx vite --port 3000 --host 0.0.0.0
+    run_and_watch vite(client) sh -lc 'npx vite --port 3000 --host 0.0.0.0'
   else
-    echo "---SANDBOX_DETECTED:package-scripts(client)---"
-    HOST=0.0.0.0 PORT=3000 npm start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null
+    run_and_watch package-scripts(client) sh -lc 'HOST=0.0.0.0 PORT=3000 npm start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null'
   fi
 elif [ -f "package.json" ]; then
   # Try common dev scripts
-  echo "---SANDBOX_DETECTED:package-scripts---"
-  HOST=0.0.0.0 PORT=3000 npx react-scripts start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null || npm start -- --port 3000 --host 0.0.0.0 2>/dev/null
+  run_and_watch package-scripts sh -lc 'HOST=0.0.0.0 PORT=3000 npx react-scripts start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null || npm start -- --port 3000 --host 0.0.0.0 2>/dev/null'
 else
-  echo "---SANDBOX_DETECTED:static---"
-  npx serve . -p 3000 -l 3000
+  run_and_watch static sh -lc 'npx serve . -p 3000 -l 3000'
 fi
 `;
   }
@@ -274,10 +330,13 @@ fi
           const exitCode = execSync(
             `docker inspect -f '{{.State.ExitCode}}' ${containerName} 2>/dev/null || echo -1`,
           ).toString().trim();
+          const recentLogs = this.readRecentLogs(containerName);
 
           if (record.status !== 'running') {
             record.status = 'error';
-            record.error = `Process exited with code ${exitCode}`;
+            record.error = recentLogs
+              ? `Process exited with code ${exitCode}\n\nRecent logs:\n${recentLogs}`
+              : `Process exited with code ${exitCode}`;
           }
           record.lastActiveAt = Date.now();
           this.saveState();
@@ -303,6 +362,19 @@ fi
       }
     }, 3000);
     this.monitors.set(record.id, monitor);
+  }
+
+  private readRecentLogs(containerName: string): string {
+    try {
+      return execSync(
+        `docker logs ${containerName} --tail 80 2>&1 || true`,
+        { stdio: 'pipe' },
+      )
+        .toString()
+        .trim();
+    } catch {
+      return '';
+    }
   }
 
   async get(id: string): Promise<SandboxRecord | null> {
