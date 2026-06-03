@@ -12,8 +12,12 @@ import {
   RefreshCw,
   Smartphone,
   Tablet,
+  Zap,
+  Container,
+  Loader2,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { SandpackProvider, SandpackPreview, SandpackLayout } from '@codesandbox/sandpack-react';
 
 interface EnhancedPreviewPaneProps {
   height?: string;
@@ -32,6 +36,12 @@ const DEVICE_CONFIG: Record<DeviceMode, { width: string; label: string }> = {
   mobile: { width: '375px', label: 'Mobile' },
 };
 
+/**
+ * v0.dev-style instant preview pane
+ *
+ * Primary: Sandpack (instant, in-browser bundler, shows immediately)
+ * Upgrade: Docker (full Next.js environment, shown when ready)
+ */
 export function EnhancedPreviewPane({
   className,
   chromeless = false,
@@ -39,9 +49,11 @@ export function EnhancedPreviewPane({
   onRefresh,
   sandboxError = null,
 }: EnhancedPreviewPaneProps) {
-  const { lastError, setLastError } = useGenerationStore();
+  const { lastError, setLastError, files } = useGenerationStore();
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [useDocker, setUseDocker] = useState(false);
+  const [sandpackLoaded, setSandpackLoaded] = useState(false);
 
   const currentDevice = DEVICE_CONFIG[deviceMode];
   const previewViewportClassName =
@@ -51,8 +63,82 @@ export function EnhancedPreviewPane({
 
   const handleRefresh = useCallback(() => {
     setLastError(null);
+    setSandpackLoaded(false);
     onRefresh?.();
   }, [onRefresh, setLastError]);
+
+  // Build Sandpack files from generation store
+  const { sandpackFiles, sandpackTemplate, dependencies } = useMemo(() => {
+    if (!files || Object.keys(files.files).length === 0) {
+      return { sandpackFiles: undefined, sandpackTemplate: 'react' as const, dependencies: {} };
+    }
+
+    const isTs = Object.keys(files.files).some(p => p.endsWith('.ts') || p.endsWith('.tsx'));
+    const result: Record<string, { code: string }> = {};
+    const deps: Record<string, string> = {};
+
+    const put = (path: string, code: string) => {
+      result[path.startsWith('/') ? path : '/' + path] = { code };
+    };
+
+    // Detect packages from import statements
+    const detectDeps = (code: string) => {
+      const importPattern = /from\s+['"]([^'"]+)['"]/g;
+      let match;
+      while ((match = importPattern.exec(code)) !== null) {
+        const dep = match[1];
+        if (!dep.startsWith('.') && !dep.startsWith('/')) {
+          const pkg = dep.split('/')[0];
+          if (!deps[pkg]) deps[pkg] = 'latest';
+        }
+      }
+    };
+
+    for (const [path, file] of Object.entries(files.files)) {
+      if (file.status === 'deleted') continue;
+      const normalized = path.startsWith('/') ? path.slice(1) : path;
+      detectDeps(file.content);
+
+      // Map src/App.* to /App.* for Sandpack
+      if (normalized === 'src/App.tsx' || normalized === 'App.tsx') put('/App.tsx', file.content);
+      else if (normalized === 'src/App.jsx' || normalized === 'App.jsx') put('/App.jsx', file.content);
+      else if (normalized === 'src/index.tsx') put('/index.tsx', file.content);
+      else if (normalized === 'src/index.jsx') put('/index.jsx', file.content);
+      else put('/' + normalized, file.content);
+    }
+
+    // Synthesize index file if only App exists
+    if (!result['/index.js'] && !result['/index.jsx'] && !result['/index.ts'] && !result['/index.tsx']) {
+      if (result['/App.tsx'] || result['/App.ts']) {
+        put('/index.tsx', [
+          "import React from 'react';",
+          "import ReactDOM from 'react-dom/client';",
+          "import App from './App';",
+          "const root = ReactDOM.createRoot(document.getElementById('root')!);",
+          "root.render(<React.StrictMode><App /></React.StrictMode>);",
+        ].join('\n'));
+      } else if (result['/App.jsx'] || result['/App.js']) {
+        put('/index.js', [
+          "import React from 'react';",
+          "import { createRoot } from 'react-dom/client';",
+          "import App from './App';",
+          "const root = createRoot(document.getElementById('root'));",
+          "root.render(<React.StrictMode><App /></React.StrictMode>);",
+        ].join('\n'));
+      }
+    }
+
+    // Add React deps if not detected
+    if (!deps['react']) deps['react'] = '^18.3.1';
+    if (!deps['react-dom']) deps['react-dom'] = '^18.3.1';
+
+    const template: 'react' | 'react-ts' = isTs ? 'react-ts' : 'react';
+    return { sandpackFiles: result, sandpackTemplate: template, dependencies: deps };
+  }, [files]);
+
+  const hasFiles = files && Object.keys(files.files).filter(p => files.files[p]?.status !== 'deleted').length > 0;
+  const dockerReady = !!sandboxUrl && !sandboxError;
+  const showDocker = useDocker && dockerReady;
 
   return (
     <div
@@ -70,16 +156,13 @@ export function EnhancedPreviewPane({
           isFullscreen={isFullscreen}
           setIsFullscreen={setIsFullscreen}
           hasError={!!lastError || !!sandboxError}
+          useDocker={showDocker}
+          dockerReady={dockerReady}
+          onToggleEngine={() => {
+            setUseDocker(!useDocker);
+            if (!useDocker && dockerReady) setSandpackLoaded(false);
+          }}
         />
-      )}
-
-      {!chromeless && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--app-accent)]/5 border-b border-[var(--app-border)] shrink-0">
-          <Info className="h-3 w-3 text-[var(--app-accent)] shrink-0" />
-          <span className="text-[10px] text-[var(--app-text-muted)] leading-tight">
-            Docker preview — renders the generated Next.js app directly
-          </span>
-        </div>
       )}
 
       <div className={previewViewportClassName}>
@@ -87,17 +170,49 @@ export function EnhancedPreviewPane({
           className="bg-white rounded-[4px] shadow-lg overflow-hidden transition-all duration-300 flex flex-col flex-1 min-h-0"
           style={{ width: currentDevice.width, maxWidth: '100%' }}
         >
-          {sandboxError ? (
-            <ErrorState message={sandboxError} onRetry={onRefresh} />
-          ) : sandboxUrl ? (
+          {sandboxError && showDocker ? (
+            /* Docker error state */
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0">
+                <SandpackPreviewShell
+                  files={sandpackFiles}
+                  template={sandpackTemplate}
+                  deps={dependencies}
+                  onLoad={() => setSandpackLoaded(true)}
+                />
+              </div>
+              <div className="px-3 py-1.5 bg-[var(--app-danger-soft)] border-t border-[var(--app-danger)]/20 shrink-0">
+                <p className="text-[10px] text-[var(--app-danger)] flex items-center gap-1.5">
+                  <AlertCircle className="h-3 w-3" />
+                  Docker preview failed — showing Sandpack fallback
+                </p>
+              </div>
+            </div>
+          ) : showDocker ? (
+            /* Docker iframe (upgraded) */
             <iframe
               src={sandboxUrl}
               className="h-full w-full border-0"
               title="Docker Live Preview"
               sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
             />
+          ) : !hasFiles ? (
+            /* Empty state — no code generated yet */
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)] p-8">
+              <Zap className="h-12 w-12 text-[var(--app-text-dim)] mb-4 opacity-20" />
+              <p className="text-sm text-[var(--app-text)] mb-1 font-medium">Preview</p>
+              <p className="text-xs text-[var(--app-text-muted)] text-center max-w-[240px] leading-relaxed">
+                Ask the AI to generate code and your preview will appear here instantly.
+              </p>
+            </div>
           ) : (
-            <StartingState label="Docker Sandbox" />
+            /* INSTANT Sandpack preview (primary engine) */
+            <SandpackPreviewShell
+              files={sandpackFiles}
+              template={sandpackTemplate}
+              deps={dependencies}
+              onLoad={() => setSandpackLoaded(true)}
+            />
           )}
         </div>
       </div>
@@ -124,8 +239,62 @@ export function EnhancedPreviewPane({
         </div>
       )}
 
-      <PreviewStatusBar deviceMode={deviceMode} engine="Docker/Next.js" />
+      <PreviewStatusBar
+        deviceMode={deviceMode}
+        engine={showDocker ? 'Docker/Next.js' : 'Sandpack React'}
+        sandpackLoaded={sandpackLoaded}
+      />
     </div>
+  );
+}
+
+/**
+ * Sandpack preview shell — the instant, in-browser bundler
+ */
+function SandpackPreviewShell({
+  files,
+  template,
+  deps,
+  onLoad,
+}: {
+  files: Record<string, { code: string }> | undefined;
+  template: 'react' | 'react-ts';
+  deps: Record<string, string>;
+  onLoad: () => void;
+}) {
+  if (!files || Object.keys(files).length === 0) {
+    return (
+      <div className="flex-1 min-h-0 flex items-center justify-center bg-[var(--app-bg)]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-6 w-6 text-[var(--app-text-dim)] animate-spin" />
+          <span className="text-[10px] text-[var(--app-text-dim)]">Bundling...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SandpackProvider
+      key={JSON.stringify(Object.keys(files))}
+      template={template}
+      files={files}
+      customSetup={{ dependencies: deps }}
+      options={{
+        recompileMode: 'delayed',
+        recompileDelay: 300,
+        initMode: 'immediate',
+      }}
+    >
+      <SandpackLayout>
+        <SandpackPreview
+          style={{ height: '100%', width: '100%', border: 'none' }}
+          showNavigator={false}
+          showOpenInCodeSandbox={false}
+          showRefreshButton={false}
+          onLoad={onLoad}
+        />
+      </SandpackLayout>
+    </SandpackProvider>
   );
 }
 
@@ -136,6 +305,9 @@ function PreviewHeader({
   isFullscreen,
   setIsFullscreen,
   hasError,
+  useDocker,
+  dockerReady,
+  onToggleEngine,
 }: {
   deviceMode: DeviceMode;
   setDeviceMode: (m: DeviceMode) => void;
@@ -143,19 +315,36 @@ function PreviewHeader({
   isFullscreen: boolean;
   setIsFullscreen: (v: boolean) => void;
   hasError: boolean;
+  useDocker: boolean;
+  dockerReady: boolean;
+  onToggleEngine: () => void;
 }) {
   return (
     <div className="h-11 flex items-center gap-1.5 px-3 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
       <div className="flex items-center gap-2.5">
         <Play className="h-3.5 w-3.5 text-[var(--app-accent)]" />
         <h3 className="text-[13px] font-semibold tracking-tight uppercase text-[var(--app-text)]">
-          Live Preview
+          Preview
         </h3>
         {hasError && (
           <span className="inline-flex text-[9px] h-4 px-1.5 uppercase font-black rounded-[6px] bg-[var(--app-danger-soft)] text-[var(--app-danger)]">
-            Runtime Error
+            Error
           </span>
         )}
+        <span className={cn(
+          'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider',
+          useDocker
+            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            : dockerReady
+              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+        )}>
+          {useDocker ? (
+            <><Container className="h-2.5 w-2.5" /> Docker</>
+          ) : (
+            <><Zap className="h-2.5 w-2.5" /> Instant</>
+          )}
+        </span>
       </div>
 
       <div className="flex items-center gap-2 ml-2">
@@ -197,6 +386,29 @@ function PreviewHeader({
         </button>
       </div>
 
+      {/* Docker upgrade toggle */}
+      {dockerReady && !useDocker && (
+        <button
+          onClick={onToggleEngine}
+          className="ml-2 h-6 px-2 rounded-[4px] border border-emerald-500/20 bg-emerald-500/5 text-[9px] font-semibold text-emerald-400 hover:bg-emerald-500/10 transition-colors flex items-center gap-1"
+          title="Upgrade to Docker preview"
+        >
+          <Container className="h-2.5 w-2.5" />
+          Docker
+        </button>
+      )}
+
+      {useDocker && (
+        <button
+          onClick={onToggleEngine}
+          className="ml-2 h-6 px-2 rounded-[4px] border border-blue-500/20 bg-blue-500/5 text-[9px] font-semibold text-blue-400 hover:bg-blue-500/10 transition-colors flex items-center gap-1"
+          title="Switch to instant preview"
+        >
+          <Zap className="h-2.5 w-2.5" />
+          Instant
+        </button>
+      )}
+
       <div className="flex-1" />
 
       <div className="flex items-center gap-1.5">
@@ -223,54 +435,14 @@ function PreviewHeader({
   );
 }
 
-function StartingState({ label }: { label: string }) {
-  return (
-    <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)]">
-      <div className="relative mb-8">
-        <div className="w-16 h-16 rounded-[6px] border-2 border-[var(--app-accent)]/25 animate-spin [animation-duration:3s]" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="h-6 w-6 text-[var(--app-accent)] animate-pulse" />
-        </div>
-      </div>
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-[11px] font-semibold text-[var(--app-accent)] uppercase tracking-[0.3em] animate-pulse">
-          Starting {label}
-        </span>
-        <div className="flex gap-1">
-          <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
-          <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ErrorState({ message, onRetry }: { message: string; onRetry?: (() => void) | undefined }) {
-  return (
-    <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)] p-6 text-center">
-      <div className="text-[12px] font-semibold text-[var(--app-danger)] mb-2">Preview Failed</div>
-      <div className="text-[11px] text-[var(--app-text-dim)] max-w-[520px] mb-4 break-words">
-        {message}
-      </div>
-      {onRetry && (
-        <button
-          className="h-8 px-3 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)] text-[11px] font-semibold uppercase tracking-tight hover:bg-[var(--app-panel-2)]"
-          onClick={onRetry}
-        >
-          Retry
-        </button>
-      )}
-    </div>
-  );
-}
-
 function PreviewStatusBar({
   deviceMode,
   engine,
+  sandpackLoaded,
 }: {
   deviceMode: DeviceMode;
   engine: string;
+  sandpackLoaded?: boolean;
 }) {
   return (
     <div className="h-6 border-t border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 flex items-center justify-between shrink-0">
@@ -285,9 +457,12 @@ function PreviewStatusBar({
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-[9px] font-medium text-[var(--app-text-dim)] uppercase tracking-widest">
-          Docker-Next Preview
-        </span>
+        {sandpackLoaded && (
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[9px] text-emerald-400/70 uppercase tracking-widest">Live</span>
+          </div>
+        )}
       </div>
     </div>
   );
