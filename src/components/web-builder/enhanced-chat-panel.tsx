@@ -422,8 +422,11 @@ export function EnhancedChatPanel({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Ref gate — prevents empty state flash during thread sync
+  const threadBootedRef = useRef(false);
 
   const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
   const { addCodeBlocks, setStreaming, reset: resetCodeBlocks } = useCodeBlocksStore();
@@ -442,13 +445,21 @@ export function EnhancedChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, accumulated]);
 
-  // Clear chat when switching projects without a thread
+  // Clear chat when switching projects (thread truly gone)
   useEffect(() => {
-    if (currentThreadId) return;
-    setMessages([]);
-    resetAccumulated();
-    resetCodeBlocks();
-    setStreaming(false);
+    if (currentThreadId) {
+      threadBootedRef.current = true;
+      return;
+    }
+    // Only clear if we previously had a thread (project switch, not initial mount)
+    if (threadBootedRef.current) {
+      setMessages([]);
+      setHasSentFirstMessage(false);
+      resetAccumulated();
+      resetCodeBlocks();
+      setStreaming(false);
+      threadBootedRef.current = false;
+    }
   }, [currentThreadId, resetAccumulated, resetCodeBlocks, setStreaming]);
 
   const loadThreadMessages = useCallback(async (threadId: string) => {
@@ -466,10 +477,8 @@ export function EnhancedChatPanel({
       const content = String(m.content || '');
       const { text, codeBlocks } = extractCodeBlocks(content);
       if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
-
       const { steps } = parseStepsFromText(content);
       const implicitSteps = steps.length === 0 ? detectImplicitSteps(text) : [];
-
       return {
         id: String(m.id),
         role: m.role as MessageRole,
@@ -480,41 +489,30 @@ export function EnhancedChatPanel({
       };
     });
 
-    // Merge: preserve locally-added messages (prefixed 'local_') that haven't
-    // been synced to the server yet. This prevents the UI from flickering back
-    // to empty state after generation completes.
+    // Merge: keep local messages not yet synced to server
     setMessages((prev) => {
-      const localMessages = prev.filter((m) => m.id.startsWith('local_'));
-      const serverIds = new Set(serverMessages.map((m) => m.id));
-
-      // Keep local messages that don't have a server counterpart yet
-      const pendingLocal = localMessages.filter((m) => {
-        // User messages: keep if no server message with same role+content exists
+      const pendingLocal = prev.filter((m) => {
+        if (!m.id.startsWith('local_')) return false;
         if (m.role === 'user') {
-          return !serverMessages.some(
-            (s) => s.role === 'user' && s.content === m.content
-          );
+          return !serverMessages.some((s) => s.role === 'user' && s.content === m.content);
         }
-        // Assistant messages: keep if they're newer (< 30s) than the last server assistant message
         if (m.role === 'assistant') {
-          const lastServerAssistant = serverMessages.find((s) => s.role === 'assistant');
-          if (!lastServerAssistant) return true;
-          const localTime = new Date(m.created_at).getTime();
-          const serverTime = new Date(lastServerAssistant.created_at).getTime();
-          return localTime > serverTime;
+          const lastServerAsst = serverMessages.find((s) => s.role === 'assistant');
+          if (!lastServerAsst) return true;
+          return new Date(m.created_at).getTime() > new Date(lastServerAsst.created_at).getTime();
         }
         return false;
       });
-
-      // Combine: server messages + pending local messages, sorted by time
       return [...serverMessages, ...pendingLocal].sort(
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
     });
   }, [addCodeBlocks]);
 
+  // Load thread on boot
   useEffect(() => {
     if (!currentThreadId) return;
+    threadBootedRef.current = true;
     loadThreadMessages(currentThreadId).catch(() => {});
   }, [currentThreadId, loadThreadMessages]);
 
@@ -654,6 +652,7 @@ export function EnhancedChatPanel({
     if (!input.trim() || isLoading) return;
     setSidebarCollapsed(true);
     resetCodeBlocks();
+    setHasSentFirstMessage(true);
 
     const text = input.trim();
     setInput('');
@@ -797,8 +796,8 @@ export function EnhancedChatPanel({
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
-        {/* Empty state */}
-        {messages.length === 0 && !isLoading && (
+        {/* Empty state — only on first visit, never after sending a message */}
+        {!hasSentFirstMessage && messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-8">
             <div className="mb-5 p-4 rounded-2xl bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20">
               <Sparkles className="h-10 w-10 text-[var(--app-accent)]" />
