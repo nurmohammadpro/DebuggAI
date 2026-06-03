@@ -26,6 +26,7 @@ import {
   Bot,
   User,
   Layers,
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -173,8 +174,14 @@ function RichTextContent({ content }: { content: string }) {
     return <p className="text-[13px] text-[var(--app-text-dim)] italic">Done.</p>;
   }
 
+  // Strip code blocks (they go to the file tree, not the chat)
+  const displayContent = content.replace(/```[\s\S]*?```/g, '').trim();
+  if (!displayContent) {
+    return <p className="text-[13px] text-[var(--app-text-dim)] italic">Code generated — view in the editor panel.</p>;
+  }
+
   // Split content into paragraphs, preserve inline code and basic formatting
-  const paragraphs = content.split(/\n{2,}/);
+  const paragraphs = displayContent.split(/\n{2,}/);
 
   return (
     <div className="text-[13px] leading-relaxed text-[var(--app-text)] space-y-2">
@@ -870,10 +877,17 @@ export function EnhancedChatPanel({
                         if (step.type === 'thought') return <ThoughtStep key={stepIdx} step={step} />;
                         if (step.type === 'explore') return <ExploreStep key={stepIdx} step={step} />;
                         if (step.type === 'action') return <ActionStep key={stepIdx} step={step} index={stepIdx} />;
-                        if (step.type === 'code') return <CodeStep key={stepIdx} step={step} />;
+                        if (step.type === 'code') return null; // Code goes to file tree, not chat
                         if (step.type === 'completion') return <CompletionStep key={stepIdx} step={step} fileCount={message.fileCount} />;
                         return null;
                       })}
+                      {/* Show file count summary when code was generated silently */}
+                      {message.fileCount && message.fileCount > 0 && message.steps!.some(s => s.type === 'code') && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--app-text-muted)] border-t border-[var(--app-border)] pt-2 mt-2">
+                          <FileCode2 className="h-3.5 w-3.5 shrink-0" />
+                          <span>{message.fileCount} file{message.fileCount !== 1 ? 's' : ''} generated → view in code panel</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
