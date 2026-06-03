@@ -44,6 +44,29 @@ type DbAiProviderConfig = {
   api_key: string | null;
 };
 
+// Module-level cache for ai_provider_config to cut Supabase reads ~90% on hot path.
+// Deno edge functions share one isolate per deployment; the cache lives as long
+// as the isolate stays warm (typically minutes). 60s TTL balances freshness vs. cost.
+let _providerCache: { value: DbAiProviderConfig | null; ts: number } | null = null;
+const PROVIDER_CACHE_TTL_MS = 60_000;
+
+async function getCachedProviderConfig(
+  adminClient: ReturnType<typeof createClient>,
+): Promise<DbAiProviderConfig | null> {
+  const now = Date.now();
+  if (_providerCache && (now - _providerCache.ts) < PROVIDER_CACHE_TTL_MS) {
+    return _providerCache.value;
+  }
+  const { data } = await adminClient
+    .from('ai_provider_config')
+    .select('enabled, base_url, model, api_key')
+    .eq('key', 'primary')
+    .maybeSingle();
+  const cfg = (data as DbAiProviderConfig | null) || null;
+  _providerCache = { value: cfg, ts: now };
+  return cfg;
+}
+
 interface GenerateRequest {
   threadId: string;
   prompt: string;
@@ -87,6 +110,7 @@ serve(async (req) => {
 
     // Admin-managed AI provider config (service role).
     // Falls back to env vars for backwards compatibility.
+    // Module-level cache to avoid a Supabase query on every hot-path call.
     let aiApiKey = (Deno.env.get('AI_API_KEY') || '').trim();
     let aiBaseUrl = (Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1').trim();
     let aiModel = (Deno.env.get('AI_MODEL') || 'deepseek-chat').trim();
@@ -95,13 +119,7 @@ serve(async (req) => {
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
       if (serviceKey) {
         const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-        const { data } = await supabaseAdmin
-          .from('ai_provider_config')
-          .select('enabled, base_url, model, api_key')
-          .eq('key', 'primary')
-          .maybeSingle();
-
-        const cfg = data as DbAiProviderConfig | null;
+        const cfg = getCachedProviderConfig(supabaseAdmin);
         if (cfg && cfg.enabled) {
           const base = String(cfg.base_url || '').trim();
           const model = String(cfg.model || '').trim();
@@ -313,9 +331,11 @@ After all code blocks, add a short bullet list of the key files and what they do
         messages: aiMessages,
         stream: true,
         temperature: 0.7,
-        max_tokens: 8192,
+        max_tokens: 16384,
       }),
-      signal: AbortSignal.timeout(55_000),
+      // Deno Edge Functions have ~150s wall clock.
+      // 120s gives time for large generations before the container timeout.
+      signal: AbortSignal.timeout(120_000),
     });
 
     if (!aiResponse.ok) {
