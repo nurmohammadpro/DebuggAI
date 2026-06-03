@@ -210,7 +210,7 @@ export function WorkspaceEditor({
                     <PanelLeftClose className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   <ProfessionalFileTree
                     onFileSelect={(path) => setActiveFilePath(path)}
                   />

@@ -17,15 +17,11 @@ import { WorkspaceSidebar } from '@/components/workspace/workspace-sidebar';
 import { V0RightPanel } from '@/components/workspace/v0-right-panel';
 import type { V0RightView } from '@/components/workspace/v0-right-panel';
 import { Panel } from '@/components/panel/panel';
-import { MoreVertical, PanelRight } from 'lucide-react';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
-import { ExportActions } from '@/components/workspace/export-actions';
 import { DeployModal } from '@/components/workspace/deploy-modal';
 import { CommandPalette } from '@/components/dashboard/command-palette';
-import { useCursorTracking, CollabCursorOverlay, CollabStatusBar } from '@/components/workspace/collab-cursors';
+import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { supabase } from '@/lib/supabase';
 import { getSession } from '@/hooks/use-session';
 
 export function WorkspaceDashboard() {
@@ -236,71 +232,15 @@ export function WorkspaceDashboard() {
         projectName={projectName}
       />
 
-      {/* Absolute-positioned sidebar — doesn't affect flex layout */}
+      {/* Absolute sidebar — single left rail, no second sidebar */}
       <WorkspaceSidebar />
 
-      {/* Main Content — pl-[48px] accounts for absolute sidebar */}
+      {/* Main workspace — no top bar, v0.dev clean layout */}
+      <WorkspaceSaveVersionButton className="hidden" ref={saveButtonRef} />
       <main className="flex-1 min-w-0 flex flex-col md:pl-12">
-        {/* Thin top bar — project name + collab status + mobile menu */}
-        <div className="h-10 flex items-center gap-2 px-4 shrink-0 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
-          {/* Hamburger moved to WorkspaceSidebar */}
-
-          <span className="text-[12px] font-semibold text-[var(--app-text)] truncate">
-            {projectName}
-          </span>
-
-          <span className="inline-flex rounded-[5px] bg-[var(--app-surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--app-text-muted)] hidden sm:inline-flex">
-            builder
-          </span>
-
-          <div className="flex-1" />
-
-          <div className="hidden sm:flex items-center gap-1.5">
-            <ExportActions />
-            <CollabStatusBar cursors={remoteCursors} />
-          </div>
-
-          <WorkspaceSaveVersionButton className="hidden" ref={saveButtonRef} />
-
-          {/* Mobile actions dropdown */}
-          <div className="sm:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="h-7 w-7 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center justify-center text-[var(--app-text-muted)]"
-                  aria-label="More actions"
-                >
-                  <MoreVertical className="h-3.5 w-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text)]">
-                <DropdownMenuLabel className="px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                  Actions
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleRun} className="cursor-pointer">Run Preview</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDeployModalOpen(true)} className="cursor-pointer">Deploy</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleShare} className="cursor-pointer">Share Link</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-default px-3 py-1">
-                  <ExportActions />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <button
-            className="sm:hidden h-7 w-7 rounded-[6px] border border-[var(--app-border)] bg-transparent hover:bg-[var(--app-surface)] transition-colors inline-flex items-center justify-center text-[var(--app-text-muted)]"
-            onClick={() => setMobilePanelOpen(true)}
-            aria-label="Open panels"
-          >
-            <PanelRight className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* IDE Workspace — v0.dev layout: narrow chat | splitter | wide preview+code */}
+        {/* IDE Workspace: chat | preview+code */}
         <div className="flex-1 min-h-0 flex min-w-0">
-          {/* Chat — narrow panel on left (v0.dev style) */}
+          {/* Chat panel — narrow, no scrollbar-visible */}
           <section
             data-chat-panel
             className={
@@ -321,7 +261,6 @@ export function WorkspaceDashboard() {
               <WorkspaceSplitter
                 ariaLabel="Resize right panel"
                 onResize={(dx) => {
-                  // Chat width adjusts relative to DnD
                   const chat = document.querySelector('[data-chat-panel]');
                   if (chat) {
                     const current = parseFloat(getComputedStyle(chat).width);
@@ -334,7 +273,7 @@ export function WorkspaceDashboard() {
             </div>
           )}
 
-          {/* Right panel — desktop (takes remaining space) */}
+          {/* Right: preview + code (split) */}
           <Panel
             id="workspace-right"
             side="right"
@@ -356,7 +295,7 @@ export function WorkspaceDashboard() {
             />
           </Panel>
 
-          {/* Right panel — mobile overlay */}
+          {/* Mobile overlay */}
           <Panel
             id="workspace-right-mobile"
             side="right"
@@ -374,7 +313,7 @@ export function WorkspaceDashboard() {
           </Panel>
         </div>
 
-          {/* Mobile Bottom Tabs */}
+        {/* Mobile bottom tabs */}
         <WorkspaceMobileTabs
           activeTab={rightView}
           onTabChange={(tab) => {
