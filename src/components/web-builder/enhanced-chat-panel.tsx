@@ -27,9 +27,6 @@ import {
   User,
   Layers,
   AlertTriangle,
-  Brain,
-  FolderSearch,
-  CheckCircle2,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -177,8 +174,14 @@ function RichTextContent({ content }: { content: string }) {
     return <p className="text-[13px] text-[var(--app-text-dim)] italic">Done.</p>;
   }
 
+  // Strip code blocks (they go to the file tree, not the chat)
+  const displayContent = content.replace(/```[\s\S]*?```/g, '').trim();
+  if (!displayContent) {
+    return <p className="text-[13px] text-[var(--app-text-dim)] italic">Code generated — view in the editor panel.</p>;
+  }
+
   // Split content into paragraphs, preserve inline code and basic formatting
-  const paragraphs = content.split(/\n{2,}/);
+  const paragraphs = displayContent.split(/\n{2,}/);
 
   return (
     <div className="text-[13px] leading-relaxed text-[var(--app-text)] space-y-2">
@@ -270,24 +273,19 @@ function ThoughtStep({ step, defaultExpanded }: { step: StepData; defaultExpande
   const [expanded, setExpanded] = useState(defaultExpanded ?? false);
 
   return (
-    <div className="rounded-[10px] border border-purple-500/20 bg-purple-500/5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-purple-500/10 transition-colors"
+        className="w-full flex items-center gap-2 px-0 py-1 text-left transition-colors"
       >
-        <Brain className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-        <span className="text-[12px] font-medium text-purple-300">Thought{step.duration ? ` for ${step.duration}` : ''}</span>
+        <span className="text-[11px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
+          {step.duration ? `Thought · ${step.duration}` : 'Thought'}
+        </span>
         <span className="flex-1" />
-        {expanded ? (
-          <ChevronDown className="h-3 w-3 text-purple-400" />
-        ) : (
-          <ChevronRight className="h-3 w-3 text-purple-400" />
-        )}
+        <ChevronRight className={`h-3 w-3 text-[var(--app-text-dim)] transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </button>
       {expanded && (
-        <div className="px-3 pb-3 pt-0 border-t border-purple-500/10">
-          <p className="text-[12px] text-purple-200/80 leading-relaxed whitespace-pre-wrap mt-2">{step.content}</p>
-        </div>
+        <p className="text-[12px] text-[var(--app-text-muted)] leading-relaxed whitespace-pre-wrap px-0 py-1">{step.content}</p>
       )}
     </div>
   );
@@ -297,39 +295,33 @@ function ExploreStep({ step }: { step: StepData }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="rounded-[10px] border border-blue-500/20 bg-blue-500/5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 hover:bg-blue-500/10 transition-colors"
+        className="w-full flex items-center gap-2 px-0 py-1 text-left transition-colors"
       >
-        <FolderSearch className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-        <span className="text-[12px] font-medium text-blue-300">
+        <span className="text-[11px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
           Explore{step.files ? ` · ${step.files.length} file${step.files.length !== 1 ? 's' : ''}` : ''}
         </span>
         <span className="flex-1" />
-        {expanded ? (
-          <ChevronDown className="h-3 w-3 text-blue-400" />
-        ) : (
-          <ChevronRight className="h-3 w-3 text-blue-400" />
-        )}
+        <ChevronRight className={`h-3 w-3 text-[var(--app-text-dim)] transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </button>
       {expanded && (
-        <div className="px-3 pb-3 border-t border-blue-500/10">
+        <div className="mt-1">
           {step.files && step.files.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
+            <div className="flex flex-wrap gap-1 mb-1">
               {step.files.map((f) => (
                 <span
                   key={f}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-blue-300"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[var(--app-surface)] text-[10px] font-mono text-[var(--app-text-muted)]"
                 >
-                  <FileCode2 className="h-3 w-3" />
                   {f}
                 </span>
               ))}
             </div>
           )}
           {step.content && (
-            <p className="text-[12px] text-blue-200/80 leading-relaxed mt-2">{step.content}</p>
+            <p className="text-[12px] text-[var(--app-text-muted)] leading-relaxed">{step.content}</p>
           )}
         </div>
       )}
@@ -339,13 +331,8 @@ function ExploreStep({ step }: { step: StepData }) {
 
 function ActionStep({ step, index }: { step: StepData; index: number }) {
   return (
-    <div className="flex items-start gap-2.5 px-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="w-5 h-5 rounded-full bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20 flex items-center justify-center shrink-0 mt-0.5">
-        <CheckCircle2 className="h-3 w-3 text-[var(--app-accent)]" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
-      </div>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
     </div>
   );
 }
@@ -361,23 +348,23 @@ function CodeStep({ step, onCopy }: { step: StepData; onCopy?: () => void }) {
   };
 
   return (
-    <div className="rounded-[10px] border border-[var(--app-border)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300 bg-zinc-950">
+    <div className="rounded-[8px] border border-[var(--app-border)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300 bg-[var(--app-panel-2)]">
       {step.fileName && (
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-800">
-          <FileCode2 className="h-3 w-3 text-zinc-400" />
-          <span className="text-[11px] font-mono text-zinc-400">{step.fileName}</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-[var(--app-border)]">
+          <FileCode2 className="h-3 w-3 text-[var(--app-text-dim)]" />
+          <span className="text-[11px] font-mono text-[var(--app-text-muted)]">{step.fileName}</span>
         </div>
       )}
       <div className="relative">
-        <pre className="p-3 text-[12px] leading-relaxed font-mono text-zinc-300 overflow-x-auto whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+        <pre className="p-3 text-[12px] leading-relaxed font-mono text-[var(--app-text)] overflow-x-auto whitespace-pre-wrap max-h-[300px] overflow-y-auto">
           {step.content}
         </pre>
         <button
           onClick={handleCopy}
-          className="absolute top-2 right-2 h-7 w-7 rounded-[6px] flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="absolute top-2 right-2 h-7 w-7 rounded-[6px] flex items-center justify-center bg-[var(--app-panel)] hover:bg-[var(--app-surface)] text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors"
           title="Copy code"
         >
-          {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3 text-[var(--app-success)]" /> : <Copy className="h-3 w-3" />}
         </button>
       </div>
     </div>
@@ -386,21 +373,16 @@ function CodeStep({ step, onCopy }: { step: StepData; onCopy?: () => void }) {
 
 function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: number }) {
   return (
-    <div className="rounded-[10px] border border-[var(--app-accent)]/20 bg-[var(--app-accent)]/5 p-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-start gap-2">
-        <Sparkles className="h-4 w-4 text-[var(--app-accent)] shrink-0 mt-0.5" />
-        <div>
-          <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
-          {fileCount && fileCount > 0 && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <FileCode2 className="h-3.5 w-3.5 text-[var(--app-accent)] shrink-0" />
-              <span className="text-[11px] font-semibold text-[var(--app-accent)]">
-                {fileCount} file{fileCount !== 1 ? 's' : ''} generated
-              </span>
-            </div>
-          )}
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
+      {fileCount && fileCount > 0 && (
+        <div className="flex items-center gap-1.5 mt-1">
+          <FileCode2 className="h-3 w-3 text-[var(--app-text-dim)] shrink-0" />
+          <span className="text-[11px] font-medium text-[var(--app-text-muted)]">
+            {fileCount} file{fileCount !== 1 ? 's' : ''} generated
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -440,8 +422,11 @@ export function EnhancedChatPanel({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Ref gate — prevents empty state flash during thread sync
+  const threadBootedRef = useRef(false);
 
   const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
   const { addCodeBlocks, setStreaming, reset: resetCodeBlocks } = useCodeBlocksStore();
@@ -460,13 +445,21 @@ export function EnhancedChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, accumulated]);
 
-  // Clear chat when switching projects without a thread
+  // Clear chat when switching projects (thread truly gone)
   useEffect(() => {
-    if (currentThreadId) return;
-    setMessages([]);
-    resetAccumulated();
-    resetCodeBlocks();
-    setStreaming(false);
+    if (currentThreadId) {
+      threadBootedRef.current = true;
+      return;
+    }
+    // Only clear if we previously had a thread (project switch, not initial mount)
+    if (threadBootedRef.current) {
+      setMessages([]);
+      setHasSentFirstMessage(false);
+      resetAccumulated();
+      resetCodeBlocks();
+      setStreaming(false);
+      threadBootedRef.current = false;
+    }
   }, [currentThreadId, resetAccumulated, resetCodeBlocks, setStreaming]);
 
   const loadThreadMessages = useCallback(async (threadId: string) => {
@@ -480,14 +473,12 @@ export function EnhancedChatPanel({
     const j = await res.json().catch(() => ({}));
     const list = (j?.messages || []) as Array<any>;
 
-    const processedMessages: ChatMessage[] = list.map((m) => {
+    const serverMessages: ChatMessage[] = list.map((m) => {
       const content = String(m.content || '');
       const { text, codeBlocks } = extractCodeBlocks(content);
       if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
-
       const { steps } = parseStepsFromText(content);
       const implicitSteps = steps.length === 0 ? detectImplicitSteps(text) : [];
-
       return {
         id: String(m.id),
         role: m.role as MessageRole,
@@ -498,11 +489,30 @@ export function EnhancedChatPanel({
       };
     });
 
-    setMessages(processedMessages);
+    // Merge: keep local messages not yet synced to server
+    setMessages((prev) => {
+      const pendingLocal = prev.filter((m) => {
+        if (!m.id.startsWith('local_')) return false;
+        if (m.role === 'user') {
+          return !serverMessages.some((s) => s.role === 'user' && s.content === m.content);
+        }
+        if (m.role === 'assistant') {
+          const lastServerAsst = serverMessages.find((s) => s.role === 'assistant');
+          if (!lastServerAsst) return true;
+          return new Date(m.created_at).getTime() > new Date(lastServerAsst.created_at).getTime();
+        }
+        return false;
+      });
+      return [...serverMessages, ...pendingLocal].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
   }, [addCodeBlocks]);
 
+  // Load thread on boot
   useEffect(() => {
     if (!currentThreadId) return;
+    threadBootedRef.current = true;
     loadThreadMessages(currentThreadId).catch(() => {});
   }, [currentThreadId, loadThreadMessages]);
 
@@ -556,8 +566,13 @@ export function EnhancedChatPanel({
       setIsLoading(false);
       setStreaming(false);
 
-      const { accumulated: latestAccumulated } = useGenerationStore.getState();
+      const { accumulated: latestAccumulated, files: currentFiles } = useGenerationStore.getState();
       const fullText = (latestAccumulated || '').trim();
+
+      // Count files that were generated
+      const generatedFileCount = currentFiles
+        ? Object.values(currentFiles.files).filter((f) => f.status === 'added').length
+        : 0;
 
       if (fullText) {
         const { text: cleanedText, codeBlocks } = extractCodeBlocks(fullText);
@@ -565,8 +580,6 @@ export function EnhancedChatPanel({
         const implicitSteps = steps.length === 0 ? detectImplicitSteps(cleanedText) : [];
         const resolvedSteps = steps.length > 0 ? steps : implicitSteps;
 
-        // Show the AI's actual response text, not a summary badge.
-        // Code was already extracted to the code pane during streaming.
         const displayContent = cleanedText || fullText;
 
         setMessages((prev) => [
@@ -582,6 +595,32 @@ export function EnhancedChatPanel({
         ]);
 
         if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
+      } else if (generatedFileCount > 0) {
+        // Fallback: no accumulated text but files were generated.
+        // Show a summary message so the user knows something happened.
+        const fileNames = currentFiles
+          ? Object.entries(currentFiles.files)
+              .filter(([, f]) => f.status === 'added')
+              .slice(0, 5)
+              .map(([p]) => `\`${p}\``)
+              .join(', ')
+          : '';
+
+        const summaryContent = `I generated ${generatedFileCount} file${generatedFileCount !== 1 ? 's' : ''}${
+          fileNames ? `: ${fileNames}${generatedFileCount > 5 ? ' and more' : ''}` : '.'
+        } View them in the editor panel.`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `local_assistant_${Date.now()}`,
+            role: 'assistant',
+            content: summaryContent,
+            steps: [{ type: 'completion', content: summaryContent }],
+            created_at: new Date().toISOString(),
+            fileCount: generatedFileCount,
+          },
+        ]);
       }
 
       resetAccumulated();
@@ -613,6 +652,7 @@ export function EnhancedChatPanel({
     if (!input.trim() || isLoading) return;
     setSidebarCollapsed(true);
     resetCodeBlocks();
+    setHasSentFirstMessage(true);
 
     const text = input.trim();
     setInput('');
@@ -756,8 +796,8 @@ export function EnhancedChatPanel({
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
-        {/* Empty state */}
-        {messages.length === 0 && !isLoading && (
+        {/* Empty state — only on first visit, never after sending a message */}
+        {!hasSentFirstMessage && messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-8">
             <div className="mb-5 p-4 rounded-2xl bg-[var(--app-accent)]/10 border border-[var(--app-accent)]/20">
               <Sparkles className="h-10 w-10 text-[var(--app-accent)]" />
@@ -895,10 +935,17 @@ export function EnhancedChatPanel({
                         if (step.type === 'thought') return <ThoughtStep key={stepIdx} step={step} />;
                         if (step.type === 'explore') return <ExploreStep key={stepIdx} step={step} />;
                         if (step.type === 'action') return <ActionStep key={stepIdx} step={step} index={stepIdx} />;
-                        if (step.type === 'code') return <CodeStep key={stepIdx} step={step} />;
+                        if (step.type === 'code') return null; // Code goes to file tree, not chat
                         if (step.type === 'completion') return <CompletionStep key={stepIdx} step={step} fileCount={message.fileCount} />;
                         return null;
                       })}
+                      {/* Show file count summary when code was generated silently */}
+                      {message.fileCount && message.fileCount > 0 && message.steps!.some(s => s.type === 'code') && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--app-text-muted)] border-t border-[var(--app-border)] pt-2 mt-2">
+                          <FileCode2 className="h-3.5 w-3.5 shrink-0" />
+                          <span>{message.fileCount} file{message.fileCount !== 1 ? 's' : ''} generated → view in code panel</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
