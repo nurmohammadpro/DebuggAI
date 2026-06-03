@@ -14,8 +14,12 @@ import {
   Zap,
   Container,
   Loader2,
+  Code2,
+  Cpu,
+  FileCode,
+  Wand2,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SandpackProvider, SandpackPreview, SandpackLayout } from '@codesandbox/sandpack-react';
 
 interface EnhancedPreviewPaneProps {
@@ -53,11 +57,13 @@ export function EnhancedPreviewPane({
   onRefresh,
   sandboxError = null,
 }: EnhancedPreviewPaneProps) {
-  const { lastError, setLastError, files } = useGenerationStore();
+  const { lastError, setLastError, files, isGenerating } = useGenerationStore();
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [useDocker, setUseDocker] = useState(false);
   const [sandpackLoaded, setSandpackLoaded] = useState(false);
+  // Track generation state — show building animation during generation
+  const wasGeneratingRef = useRef(false);
 
   const currentDevice = DEVICE_CONFIG[deviceMode];
   const previewViewportClassName =
@@ -195,6 +201,22 @@ export function EnhancedPreviewPane({
   const dockerReady = !!sandboxUrl && !sandboxError;
   const showDocker = useDocker && dockerReady;
 
+  // Track generation completion to auto-render preview
+  const [showTransition, setShowTransition] = useState(false);
+  useEffect(() => {
+    if (!isGenerating && wasGeneratingRef.current && hasFiles) {
+      // Generation just completed — briefly show "Ready" then auto-render
+      setShowTransition(true);
+      const timer = setTimeout(() => {
+        setShowTransition(false);
+      }, 1200); // 1.2s to show completion animation
+      return () => clearTimeout(timer);
+    }
+    wasGeneratingRef.current = isGenerating;
+  }, [isGenerating, hasFiles]);
+
+  const showBuildingAnimation = isGenerating || (!hasFiles && !isGenerating) || showTransition;
+
   // ── Render ────────────────────────────────────────────────────────────
   return (
     <div
@@ -245,14 +267,9 @@ export function EnhancedPreviewPane({
               title="Docker Live Preview"
               sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
             />
-          ) : !hasFiles ? (
-            <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)] p-8">
-              <Zap className="h-12 w-12 text-[var(--app-text-dim)] mb-4 opacity-20" />
-              <p className="text-sm text-[var(--app-text)] mb-1 font-medium">Preview</p>
-              <p className="text-xs text-[var(--app-text-muted)] text-center max-w-[240px] leading-relaxed">
-                Ask the AI to generate code and your preview will appear here instantly.
-              </p>
-            </div>
+          ) : showBuildingAnimation ? (
+            /* ── Building animation ── */
+            <BuildingAnimation isGenerating={isGenerating} fileCount={hasFiles ? Object.keys(files?.files || {}).filter(p => files?.files?.[p]?.status !== 'deleted').length : 0} />
           ) : (
             <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} />
           )}
@@ -273,6 +290,91 @@ export function EnhancedPreviewPane({
       )}
 
       <PreviewStatusBar deviceMode={deviceMode} engine={showDocker ? 'Docker/Next.js' : 'Sandpack React'} sandpackLoaded={sandpackLoaded} />
+    </div>
+  );
+}
+
+// ── Building Animation ───────────────────────────────────────────────────
+function BuildingAnimation({ isGenerating, fileCount }: { isGenerating: boolean; fileCount: number }) {
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    if (!isGenerating) {
+      setPhase(3); // Final phase — wrapping up
+      return;
+    }
+    const interval = setInterval(() => {
+      setPhase(p => (p + 1) % 4);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
+  const phases = [
+    { icon: Wand2, label: 'Analyzing your request...', color: 'text-purple-400', bg: 'bg-purple-500/5' },
+    { icon: Cpu, label: 'Architecting components...', color: 'text-blue-400', bg: 'bg-blue-500/5' },
+    { icon: FileCode, label: 'Writing code files...', color: 'text-amber-400', bg: 'bg-amber-500/5' },
+    { icon: Code2, label: isGenerating ? 'Polishing the details...' : `Built ${fileCount} file${fileCount !== 1 ? 's' : ''}`, color: 'text-emerald-400', bg: 'bg-emerald-500/5' },
+  ];
+
+  const current = phases[phase % 4]!;
+  const Icon = current.icon;
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)] p-8">
+      {/* Animated build indicator */}
+      <div className="relative mb-8">
+        <div className={cn(
+          'w-20 h-20 rounded-2xl border-2 flex items-center justify-center',
+          isGenerating ? 'animate-spin [animation-duration:4s] border-[var(--app-accent)]/20' : 'border-emerald-500/20'
+        )}>
+          <div className={cn(
+            'w-16 h-16 rounded-xl flex items-center justify-center',
+            current.bg
+          )}>
+            <Icon className={cn('h-7 w-7', current.color, isGenerating && 'animate-pulse')} />
+          </div>
+        </div>
+        {/* Pulse rings */}
+        {isGenerating && (
+          <>
+            <div className="absolute inset-0 rounded-2xl border border-[var(--app-accent)]/10 animate-ping [animation-duration:2s]" />
+            <div className="absolute -inset-1 rounded-2xl border border-[var(--app-accent)]/5 animate-ping [animation-duration:3s] [animation-delay:0.5s]" />
+          </>
+        )}
+        {/* Done checkmark */}
+        {!isGenerating && (
+          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center animate-in zoom-in duration-300">
+            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Status text */}
+      <div className="flex flex-col items-center gap-2">
+        <span className={cn(
+          'text-[13px] font-semibold transition-colors duration-500',
+          current.color
+        )}>
+          {current.label}
+        </span>
+        {isGenerating && (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-[10px] text-[var(--app-text-dim)] uppercase tracking-[0.2em]">Your app is coming up</span>
+            <span className="flex gap-0.5 ml-1">
+              <span className="w-1 h-1 rounded-full bg-[var(--app-accent)]/40 animate-bounce [animation-delay:0ms]" />
+              <span className="w-1 h-1 rounded-full bg-[var(--app-accent)]/40 animate-bounce [animation-delay:150ms]" />
+              <span className="w-1 h-1 rounded-full bg-[var(--app-accent)]/40 animate-bounce [animation-delay:300ms]" />
+            </span>
+          </div>
+        )}
+        {!isGenerating && fileCount > 0 && (
+          <span className="text-[10px] text-[var(--app-text-dim)] uppercase tracking-[0.15em] mt-1 animate-in fade-in duration-500">
+            Ready — rendering preview
+          </span>
+        )}
+      </div>
     </div>
   );
 }

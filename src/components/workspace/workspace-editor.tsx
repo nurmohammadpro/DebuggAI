@@ -2,12 +2,16 @@
 
 import { CodeEditor } from '@/components/web-builder/code-editor';
 import { EnhancedPreviewPane } from '@/components/web-builder/enhanced-preview-pane';
+import { ProfessionalFileTree } from '@/components/workspace/professional-file-tree';
 import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
 import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import {
   Code2,
   Eye,
+  Folder,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +38,7 @@ export function WorkspaceEditor({
 }) {
   const { activeFilePath, files, setActiveFilePath } = useGenerationStore();
   const language = activeFilePath ? files?.files[activeFilePath]?.language : undefined;
+  const [showFileTree, setShowFileTree] = useState(true);
 
   const sandbox = useSandbox();
   const sandboxStartingRef = useRef(false);
@@ -189,7 +194,42 @@ export function WorkspaceEditor({
           />
         ) : (
           <>
-            {/* Monaco Editor — file tree is available via sidebar (ProfessionalFileTree) */}
+            {/* File Tree Sidebar — collapsible */}
+            {fileCount > 0 && showFileTree && (
+              <div className="w-56 shrink-0 border-r border-[var(--app-border)] bg-[var(--app-panel-2)] flex flex-col overflow-hidden">
+                <div className="h-8 px-3 flex items-center justify-between border-b border-[var(--app-border)] shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-3.5 w-3.5 text-[var(--app-accent)]" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">Files</span>
+                  </div>
+                  <button
+                    onClick={() => setShowFileTree(false)}
+                    className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                    title="Hide file tree"
+                  >
+                    <PanelLeftClose className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <ProfessionalFileTree
+                    onFileSelect={(path) => setActiveFilePath(path)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Show tree toggle when collapsed */}
+            {fileCount > 0 && !showFileTree && (
+              <button
+                onClick={() => setShowFileTree(true)}
+                className="absolute left-0 top-10 z-10 h-8 w-8 rounded-r-[6px] bg-[var(--app-panel-2)] border border-l-0 border-[var(--app-border)] flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors shadow-sm"
+                title="Show file tree"
+              >
+                <PanelLeftOpen className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {/* Monaco Editor */}
             <CodeEditor
               height="100%"
               showHeader={false}
