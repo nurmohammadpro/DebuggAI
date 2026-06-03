@@ -81,7 +81,15 @@ export function EnhancedPreviewPane({
       result[path.startsWith('/') ? path : '/' + path] = { code };
     };
 
-    // Detect packages from import statements
+    // Track CSS files found — we'll inject imports if needed
+    const cssFiles: string[] = [];
+
+    // Check if any file already imports a CSS file
+const cssAlreadyImported = (codes: string[]): boolean => {
+  return codes.some(code => /import\s+['"].*\.css['"]/.test(code) || /import\s+['"].*\.scss['"]/.test(code));
+};
+
+// Detect packages from import statements
     const detectDeps = (code: string) => {
       const importPattern = /from\s+['"]([^'"]+)['"]/g;
       let match;
@@ -94,37 +102,116 @@ export function EnhancedPreviewPane({
       }
     };
 
+    // Phase 1: Collect all files and detect CSS
     for (const [path, file] of Object.entries(files.files)) {
       if (file.status === 'deleted') continue;
       const normalized = path.startsWith('/') ? path.slice(1) : path;
       detectDeps(file.content);
 
-      // Map src/App.* to /App.* for Sandpack
-      if (normalized === 'src/App.tsx' || normalized === 'App.tsx') put('/App.tsx', file.content);
-      else if (normalized === 'src/App.jsx' || normalized === 'App.jsx') put('/App.jsx', file.content);
-      else if (normalized === 'src/index.tsx') put('/index.tsx', file.content);
-      else if (normalized === 'src/index.jsx') put('/index.jsx', file.content);
-      else put('/' + normalized, file.content);
+      const ext = normalized.split('.').pop()?.toLowerCase();
+      if (ext === 'css' || ext === 'scss' || ext === 'sass') {
+        cssFiles.push(normalized);
+      }
     }
 
-    // Synthesize index file if only App exists
-    if (!result['/index.js'] && !result['/index.jsx'] && !result['/index.ts'] && !result['/index.tsx']) {
-      if (result['/App.tsx'] || result['/App.ts']) {
+    // Phase 2: Map files to Sandpack paths
+    let hasAppPage = false;
+    let hasLayout = false;
+    let layoutContent = '';
+
+    for (const [path, file] of Object.entries(files.files)) {
+      if (file.status === 'deleted') continue;
+      const normalized = path.startsWith('/') ? path.slice(1) : path;
+      const ext = normalized.split('.').pop()?.toLowerCase();
+
+      // Track Next.js App Router patterns
+      if (normalized === 'app/page.tsx' || normalized === 'app/page.jsx') {
+        hasAppPage = true;
+      }
+      if (normalized === 'app/layout.tsx' || normalized === 'app/layout.jsx') {
+        hasLayout = true;
+        layoutContent = file.content;
+      }
+
+      // Map CSS files — use /styles.css for the primary CSS (Sandpack auto-includes it)
+      if (ext === 'css' || ext === 'scss' || ext === 'sass') {
+        if (
+          normalized === 'app/globals.css' ||
+          normalized === 'src/app/globals.css' ||
+          normalized === 'styles.css' ||
+          normalized === 'src/styles.css' ||
+          normalized === 'index.css' ||
+          normalized === 'App.css'
+        ) {
+          put('/styles.css', file.content);
+        } else if (normalized.endsWith('.module.css') || normalized.endsWith('.module.scss')) {
+          // CSS modules — preserve path for named imports
+          put('/' + normalized.replace(/^app\//, ''), file.content);
+        } else {
+          put('/' + normalized, file.content);
+        }
+        continue;
+      }
+
+      // Map component files to Sandpack-friendly paths
+      if (normalized === 'src/App.tsx' || normalized === 'App.tsx' || normalized === 'src/App.jsx' || normalized === 'App.jsx') {
+        put('/App.tsx', file.content);
+      } else if (normalized === 'app/page.tsx' || normalized === 'app/page.jsx') {
+        // Next.js app/page -> standalone App component
+        let code = file.content;
+        // Remove 'use client' directive if present (Sandpack doesn't need it)
+        code = code.replace(/^['"]use client['"];?\s*\n?/gm, '');
+        // Convert `export default function Page` -> `export default function App`
+        code = code.replace(/export default function (\w+)/, 'export default function App');
+        // Convert `export default function page` -> `export default function App`
+        code = code.replace(/export default function page/, 'export default function App');
+        put('/App.tsx', code);
+      } else if (normalized === 'src/index.tsx' || normalized === 'src/index.jsx') {
+        put('/index.tsx', file.content);
+      } else if (normalized === 'app/layout.tsx' || normalized === 'app/layout.jsx') {
+        // Next.js layout — extract CSS imports, keep as regular component
+        let code = file.content;
+        code = code.replace(/^['"]use client['"];?\s*\n?/gm, '');
+        // Remove Next.js metadata config — Sandpack doesn't support it
+        code = code.replace(/export (const|let) metadata[\s\S]*?;?\n?/gm, '');
+        code = code.replace(/export (const|let) generateMetadata[\s\S]*?}[\s\S]*?}[\s\S]*?;?\n?/gm, '');
+        put('/layout.tsx', code);
+      } else {
+        // All other files — preserve path but strip src/ prefix for Sandpack
+        const spPath = normalized.startsWith('src/') ? normalized.slice(4) : normalized;
+        put('/' + spPath, file.content);
+      }
+    }
+
+    // Phase 3: Synthesize index file if missing
+    const needsIndex = !result['/index.js'] && !result['/index.jsx'] && !result['/index.ts'] && !result['/index.tsx'];
+    if (needsIndex) {
+      const hasApp = !!(result['/App.tsx'] || result['/App.jsx']);
+      if (hasApp) {
+        // Build import statements
+        const imports: string[] = [];
+        const cssImport = result['/styles.css'] ? "import './styles.css';" : null;
+        if (cssImport) imports.push(cssImport);
+        if (isTs) imports.push("import React from 'react';");
+        imports.push("import ReactDOM from 'react-dom/client';");
+        imports.push("import App from './App';");
+
         put('/index.tsx', [
-          "import React from 'react';",
-          "import ReactDOM from 'react-dom/client';",
-          "import App from './App';",
+          ...imports,
+          '',
           "const root = ReactDOM.createRoot(document.getElementById('root')!);",
           "root.render(<React.StrictMode><App /></React.StrictMode>);",
         ].join('\n'));
-      } else if (result['/App.jsx'] || result['/App.js']) {
-        put('/index.js', [
-          "import React from 'react';",
-          "import { createRoot } from 'react-dom/client';",
-          "import App from './App';",
-          "const root = createRoot(document.getElementById('root'));",
-          "root.render(<React.StrictMode><App /></React.StrictMode>);",
-        ].join('\n'));
+      }
+    }
+
+    // Phase 4: Ensure CSS is imported somewhere
+    if (result['/styles.css'] && !cssAlreadyImported(Object.values(result).map(r => r.code))) {
+      // Inject CSS import into the index file
+      if (result['/index.tsx']) {
+        result['/index.tsx'].code = "import './styles.css';\n" + result['/index.tsx'].code;
+      } else if (result['/App.tsx']) {
+        result['/App.tsx'].code = "import './styles.css';\n" + result['/App.tsx'].code;
       }
     }
 
