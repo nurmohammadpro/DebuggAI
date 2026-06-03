@@ -121,6 +121,11 @@ class SandboxManager {
       { mode: 0o755 },
     );
 
+    // Sandbox containers run with --cap-drop ALL (no DAC_OVERRIDE),
+    // so even root can't write to files owned by another UID.
+    // Make the project dir world-writable so npm install / dev servers work.
+    await fs.chmod(projectDir, 0o777);
+
     const record: SandboxRecord = {
       id,
       userId,
