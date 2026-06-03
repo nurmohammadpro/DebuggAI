@@ -497,6 +497,8 @@ export function EnhancedChatPanel({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+  // Tool events for the agent timeline (ToolTimeline component)
+  const [toolEvents, setToolEvents] = useState<ToolEvent[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Ref gate — prevents empty state flash during thread sync
@@ -1021,6 +1023,11 @@ export function EnhancedChatPanel({
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {/* Agent tool timeline — renders tool_call/tool_result events */}
+                  {toolEvents.length > 0 && isLast && (
+                    <ToolTimeline events={toolEvents} />
                   )}
 
                   {/* Fallback: rich text when no structured steps */}

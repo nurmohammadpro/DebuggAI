@@ -108,12 +108,18 @@ serve(async (req) => {
       },
     });
 
-    // Admin-managed AI provider config (service role).
+    // Multi-provider AI config (service role).
+    // Supports: DeepSeek (primary), Groq (fast fallback).
     // Falls back to env vars for backwards compatibility.
-    // Module-level cache to avoid a Supabase query on every hot-path call.
     let aiApiKey = (Deno.env.get('AI_API_KEY') || '').trim();
     let aiBaseUrl = (Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1').trim();
     let aiModel = (Deno.env.get('AI_MODEL') || 'deepseek-chat').trim();
+
+    // Groq provider (fast, cheap — used as fallback or for small edits)
+    let groqApiKey = (Deno.env.get('GROQ_API_KEY') || '').trim();
+    let groqBaseUrl = (Deno.env.get('GROQ_BASE_URL') || 'https://api.groq.com/openai/v1').trim();
+    let groqModel = (Deno.env.get('GROQ_MODEL') || 'llama-3.3-70b-versatile').trim();
+    let useGroq = false; // Default: DeepSeek
 
     try {
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -128,9 +134,30 @@ serve(async (req) => {
           if (model) aiModel = model;
           if (key) aiApiKey = key;
         }
+
+        // Also check Groq provider config
+        const { data: groqCfg } = await supabaseAdmin
+          .from('ai_provider_config')
+          .select('enabled, base_url, model, api_key')
+          .eq('key', 'groq')
+          .maybeSingle();
+
+        const gCfg = groqCfg as DbAiProviderConfig | null;
+        if (gCfg && gCfg.enabled && gCfg.api_key) {
+          groqApiKey = gCfg.api_key;
+          if (gCfg.base_url) groqBaseUrl = gCfg.base_url;
+          if (gCfg.model) groqModel = gCfg.model;
+        }
       }
     } catch {
       // best-effort: keep env fallback
+    }
+
+    // Provider routing: detect intent, prefer Groq for small edits
+    const promptLower = prompt.toLowerCase();
+    const isSmallEdit = /change|fix|update|edit|modify|replace|remove|add (a|the) |rename|tweak|adjust/i.test(promptLower);
+    if (isSmallEdit && groqApiKey) {
+      useGroq = true;
     }
 
     // Verify user is authenticated
@@ -308,10 +335,14 @@ You have access to tools: list_dir, view_file, write_file, line_replace, search_
       });
     }
 
-    const aiResponse = await fetch(`${aiBaseUrl}/chat/completions`, {
+    // Route to correct provider based on intent detection
+    const providerBaseUrl = useGroq ? groqBaseUrl : aiBaseUrl;
+    const providerApiKey = useGroq ? groqApiKey : aiApiKey;
+
+    const aiResponse = await fetch(`${providerBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${aiApiKey}`,
+        'Authorization': `Bearer ${providerApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
