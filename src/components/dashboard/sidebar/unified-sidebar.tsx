@@ -71,22 +71,23 @@ export function UnifiedSidebar({
     <>
       {/* Top Content - Navigation and Recent Items */}
       <div className="flex-1 min-h-0 flex flex-col">
-        {/* Header */}
-        <div className="h-12 flex items-center justify-between px-3 shrink-0">
+        {/* Header - v0 style with better visual hierarchy */}
+        <div className="h-16 flex items-center justify-between px-3 shrink-0 border-b border-[var(--app-border)]">
           {!collapsed && (
-            <Link href="/dashboard" className="font-semibold text-xs text-[var(--app-text)]">
+            <Link href="/dashboard" className="font-bold text-sm text-[var(--app-text)] tracking-tight hover:text-[var(--ds-green)] transition-colors">
               DeBuggAI
             </Link>
           )}
           {onToggleCollapsed && (
             <button
               onClick={onToggleCollapsed}
-              className="p-1 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text-muted)] transition-all"
+              className="p-1.5 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-200"
               aria-label="Toggle sidebar"
+              title={collapsed ? 'Expand' : 'Collapse'}
             >
               {/* On desktop in the inline sidebar show the collapse/expand icon; on mobile overlay show X */}
               <X className="h-4 w-4 md:hidden" />
-              <svg className="hidden md:block" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="hidden md:block" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M9 3v18" />
               </svg>
@@ -97,19 +98,19 @@ export function UnifiedSidebar({
         {/* Navigation */}
         <div className="flex-1 min-h-0 py-2 overflow-y-auto">
           {!collapsed && (
-            <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+            <div className="px-3 py-3 grid grid-cols-2 gap-2">
               <Link
                 href="/dashboard/home?create=1"
-                className="h-8 rounded-[6px] bg-[var(--ds-green)] px-2 text-[11px] font-medium text-white hover:bg-[var(--ds-green-bright)] transition-colors inline-flex items-center justify-center gap-1.5"
+                className="h-9 rounded-[6px] bg-[var(--ds-green)] px-3 text-[11px] font-semibold text-white hover:bg-[var(--ds-green-bright)] active:scale-95 transition-all duration-150 inline-flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
                 Project
               </Link>
               <Link
                 href="/dashboard/debug"
-                className="h-8 rounded-[6px] border border-[var(--app-border)] px-2 text-[11px] font-medium text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors inline-flex items-center justify-center gap-1.5"
+                className="h-9 rounded-[6px] border border-[var(--app-border)] px-3 text-[11px] font-semibold text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] hover:border-[var(--app-border-strong)] transition-all duration-150 inline-flex items-center justify-center gap-1.5"
               >
-                <MessageSquarePlus className="h-3.5 w-3.5" />
+                <MessageSquarePlus className="h-4 w-4" />
                 Chat
               </Link>
             </div>
@@ -117,7 +118,7 @@ export function UnifiedSidebar({
 
           {/* Main Navigation */}
           {!collapsed && (
-            <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
+            <div className="px-3 mt-4 mb-3 text-[10px] font-bold text-[var(--app-text-dim)] uppercase tracking-widest">
               Workspace
             </div>
           )}
@@ -160,8 +161,8 @@ export function UnifiedSidebar({
 
           {/* Recent Projects */}
           {!collapsed && recentProjects.length > 0 && (
-            <div className="mt-4">
-              <div className="px-3 mb-2 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
+            <div className="mt-6">
+              <div className="px-3 mb-3 text-[10px] font-bold text-[var(--app-text-dim)] uppercase tracking-widest">
                 Recent Projects
               </div>
               {recentProjects.slice(0, 5).map((project) => (
@@ -172,17 +173,18 @@ export function UnifiedSidebar({
 
           {/* Debug Sessions */}
           {!collapsed && (
-            <div className="mt-4">
-              <div className="px-3 mb-2 flex items-center justify-between gap-2">
-                <div className="text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider">
+            <div className="mt-6">
+              <div className="px-3 mb-3 flex items-center justify-between gap-2">
+                <div className="text-[10px] font-bold text-[var(--app-text-dim)] uppercase tracking-widest">
                   Threads
                 </div>
                 <button
                   onClick={createThread}
-                  className="h-6 w-6 rounded-[6px] inline-flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+                  className="h-7 w-7 rounded-[6px] inline-flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150"
                   aria-label="New thread"
+                  title="Create new thread"
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-4 w-4" />
                 </button>
               </div>
               {recentThreads.length === 0 ? (
@@ -238,24 +240,25 @@ export function UnifiedSidebar({
       </div>
 
       {/* Bottom Content - User Profile */}
-      <div className="p-3 shrink-0">
+      <div className="p-3 shrink-0 border-t border-[var(--app-border)]">
         {collapsed ? (
           <Link
             href="/dashboard/settings"
-            className="w-7 h-7 rounded-[6px] bg-[var(--app-surface)] flex items-center justify-center text-[11px] font-semibold text-[var(--app-text-muted)]"
+            className="w-9 h-9 rounded-[6px] bg-[var(--ds-green)] flex items-center justify-center text-[11px] font-bold text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 shadow-sm"
+            title={user?.email || 'User settings'}
           >
             {user?.email?.[0].toUpperCase() || 'U'}
           </Link>
         ) : (
           <Link
             href="/dashboard/settings"
-            className="flex items-center gap-2 p-2 rounded-[6px] hover:bg-[var(--app-surface)] transition-all"
+            className="flex items-center gap-2 p-2.5 rounded-[6px] hover:bg-[var(--app-surface)] transition-all duration-150"
           >
-            <div className="w-7 h-7 rounded-[6px] bg-[var(--app-surface)] flex items-center justify-center text-[11px] font-semibold text-[var(--app-text-muted)] shrink-0">
+            <div className="w-8 h-8 rounded-[6px] bg-[var(--ds-green)] flex items-center justify-center text-xs font-bold text-white shrink-0">
               {user?.email?.[0].toUpperCase() || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-[var(--app-text)] truncate">
+              <div className="text-xs font-semibold text-[var(--app-text)] truncate">
                 {user?.displayName || user?.email || 'User'}
               </div>
               <div className="text-[10px] text-[var(--app-text-dim)] capitalize">
@@ -271,10 +274,10 @@ export function UnifiedSidebar({
   return (
     <>
       <ConfirmDialogComponent />
-      {/* Desktop sidebar — full viewport height */}
+      {/* Desktop sidebar — full viewport height with v0-style border */}
       <aside
-        className={`hidden md:flex shrink-0 flex-col h-full bg-[var(--app-panel)] drop-shadow-[1px_0_4px_rgba(0,0,0,0.06)] transition-all duration-200 ${
-          collapsed ? 'w-[64px]' : 'w-[264px]'
+        className={`hidden md:flex shrink-0 flex-col h-full bg-[var(--app-panel)] border-r border-[var(--app-border)] transition-all duration-200 ${
+          collapsed ? 'w-16' : 'w-72'
         }`}
       >
           {sidebarContent}
@@ -308,16 +311,16 @@ function NavItem({ collapsed, active, icon, label, href }: NavItemProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-[6px] transition-all ${
+      className={`flex items-center gap-3 px-3 py-2 text-xs rounded-[6px] transition-all duration-150 ${
         active
-          ? 'bg-[var(--app-surface)] font-medium text-[var(--app-text)]'
-          : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
+          ? 'bg-[var(--ds-green-muted)] font-semibold text-[var(--ds-green)] border border-[var(--ds-green)]/20'
+          : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
       }`}
     >
-      <span className="flex items-center justify-center shrink-0">
+      <span className="flex items-center justify-center shrink-0 w-4 h-4">
         {icon}
       </span>
-      {!collapsed && <span>{label}</span>}
+      {!collapsed && <span className="flex-1">{label}</span>}
     </Link>
   );
 }
@@ -332,13 +335,13 @@ function RecentProjectItem({ project }: RecentProjectItemProps) {
   return (
     <Link
       href={`/dashboard?project=${project.id}`}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all group"
+      className="flex items-center gap-2.5 px-2.5 py-2 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-150 group"
     >
-      <Database className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
-      <span className="flex-1 min-w-0 truncate">
+      <Database className="w-3.5 h-3.5 text-[var(--app-text-dim)] shrink-0" />
+      <span className="flex-1 min-w-0 truncate font-medium">
         {project.description || project.prompt || 'Untitled Project'}
       </span>
-      <span className="text-[10px] text-[var(--app-text-dim)] shrink-0">
+      <span className="text-[10px] text-[var(--app-text-dim)] shrink-0 ml-1">
         {timeAgo}
       </span>
     </Link>
@@ -359,14 +362,14 @@ function RecentThreadItem({ thread, onRename, onDelete }: RecentThreadItemProps)
     : `/dashboard?thread=${thread.id}`;
 
   return (
-    <div className="group flex items-center gap-1 px-1">
+    <div className="group flex items-center gap-1 px-1 py-0.5">
       <Link
         href={href}
-        className="flex-1 flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all min-w-0"
+        className="flex-1 flex items-center gap-2 px-2.5 py-2 text-xs text-[var(--app-text-muted)] rounded-[6px] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-150 min-w-0"
       >
-        <Activity className="w-3 h-3 text-[var(--app-text-dim)] shrink-0" />
-        <span className="flex-1 min-w-0 truncate">{title}</span>
-        <span className="text-[10px] text-[var(--app-text-dim)] shrink-0">{timeAgo}</span>
+        <Activity className="w-3.5 h-3.5 text-[var(--app-text-dim)] shrink-0" />
+        <span className="flex-1 min-w-0 truncate font-medium">{title}</span>
+        <span className="text-[10px] text-[var(--app-text-dim)] shrink-0 ml-1">{timeAgo}</span>
       </Link>
       <button
         type="button"
@@ -375,8 +378,9 @@ function RecentThreadItem({ thread, onRename, onDelete }: RecentThreadItemProps)
           e.stopPropagation();
           onRename?.();
         }}
-        className="hidden group-hover:inline-flex h-7 w-7 rounded-[6px] items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+        className="hidden group-hover:inline-flex h-7 w-7 rounded-[6px] items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150"
         aria-label="Rename thread"
+        title="Rename"
       >
         <Pencil className="h-3.5 w-3.5" />
       </button>
@@ -387,8 +391,9 @@ function RecentThreadItem({ thread, onRename, onDelete }: RecentThreadItemProps)
           e.stopPropagation();
           onDelete?.();
         }}
-        className="hidden group-hover:inline-flex h-7 w-7 rounded-[6px] items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-danger)] hover:bg-[var(--app-danger-soft)] transition-colors"
+        className="hidden group-hover:inline-flex h-7 w-7 rounded-[6px] items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-danger)] hover:bg-[var(--app-danger-soft)] transition-all duration-150"
         aria-label="Delete thread"
+        title="Delete"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
