@@ -201,3 +201,57 @@ export async function withRateLimit(
 export function getActionCost(action: string): number {
   return ACTION_COSTS[action] ?? 1;
 }
+
+// ── Per-IP rate limiting ────────────────────────────────────────────────
+// Simple in-process bucket (restarts clear it — acceptable for abuse
+// prevention; upgrade to Redis/PG for production).
+
+const IP_BUCKETS = new Map<string, { count: number; resetAt: number }>();
+const IP_WINDOW_MS = 60_000;   // 1 minute window
+const IP_MAX_REQUESTS = 30;    // 30 req/min per IP (generous — catches scripted abuse)
+
+function getClientIP(req?: NextRequest): string | null {
+  if (!req) return null;
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0]!.trim();
+  return req.headers.get('x-real-ip') || null;
+}
+
+/**
+ * Check per-IP rate limit bucket. Separate from per-user limits —
+ * this catches unauthenticated or anonymous abuse patterns.
+ */
+export function checkIPRateLimit(
+  req?: NextRequest,
+): { allowed: boolean; retryAfter?: number } {
+  const ip = getClientIP(req);
+  if (!ip) return { allowed: true }; // Can't identify — allow through
+
+  const now = Date.now();
+  let bucket = IP_BUCKETS.get(ip);
+
+  if (!bucket || now > bucket.resetAt) {
+    bucket = { count: 1, resetAt: now + IP_WINDOW_MS };
+    IP_BUCKETS.set(ip, bucket);
+    return { allowed: true };
+  }
+
+  bucket.count++;
+
+  if (bucket.count > IP_MAX_REQUESTS) {
+    const retryAfter = Math.ceil((bucket.resetAt - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  return { allowed: true };
+}
+
+// Periodic cleanup of stale IP buckets (every 5 minutes)
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, bucket] of IP_BUCKETS) {
+      if (now > bucket.resetAt) IP_BUCKETS.delete(ip);
+    }
+  }, 300_000).unref?.();
+}

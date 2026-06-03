@@ -2,13 +2,16 @@
  * Deploy API Route
  *
  * Triggers a deployment of the project to Vercel or Netlify.
- * Body: { provider: 'vercel' | 'netlify', files: Record<string, string>, env?: Record<string, string> }
+ * If files are not provided in the body, loads them from project_files table.
+ * Also supports sandbox-based export for Docker-built projects.
+ * Body: { provider, files?, env?, fromSandbox? }
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { logAuditEvent } from '@/lib/server/audit-log';
+import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,10 +24,43 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     provider: string;
     files?: Record<string, string>;
     env?: Record<string, string>;
+    fromSandbox?: boolean;
   };
 
   if (!body?.provider) {
     return NextResponse.json({ error: 'provider is required (vercel | netlify)' }, { status: 400 });
+  }
+
+  // Auto-load files from project_files if not provided
+  let deployFiles = body.files || {};
+  if (Object.keys(deployFiles).length === 0) {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      if (serviceKey) {
+        const admin = createClient(supabaseUrl, serviceKey);
+        const { data: fileRows } = await admin
+          .from('project_files')
+          .select('path, content')
+          .eq('project_id', projectId)
+          .neq('status', 'deleted');
+
+        if (fileRows && fileRows.length > 0) {
+          deployFiles = {};
+          for (const row of fileRows) {
+            if (row.path && row.content !== undefined && row.path !== 'project_memory.md') {
+              deployFiles[row.path] = row.content;
+            }
+          }
+        }
+      }
+    } catch {
+      // Fall through — use whatever files were provided
+    }
+  }
+
+  if (Object.keys(deployFiles).length === 0) {
+    return NextResponse.json({ error: 'No files to deploy. Generate code first, or provide files.' }, { status: 400 });
   }
 
   const supabase = createSupabaseAdmin();
@@ -53,8 +89,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     let deployResult: { url?: string; id?: string; status?: string } = {};
 
     if (body.provider === 'vercel') {
-      const files = body.files || {};
-      const fileArray = Object.entries(files).map(([file, data]) => ({ file, data }));
+      const fileArray = Object.entries(deployFiles).map(([file, data]) => ({ file, data }));
 
       const vercelRes = await fetch('https://api.vercel.com/v13/deployments', {
         method: 'POST',
@@ -85,8 +120,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       }
 
       // Create a zip from files using the sandbox manager
-      const files = body.files || {};
-      const fileEntries = Object.entries(files).map(([path, content]) => ({ path, content }));
+      const fileEntries = Object.entries(deployFiles).map(([path, content]) => ({ path, content }));
 
       const netlifyRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
         method: 'POST',
