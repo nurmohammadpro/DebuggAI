@@ -243,16 +243,16 @@ export function WorkspaceSidebar() {
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
         <div className="h-[env(safe-area-inset-top)] shrink-0" />
         {/* Mobile header */}
-        <div className="flex items-center justify-between h-14 px-5 border-b border-[var(--app-border)] shrink-0">
-          <Link href="/dashboard/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--app-accent)] flex items-center justify-center"><span className="text-[12px] font-black text-white">D</span></div>
-            <div><span className="text-[14px] font-semibold text-[var(--app-text)]">DeBuggAI</span><span className="block text-[10px] text-[var(--app-text-dim)]">v1.0</span></div>
+        <div className="flex items-center justify-between h-16 px-5 border-b border-[var(--app-border)] shrink-0">
+          <Link href="/dashboard/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="w-8 h-8 rounded-lg bg-[var(--ds-green)] flex items-center justify-center shadow-sm"><span className="text-xs font-black text-white">D</span></div>
+            <div><span className="text-sm font-bold text-[var(--app-text)]">DeBuggAI</span><span className="block text-[10px] text-[var(--app-text-dim)]">Workspace</span></div>
           </Link>
-          <button onClick={() => setMobileOpen(false)} className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] active:scale-95"><X className="w-5 h-5" /></button>
+          <button onClick={() => setMobileOpen(false)} className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-150 active:scale-95"><X className="w-5 h-5" /></button>
         </div>
-        <div className="px-3 py-3 border-b border-[var(--app-border)] shrink-0">
+        <div className="px-4 py-3 border-b border-[var(--app-border)] shrink-0">
           <Link href="/dashboard?create=1" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-[13px] font-medium bg-[var(--app-accent)] text-white hover:opacity-90 active:scale-[0.98]">
+            className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-[13px] font-semibold bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 active:scale-95 shadow-sm hover:shadow-md">
             <Plus className="h-4 w-4" /> New Project
           </Link>
         </div>
@@ -309,32 +309,32 @@ export function WorkspaceSidebar() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}>
       {/* Logo */}
-      <div className="h-12 flex items-center shrink-0 border-b border-[var(--app-border)] overflow-hidden px-2">
-        <Link href="/dashboard/home" className="flex items-center rounded-md hover:bg-[var(--app-surface)] transition-colors"
-          style={{ padding: effectiveExpanded ? '4px 8px' : '4px' }}>
-          <div className="w-8 h-8 rounded-lg bg-[var(--app-accent)] flex items-center justify-center shrink-0"><span className="text-[12px] font-black text-white">D</span></div>
+      <div className="h-16 flex items-center shrink-0 border-b border-[var(--app-border)] overflow-hidden px-2">
+        <Link href="/dashboard/home" className="flex items-center rounded-md hover:bg-[var(--app-surface)] transition-all duration-150"
+          style={{ padding: effectiveExpanded ? '6px 10px' : '6px' }}>
+          <div className="w-8 h-8 rounded-lg bg-[var(--ds-green)] flex items-center justify-center shrink-0 shadow-sm"><span className="text-[12px] font-black text-white">D</span></div>
           {effectiveExpanded && (
-            <div className="ml-2 overflow-hidden transition-opacity duration-200">
-              <span className="text-[13px] font-semibold text-[var(--app-text)] whitespace-nowrap">DeBuggAI</span>
-              <span className="block text-[9px] text-[var(--app-text-dim)] -mt-0.5">v1.0</span>
+            <div className="ml-3 overflow-hidden transition-opacity duration-200">
+              <span className="text-sm font-bold text-[var(--app-text)] whitespace-nowrap">DeBuggAI</span>
+              <span className="block text-[10px] text-[var(--app-text-dim)] -mt-0.5">Workspace</span>
             </div>
           )}
         </Link>
         {effectiveExpanded && (
           <button onClick={e => { e.stopPropagation(); setLocked(l => !l); }}
-            className="ml-auto w-6 h-6 rounded-md flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors shrink-0"
+            className="ml-auto w-7 h-7 rounded-md flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150 shrink-0"
             title={locked ? 'Unpin sidebar' : 'Pin sidebar'}>
-            {locked ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3 rotate-45" />}
+            {locked ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4 rotate-45" />}
           </button>
         )}
       </div>
 
       {/* Quick action + search */}
       <div className={cn('shrink-0 border-b border-[var(--app-border)] transition-all duration-200',
-        effectiveExpanded ? 'px-3 py-2 space-y-2' : 'px-1.5 py-2')}>
+        effectiveExpanded ? 'px-3 py-3 space-y-2' : 'px-1.5 py-3')}>
         <Link href="/dashboard?create=1" className={cn(
-          'flex items-center rounded-lg bg-[var(--app-accent)] text-white hover:opacity-90 transition-opacity active:scale-[0.97]',
-          effectiveExpanded ? 'gap-2 px-3 py-2 text-[12px] font-medium w-full justify-start' : 'w-9 h-9 mx-auto justify-center')}
+          'flex items-center rounded-lg bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 active:scale-95 shadow-sm hover:shadow-md',
+          effectiveExpanded ? 'gap-2.5 px-3 py-2.5 text-[12px] font-semibold w-full justify-start' : 'w-10 h-10 mx-auto justify-center')}
           title={effectiveExpanded ? undefined : 'New Project'}>
           <Plus className="h-4 w-4 shrink-0" />
           {effectiveExpanded && 'New Project'}
@@ -342,11 +342,11 @@ export function WorkspaceSidebar() {
         {/* Search bar (P3) */}
         {effectiveExpanded && (
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--app-text-dim)]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--app-text-dim)]" />
             <input value={sidebarSearch} onChange={e => setSidebarSearch(e.target.value)}
-              placeholder="Search..." className="w-full h-8 rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] pl-8 pr-2 text-[11px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)]/40 transition-colors" />
+              placeholder="Search..." className="w-full h-9 rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] pl-9 pr-8 text-[12px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--ds-green)]/50 focus:ring-1 focus:ring-[var(--ds-green)]/20 transition-all" />
             {sidebarSearch && (
-              <button onClick={() => setSidebarSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--app-text-dim)] hover:text-[var(--app-text)]">
+              <button onClick={() => setSidebarSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
                 <X className="h-3 w-3" />
               </button>
             )}
@@ -408,49 +408,49 @@ export function WorkspaceSidebar() {
 
         {/* ── Recent threads (P1) ── */}
         {effectiveExpanded && recentThreads.length > 0 && (
-          <div className={cn('pt-3', !currentProject && 'mt-3 border-t border-[var(--app-border)]')}>
-            <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--app-text-dim)] flex items-center gap-1.5">
-              <History className="h-3 w-3" /> Recent
+          <div className={cn('pt-4', !currentProject && 'mt-4 border-t border-[var(--app-border)]')}>
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--app-text-dim)] flex items-center gap-1.5">
+              <History className="h-3.5 w-3.5" /> Recent
             </div>
             {recentThreads.map(t => (
               <Link key={t.id} href={`/dashboard?project=${activeProjectId}&thread=${t.id}`}
-                className="flex items-center gap-2 px-2.5 py-1.5 mx-1.5 rounded-md text-[11px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors group truncate">
-                <MessageSquare className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-dim)] group-hover:text-[var(--app-accent)] transition-colors" />
-                <span className="truncate flex-1">{t.title || 'Untitled chat'}</span>
-                <span className="shrink-0 text-[9px] text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex items-center gap-2.5 px-3 py-2.5 mx-1.5 rounded-lg text-[12px] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-150 group truncate">
+                <MessageSquare className="h-4 w-4 shrink-0 text-[var(--app-text-dim)] group-hover:text-[var(--ds-green)] transition-colors" />
+                <span className="truncate flex-1 font-medium">{t.title || 'Untitled chat'}</span>
+                <span className="shrink-0 text-[10px] text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100 transition-opacity"
                   title={t.updated_at ? new Date(t.updated_at).toLocaleString() : undefined}>
                   {fmtRelative(t.updated_at)}
                 </span>
               </Link>
             ))}
             {threads.length < 1 && (
-              <p className="px-2.5 py-2 text-[10px] text-[var(--app-text-dim)] italic">No history yet</p>
+              <p className="px-3 py-2 text-[11px] text-[var(--app-text-dim)] italic">No history yet</p>
             )}
           </div>
         )}
       </nav>
 
       {/* Bottom */}
-      <div className={cn('border-t border-[var(--app-border)] py-2 space-y-0.5 shrink-0',
-        effectiveExpanded ? 'px-1.5' : 'flex flex-col items-center px-1')}>
-        <div className={cn('flex items-center text-[var(--app-text-muted)] rounded-md',
-          effectiveExpanded ? 'gap-2.5 px-2.5 py-1.5 text-[11px]' : 'justify-center w-9 h-9 mx-auto')}>
-          <Zap className={cn('shrink-0', effectiveExpanded ? 'h-3.5 w-3.5' : 'h-4 w-4', 'text-[var(--app-text-dim)]')} />
-          {effectiveExpanded && <span className="truncate">{credits === -1 ? 'Unlimited' : `${credits ?? 0} credits`}</span>}
+      <div className={cn('border-t border-[var(--app-border)] py-3 space-y-1 shrink-0',
+        effectiveExpanded ? 'px-2' : 'flex flex-col items-center px-1')}>
+        <div className={cn('flex items-center text-[var(--app-text-muted)] rounded-lg transition-all duration-150',
+          effectiveExpanded ? 'gap-3 px-3 py-2 text-[12px] hover:bg-[var(--app-surface)]' : 'justify-center w-10 h-10 mx-auto')}>
+          <Zap className={cn('shrink-0', effectiveExpanded ? 'h-4 w-4' : 'h-5 w-5', 'text-[var(--app-text-dim)]')} />
+          {effectiveExpanded && <span className="truncate font-medium">{credits === -1 ? 'Unlimited' : `${credits ?? 0} credits`}</span>}
         </div>
         <button onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className={cn('rounded-md text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors',
-            effectiveExpanded ? 'flex items-center gap-2.5 px-2.5 py-1.5 w-full text-[11px]' : 'flex items-center justify-center w-9 h-9 mx-auto')}>
+          className={cn('rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150',
+            effectiveExpanded ? 'flex items-center gap-3 px-3 py-2 w-full text-[12px] font-medium' : 'flex items-center justify-center w-10 h-10 mx-auto')}>
           {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           {effectiveExpanded && (resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode')}
         </button>
-        <div className={effectiveExpanded ? 'px-2.5 py-1' : 'flex justify-center'}><WorkspaceAccountMenu /></div>
+        <div className={effectiveExpanded ? 'px-3 py-2' : 'flex justify-center w-10 h-10 mx-auto'}><WorkspaceAccountMenu /></div>
       </div>
 
       {/* ── Resize handle (P2) ── */}
       {effectiveExpanded && (
         <div onMouseDown={handleResizeMouseDown}
-          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[var(--app-accent)]/20 transition-colors z-50"
+          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[var(--ds-green)]/30 transition-colors duration-150 z-50"
           title="Drag to resize sidebar" />
       )}
     </div>
@@ -460,9 +460,9 @@ export function WorkspaceSidebar() {
     <>
       {/* Mobile hamburger */}
       <button
-        className="md:hidden fixed top-[14px] left-3 z-50 w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--app-panel)] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all shadow-lg active:scale-95 touch-manipulation"
+        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--app-panel)] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150 shadow-lg active:scale-95 touch-manipulation"
         onClick={() => setMobileOpen(true)} aria-label="Open menu">
-        <PanelLeft className="w-4 h-4" />
+        <PanelLeft className="w-5 h-5" />
       </button>
       {desktopRail}
       {mobileDrawer}
@@ -497,10 +497,10 @@ function NavLinkDesktop({ item, expanded, onDragStart, onDragOver, onDrop, isDra
       onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
       title={expanded ? undefined : `${item.label}${item.shortcut ? ` (⌘${item.shortcut})` : ''}`}
       className={cn(
-        'flex items-center rounded-md transition-all duration-200 whitespace-nowrap group relative',
-        expanded ? 'gap-2.5 px-2.5 py-1.5' : 'justify-center w-9 h-9 mx-auto',
-        item.active ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
-          : isDragOver ? 'bg-[var(--app-accent)]/10 border border-dashed border-[var(--app-accent)]/30'
+        'flex items-center rounded-lg transition-all duration-150 whitespace-nowrap group relative',
+        expanded ? 'gap-3 px-3 py-2' : 'justify-center w-10 h-10 mx-auto',
+        item.active ? 'bg-[var(--ds-green-muted)] text-[var(--ds-green)] border border-[var(--ds-green)]/20'
+          : isDragOver ? 'bg-[var(--ds-green)]/10 border border-dashed border-[var(--ds-green)]/30'
           : isDragging ? 'opacity-40'
           : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]'
       )}>
@@ -510,9 +510,9 @@ function NavLinkDesktop({ item, expanded, onDragStart, onDragOver, onDrop, isDra
           <GripVertical className="h-3 w-3" />
         </span>
       )}
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-4.5 w-4.5 shrink-0" />
       {expanded && (
-        <span className="text-[12px] font-medium truncate flex-1">{item.label}</span>
+        <span className="text-sm font-semibold truncate flex-1">{item.label}</span>
       )}
       {/* Shortcut hint */}
       {expanded && item.shortcut && (
@@ -523,14 +523,14 @@ function NavLinkDesktop({ item, expanded, onDragStart, onDragOver, onDrop, isDra
       {/* Notification badge (P2) */}
       {item.badge && item.badge > 0 ? (
         <span className={cn(
-          'rounded-full bg-[var(--app-accent)] text-white text-[9px] font-bold flex items-center justify-center shrink-0',
-          expanded ? 'h-4 min-w-[16px] px-1' : 'absolute -top-0.5 -right-0.5 h-3.5 w-3.5 text-[7px]')}>
+          'rounded-full bg-[var(--ds-green)] text-white text-[10px] font-bold flex items-center justify-center shrink-0 shadow-sm',
+          expanded ? 'h-5 min-w-[20px] px-1.5' : 'absolute -top-1 -right-1 h-4 w-4 text-[8px]')}>
           {item.badge}
         </span>
       ) : null}
       {/* Active indicator dot (collapsed) */}
       {item.active && !expanded && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-[var(--app-accent)]" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-[var(--ds-green)]" />
       )}
     </Link>
   );
