@@ -24,7 +24,8 @@ services:
       # Required so the app can start/stop sandbox containers on the host.
       - /var/run/docker.sock:/var/run/docker.sock
       # Persist sandboxes and exported zips across deploys/restarts.
-      - debuggai_projects:/var/lib/debuggai/projects
+      # Bind mount to host path so sandbox containers resolve /var/lib/debuggai/projects correctly.
+      - /var/lib/debuggai/projects:/var/lib/debuggai/projects
     group_add:
       # Match the host docker.sock group so the app container can call docker.
       # If your host uses a different docker group GID, update this value to match.
@@ -79,6 +80,5 @@ services:
       - caddy_config:/config
 
 volumes:
-  debuggai_projects:
   caddy_data:
   caddy_config:

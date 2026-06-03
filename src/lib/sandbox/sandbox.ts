@@ -145,6 +145,49 @@ class SandboxManager {
     return record;
   }
 
+  /**
+   * Resolve the real host path for a container path that lives on a Docker volume.
+   *
+   * When the app container bind-mounts its PROJECTS_DIR via Docker socket,
+   * the daemon resolves paths from the host filesystem — not the container.
+   * A named Docker volume lives at /var/lib/docker/volumes/<name>/_data on the
+   * host, so we must translate the container-internal PROJECTS_DIR prefix to
+   * the actual host Mountpoint.
+   */
+  private resolveHostPath(containerProjectDir: string): string {
+    try {
+      const myId = os.hostname();
+      const stdout = execSync(
+        `docker inspect --format '{{range .Mounts}}{{\"\\n\"}}{{.Destination}}{{\"|\"}}{{.Source}}{{end}}' "${myId}"`,
+        { timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'] },
+      ).toString();
+
+      for (const line of stdout.trim().split('\n')) {
+        const [dest, source] = line.split('|');
+        if (dest && source && dest === PROJECTS_DIR) {
+          return containerProjectDir.replace(PROJECTS_DIR, source);
+        }
+      }
+    } catch {
+      // fall through to direct mount if self-inspect fails
+    }
+
+    // Fallback: use a direct bind mount on the host if available
+    try {
+      const s = execSync(
+        `test -d "${PROJECTS_DIR}" 2>/dev/null && echo YES || echo NO`,
+        { timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] },
+      ).toString().trim();
+      if (s === 'YES') {
+        return containerProjectDir; // host has the path, use it directly
+      }
+    } catch {
+      // fall through
+    }
+
+    return containerProjectDir;
+  }
+
   private assertDockerAvailable() {
     try {
       const result = spawnSync('docker', ['version'], { stdio: 'ignore' });
@@ -290,6 +333,11 @@ fi
     record.status = 'installing';
     await this.saveState();
 
+    // Resolve the host-side path for the volume bind mount.
+    // Docker interprets bind mount source paths from the host filesystem,
+    // not the container's — so we must translate via docker inspect.
+    const hostProjectDir = this.resolveHostPath(projectDir);
+
     // Run Docker container with startup script as main command (no docker exec).
     // This way docker logs -f captures npm install + dev server output.
     execSync(
@@ -303,7 +351,7 @@ fi
         '--cap-drop', 'ALL',
         '--tmpfs', '/tmp:rw,nosuid,nodev,size=64m',
         '-p', `${port}:3000`,
-        '-v', `${projectDir}:/app`,
+        '-v', `${hostProjectDir}:/app`,
         '-w', '/app',
         '--restart', 'no',
         DOCKER_IMAGE,
