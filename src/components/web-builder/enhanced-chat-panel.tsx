@@ -462,7 +462,7 @@ export function EnhancedChatPanel({
     const j = await res.json().catch(() => ({}));
     const list = (j?.messages || []) as Array<any>;
 
-    const processedMessages: ChatMessage[] = list.map((m) => {
+    const serverMessages: ChatMessage[] = list.map((m) => {
       const content = String(m.content || '');
       const { text, codeBlocks } = extractCodeBlocks(content);
       if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
@@ -480,7 +480,37 @@ export function EnhancedChatPanel({
       };
     });
 
-    setMessages(processedMessages);
+    // Merge: preserve locally-added messages (prefixed 'local_') that haven't
+    // been synced to the server yet. This prevents the UI from flickering back
+    // to empty state after generation completes.
+    setMessages((prev) => {
+      const localMessages = prev.filter((m) => m.id.startsWith('local_'));
+      const serverIds = new Set(serverMessages.map((m) => m.id));
+
+      // Keep local messages that don't have a server counterpart yet
+      const pendingLocal = localMessages.filter((m) => {
+        // User messages: keep if no server message with same role+content exists
+        if (m.role === 'user') {
+          return !serverMessages.some(
+            (s) => s.role === 'user' && s.content === m.content
+          );
+        }
+        // Assistant messages: keep if they're newer (< 30s) than the last server assistant message
+        if (m.role === 'assistant') {
+          const lastServerAssistant = serverMessages.find((s) => s.role === 'assistant');
+          if (!lastServerAssistant) return true;
+          const localTime = new Date(m.created_at).getTime();
+          const serverTime = new Date(lastServerAssistant.created_at).getTime();
+          return localTime > serverTime;
+        }
+        return false;
+      });
+
+      // Combine: server messages + pending local messages, sorted by time
+      return [...serverMessages, ...pendingLocal].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
   }, [addCodeBlocks]);
 
   useEffect(() => {
@@ -538,8 +568,13 @@ export function EnhancedChatPanel({
       setIsLoading(false);
       setStreaming(false);
 
-      const { accumulated: latestAccumulated } = useGenerationStore.getState();
+      const { accumulated: latestAccumulated, files: currentFiles } = useGenerationStore.getState();
       const fullText = (latestAccumulated || '').trim();
+
+      // Count files that were generated
+      const generatedFileCount = currentFiles
+        ? Object.values(currentFiles.files).filter((f) => f.status === 'added').length
+        : 0;
 
       if (fullText) {
         const { text: cleanedText, codeBlocks } = extractCodeBlocks(fullText);
@@ -547,8 +582,6 @@ export function EnhancedChatPanel({
         const implicitSteps = steps.length === 0 ? detectImplicitSteps(cleanedText) : [];
         const resolvedSteps = steps.length > 0 ? steps : implicitSteps;
 
-        // Show the AI's actual response text, not a summary badge.
-        // Code was already extracted to the code pane during streaming.
         const displayContent = cleanedText || fullText;
 
         setMessages((prev) => [
@@ -564,6 +597,32 @@ export function EnhancedChatPanel({
         ]);
 
         if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
+      } else if (generatedFileCount > 0) {
+        // Fallback: no accumulated text but files were generated.
+        // Show a summary message so the user knows something happened.
+        const fileNames = currentFiles
+          ? Object.entries(currentFiles.files)
+              .filter(([, f]) => f.status === 'added')
+              .slice(0, 5)
+              .map(([p]) => `\`${p}\``)
+              .join(', ')
+          : '';
+
+        const summaryContent = `I generated ${generatedFileCount} file${generatedFileCount !== 1 ? 's' : ''}${
+          fileNames ? `: ${fileNames}${generatedFileCount > 5 ? ' and more' : ''}` : '.'
+        } View them in the editor panel.`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `local_assistant_${Date.now()}`,
+            role: 'assistant',
+            content: summaryContent,
+            steps: [{ type: 'completion', content: summaryContent }],
+            created_at: new Date().toISOString(),
+            fileCount: generatedFileCount,
+          },
+        ]);
       }
 
       resetAccumulated();
