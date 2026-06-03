@@ -794,8 +794,8 @@ export function EnhancedChatPanel({
         </div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+      {/* Messages — scrollable but no visible scrollbar */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Empty state — only on first visit, never after sending a message */}
         {!hasSentFirstMessage && messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-8">
