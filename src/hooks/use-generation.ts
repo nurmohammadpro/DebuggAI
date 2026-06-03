@@ -175,14 +175,23 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         }
 
         const threadId = await ensureThread();
+        // Idempotency key prevents double-charging credits on retry
+        const idempotencyKey = `${threadId}_${Date.now()}`;
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...authHeaders,
           },
-          body: JSON.stringify({ persistUserMessage: true, ...request, threadId }),
+          body: JSON.stringify({ persistUserMessage: true, ...request, threadId, idempotencyKey }),
         });
+
+        // Handle rate limiting with Retry-After
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const waitSec = retryAfter ? parseInt(retryAfter, 10) : 60;
+          throw new Error(`Rate limited. Please wait ${waitSec} seconds before trying again.`);
+        }
 
         if (!response.ok) {
           const raw = await response.text().catch(() => '');

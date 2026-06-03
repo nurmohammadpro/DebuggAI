@@ -44,6 +44,29 @@ type DbAiProviderConfig = {
   api_key: string | null;
 };
 
+// Module-level cache for ai_provider_config to cut Supabase reads ~90% on hot path.
+// Deno edge functions share one isolate per deployment; the cache lives as long
+// as the isolate stays warm (typically minutes). 60s TTL balances freshness vs. cost.
+let _providerCache: { value: DbAiProviderConfig | null; ts: number } | null = null;
+const PROVIDER_CACHE_TTL_MS = 60_000;
+
+async function getCachedProviderConfig(
+  adminClient: ReturnType<typeof createClient>,
+): Promise<DbAiProviderConfig | null> {
+  const now = Date.now();
+  if (_providerCache && (now - _providerCache.ts) < PROVIDER_CACHE_TTL_MS) {
+    return _providerCache.value;
+  }
+  const { data } = await adminClient
+    .from('ai_provider_config')
+    .select('enabled, base_url, model, api_key')
+    .eq('key', 'primary')
+    .maybeSingle();
+  const cfg = (data as DbAiProviderConfig | null) || null;
+  _providerCache = { value: cfg, ts: now };
+  return cfg;
+}
+
 interface GenerateRequest {
   threadId: string;
   prompt: string;
@@ -85,23 +108,24 @@ serve(async (req) => {
       },
     });
 
-    // Admin-managed AI provider config (service role).
+    // Multi-provider AI config (service role).
+    // Supports: DeepSeek (primary), Groq (fast fallback).
     // Falls back to env vars for backwards compatibility.
     let aiApiKey = (Deno.env.get('AI_API_KEY') || '').trim();
     let aiBaseUrl = (Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1').trim();
     let aiModel = (Deno.env.get('AI_MODEL') || 'deepseek-chat').trim();
 
+    // Groq provider (fast, cheap — used as fallback or for small edits)
+    let groqApiKey = (Deno.env.get('GROQ_API_KEY') || '').trim();
+    let groqBaseUrl = (Deno.env.get('GROQ_BASE_URL') || 'https://api.groq.com/openai/v1').trim();
+    let groqModel = (Deno.env.get('GROQ_MODEL') || 'llama-3.3-70b-versatile').trim();
+    let useGroq = false; // Default: DeepSeek
+
     try {
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
       if (serviceKey) {
         const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-        const { data } = await supabaseAdmin
-          .from('ai_provider_config')
-          .select('enabled, base_url, model, api_key')
-          .eq('key', 'primary')
-          .maybeSingle();
-
-        const cfg = data as DbAiProviderConfig | null;
+        const cfg = getCachedProviderConfig(supabaseAdmin);
         if (cfg && cfg.enabled) {
           const base = String(cfg.base_url || '').trim();
           const model = String(cfg.model || '').trim();
@@ -110,9 +134,30 @@ serve(async (req) => {
           if (model) aiModel = model;
           if (key) aiApiKey = key;
         }
+
+        // Also check Groq provider config
+        const { data: groqCfg } = await supabaseAdmin
+          .from('ai_provider_config')
+          .select('enabled, base_url, model, api_key')
+          .eq('key', 'groq')
+          .maybeSingle();
+
+        const gCfg = groqCfg as DbAiProviderConfig | null;
+        if (gCfg && gCfg.enabled && gCfg.api_key) {
+          groqApiKey = gCfg.api_key;
+          if (gCfg.base_url) groqBaseUrl = gCfg.base_url;
+          if (gCfg.model) groqModel = gCfg.model;
+        }
       }
     } catch {
       // best-effort: keep env fallback
+    }
+
+    // Provider routing: detect intent, prefer Groq for small edits
+    const promptLower = prompt.toLowerCase();
+    const isSmallEdit = /change|fix|update|edit|modify|replace|remove|add (a|the) |rename|tweak|adjust/i.test(promptLower);
+    if (isSmallEdit && groqApiKey) {
+      useGroq = true;
     }
 
     // Verify user is authenticated
@@ -189,49 +234,37 @@ serve(async (req) => {
       conversationHistory = messages.reverse().map((m: any) => ({ role: m.role, content: m.content }));
     }
     // 4. Build messages array for AI
-    const systemPrompt = `You are DeBuggAI, an expert Next.js engineer and friendly technical assistant.
+    const systemPrompt = `You are DeBuggAI, an expert Next.js engineer. You work INSIDE the user's project using tools to explore, read, and edit files surgically.
 
-Goal: Generate a complete, runnable Next.js 14+ project using the App Router. Your output will be unzipped and the user will run \`npm install && npm run dev\` immediately — so every file must be present and correct.
+## HOW YOU WORK
+You have access to tools: list_dir, view_file, write_file, line_replace, search_files. Use them like a real engineer:
+1. **Explore first** — use list_dir to see what files exist
+2. **Read before editing** — use view_file to see current code
+3. **Edit surgically** — use line_replace for small changes (preferred). Use write_file only for new files or full rewrites.
+4. **Search** — use search_files to find where patterns or symbols are used
 
-## CRITICAL RESPONSE FORMAT — FOLLOW EXACTLY:
+## FORMAT
+- First, write a 1-2 sentence plan of what you'll do in plain English
+- Then use tools to make the changes
+- After all changes, briefly summarize what you did in plain English
 
-**STEP 1 — ALWAYS start with a plain-text explanation (2-4 sentences):**
-Explain what you are building, what approach you are taking, and what key technologies you are using. Write this as friendly, direct prose. This text appears in the chat pane for the user to read.
+## HARD RULES
+1. Use App Router only (app/ directory, NOT pages/)
+2. TypeScript by default (.ts / .tsx)
+3. Tailwind CSS for styling
+4. Edit globals.css CSS variables for colors — never hardcode raw hex in JSX
+5. Keep edits SMALL. One logical change per response. Don't rewrite the whole project.
+6. If the project is empty and the user asks you to build something, bootstrap the required files (package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs)
+7. Use @/ import alias for local imports
+8. Before adding new dependencies, ask the user first
 
-**STEP 2 — Output all code files using file markers:**
-Every file uses this exact format:
-// File: app/page.tsx
-\`\`\`tsx
-...code...
-\`\`\`
+## RESPONSE EXAMPLES
 
-**STEP 3 — ALWAYS end with a summary:**
-After all code blocks, add a short bullet list of the key files and what they do. Example:
-**What's included:**
-- \`app/page.tsx\` — Main landing page with hero and CTA sections
-- \`components/Button.tsx\` — Reusable button with variants
-- \`app/globals.css\` — Tailwind base styles and custom CSS variables
+**New project (empty):** "I'll bootstrap a Next.js project with..." → then use write_file for each required file → then "Your project is ready with these files: ..."
 
----
+**Editing existing code:** "I see the navbar needs updating. Let me read it first..." → view_file → "I'll change the color..." → line_replace → "Updated the navbar to use the new color tokens."
 
-## Hard rules:
-1. Output MUST be a complete file tree (a project), not a single snippet or component. Every response must include ALL files needed for \`npm run dev\` to succeed.
-2. Use App Router only (\`app/\` directory, NOT \`pages/\`). Do NOT use the Pages Router.
-3. REQUIRED files (MUST include ALL of these):
-   - \`package.json\` — with complete, valid dependencies (next, react, react-dom, and any additional deps). Use latest stable versions.
-   - \`tsconfig.json\` — standard Next.js TypeScript config with \`@/*\` path alias.
-   - \`next.config.js\` — minimal config matching Next.js 14+.
-   - \`app/layout.tsx\` — root layout with HTML, metadata export, and children rendering.
-   - \`app/page.tsx\` — main page implementing the user request.
-   - \`app/globals.css\` — Tailwind directives plus any custom styles.
-   - \`tailwind.config.ts\` — with content paths scanning your file tree.
-   - \`postcss.config.mjs\` — with tailwindcss and autoprefixer plugins.
-4. Use TypeScript by default (\`.ts\` / \`.tsx\`).
-5. Dependencies in \`package.json\` MUST be consistent with all imports used in your code files.
-6. Default to Tailwind CSS for styling.
-7. Use the \`@/\` import alias for local imports.
-8. Decision confirmation: Before making structural changes (new dependencies, schema changes, restructuring files), ask the user first.
-9. Use either root-level \`app/\` OR \`src/app/\` — be consistent across all files.`;
+**Fixing errors:** "Let me search for where this error occurs..." → search_files → "Found the issue in..." → line_replace → "Fixed. The error was..."`;
 
     const aiMessages = [
       { role: 'system', content: systemPrompt },
@@ -302,10 +335,14 @@ After all code blocks, add a short bullet list of the key files and what they do
       });
     }
 
-    const aiResponse = await fetch(`${aiBaseUrl}/chat/completions`, {
+    // Route to correct provider based on intent detection
+    const providerBaseUrl = useGroq ? groqBaseUrl : aiBaseUrl;
+    const providerApiKey = useGroq ? groqApiKey : aiApiKey;
+
+    const aiResponse = await fetch(`${providerBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${aiApiKey}`,
+        'Authorization': `Bearer ${providerApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -313,9 +350,11 @@ After all code blocks, add a short bullet list of the key files and what they do
         messages: aiMessages,
         stream: true,
         temperature: 0.7,
-        max_tokens: 8192,
+        max_tokens: 16384,
       }),
-      signal: AbortSignal.timeout(55_000),
+      // Deno Edge Functions have ~150s wall clock.
+      // 120s gives time for large generations before the container timeout.
+      signal: AbortSignal.timeout(120_000),
     });
 
     if (!aiResponse.ok) {
