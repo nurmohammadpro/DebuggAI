@@ -279,6 +279,9 @@ export function WorkspaceEditor({
   }, [files]);
 
   // Docker files for sandbox
+  // Only inject structural boilerplate if the project already has
+  // user-generated files (package.json or app/page.tsx).
+  // Empty/fresh projects stay empty until AI generates something.
   const dockerFiles = useMemo(() => {
     if (!files?.files) return null;
     const out: Record<string, string> = {};
@@ -287,6 +290,8 @@ export function WorkspaceEditor({
       const key = p.startsWith('/') ? p.slice(1) : p;
       out[key] = f.content;
     }
+    const hasGeneratedFiles = !!(out['package.json'] || out['app/page.tsx'] || out['src/App.tsx']);
+    if (!hasGeneratedFiles) return out;
     if (!out['package.json']) {
       const isTs = Object.keys(out).some((p) => p.endsWith('.ts') || p.endsWith('.tsx'));
       out['app/layout.tsx'] =

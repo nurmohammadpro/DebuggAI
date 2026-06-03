@@ -167,10 +167,17 @@ export function WorkspaceDashboard() {
     setProjectKey(getProjectKey(project));
   }, [project, setProjectKey]);
 
+  // Fresh project → chat-only (v0.dev style). After AI generates files,
+  // show the full 3-column layout.
+  const hasGeneratedFiles = !!(files?.files &&
+    Object.keys(files.files).length > 1 &&
+    Object.values(files.files).some(f => f.status !== 'deleted'));
+  const showOnlyChat = !hasGeneratedFiles;
+
   useEffect(() => {
-    setRightCollapsed(false);
+    setRightCollapsed(showOnlyChat);
     setRightView('code');
-  }, []);
+  }, [showOnlyChat]);
 
   useEffect(() => {
     try {
@@ -308,9 +315,14 @@ export function WorkspaceDashboard() {
         </div>
 
         {/* IDE Workspace — 3-column: chat | splitter | right panel */}
+        {/* Fresh projects: chat-only centered; after AI generates files: full layout */}
         <div className="flex-1 min-h-0 flex min-w-0">
           {/* Center: Chat surface */}
-          <section className="flex-1 min-w-0 sm:min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0">
+          <section className={
+            showOnlyChat
+              ? "flex-1 min-w-0 max-w-[720px] mx-auto bg-[var(--app-bg)] flex flex-col min-h-0"
+              : "flex-1 min-w-0 sm:min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0"
+          }>
             <EnhancedChatPanel
               chromeless
               mode="build"
@@ -319,7 +331,7 @@ export function WorkspaceDashboard() {
           </section>
 
           {/* Splitter */}
-          {!rightCollapsed && (
+          {!rightCollapsed && !showOnlyChat && (
             <div className="hidden sm:block">
               <WorkspaceSplitter
                 ariaLabel="Resize right panel"
@@ -330,7 +342,7 @@ export function WorkspaceDashboard() {
             </div>
           )}
 
-          {/* Right panel — desktop */}
+          {/* Right panel — desktop (hidden on fresh projects) */}
           <Panel
             id="workspace-right"
             side="right"
@@ -338,7 +350,7 @@ export function WorkspaceDashboard() {
             minWidth={420}
             collapsed={rightCollapsed}
             onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-            className="hidden sm:flex transition-all duration-200 ease-out"
+            className={`hidden sm:flex transition-all duration-200 ease-out ${showOnlyChat ? 'hidden' : ''}`}
           >
             <V0RightPanel
               activeView={rightView}
