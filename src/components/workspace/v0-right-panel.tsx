@@ -47,15 +47,20 @@ export function V0RightPanel({
   const hasBootedRef = useRef(false);
   const sandboxRef = useRef(sandbox);
   sandboxRef.current = sandbox;
+  // In production the Docker socket is often unavailable. Once we fail,
+  // skip all future sandbox attempts — Sandpack instant preview handles it.
+  const dockerUnavailableRef = useRef(false);
 
   // Split position (percentage for preview, code takes the rest)
   const [splitPos, setSplitPos] = useState(55);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-create Docker sandbox when files are available (background)
+  // Auto-create Docker sandbox when files are available (background — best-effort only)
   useEffect(() => {
     if (!files || Object.keys(files.files).length === 0) return;
+    // Skip if Docker is known to be unavailable (common in production)
+    if (dockerUnavailableRef.current) return;
 
     const snapshot = serializeVirtualFiles(files);
     if (snapshot === lastFileSnapshot.current && hasBootedRef.current) return;
@@ -74,12 +79,16 @@ export function V0RightPanel({
     const sb = sandboxRef.current;
     if (sb.status === 'running' || sb.status === 'installing') {
       sb.stopSandbox().then(() => {
-        sandboxRef.current.createSandbox(flatFiles);
+        sandboxRef.current.createSandbox(flatFiles).then((id) => {
+          if (!id) dockerUnavailableRef.current = true;
+        });
       }).catch(() => {
-        sandboxRef.current.createSandbox(flatFiles);
+        dockerUnavailableRef.current = true;
       });
     } else if (sb.status === 'idle' || sb.status === 'stopped' || sb.status === 'error') {
-      sb.createSandbox(flatFiles);
+      sb.createSandbox(flatFiles).then((id) => {
+        if (!id) dockerUnavailableRef.current = true;
+      });
     }
   }, [files]);
 
@@ -96,6 +105,7 @@ export function V0RightPanel({
 
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
+    if (dockerUnavailableRef.current) return; // Sandpack handles it
     if (sandbox.status === 'stopped' || sandbox.status === 'error') {
       if (!files || Object.keys(files.files).length === 0) return;
       const flatFiles: Record<string, string> = {};
@@ -103,7 +113,9 @@ export function V0RightPanel({
         if (file.status === 'deleted') continue;
         flatFiles[path] = file.content;
       }
-      sandbox.createSandbox(flatFiles);
+      sandbox.createSandbox(flatFiles).then((id) => {
+        if (!id) dockerUnavailableRef.current = true;
+      });
     }
   }, [bumpPreviewNonce, sandbox, files]);
 
