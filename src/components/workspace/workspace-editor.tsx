@@ -6,250 +6,22 @@ import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
 import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import {
-  FileCode,
-  FileJson,
-  FileText,
-  Folder,
-  FolderOpen,
-  ChevronRight,
-  ChevronDown,
-  Eye,
   Code2,
-  FileType,
-  Braces,
-  Hash,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type EditorView = 'code' | 'preview';
 
-// ── File icon helper ────────────────────────────────────────────────────────
-function getFileIcon(filename: string) {
-  const ext = filename.split('.').pop()?.toLowerCase();
-  switch (ext) {
-    case 'tsx':
-    case 'jsx':
-      return <FileCode className="h-3.5 w-3.5 text-[#61DAFB] shrink-0" />;
-    case 'ts':
-    case 'js':
-      return <FileCode className="h-3.5 w-3.5 text-[#F7DF1E] shrink-0" />;
-    case 'css':
-      return <Hash className="h-3.5 w-3.5 text-[#264DE4] shrink-0" />;
-    case 'json':
-      return <Braces className="h-3.5 w-3.5 text-[#FAC863] shrink-0" />;
-    case 'md':
-    case 'mdx':
-      return <FileText className="h-3.5 w-3.5 text-[#88A0A8] shrink-0" />;
-    case 'html':
-      return <FileType className="h-3.5 w-3.5 text-[#E44D26] shrink-0" />;
-    default:
-      return <FileText className="h-3.5 w-3.5 text-[var(--app-text-dim)] shrink-0" />;
-  }
-}
-
-// ── Tree node types ──────────────────────────────────────────────────────────
-type TreeFile = {
-  type: 'file';
-  name: string;
-  path: string;
+// ── File icon helper (used in toolbar) ─────────────────────────────────────
+const FILE_EXT_COLORS: Record<string, string> = {
+  tsx: '#61DAFB', ts: '#F7DF1E', jsx: '#61DAFB', js: '#F7DF1E',
+  css: '#264DE4', json: '#FAC863', md: '#88A0A8', html: '#E44D26',
 };
 
-type TreeDir = {
-  type: 'dir';
-  name: string;
-  path: string;
-  children: TreeNode[];
-};
-
-type TreeNode = TreeFile | TreeDir;
-
-// ── Build tree from flat path list ────────────────────────────────────────────
-function buildTree(paths: string[]): TreeNode[] {
-  const root: Record<string, TreeNode> = {};
-
-  const getOrCreateDir = (
-    container: Record<string, TreeNode>,
-    name: string,
-    path: string
-  ): TreeDir => {
-    if (!container[name]) {
-      container[name] = { type: 'dir', name, path, children: [] };
-    }
-    return container[name] as TreeDir;
-  };
-
-  for (const fullPath of paths) {
-    const parts = fullPath.split('/').filter(Boolean);
-    let current = root;
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]!;
-      const partPath = parts.slice(0, i + 1).join('/');
-      const isLast = i === parts.length - 1;
-
-      if (isLast) {
-        current[part] = { type: 'file', name: part, path: fullPath };
-      } else {
-        const dir = getOrCreateDir(current, part, partPath);
-        const nextContainer: Record<string, TreeNode> = {};
-        dir.children.forEach((c) => { nextContainer[c.name] = c; });
-        current = nextContainer;
-        dir.children = Object.values(nextContainer);
-      }
-    }
-  }
-
-  // Rebuild properly from root
-  return buildTreeFromObj(paths);
-}
-
-function buildTreeFromObj(paths: string[]): TreeNode[] {
-  const dirMap = new Map<string, TreeDir>();
-  const rootNodes: TreeNode[] = [];
-
-  // Create all directories first
-  const allDirs = new Set<string>();
-  for (const path of paths) {
-    const parts = path.split('/').filter(Boolean);
-    for (let i = 1; i < parts.length; i++) {
-      allDirs.add(parts.slice(0, i).join('/'));
-    }
-  }
-
-  // Sort dirs by depth so parents are created before children
-  const sortedDirs = [...allDirs].sort((a, b) => a.split('/').length - b.split('/').length);
-
-  for (const dirPath of sortedDirs) {
-    const parts = dirPath.split('/');
-    const name = parts[parts.length - 1]!;
-    const dir: TreeDir = { type: 'dir', name, path: dirPath, children: [] };
-    dirMap.set(dirPath, dir);
-
-    if (parts.length === 1) {
-      rootNodes.push(dir);
-    } else {
-      const parentPath = parts.slice(0, -1).join('/');
-      const parent = dirMap.get(parentPath);
-      if (parent) parent.children.push(dir);
-    }
-  }
-
-  // Add files
-  for (const filePath of paths) {
-    const parts = filePath.split('/').filter(Boolean);
-    const name = parts[parts.length - 1]!;
-    const file: TreeFile = { type: 'file', name, path: filePath };
-
-    if (parts.length === 1) {
-      rootNodes.push(file);
-    } else {
-      const parentPath = parts.slice(0, -1).join('/');
-      const parent = dirMap.get(parentPath);
-      if (parent) parent.children.push(file);
-    }
-  }
-
-  // Sort: dirs first, then files (alphabetical within each group)
-  const sortNodes = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => {
-      if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
-    nodes.forEach((n) => { if (n.type === 'dir') sortNodes(n.children); });
-  };
-
-  sortNodes(rootNodes);
-  return rootNodes;
-}
-
-// ── File Tree Component ──────────────────────────────────────────────────────
-function FileTreeNode({
-  node,
-  depth,
-  activeFilePath,
-  onSelect,
-  expandedDirs,
-  onToggleDir,
-}: {
-  node: TreeNode;
-  depth: number;
-  activeFilePath: string | null;
-  onSelect: (path: string) => void;
-  expandedDirs: Set<string>;
-  onToggleDir: (path: string) => void;
-}) {
-  const indent = depth * 12 + 8;
-
-  if (node.type === 'dir') {
-    const isExpanded = expandedDirs.has(node.path);
-    return (
-      <div>
-        <button
-          onClick={() => onToggleDir(node.path)}
-          className="w-full flex items-center gap-1.5 py-1 hover:bg-[var(--app-surface)] transition-colors text-left group"
-          style={{ paddingLeft: indent }}
-        >
-          {isExpanded ? (
-            <ChevronDown className="h-3 w-3 text-[var(--app-text-dim)] shrink-0" />
-          ) : (
-            <ChevronRight className="h-3 w-3 text-[var(--app-text-dim)] shrink-0" />
-          )}
-          {isExpanded ? (
-            <FolderOpen className="h-3.5 w-3.5 text-[var(--app-accent)] shrink-0" />
-          ) : (
-            <Folder className="h-3.5 w-3.5 text-[var(--app-accent)]/70 shrink-0" />
-          )}
-          <span className="text-[11px] font-medium text-[var(--app-text)] truncate">
-            {node.name}
-          </span>
-          <span className="ml-auto pr-2 text-[9px] text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100 transition-opacity">
-            {node.children.length}
-          </span>
-        </button>
-        {isExpanded && (
-          <div>
-            {node.children.map((child) => (
-              <FileTreeNode
-                key={child.path}
-                node={child}
-                depth={depth + 1}
-                activeFilePath={activeFilePath}
-                onSelect={onSelect}
-                expandedDirs={expandedDirs}
-                onToggleDir={onToggleDir}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // File node
-  const isActive = activeFilePath === node.path;
-  return (
-    <button
-      onClick={() => onSelect(node.path)}
-      className={cn(
-        'w-full flex items-center gap-1.5 py-1 pr-2 transition-colors text-left',
-        isActive
-          ? 'bg-[var(--app-accent)]/12 text-[var(--app-accent)]'
-          : 'hover:bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
-      )}
-      style={{ paddingLeft: indent + 16 }}
-      title={node.path}
-    >
-      {getFileIcon(node.name)}
-      <span
-        className={cn(
-          'text-[11px] truncate',
-          isActive ? 'font-semibold text-[var(--app-accent)]' : 'font-normal'
-        )}
-      >
-        {node.name}
-      </span>
-    </button>
-  );
+function getFileExtColor(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  return FILE_EXT_COLORS[ext] || 'var(--app-text-dim)';
 }
 
 // ── Main WorkspaceEditor ───────────────────────────────────────────────────
@@ -266,22 +38,7 @@ export function WorkspaceEditor({
   const sandbox = useSandbox();
   const sandboxStartingRef = useRef(false);
 
-  // Expanded dirs state — auto-expand top-level dirs
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['app', 'src', 'components', 'lib']));
-
-  // Build file tree from project files
-  const fileTree = useMemo(() => {
-    if (!files?.files) return [];
-    const activePaths = Object.entries(files.files)
-      .filter(([, f]) => f.status !== 'deleted')
-      .map(([path]) => path);
-    return buildTreeFromObj(activePaths);
-  }, [files]);
-
   // Docker files for sandbox
-  // Only inject structural boilerplate if the project already has
-  // user-generated files (package.json or app/page.tsx).
-  // Empty/fresh projects stay empty until AI generates something.
   const dockerFiles = useMemo(() => {
     if (!files?.files) return null;
     const out: Record<string, string> = {};
@@ -369,15 +126,6 @@ export function WorkspaceEditor({
     void ensureSandboxRunning();
   }, [editorView, ensureSandboxRunning]);
 
-  const handleToggleDir = (path: string) => {
-    setExpandedDirs((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
-
   const fileCount = files ? Object.values(files.files).filter((f) => f.status !== 'deleted').length : 0;
 
   return (
@@ -387,7 +135,7 @@ export function WorkspaceEditor({
         <div className="flex-1 min-w-0 flex items-center gap-2">
           {activeFilePath ? (
             <div className="flex items-center gap-1.5 min-w-0">
-              {getFileIcon(activeFilePath.split('/').pop() || '')}
+              <span className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: getFileExtColor(activeFilePath.split('/').pop() || '') }} />
               <span className="text-[11px] font-medium text-[var(--app-text)] truncate">
                 {activeFilePath}
               </span>
@@ -441,37 +189,7 @@ export function WorkspaceEditor({
           />
         ) : (
           <>
-            {/* File Tree — only shown when files exist */}
-            {fileCount > 0 && (
-              <div className="w-52 shrink-0 border-r border-[var(--app-border)] bg-[var(--app-panel-2)] flex flex-col overflow-hidden">
-                {/* Tree header */}
-                <div className="h-8 px-3 flex items-center justify-between border-b border-[var(--app-border)] shrink-0">
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[var(--app-text-dim)]">
-                    Explorer
-                  </span>
-                  <span className="text-[9px] text-[var(--app-text-dim)] tabular-nums">
-                    {fileCount}
-                  </span>
-                </div>
-
-                {/* Tree content */}
-                <div className="flex-1 overflow-y-auto py-1">
-                  {fileTree.map((node) => (
-                    <FileTreeNode
-                      key={node.path}
-                      node={node}
-                      depth={0}
-                      activeFilePath={activeFilePath}
-                      onSelect={setActiveFilePath}
-                      expandedDirs={expandedDirs}
-                      onToggleDir={handleToggleDir}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Monaco Editor */}
+            {/* Monaco Editor — file tree is available via sidebar (ProfessionalFileTree) */}
             <CodeEditor
               height="100%"
               showHeader={false}

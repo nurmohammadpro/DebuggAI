@@ -167,8 +167,8 @@ export function WorkspaceDashboard() {
     setProjectKey(getProjectKey(project));
   }, [project, setProjectKey]);
 
-  // Fresh project → chat-only (v0.dev style). After AI generates files,
-  // show the full 3-column layout.
+  // Fresh project → chat-only. After AI generates files,
+  // show the full 3-column layout with PREVIEW as default.
   const hasGeneratedFiles = !!(files?.files &&
     Object.keys(files.files).length > 1 &&
     Object.values(files.files).some(f => f.status !== 'deleted'));
@@ -176,8 +176,10 @@ export function WorkspaceDashboard() {
 
   useEffect(() => {
     setRightCollapsed(showOnlyChat);
-    setRightView('code');
-  }, [showOnlyChat]);
+    if (hasGeneratedFiles) {
+      setRightView('preview'); // v0.dev: preview is the primary view
+    }
+  }, [showOnlyChat, hasGeneratedFiles]);
 
   useEffect(() => {
     try {
