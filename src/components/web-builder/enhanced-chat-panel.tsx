@@ -387,6 +387,80 @@ function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: numbe
   );
 }
 
+// ── Tool Timeline (agent loop diff view) ─────────────────────────────────
+type ToolEvent = { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> } | { type: 'tool_result'; tool_call_id: string; output: string; is_error?: boolean };
+
+function ToolTimeline({ events }: { events: ToolEvent[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  if (!events.length) return null;
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="rounded-[8px] border border-[var(--app-border)] overflow-hidden bg-[var(--app-panel-2)] animate-in fade-in duration-300">
+      <div className="px-3 py-2 border-b border-[var(--app-border)] flex items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+          Changes
+        </span>
+        <span className="text-[9px] text-[var(--app-text-dim)] ml-auto">{events.filter(e => e.type === 'tool_call').length} action{events.filter(e => e.type === 'tool_call').length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className="max-h-[200px] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+        {events.map((evt, i) => {
+          if (evt.type === 'tool_call') {
+            const result = events.find((r): r is Extract<ToolEvent, { type: 'tool_result' }> => r.type === 'tool_result' && r.tool_call_id === evt.id);
+            const isExpanded = expanded.has(evt.id);
+            const hasError = result ? result.is_error : false;
+            return (
+              <div key={i} className="border-b border-[var(--app-border)] last:border-b-0">
+                <button
+                  onClick={() => toggleExpand(evt.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--app-surface)] transition-colors"
+                >
+                  <span className={cn(
+                    'w-1.5 h-1.5 rounded-full shrink-0',
+                    evt.name === 'write_file' || evt.name === 'line_replace' ? 'bg-amber-400' :
+                    evt.name === 'view_file' || evt.name === 'list_dir' ? 'bg-blue-400' :
+                    evt.name === 'search_files' ? 'bg-purple-400' :
+                    hasError ? 'bg-rose-400' : 'bg-emerald-400'
+                  )} />
+                  <span className="text-[11px] font-medium text-[var(--app-text)] capitalize truncate">{evt.name.replace(/_/g, ' ')}</span>
+                  {typeof evt.args?.path === 'string' && (
+                    <span className="text-[10px] text-[var(--app-text-dim)] font-mono truncate">{String(evt.args.path)}</span>
+                  )}
+                  <ChevronRight className={cn('h-3 w-3 text-[var(--app-text-dim)] ml-auto shrink-0 transition-transform', isExpanded && 'rotate-90')} />
+                </button>
+                {isExpanded && (
+                  <div className="px-3 pb-2 space-y-1">
+                    {Object.entries(evt.args).map(([k, v]) => (
+                      <div key={k} className="flex gap-2 text-[10px]">
+                        <span className="text-[var(--app-text-dim)] shrink-0">{k}:</span>
+                        <span className="text-[var(--app-text-muted)] font-mono truncate">{typeof v === 'string' ? (v.length > 80 ? v.slice(0, 80) + '…' : v) : JSON.stringify(v)}</span>
+                      </div>
+                    ))}
+                    {result && (
+                      <div className={cn('mt-1 text-[10px]', result.is_error ? 'text-[var(--app-danger)]' : 'text-[var(--app-text-dim)]')}>
+                        {result.output.slice(0, 200)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return null;
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Typing Indicator ────────────────────────────────────────────────────────
 
 function TypingIndicator({ label = 'Thinking' }: { label?: string }) {

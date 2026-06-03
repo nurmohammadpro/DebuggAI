@@ -90,6 +90,35 @@ export const AGENT_TOOLS = [
       },
     },
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'read_dev_logs',
+      description: 'Read recent console output from the dev server (errors, warnings, build output). Use this to check if your changes compiled successfully or to diagnose runtime errors.',
+      parameters: {
+        type: 'object',
+        properties: {
+          filter: { type: 'string', description: 'Optional: filter logs to lines containing this text (e.g. "error" or "warn")' },
+          lines: { type: 'number', description: 'Number of recent log lines to return (default 50)' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'web_search',
+      description: 'Search the web for documentation, API references, or solution patterns. Use when you need up-to-date information about a library, framework API, or error message.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Search query — be specific, e.g. "Next.js 14 metadata API" or "tailwindcss grid responsive classes"' },
+        },
+        required: ['query'],
+      },
+    },
+  },
 ];
 
 // ── Tool executor types ──────────────────────────────────────────────────
@@ -111,6 +140,12 @@ export interface ProjectContext {
   files: Record<string, string>; // path → content (in-memory snapshot)
   /** Callback to persist a file write to Supabase + disk */
   onFileChange?: (path: string, content: string) => Promise<void>;
+  /** Sandbox ID for reading dev server logs */
+  sandboxId?: string;
+  /** Callback to read dev server logs */
+  onReadDevLogs?: (filter?: string, lines?: number) => Promise<string>;
+  /** Callback for web search */
+  onWebSearch?: (query: string) => Promise<string>;
 }
 
 // ── Executors ────────────────────────────────────────────────────────────
@@ -242,6 +277,26 @@ async function executeByName(
 
       if (results.length === 0) return 'No matches found';
       return results.map((r) => `${r.path}:\n${r.lines.map((l) => `  ${l}`).join('\n')}`).join('\n\n');
+    }
+
+    case 'read_dev_logs': {
+      const filter = typeof args.filter === 'string' ? args.filter : undefined;
+      const lines = typeof args.lines === 'number' ? args.lines : 50;
+      if (ctx.onReadDevLogs) {
+        return await ctx.onReadDevLogs(filter, lines);
+      }
+      // Fallback: simulate — in production, Docker sandbox would provide real logs
+      return 'Dev server logs not available (sandbox not connected). Check the browser console for runtime errors.';
+    }
+
+    case 'web_search': {
+      const query = String(args.query || '');
+      if (!query) return 'Error: query is required';
+      if (ctx.onWebSearch) {
+        return await ctx.onWebSearch(query);
+      }
+      // Fallback: return guidance instead of failing
+      return `Web search is not configured on this server. Here's what I know about "${query}": Please check the official documentation at the relevant package's website. For Next.js: https://nextjs.org/docs. For Tailwind: https://tailwindcss.com/docs. For React: https://react.dev.`;
     }
 
     default:

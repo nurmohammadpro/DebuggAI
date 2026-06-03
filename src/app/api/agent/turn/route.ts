@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { AGENT_TOOLS, executeToolCall, type ToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
 import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
+import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -121,6 +122,58 @@ export async function POST(req: NextRequest) {
           }
         }
       : undefined,
+    // Read sandbox dev logs (if sandbox is running)
+    onReadDevLogs: projectId
+      ? async (filter, lines = 50) => {
+          try {
+            // Check sandbox state from the sandbox manager
+            const sandboxBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+            const res = await fetch(`${sandboxBase}/api/sandbox/status?projectId=${projectId}`, {
+              headers: svcKey ? { Authorization: `Bearer ${svcKey}` } : {},
+            });
+            if (!res.ok) throw new Error('Sandbox not running');
+            const { sandboxId } = await res.json().catch(() => ({}));
+            if (!sandboxId) return 'No sandbox is running for this project. Start the dev server first.';
+
+            const logRes = await fetch(`${sandboxBase}/api/sandbox/${sandboxId}/logs`, {
+              headers: svcKey ? { Authorization: `Bearer ${svcKey}` } : {},
+            });
+            if (!logRes.ok) return 'Could not read sandbox logs.';
+            const text = await logRes.text();
+            const allLines = text.split('\n').filter(Boolean);
+            const selected = allLines.slice(-lines);
+            if (filter) {
+              const fLower = filter.toLowerCase();
+              return selected.filter(l => l.toLowerCase().includes(fLower)).join('\n') || `No log lines matching "${filter}"`;
+            }
+            return selected.join('\n') || 'No recent log output.';
+          } catch {
+            return 'Dev server logs not available. Check the browser console for runtime errors.';
+          }
+        }
+      : undefined,
+    // Web search (Tavily or fallback)
+    onWebSearch: async (query) => {
+      try {
+        const tavilyKey = process.env.TAVILY_API_KEY;
+        if (!tavilyKey) {
+          return `Web search not configured. Check these resources for "${query}": https://nextjs.org/docs, https://tailwindcss.com/docs, https://react.dev`;
+        }
+        const res = await fetch('https://api.tavily.com/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: tavilyKey, query, search_depth: 'basic', max_results: 3 }),
+        });
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        const results = (data?.results || []) as Array<{ title: string; url: string; content: string }>;
+        if (!results.length) return `No results found for "${query}"`;
+        return results.map(r => `**${r.title}**\n${r.url}\n${r.content?.slice(0, 500)}`).join('\n\n');
+      } catch {
+        return `Search for "${query}" failed. Try checking: https://nextjs.org/docs, https://tailwindcss.com/docs, https://react.dev`;
+      }
+    },
   };
 
   // ── Stream the agent loop as SSE ───────────────────────────────────────
@@ -141,22 +194,36 @@ export async function POST(req: NextRequest) {
 
       try {
         // ── Build conversation ──────────────────────────────────────────
+        const skillContext = getRelevantSkills(prompt, 2, 600);
+
         const messages: Array<{ role: string; content: string }> = [
           {
             role: 'system',
             content: `You are DeBuggAI, an expert Next.js engineer. You have access to tools for reading and writing project files.
 
-Guidelines:
-- Use list_dir to explore the project structure.
-- Use view_file to read files before editing them.
-- Use line_replace for small edits (preferred — preserves surrounding code).
-- Use write_file only for new files or when replacing the entire file.
-- Use search_files to find where a symbol or pattern is used.
-- After making changes, explain what you did in plain English.
-- Keep edits small and focused. One logical change per turn.
-- If the project is empty (no files), use write_file to bootstrap it with app/page.tsx, app/layout.tsx, app/globals.css, package.json, tsconfig.json.
+## HOW YOU WORK
+1. **Explore first** — use list_dir to see what exists
+2. **Read before editing** — use view_file to inspect code
+3. **Edit surgically** — line_replace for small changes (preferred), write_file for new files
+4. **Search** — use search_files to find patterns
+5. **Verify** — after changes, use read_dev_logs to check the dev server output
+6. **Research** — use web_search when you need up-to-date API docs
 
-Current project files: ${Object.keys(ctx.files).length > 0 ? Object.keys(ctx.files).join(', ') : '(empty)'}`,
+## DESIGN TOKEN RULES (CRITICAL)
+- Edit \`globals.css\` CSS variables for theme colors (--primary, --background, --foreground, --accent, --muted, --border)
+- NEVER use raw hex colors (#xxx) in JSX/TSX files — always use Tailwind classes or CSS variables
+- When the user asks to change a color, edit the CSS variable, not every component
+- Use Tailwind utility classes, not inline styles
+- Components should use semantic Tailwind classes (bg-primary, text-foreground, border-border)
+
+## RULES
+- Keep edits SMALL — one logical change per turn
+- After making changes, explain what you did in 1-2 sentences
+- If the project is empty, bootstrap required files (package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs)
+- Use @/ import alias for local imports
+- Before adding new dependencies, ask the user
+
+Current project files: ${Object.keys(ctx.files).length > 0 ? Object.keys(ctx.files).join(', ') : '(empty)'}${skillContext}`,
           },
           ...history.map((h) => ({ role: h.role, content: h.content })),
           { role: 'user', content: prompt },
