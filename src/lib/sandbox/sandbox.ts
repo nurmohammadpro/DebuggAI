@@ -311,11 +311,11 @@ elif [ -f "client/package.json" ]; then
 
   cd client
   if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
-    run_and_watch next(client) sh -lc 'npx next dev -p 3000 -H 0.0.0.0'
+    run_and_watch 'next(client)' sh -lc 'npx next dev -p 3000 -H 0.0.0.0'
   elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-    run_and_watch vite(client) sh -lc 'npx vite --port 3000 --host 0.0.0.0'
+    run_and_watch 'vite(client)' sh -lc 'npx vite --port 3000 --host 0.0.0.0'
   else
-    run_and_watch package-scripts(client) sh -lc 'HOST=0.0.0.0 PORT=3000 npm start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null'
+    run_and_watch 'package-scripts(client)' sh -lc 'HOST=0.0.0.0 PORT=3000 npm start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null'
   fi
 elif [ -f "package.json" ]; then
   # Try common dev scripts
