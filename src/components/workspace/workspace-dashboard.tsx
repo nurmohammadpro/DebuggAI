@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
@@ -39,7 +39,6 @@ export function WorkspaceDashboard() {
   const [rightView, setRightView] = useState<V0RightView>('code');
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
-  const [rightWidth, setRightWidth] = useState(980);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [loadingThread, setLoadingThread] = useState(false);
   const projectBootStartedAtRef = useRef<number | null>(null);
@@ -168,7 +167,7 @@ export function WorkspaceDashboard() {
   }, [project, setProjectKey]);
 
   // Fresh project → chat-only. After AI generates files,
-  // show the full 3-column layout with PREVIEW as default.
+  // show the full layout with PREVIEW as default (v0.dev style).
   const hasGeneratedFiles = !!(files?.files &&
     Object.keys(files.files).length > 1 &&
     Object.values(files.files).some(f => f.status !== 'deleted'));
@@ -177,26 +176,9 @@ export function WorkspaceDashboard() {
   useEffect(() => {
     setRightCollapsed(showOnlyChat);
     if (hasGeneratedFiles) {
-      setRightView('preview'); // v0.dev: preview is the primary view
+      setRightView('preview');
     }
   }, [showOnlyChat, hasGeneratedFiles]);
-
-  useEffect(() => {
-    try {
-      const savedRight = window.localStorage.getItem('debuggai.workspace.rightWidth');
-      if (savedRight) setRightWidth(Number(savedRight));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem('debuggai.workspace.rightWidth', String(rightWidth));
-    } catch {
-      // ignore
-    }
-  }, [rightWidth]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -316,14 +298,15 @@ export function WorkspaceDashboard() {
           </button>
         </div>
 
-        {/* IDE Workspace — 3-column: chat | splitter | right panel */}
-        {/* Fresh projects: chat-only centered; after AI generates files: full layout */}
+        {/* IDE Workspace — v0.dev layout: narrow chat | splitter | wide preview+code */}
         <div className="flex-1 min-h-0 flex min-w-0">
-          {/* Center: Chat surface */}
-          <section className={
+          {/* Chat — narrow panel on left (v0.dev style) */}
+          <section
+            data-chat-panel
+            className={
             showOnlyChat
               ? "flex-1 min-w-0 max-w-[720px] mx-auto bg-[var(--app-bg)] flex flex-col min-h-0"
-              : "flex-1 min-w-0 sm:min-w-[300px] bg-[var(--app-bg)] flex flex-col min-h-0"
+              : "w-[360px] min-w-[300px] max-w-[420px] bg-[var(--app-bg)] flex flex-col min-h-0 border-r border-[var(--app-border)]"
           }>
             <EnhancedChatPanel
               chromeless
@@ -337,22 +320,29 @@ export function WorkspaceDashboard() {
             <div className="hidden sm:block">
               <WorkspaceSplitter
                 ariaLabel="Resize right panel"
-                onResize={(dx) =>
-                  setRightWidth((w) => clamp(w - dx, 420, 1400))
-                }
+                onResize={(dx) => {
+                  // Chat width adjusts relative to DnD
+                  const chat = document.querySelector('[data-chat-panel]');
+                  if (chat) {
+                    const current = parseFloat(getComputedStyle(chat).width);
+                    const next = Math.max(260, Math.min(520, current + dx));
+                    (chat as HTMLElement).style.width = `${next}px`;
+                    (chat as HTMLElement).style.maxWidth = `${next}px`;
+                  }
+                }}
               />
             </div>
           )}
 
-          {/* Right panel — desktop (hidden on fresh projects) */}
+          {/* Right panel — desktop (takes remaining space) */}
           <Panel
             id="workspace-right"
             side="right"
-            defaultWidth={clamp(rightWidth, 420, 1400)}
+            defaultWidth={0}
             minWidth={420}
             collapsed={rightCollapsed}
             onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-            className={`hidden sm:flex transition-all duration-200 ease-out ${showOnlyChat ? 'hidden' : ''}`}
+            className={`hidden sm:flex flex-1 transition-all duration-200 ease-out ${showOnlyChat ? 'hidden' : ''}`}
           >
             <V0RightPanel
               activeView={rightView}
@@ -396,8 +386,4 @@ export function WorkspaceDashboard() {
       </main>
     </div>
   );
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
 }
