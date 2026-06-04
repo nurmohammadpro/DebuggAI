@@ -3,6 +3,8 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface MarkdownRendererProps {
   content: string;
@@ -25,16 +27,28 @@ const components: Components = {
     }
 
     return (
-      <pre className="bg-[var(--app-surface)] border border-[var(--app-border)] rounded-[6px] overflow-x-auto my-3">
-        {match && (
-          <div className="px-4 pt-2 pb-1 text-[10px] font-medium text-[var(--app-text-dim)] uppercase tracking-wider select-none">
-            {match[1]}
-          </div>
-        )}
-        <code className={`px-4 pb-3 pt-1 block text-[13px] font-mono leading-relaxed ${className || ''}`} {...props}>
-          {children}
-        </code>
-      </pre>
+      <div className="my-3 overflow-hidden rounded-[8px] border border-[var(--app-border)] bg-[#0f172a]">
+        <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-white/60">
+          <span>{match?.[1] || 'code'}</span>
+        </div>
+        <SyntaxHighlighter
+          language={match?.[1] || 'text'}
+          style={oneDark as any}
+          PreTag="div"
+          customStyle={{
+            margin: 0,
+            background: 'transparent',
+            padding: '12px',
+            fontSize: '13px',
+            lineHeight: '1.6',
+          }}
+          codeTagProps={{
+            className: 'font-mono',
+          }}
+        >
+          {String(children).replace(/\n$/, '')}
+        </SyntaxHighlighter>
+      </div>
     );
   },
   pre({ children }) {
@@ -94,11 +108,13 @@ const components: Components = {
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={components}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0 prose-strong:text-[var(--app-text)] prose-a:text-[var(--app-accent)] prose-a:no-underline hover:prose-a:underline">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={components}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   );
 }

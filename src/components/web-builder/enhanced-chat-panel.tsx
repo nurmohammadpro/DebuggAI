@@ -33,6 +33,7 @@ import {
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
 import { PromptTemplates } from '@/components/visual-editor/prompt-templates';
+import { MarkdownRenderer } from './markdown-renderer';
 import { useShellStore } from '@/store/shell-store';
 import { cn } from '@/lib/utils';
 import { useGenerationStore } from '@/store/generation-store';
@@ -40,10 +41,12 @@ import { serializeVirtualFiles } from '@/lib/project/virtual-files';
 import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
+import { BRAND_NAME, Logo } from '@/components/logo';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type MessageRole = 'user' | 'assistant' | 'system' | 'tool';
+type MessageStatus = 'thinking' | 'streaming' | 'done' | 'error';
 
 type StepType = 'thought' | 'explore' | 'action' | 'code' | 'completion';
 
@@ -69,6 +72,25 @@ interface ChatMessage {
   created_at: string;
   fileCount?: number;
   hasError?: boolean;
+  status?: MessageStatus;
+  toolCalls?: ToolCall[];
+  toolCallId?: string;
+}
+
+interface ServerChatMessage {
+  id: string;
+  role: string;
+  content?: string | null;
+  created_at?: string | null;
+  metadata?: unknown;
+}
+
+interface ToolCall {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+  output?: string;
+  isError?: boolean;
 }
 
 interface EnhancedChatPanelProps {
@@ -165,6 +187,118 @@ function detectImplicitSteps(text: string): StepData[] {
   }
 
   return steps;
+}
+
+function normalizeToolCalls(value: unknown): ToolCall[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry, index) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const argsValue = record.arguments ?? record.args ?? record.input ?? {};
+      const args =
+        argsValue && typeof argsValue === 'object' && !Array.isArray(argsValue)
+          ? (argsValue as Record<string, unknown>)
+          : {};
+      return {
+        id: typeof record.id === 'string' ? record.id : `tool_${index}`,
+        name: typeof record.name === 'string'
+          ? record.name
+          : typeof record.tool_name === 'string'
+            ? record.tool_name
+            : 'tool',
+        args,
+        output: typeof record.output === 'string' ? record.output : undefined,
+        isError: typeof record.is_error === 'boolean' ? record.is_error : typeof record.error === 'string',
+      } satisfies ToolCall;
+    })
+    .filter(Boolean) as ToolCall[];
+}
+
+function summarizeToolArgs(args: Record<string, unknown>): string {
+  const preferredKeys = ['path', 'query', 'prompt', 'name', 'file', 'filename', 'tool', 'type'];
+  for (const key of preferredKeys) {
+    const value = args[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.length > 90 ? `${value.slice(0, 90)}…` : value;
+    }
+  }
+
+  const firstString = Object.values(args).find((value) => typeof value === 'string' && value.trim());
+  if (typeof firstString === 'string') {
+    return firstString.length > 90 ? `${firstString.slice(0, 90)}…` : firstString;
+  }
+
+  const entries = Object.entries(args).slice(0, 3);
+  if (entries.length === 0) return 'No arguments';
+  return entries
+    .map(([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`)
+    .join(' · ')
+    .slice(0, 110);
+}
+
+function ToolCallCard({
+  call,
+  result,
+}: {
+  call: ToolCall;
+  result?: { content: string; isError?: boolean };
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel-2)] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[var(--app-surface)]/70 transition-colors"
+      >
+        <div
+          className={cn(
+            'h-2 w-2 rounded-full shrink-0',
+            call.isError || result?.isError ? 'bg-rose-400' : 'bg-emerald-400',
+          )}
+        />
+        <FileCode2 className="h-3.5 w-3.5 shrink-0 text-[var(--app-text-dim)]" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-[var(--app-text)] capitalize truncate">
+              {call.name.replace(/_/g, ' ')}
+            </span>
+            <span className="text-[10px] text-[var(--app-text-dim)] font-mono truncate">
+              {summarizeToolArgs(call.args)}
+            </span>
+          </div>
+        </div>
+        <ChevronRight className={cn('h-3 w-3 shrink-0 text-[var(--app-text-dim)] transition-transform', expanded && 'rotate-90')} />
+      </button>
+
+      {expanded && (
+        <div className="border-t border-[var(--app-border)] px-3 py-2 space-y-2">
+          <div className="space-y-1">
+            {Object.entries(call.args).map(([key, value]) => (
+              <div key={key} className="flex gap-2 text-[10px] leading-relaxed">
+                <span className="shrink-0 text-[var(--app-text-dim)]">{key}:</span>
+                <span className="min-w-0 break-words text-[var(--app-text-muted)] font-mono">
+                  {typeof value === 'string' ? value : JSON.stringify(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          {result?.content && (
+            <div className={cn(
+              'rounded-[8px] border px-2.5 py-2 text-[11px] leading-relaxed whitespace-pre-wrap break-words',
+              result.isError
+                ? 'border-rose-500/20 bg-rose-500/10 text-rose-100'
+                : 'border-[var(--app-border)] bg-[var(--app-panel)] text-[var(--app-text-muted)]',
+            )}>
+              {result.content}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Rich Text Renderer ─────────────────────────────────────────────────────
@@ -387,6 +521,80 @@ function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: numbe
   );
 }
 
+// ── Tool Timeline (agent loop diff view) ─────────────────────────────────
+type ToolEvent = { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> } | { type: 'tool_result'; tool_call_id: string; output: string; is_error?: boolean };
+
+function ToolTimeline({ events }: { events: ToolEvent[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  if (!events.length) return null;
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="rounded-[8px] border border-[var(--app-border)] overflow-hidden bg-[var(--app-panel-2)] animate-in fade-in duration-300">
+      <div className="px-3 py-2 border-b border-[var(--app-border)] flex items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+          Changes
+        </span>
+        <span className="text-[9px] text-[var(--app-text-dim)] ml-auto">{events.filter(e => e.type === 'tool_call').length} action{events.filter(e => e.type === 'tool_call').length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className="max-h-[200px] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+        {events.map((evt, i) => {
+          if (evt.type === 'tool_call') {
+            const result = events.find((r): r is Extract<ToolEvent, { type: 'tool_result' }> => r.type === 'tool_result' && r.tool_call_id === evt.id);
+            const isExpanded = expanded.has(evt.id);
+            const hasError = result ? result.is_error : false;
+            return (
+              <div key={i} className="border-b border-[var(--app-border)] last:border-b-0">
+                <button
+                  onClick={() => toggleExpand(evt.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-[var(--app-surface)] transition-colors"
+                >
+                  <span className={cn(
+                    'w-1.5 h-1.5 rounded-full shrink-0',
+                    evt.name === 'write_file' || evt.name === 'line_replace' ? 'bg-amber-400' :
+                    evt.name === 'view_file' || evt.name === 'list_dir' ? 'bg-blue-400' :
+                    evt.name === 'search_files' ? 'bg-purple-400' :
+                    hasError ? 'bg-rose-400' : 'bg-emerald-400'
+                  )} />
+                  <span className="text-[11px] font-medium text-[var(--app-text)] capitalize truncate">{evt.name.replace(/_/g, ' ')}</span>
+                  {typeof evt.args?.path === 'string' && (
+                    <span className="text-[10px] text-[var(--app-text-dim)] font-mono truncate">{String(evt.args.path)}</span>
+                  )}
+                  <ChevronRight className={cn('h-3 w-3 text-[var(--app-text-dim)] ml-auto shrink-0 transition-transform', isExpanded && 'rotate-90')} />
+                </button>
+                {isExpanded && (
+                  <div className="px-3 pb-2 space-y-1">
+                    {Object.entries(evt.args).map(([k, v]) => (
+                      <div key={k} className="flex gap-2 text-[10px]">
+                        <span className="text-[var(--app-text-dim)] shrink-0">{k}:</span>
+                        <span className="text-[var(--app-text-muted)] font-mono truncate">{typeof v === 'string' ? (v.length > 80 ? v.slice(0, 80) + '…' : v) : JSON.stringify(v)}</span>
+                      </div>
+                    ))}
+                    {result && (
+                      <div className={cn('mt-1 text-[10px]', result.is_error ? 'text-[var(--app-danger)]' : 'text-[var(--app-text-dim)]')}>
+                        {result.output.slice(0, 200)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return null;
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Typing Indicator ────────────────────────────────────────────────────────
 
 function TypingIndicator({ label = 'Thinking' }: { label?: string }) {
@@ -425,6 +633,7 @@ export function EnhancedChatPanel({
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const streamingMessageIdRef = useRef<string | null>(null);
   // Ref gate — prevents empty state flash during thread sync
   const threadBootedRef = useRef(false);
 
@@ -471,37 +680,49 @@ export function EnhancedChatPanel({
     });
     if (!res.ok) return;
     const j = await res.json().catch(() => ({}));
-    const list = (j?.messages || []) as Array<any>;
+    const list = (j?.messages || []) as ServerChatMessage[];
 
     const serverMessages: ChatMessage[] = list.map((m) => {
       const content = String(m.content || '');
-      const { text, codeBlocks } = extractCodeBlocks(content);
+      const { codeBlocks } = extractCodeBlocks(content);
       if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
-      const { steps } = parseStepsFromText(content);
-      const implicitSteps = steps.length === 0 ? detectImplicitSteps(text) : [];
+      const metadata = m && typeof m.metadata === 'object' && m.metadata ? (m.metadata as Record<string, unknown>) : {};
+      const toolCalls = normalizeToolCalls(metadata.tool_calls ?? metadata.toolCalls);
+      const toolCallId = typeof metadata.tool_call_id === 'string' ? metadata.tool_call_id : undefined;
+      const toolName = typeof metadata.tool_name === 'string' ? metadata.tool_name : undefined;
+      const resolvedToolCalls = toolCalls.length > 0
+        ? toolCalls
+        : toolName
+          ? [{
+              id: toolCallId || String(m.id),
+              name: toolName,
+              args: {},
+              output: content,
+            }]
+          : undefined;
       return {
         id: String(m.id),
         role: m.role as MessageRole,
-        content: text,
-        steps: steps.length > 0 ? steps : implicitSteps,
+        content,
         created_at: String(m.created_at || new Date().toISOString()),
         fileCount: codeBlocks.length > 0 ? codeBlocks.length : undefined,
+        toolCalls: resolvedToolCalls,
+        toolCallId,
+        status: m.role === 'assistant' ? 'done' : undefined,
+        hasError: Boolean(metadata.has_error),
       };
     });
 
-    // Merge: keep local messages not yet synced to server
+    // Merge: keep local user messages not yet synced to server.
     setMessages((prev) => {
       const pendingLocal = prev.filter((m) => {
         if (!m.id.startsWith('local_')) return false;
-        if (m.role === 'user') {
-          return !serverMessages.some((s) => s.role === 'user' && s.content === m.content);
-        }
         if (m.role === 'assistant') {
-          const lastServerAsst = serverMessages.find((s) => s.role === 'assistant');
-          if (!lastServerAsst) return true;
-          return new Date(m.created_at).getTime() > new Date(lastServerAsst.created_at).getTime();
+          return m.id === streamingMessageIdRef.current || m.status === 'thinking' || m.status === 'streaming';
         }
-        return false;
+        return m.role === 'user'
+          ? !serverMessages.some((s) => s.role === 'user' && s.content === m.content)
+          : false;
       });
       return [...serverMessages, ...pendingLocal].sort(
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -561,89 +782,98 @@ export function EnhancedChatPanel({
     }
   }, []);
 
+  const updateStreamingAssistant = useCallback((updater: (message: ChatMessage) => ChatMessage) => {
+    const streamingId = streamingMessageIdRef.current;
+    if (!streamingId) return;
+    setMessages((prev) => prev.map((message) => (message.id === streamingId ? updater(message) : message)));
+  }, []);
+
+  const appendStreamingChunk = useCallback((chunk: string) => {
+    if (!chunk) return;
+    updateStreamingAssistant((message) => ({
+      ...message,
+      content: `${message.content || ''}${chunk}`,
+      status: 'streaming',
+    }));
+  }, [updateStreamingAssistant]);
+
   const { generate, ensureThreadId } = useGeneration({
+    onChunk: appendStreamingChunk,
     onDone: async () => {
       setIsLoading(false);
       setStreaming(false);
 
       const { accumulated: latestAccumulated, files: currentFiles } = useGenerationStore.getState();
       const fullText = (latestAccumulated || '').trim();
+      const streamingId = streamingMessageIdRef.current;
+      const parsedCodeBlocks = fullText ? extractCodeBlocks(fullText).codeBlocks : [];
 
       // Count files that were generated
       const generatedFileCount = currentFiles
         ? Object.values(currentFiles.files).filter((f) => f.status === 'added').length
-        : 0;
+        : parsedCodeBlocks.length;
 
-      if (fullText) {
-        const { text: cleanedText, codeBlocks } = extractCodeBlocks(fullText);
-        const { steps } = parseStepsFromText(fullText);
-        const implicitSteps = steps.length === 0 ? detectImplicitSteps(cleanedText) : [];
-        const resolvedSteps = steps.length > 0 ? steps : implicitSteps;
+      if (parsedCodeBlocks.length > 0) {
+        addCodeBlocks(parsedCodeBlocks);
+      }
 
-        const displayContent = cleanedText || fullText;
+      const finalContent = fullText || (
+        generatedFileCount > 0
+          ? `I generated ${generatedFileCount} file${generatedFileCount !== 1 ? 's' : ''}. View them in the editor panel.`
+          : 'Done.'
+      );
 
+      if (streamingId) {
+        updateStreamingAssistant((message) => ({
+          ...message,
+          content: finalContent,
+          status: 'done',
+          fileCount: generatedFileCount > 0 ? generatedFileCount : message.fileCount,
+        }));
+      } else {
         setMessages((prev) => [
           ...prev,
           {
             id: `local_assistant_${Date.now()}`,
             role: 'assistant',
-            content: displayContent,
-            steps: resolvedSteps,
+            content: finalContent,
             created_at: new Date().toISOString(),
-            fileCount: codeBlocks.length > 0 ? codeBlocks.length : undefined,
-          },
-        ]);
-
-        if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
-      } else if (generatedFileCount > 0) {
-        // Fallback: no accumulated text but files were generated.
-        // Show a summary message so the user knows something happened.
-        const fileNames = currentFiles
-          ? Object.entries(currentFiles.files)
-              .filter(([, f]) => f.status === 'added')
-              .slice(0, 5)
-              .map(([p]) => `\`${p}\``)
-              .join(', ')
-          : '';
-
-        const summaryContent = `I generated ${generatedFileCount} file${generatedFileCount !== 1 ? 's' : ''}${
-          fileNames ? `: ${fileNames}${generatedFileCount > 5 ? ' and more' : ''}` : '.'
-        } View them in the editor panel.`;
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `local_assistant_${Date.now()}`,
-            role: 'assistant',
-            content: summaryContent,
-            steps: [{ type: 'completion', content: summaryContent }],
-            created_at: new Date().toISOString(),
-            fileCount: generatedFileCount,
+            status: 'done',
+            fileCount: generatedFileCount > 0 ? generatedFileCount : undefined,
           },
         ]);
       }
 
       resetAccumulated();
-      const tid = currentThreadId;
-
       // Auto-save generated code to generations table for project persistence
       await autoSaveCode();
-
-      if (tid) setTimeout(() => void loadThreadMessages(tid), 1500);
+      streamingMessageIdRef.current = null;
     },
     onError: (error) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `err_${Date.now()}`,
-          role: 'assistant',
+      const streamingId = streamingMessageIdRef.current;
+      if (streamingId) {
+        updateStreamingAssistant((message) => ({
+          ...message,
           content: `Something went wrong\n\n${error.message}`,
-          created_at: new Date().toISOString(),
           hasError: true,
-        },
-      ]);
+          status: 'error',
+        }));
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `err_${Date.now()}`,
+            role: 'assistant',
+            content: `Something went wrong\n\n${error.message}`,
+            created_at: new Date().toISOString(),
+            hasError: true,
+            status: 'error',
+          },
+        ]);
+      }
       setIsLoading(false);
       setStreaming(false);
+      streamingMessageIdRef.current = null;
       toast.error('Generation failed');
     },
   });
@@ -660,6 +890,9 @@ export function EnhancedChatPanel({
     resetAccumulated();
     setStreaming(true);
 
+    const assistantId = `local_assistant_${Date.now()}`;
+    streamingMessageIdRef.current = assistantId;
+
     setMessages((prev) => [
       ...prev,
       {
@@ -667,6 +900,13 @@ export function EnhancedChatPanel({
         role: 'user',
         content: text,
         created_at: new Date().toISOString(),
+      },
+      {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        created_at: new Date().toISOString(),
+        status: 'thinking',
       },
     ]);
 
@@ -688,8 +928,15 @@ export function EnhancedChatPanel({
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Generation failed');
+      updateStreamingAssistant((message) => ({
+        ...message,
+        content: `Something went wrong\n\n${error instanceof Error ? error.message : 'Generation failed'}`,
+        hasError: true,
+        status: 'error',
+      }));
       setIsLoading(false);
       setStreaming(false);
+      streamingMessageIdRef.current = null;
     }
   };
 
@@ -751,20 +998,6 @@ export function EnhancedChatPanel({
           'Create a dashboard with stats cards and charts',
           'Build a todo app with drag-and-drop reordering',
         ];
-
-  const streamingText = (() => {
-    if (!accumulated) return '';
-    const { text, codeBlocks } = extractCodeBlocks(accumulated);
-    if (text) return text;
-    if (codeBlocks.length > 0) {
-      return `Generating ${codeBlocks.length} file${codeBlocks.length !== 1 ? 's' : ''}...`;
-    }
-    const openFences = (accumulated.match(/```/g) || []).length;
-    if (openFences > 0 && openFences % 2 === 1) {
-      return null;
-    }
-    return '';
-  })();
 
   return (
     <div
@@ -831,7 +1064,6 @@ export function EnhancedChatPanel({
           const isLast = index === messages.length - 1;
           const canRegen = message.role === 'assistant' && isLast && !isLoading;
           const isUser = message.role === 'user';
-          const hasSteps = message.steps && message.steps.length > 0;
 
           return (
             <div
@@ -908,14 +1140,24 @@ export function EnhancedChatPanel({
                 </>
               )}
 
-              {/* Assistant message — steps or text */}
+              {/* Assistant message */}
               {!isUser && (
                 <>
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[var(--app-surface)] border border-[var(--app-border)]">
-                      <Bot className="h-3 w-3 text-[var(--app-text-muted)]" />
+                      <Logo className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-[10px] font-medium text-[var(--app-text-dim)]">DeBuggAI</span>
+                    <span className="text-[10px] font-medium text-[var(--app-text-dim)]">{BRAND_NAME}</span>
+                    {message.status === 'thinking' && (
+                      <span className="ml-1 inline-flex items-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+                        Thinking
+                      </span>
+                    )}
+                    {message.status === 'streaming' && (
+                      <span className="ml-1 inline-flex items-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+                        Streaming
+                      </span>
+                    )}
                   </div>
 
                   {message.hasError && (
@@ -924,43 +1166,55 @@ export function EnhancedChatPanel({
                         <AlertTriangle className="h-3.5 w-3.5 text-[var(--app-danger)]" />
                         <span className="text-[11px] font-semibold text-[var(--app-danger)]">Error</span>
                       </div>
-                      <p className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap">{message.content}</p>
+                      <div className="text-[13px] leading-relaxed text-[var(--app-text)]">
+                        <MarkdownRenderer content={message.content} />
+                      </div>
                     </div>
                   )}
 
-                  {/* Render steps if available */}
-                  {!message.hasError && hasSteps && (
-                    <div className="max-w-[90%] space-y-2.5 w-full">
-                      {message.steps!.map((step, stepIdx) => {
-                        if (step.type === 'thought') return <ThoughtStep key={stepIdx} step={step} />;
-                        if (step.type === 'explore') return <ExploreStep key={stepIdx} step={step} />;
-                        if (step.type === 'action') return <ActionStep key={stepIdx} step={step} index={stepIdx} />;
-                        if (step.type === 'code') return null; // Code goes to file tree, not chat
-                        if (step.type === 'completion') return <CompletionStep key={stepIdx} step={step} fileCount={message.fileCount} />;
-                        return null;
-                      })}
-                      {/* Show file count summary when code was generated silently */}
-                      {message.fileCount && message.fileCount > 0 && message.steps!.some(s => s.type === 'code') && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--app-text-muted)] border-t border-[var(--app-border)] pt-2 mt-2">
-                          <FileCode2 className="h-3.5 w-3.5 shrink-0" />
-                          <span>{message.fileCount} file{message.fileCount !== 1 ? 's' : ''} generated → view in code panel</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="max-w-[90%] space-y-2 w-full">
+                    {message.toolCalls?.length ? (
+                      <div className="space-y-2">
+                        {message.toolCalls.map((call) => (
+                          <ToolCallCard
+                            key={call.id}
+                            call={call}
+                            result={call.output ? { content: call.output, isError: call.isError } : undefined}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
 
-                  {/* Fallback: rich text when no structured steps */}
-                  {!message.hasError && !hasSteps && (
-                    <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
-                      <RichTextContent content={message.content} />
-                      {message.fileCount && message.fileCount > 0 && (
-                        <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px] text-[var(--app-text-dim)]">
-                          <FileCode2 className="h-3 w-3" />
-                          {message.fileCount} file{message.fileCount !== 1 ? 's' : ''} sent to code pane
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    {message.role === 'tool' ? (
+                      <ToolCallCard
+                        call={{
+                          id: message.toolCallId || message.id,
+                          name: 'tool result',
+                          args: message.toolCallId ? { tool_call_id: message.toolCallId } : {},
+                          output: message.content,
+                          isError: message.hasError,
+                        }}
+                        result={{ content: message.content, isError: message.hasError }}
+                      />
+                    ) : (
+                      <div className="rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
+                        {message.content.trim() ? (
+                          <MarkdownRenderer content={message.content} />
+                        ) : (
+                          <TypingIndicator label={message.status === 'thinking' ? 'Thinking' : 'Streaming'} />
+                        )}
+                        {message.status === 'streaming' && message.content.trim() && (
+                          <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle rounded-[2px]" />
+                        )}
+                        {message.fileCount && message.fileCount > 0 && (
+                          <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px] text-[var(--app-text-dim)]">
+                            <FileCode2 className="h-3 w-3" />
+                            {message.fileCount} file{message.fileCount !== 1 ? 's' : ''} generated → view in code pane
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Assistant message actions */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -993,41 +1247,6 @@ export function EnhancedChatPanel({
             </div>
           );
         })}
-
-        {/* Streaming response */}
-        {isLoading && accumulated && (
-          <div className="flex flex-col items-start gap-1 animate-in fade-in duration-300">
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[var(--app-surface)] border border-[var(--app-border)]">
-                <Bot className="h-3 w-3 text-[var(--app-text-muted)]" />
-              </div>
-              <span className="text-[10px] font-medium text-[var(--app-text-dim)]">DeBuggAI</span>
-            </div>
-            <div className="max-w-[85%] rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
-              {streamingText ? (
-                <div className="text-[13px] leading-relaxed text-[var(--app-text)] whitespace-pre-wrap break-words">
-                  {streamingText}
-                  <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle rounded-[2px]" />
-                </div>
-              ) : (
-                <TypingIndicator />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Typing indicator (before first stream chunk) */}
-        {isLoading && !accumulated && (
-          <div className="flex flex-col items-start gap-1 animate-in fade-in duration-300">
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[var(--app-surface)] border border-[var(--app-border)]">
-                <Bot className="h-3 w-3 text-[var(--app-text-muted)]" />
-              </div>
-              <span className="text-[10px] font-medium text-[var(--app-text-dim)]">DeBuggAI</span>
-            </div>
-            <TypingIndicator />
-          </div>
-        )}
 
         <div ref={messagesEndRef} />
       </div>

@@ -32,13 +32,17 @@ function getFileExtColor(filename: string): string {
 export function WorkspaceEditor({
   editorView = 'code',
   onEditorViewChange,
+  showToolbar = true,
+  showFileTree = true,
 }: {
   editorView?: EditorView;
   onEditorViewChange?: (view: EditorView) => void;
+  showToolbar?: boolean;
+  showFileTree?: boolean;
 }) {
   const { activeFilePath, files, setActiveFilePath } = useGenerationStore();
   const language = activeFilePath ? files?.files[activeFilePath]?.language : undefined;
-  const [showFileTree, setShowFileTree] = useState(true);
+  const [fileTreeOpen, setFileTreeOpen] = useState(true);
 
   const sandbox = useSandbox();
   const sandboxStartingRef = useRef(false);
@@ -135,51 +139,51 @@ export function WorkspaceEditor({
 
   return (
     <section className="flex-1 min-w-0 bg-[var(--app-bg)] flex flex-col min-h-0 h-full">
-      {/* Toolbar */}
-      <div className="h-10 border-b border-[var(--app-border)] bg-[var(--app-panel)] flex items-center px-3 gap-2 shrink-0">
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          {activeFilePath ? (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: getFileExtColor(activeFilePath.split('/').pop() || '') }} />
-              <span className="text-[11px] font-medium text-[var(--app-text)] truncate">
-                {activeFilePath}
+      {showToolbar && (
+        <div className="h-10 border-b border-[var(--app-border)] bg-[var(--app-panel)] flex items-center px-3 gap-2 shrink-0">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {activeFilePath ? (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: getFileExtColor(activeFilePath.split('/').pop() || '') }} />
+                <span className="text-[11px] font-medium text-[var(--app-text)] truncate">
+                  {activeFilePath}
+                </span>
+              </div>
+            ) : (
+              <span className="text-[11px] text-[var(--app-text-dim)]">
+                {fileCount > 0 ? `${fileCount} files` : 'No files'}
               </span>
-            </div>
-          ) : (
-            <span className="text-[11px] text-[var(--app-text-dim)]">
-              {fileCount > 0 ? `${fileCount} files` : 'No files'}
-            </span>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Code / Preview toggle */}
-        <div className="flex items-center shrink-0 rounded-[7px] bg-[var(--app-panel-2)] p-0.5 border border-[var(--app-border)]">
-          <button
-            className={cn(
-              'h-7 px-3 rounded-[5px] text-[11px] font-medium transition-colors flex items-center gap-1.5',
-              editorView === 'code'
-                ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
-                : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
-            )}
-            onClick={() => onEditorViewChange?.('code')}
-          >
-            <Code2 className="h-3 w-3" />
-            Code
-          </button>
-          <button
-            className={cn(
-              'h-7 px-3 rounded-[5px] text-[11px] font-medium transition-colors flex items-center gap-1.5',
-              editorView === 'preview'
-                ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
-                : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
-            )}
-            onClick={() => onEditorViewChange?.('preview')}
-          >
-            <Eye className="h-3 w-3" />
-            Preview
-          </button>
+          <div className="flex items-center shrink-0 rounded-[7px] bg-[var(--app-panel-2)] p-0.5 border border-[var(--app-border)]">
+            <button
+              className={cn(
+                'h-7 px-3 rounded-[5px] text-[11px] font-medium transition-colors flex items-center gap-1.5',
+                editorView === 'code'
+                  ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
+              )}
+              onClick={() => onEditorViewChange?.('code')}
+            >
+              <Code2 className="h-3 w-3" />
+              Code
+            </button>
+            <button
+              className={cn(
+                'h-7 px-3 rounded-[5px] text-[11px] font-medium transition-colors flex items-center gap-1.5',
+                editorView === 'preview'
+                  ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                  : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]'
+              )}
+              onClick={() => onEditorViewChange?.('preview')}
+            >
+              <Eye className="h-3 w-3" />
+              Preview
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-h-0 flex">
@@ -195,7 +199,7 @@ export function WorkspaceEditor({
         ) : (
           <>
             {/* File Tree Sidebar — collapsible */}
-            {fileCount > 0 && showFileTree && (
+            {showFileTree && fileCount > 0 && fileTreeOpen && (
               <div className="w-56 shrink-0 border-r border-[var(--app-border)] bg-[var(--app-panel-2)] flex flex-col overflow-hidden">
                 <div className="h-8 px-3 flex items-center justify-between border-b border-[var(--app-border)] shrink-0">
                   <div className="flex items-center gap-2">
@@ -203,7 +207,7 @@ export function WorkspaceEditor({
                     <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">Files</span>
                   </div>
                   <button
-                    onClick={() => setShowFileTree(false)}
+                    onClick={() => setFileTreeOpen(false)}
                     className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
                     title="Hide file tree"
                   >
@@ -219,10 +223,10 @@ export function WorkspaceEditor({
             )}
 
             {/* Show tree toggle when collapsed */}
-            {fileCount > 0 && !showFileTree && (
+            {showFileTree && fileCount > 0 && !fileTreeOpen && (
               <button
-                onClick={() => setShowFileTree(true)}
-                className="absolute left-0 top-10 z-10 h-8 w-8 rounded-r-[6px] bg-[var(--app-panel-2)] border border-l-0 border-[var(--app-border)] flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors shadow-sm"
+                onClick={() => setFileTreeOpen(true)}
+                className="absolute left-0 top-0 z-10 h-8 w-8 rounded-r-[6px] bg-[var(--app-panel-2)] border border-l-0 border-[var(--app-border)] flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors shadow-sm"
                 title="Show file tree"
               >
                 <PanelLeftOpen className="h-3.5 w-3.5" />

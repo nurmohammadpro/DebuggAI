@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
-import { requireFeature, getUserPlan, getActionCost, withRateLimit } from '@/lib/server/plan-enforcement';
+import { requireFeature, getActionCost, withRateLimit } from '@/lib/server/plan-enforcement';
 import { spawnSync } from 'child_process';
 import * as Sentry from '@sentry/nextjs';
 import { getThrottleFlag } from '@/lib/server/throttle-config';
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fail fast before charging credits if Docker isn't available.
-    const dockerCheck = spawnSync('docker', ['version'], { encoding: 'utf-8' });
+    const dockerCheck = spawnSync('docker', ['version'], { encoding: 'utf-8', timeout: 5000 });
     const dockerStderr = `${dockerCheck.stderr || ''}`.trim();
     if (dockerCheck.error || (typeof dockerCheck.status === 'number' && dockerCheck.status !== 0)) {
       const permissionDenied =
@@ -109,6 +109,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const sandbox = await sandboxManager.create(user.id, files);
+
     // Charge credits atomically (production only, when admin key is configured).
     if (enforceBilling && !privilegedPreviewUser) {
       const adminClient = createSupabaseAdmin();
@@ -122,13 +124,12 @@ export async function POST(req: NextRequest) {
       });
 
       if (spendError) {
+        await sandboxManager.stop(sandbox.id).catch(() => {});
         const msg = spendError.message || 'Failed to spend credits';
         const status = msg.toLowerCase().includes('insufficient') ? 402 : 500;
         return NextResponse.json({ error: msg }, { status });
       }
     }
-
-    const sandbox = await sandboxManager.create(user.id, files);
 
     return NextResponse.json({
       id: sandbox.id,
@@ -138,6 +139,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to create sandbox';
+    const lowerMessage = message.toLowerCase();
+    const status =
+      lowerMessage.includes('capacity') ||
+      lowerMessage.includes('active preview') ||
+      lowerMessage.includes('rate limit')
+        ? 429
+        : lowerMessage.includes('too large') ||
+            lowerMessage.includes('limited to') ||
+            lowerMessage.includes('invalid file')
+          ? 400
+          : 500;
     console.error('[sandbox/create] Error:', { userId: user.id, error: message });
     Sentry.captureException(err, {
       tags: { route: 'sandbox/create' },
@@ -145,7 +157,7 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(
       { error: message },
-      { status: 500 },
+      { status },
     );
   }
 }

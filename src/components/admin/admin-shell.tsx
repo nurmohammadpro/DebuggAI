@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Users, CreditCard, Activity, Menu, X, PanelLeftClose, PanelLeftOpen, LogOutIcon, Play, Bot } from 'lucide-react';
+import { BarChart3, Users, CreditCard, Activity, Menu, X, PanelLeftClose, LogOutIcon, Play, Bot } from 'lucide-react';
 
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useSessionStore } from '@/store/session-store';
+import { BrandLockup, Logo } from '@/components/logo';
 
 const STORAGE_KEY = 'debuggai.admin-dashboard.sidebar.collapsed';
 
@@ -66,14 +67,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             className="w-9 h-9 rounded-[8px] bg-[var(--app-panel-2)] border border-[var(--app-border)] flex items-center justify-center text-[var(--app-text-muted)] hover:border-[var(--app-accent)] hover:text-[var(--app-accent)] transition-colors"
             title="Expand sidebar"
           >
-            <PanelLeftOpen className="w-4 h-4" />
+            <Logo className="h-5 w-5" />
           </button>
         ) : (
           <>
             <Link href="/dashboard/admin" className="flex items-center gap-2 shrink-0">
-              <span className="flex h-10 w-16 items-center justify-center overflow-hidden rounded-[8px] bg-[var(--app-panel-2)] px-2">
-                <BarChart3 className="w-5 h-5 text-[var(--app-accent)]" />
-              </span>
+              <BrandLockup logoClassName="h-8 w-8" textClassName="text-sm font-semibold" />
             </Link>
             <button
               onClick={toggleCollapsed}

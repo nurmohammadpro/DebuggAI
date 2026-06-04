@@ -94,6 +94,16 @@ export async function GET(
           const s = await sandboxManager.get(id);
           if (!s) return;
 
+          if (s.status === 'error') {
+            send('status', { status: 'error', error: s.error || 'Preview failed to start' });
+            send('close', {});
+            clearInterval(interval);
+            docker.kill();
+            try { controller.close(); } catch {}
+            closed = true;
+            return;
+          }
+
           // Health check: try to reach the dev server
           if (s.status === 'installing') {
             try {
@@ -106,7 +116,7 @@ export async function GET(
             } catch {}
           }
 
-          send('ping', { status: s.status, port: s.port });
+          send('ping', { status: s.status, port: s.port, error: s.error || null });
         } catch {}
       }, 2000);
 

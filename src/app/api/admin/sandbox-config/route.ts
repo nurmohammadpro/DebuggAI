@@ -44,9 +44,16 @@ export async function GET(request: NextRequest) {
     runtimeDisabled,
     envDisabled,
     activeContainers,
-    maxSandboxes: parseInt(process.env.MAX_SANDBOXES || '10', 10),
-    sandboxTimeoutMs: parseInt(process.env.SANDBOX_TIMEOUT_MS || '1800000', 10),
+    maxSandboxes: parseInt(process.env.MAX_SANDBOXES || '4', 10),
+    maxSandboxesPerUser: parseInt(process.env.MAX_SANDBOXES_PER_USER || '1', 10),
+    replaceUserActive: process.env.SANDBOX_REPLACE_USER_ACTIVE !== '0' && process.env.SANDBOX_REPLACE_USER_ACTIVE !== 'false',
+    sandboxTimeoutMs: parseInt(process.env.SANDBOX_TIMEOUT_MS || '900000', 10),
     dockerImage: process.env.SANDBOX_DOCKER_IMAGE || 'node:20-slim',
+    dockerNetwork: process.env.SANDBOX_NETWORK || 'bridge',
+    cpuLimit: process.env.SANDBOX_LIMIT_CPUS || '1.0',
+    memoryLimit: process.env.SANDBOX_LIMIT_MEMORY || '1024m',
+    maxFiles: parseInt(process.env.SANDBOX_MAX_FILES || '80', 10),
+    maxTotalBytes: parseInt(process.env.SANDBOX_MAX_TOTAL_BYTES || `${2 * 1024 * 1024}`, 10),
   });
 }
 

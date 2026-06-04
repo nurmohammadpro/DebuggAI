@@ -1,16 +1,60 @@
 'use client';
 
-import { Code2, Eye, Play, Rocket, Share2, Save, PanelRightClose, PanelRightOpen, Maximize2, Minimize2, RefreshCw, Loader2, Container, Terminal, GripHorizontal } from 'lucide-react';
+import {
+  AlertTriangle,
+  Code2,
+  Container,
+  Database,
+  Eye,
+  Files,
+  LayoutPanelTop,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  PanelRightClose,
+  PanelRightOpen,
+  Play,
+  Plug,
+  RefreshCw,
+  Rocket,
+  Save,
+  Share2,
+  Terminal,
+} from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
-import type { EditorView } from '@/components/workspace/workspace-editor';
 import { EnhancedPreviewPane } from '@/components/web-builder/enhanced-preview-pane';
 import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
 import { cn } from '@/lib/utils';
 import { serializeVirtualFiles } from '@/lib/project/virtual-files';
+import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
+import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
+import { VisualEditor } from '@/components/visual-editor/visual-editor';
+import { SchemaGenerator } from '@/components/schema-generator/schema-generator';
 
-export type V0RightView = 'code' | 'preview';
+export type V0RightView =
+  | 'preview'
+  | 'code'
+  | 'files'
+  | 'console'
+  | 'connections'
+  | 'visual'
+  | 'schema';
+
+const WORKSPACE_TABS: Array<{
+  id: V0RightView;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { id: 'preview', label: 'Preview', icon: Eye },
+  { id: 'code', label: 'Code', icon: Code2 },
+  { id: 'files', label: 'Files', icon: Files },
+  { id: 'console', label: 'Console', icon: Terminal },
+  { id: 'connections', label: 'Connect', icon: Plug },
+  { id: 'visual', label: 'Visual', icon: LayoutPanelTop },
+  { id: 'schema', label: 'Schema', icon: Database },
+];
 
 interface V0RightPanelProps {
   activeView: V0RightView;
@@ -24,11 +68,8 @@ interface V0RightPanelProps {
 }
 
 /**
- * v0.dev-style right panel with split view:
- * - Preview always visible (primary, top 55%)
- * - Code always visible (secondary, bottom 45%)
- * - Resizable splitter between them
- * - Auto-refresh preview when files change
+ * v0.dev-style right panel with one clear surface at a time.
+ * New users see either Preview or Code, not a stacked IDE maze.
  */
 export function V0RightPanel({
   activeView,
@@ -41,26 +82,19 @@ export function V0RightPanel({
   onSave,
 }: V0RightPanelProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { bumpPreviewNonce, files } = useGenerationStore();
+  const { bumpPreviewNonce, files, activeFilePath } = useGenerationStore();
   const sandbox = useSandbox();
   const lastFileSnapshot = useRef<string>('');
   const hasBootedRef = useRef(false);
   const sandboxRef = useRef(sandbox);
-  sandboxRef.current = sandbox;
-  // In production the Docker socket is often unavailable. Once we fail,
-  // skip all future sandbox attempts — Sandpack instant preview handles it.
-  const dockerUnavailableRef = useRef(false);
 
-  // Split position (percentage for preview, code takes the rest)
-  const [splitPos, setSplitPos] = useState(55);
-  const isDragging = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    sandboxRef.current = sandbox;
+  }, [sandbox]);
 
   // Auto-create Docker sandbox when files are available (background — best-effort only)
   useEffect(() => {
     if (!files || Object.keys(files.files).length === 0) return;
-    // Skip if Docker is known to be unavailable (common in production)
-    if (dockerUnavailableRef.current) return;
 
     const snapshot = serializeVirtualFiles(files);
     if (snapshot === lastFileSnapshot.current && hasBootedRef.current) return;
@@ -79,16 +113,10 @@ export function V0RightPanel({
     const sb = sandboxRef.current;
     if (sb.status === 'running' || sb.status === 'installing') {
       sb.stopSandbox().then(() => {
-        sandboxRef.current.createSandbox(flatFiles).then((id) => {
-          if (!id) dockerUnavailableRef.current = true;
-        });
-      }).catch(() => {
-        dockerUnavailableRef.current = true;
-      });
+        sandboxRef.current.createSandbox(flatFiles);
+      }).catch(() => {});
     } else if (sb.status === 'idle' || sb.status === 'stopped' || sb.status === 'error') {
-      sb.createSandbox(flatFiles).then((id) => {
-        if (!id) dockerUnavailableRef.current = true;
-      });
+      sb.createSandbox(flatFiles);
     }
   }, [files]);
 
@@ -105,7 +133,6 @@ export function V0RightPanel({
 
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
-    if (dockerUnavailableRef.current) return; // Sandpack handles it
     if (sandbox.status === 'stopped' || sandbox.status === 'error') {
       if (!files || Object.keys(files.files).length === 0) return;
       const flatFiles: Record<string, string> = {};
@@ -113,41 +140,9 @@ export function V0RightPanel({
         if (file.status === 'deleted') continue;
         flatFiles[path] = file.content;
       }
-      sandbox.createSandbox(flatFiles).then((id) => {
-        if (!id) dockerUnavailableRef.current = true;
-      });
+      sandbox.createSandbox(flatFiles);
     }
   }, [bumpPreviewNonce, sandbox, files]);
-
-  // Split resize handlers
-  const handleMouseDown = useCallback(() => {
-    isDragging.current = true;
-    document.body.style.cursor = 'row-resize';
-    document.body.style.userSelect = 'none';
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const y = e.clientY - rect.top;
-      const pct = (y / rect.height) * 100;
-      setSplitPos(Math.max(30, Math.min(80, pct)));
-    };
-    const handleMouseUp = () => {
-      if (isDragging.current) {
-        isDragging.current = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      }
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
 
   const previewEngine =
     sandbox.status === 'creating' ? 'docker-creating' :
@@ -159,6 +154,14 @@ export function V0RightPanel({
     'idle';
 
   const hasFiles = files && Object.keys(files.files).filter(p => files.files[p]?.status !== 'deleted').length > 0;
+  const fileCount = files ? Object.values(files.files).filter((file) => file.status !== 'deleted').length : 0;
+  const latestLog = sandbox.logs[sandbox.logs.length - 1] || '';
+
+  useEffect(() => {
+    if (sandbox.status === 'error') {
+      onViewChange('console');
+    }
+  }, [onViewChange, sandbox.status]);
 
   return (
     <div
@@ -193,6 +196,37 @@ export function V0RightPanel({
         </div>
 
         <div className="flex-1" />
+
+        {hasFiles && (
+          <div className="h-7 min-w-0 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-bg)] p-0.5 flex items-center gap-0.5 overflow-x-auto">
+            {WORKSPACE_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeView === tab.id;
+              const hasConsoleIssue = tab.id === 'console' && sandbox.status === 'error';
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onViewChange(tab.id)}
+                  className={cn(
+                    'h-6 px-2.5 rounded-[5px] inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors shrink-0',
+                    isActive
+                      ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
+                      : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]',
+                    hasConsoleIssue && !isActive && 'text-[var(--app-danger)]',
+                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden xl:inline">{tab.label}</span>
+                  {hasConsoleIssue && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--app-danger)]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Actions */}
         {hasFiles && (
@@ -276,8 +310,8 @@ export function V0RightPanel({
         )}
       </div>
 
-      {/* Split Content: Preview (top) + Code (bottom) — always visible when files exist */}
-      <div ref={containerRef} className="flex-1 min-h-0 flex flex-col">
+      {/* Content */}
+      <div className="flex-1 min-h-0 flex flex-col">
         {!hasFiles ? (
           /* Empty state — no files generated yet */
           <div className="flex-1 flex items-center justify-center text-center p-8">
@@ -290,43 +324,99 @@ export function V0RightPanel({
             </div>
           </div>
         ) : (
-          <>
-            {/* PREVIEW — top section (55% default) */}
-            <div
-              className="min-h-0 overflow-hidden"
-              style={{ flex: `${splitPos} 1 0` }}
-            >
-              <EnhancedPreviewPane
-                height="100%"
-                className="h-full border-0 rounded-none"
-                chromeless
-                sandboxUrl={sandbox.previewUrl}
-                sandboxError={sandbox.error}
-                onRefresh={handleRefresh}
-              />
-            </div>
-
-            {/* Resize Handle */}
-            <div
-              className="h-2 shrink-0 flex items-center justify-center cursor-row-resize group hover:bg-[var(--app-accent)]/10 transition-colors relative"
-              onMouseDown={handleMouseDown}
-            >
-              <div className="w-8 h-1 rounded-full bg-[var(--app-border)] group-hover:bg-[var(--app-accent)]/40 transition-colors" />
-            </div>
-
-            {/* CODE — bottom section (45% default) */}
-            <div
-              className="min-h-0 overflow-hidden border-t border-[var(--app-border)]"
-              style={{ flex: `${100 - splitPos} 1 0` }}
-            >
+          activeView === 'code' ? (
+            <div className="flex-1 min-h-0 overflow-hidden">
               <WorkspaceEditor
                 editorView="code"
+                showToolbar={false}
+                showFileTree={false}
                 onEditorViewChange={(view) => onViewChange(view as V0RightView)}
               />
             </div>
-          </>
+          ) : activeView === 'files' ? (
+            <WorkspaceFileTree view="explorer" width={360} />
+          ) : activeView === 'console' ? (
+            <DockerConsole
+              status={sandbox.status}
+              error={sandbox.error}
+              logs={sandbox.logs}
+              latestLog={latestLog}
+              onRetry={handleRefresh}
+            />
+          ) : activeView === 'connections' ? (
+            <WorkspaceConnectionsPanel />
+          ) : activeView === 'visual' ? (
+            <VisualEditor className="h-full" />
+          ) : activeView === 'schema' ? (
+            <SchemaGenerator />
+          ) : (
+            <EnhancedPreviewPane
+              height="100%"
+              className="flex-1 min-h-0 border-0 rounded-none"
+              chromeless
+              sandboxUrl={sandbox.previewUrl}
+              sandboxError={sandbox.error}
+              onRefresh={handleRefresh}
+            />
+          )
         )}
       </div>
+      {hasFiles && activeView === 'code' && (
+        <div className="h-7 shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)] px-3 flex items-center gap-2 text-[10px] text-[var(--app-text-dim)]">
+          <span>{fileCount} files</span>
+          <span>·</span>
+          <span className="truncate">{activeFilePath || 'No file selected'}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DockerConsole({
+  status,
+  error,
+  logs,
+  latestLog,
+  onRetry,
+}: {
+  status: ReturnType<typeof useSandbox>['status'];
+  error: string | null;
+  logs: string[];
+  latestLog: string;
+  onRetry: () => void;
+}) {
+  const hasError = status === 'error' || !!error;
+  return (
+    <div className="flex-1 min-h-0 bg-[var(--app-bg)] flex flex-col">
+      <div className="h-10 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)] px-3 flex items-center gap-2">
+        {hasError ? (
+          <AlertTriangle className="h-4 w-4 text-[var(--app-danger)]" />
+        ) : status === 'installing' || status === 'creating' ? (
+          <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
+        ) : (
+          <Terminal className="h-4 w-4 text-[var(--app-text-dim)]" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-[12px] font-semibold text-[var(--app-text)]">
+            {hasError ? 'Preview failed' : status === 'running' ? 'Preview running' : 'Preview console'}
+          </p>
+          <p className="truncate text-[10px] text-[var(--app-text-dim)]">
+            {error || latestLog || 'Docker output appears here while the preview starts.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="h-7 rounded-[6px] border border-[var(--app-border)] px-2.5 text-[11px] font-medium text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+
+      <pre className="flex-1 min-h-0 overflow-auto whitespace-pre-wrap break-words p-4 text-[11px] leading-5 font-mono text-[var(--app-text-muted)]">
+        {error ? `${error}\n\n` : ''}
+        {logs.length > 0 ? logs.join('\n') : 'No Docker logs yet.'}
+      </pre>
     </div>
   );
 }
