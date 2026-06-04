@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
-import { checkIPRateLimit } from '@/lib/server/plan-enforcement';
+import { checkRateLimit } from '@/lib/server/plan-enforcement';
 import { AGENT_TOOLS, executeToolCall, type ToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
 import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
@@ -67,15 +67,6 @@ function ssePing(): string {
 
 // ── POST ─────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Per-IP rate limit — catches anonymous abuse before auth
-  const ipCheck = checkIPRateLimit(req);
-  if (!ipCheck.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests from this IP' },
-      { status: 429, headers: { 'Retry-After': String(ipCheck.retryAfter || 60) } },
-    );
-  }
-
   const auth = await requireUser(req);
   if (auth.errorResponse) return auth.errorResponse;
 

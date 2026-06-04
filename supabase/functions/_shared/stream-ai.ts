@@ -46,7 +46,7 @@ export function createSSEStream(opts: StreamAIOptions): ReadableStream {
     baseUrl,
     apiKey,
     temperature = 0.7,
-    maxTokens = 16384,
+    maxTokens = 4096,
     supabase,
     user,
     threadId,
@@ -79,11 +79,7 @@ export function createSSEStream(opts: StreamAIOptions): ReadableStream {
             temperature,
             max_tokens: maxTokens,
           }),
-          // Deno Edge Functions have ~150s wall clock.
-          // 120s gives breathing room before Deno kills us, while
-          // still being shorter than the container timeout so we can
-          // write a clean error instead of dropping mid-stream.
-          signal: AbortSignal.timeout(120_000),
+          signal: AbortSignal.timeout(55_000),
         });
 
         if (!aiResponse.ok) {
@@ -112,25 +108,16 @@ export function createSSEStream(opts: StreamAIOptions): ReadableStream {
         let assistantBuffer = '';
         let usage: { input_tokens?: number; output_tokens?: number } | null = null;
 
-        // Heartbeat: ping every 15s to keep host LB (Caddy/Hostinger) from
-        // closing the SSE stream during long silent periods (model thinking).
-        const heartbeat = setInterval(() => {
-          if (!cancelled) {
-            try { controller.enqueue(encoder.encode(': ping\n\n')); } catch {}
+        while (true) {
+          if (cancelled) break;
+          const { done, value } = await reader.read();
+
+          if (done) {
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            break;
           }
-        }, 15_000);
 
-        try {
-          while (true) {
-            if (cancelled) break;
-            const { done, value } = await reader.read();
-
-            if (done) {
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-              break;
-            }
-
-            buffer += decoder.decode(value, { stream: true });
+          buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
 
@@ -161,11 +148,6 @@ export function createSSEStream(opts: StreamAIOptions): ReadableStream {
               }
             }
           }
-        }
-
-          }
-        } finally {
-          clearInterval(heartbeat);
         }
 
         controller.close();

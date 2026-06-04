@@ -62,12 +62,17 @@ export function EnhancedPreviewPane({
   }, [onRefresh, setLastError]);
 
   useEffect(() => {
-    if (!isGenerating && wasGeneratingRef.current && hasFiles) {
-      setShowTransition(true);
-      const timer = setTimeout(() => setShowTransition(false), 1200);
-      return () => clearTimeout(timer);
-    }
+    const wasGenerating = wasGeneratingRef.current;
     wasGeneratingRef.current = isGenerating;
+
+    if (!isGenerating && wasGenerating && hasFiles) {
+      const startTimer = setTimeout(() => setShowTransition(true), 0);
+      const endTimer = setTimeout(() => setShowTransition(false), 1200);
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(endTimer);
+      };
+    }
   }, [isGenerating, hasFiles]);
 
   return (

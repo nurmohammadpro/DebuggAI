@@ -1,13 +1,12 @@
 /**
- * Save Generated Code API — with auto-git-branch
+ * Save Generated Code API
  *
- * Persists code to both generations table AND project_files table.
- * Auto-commits changes to a git branch named after the conversation thread.
+ * Auto-saves the latest generated code to the generations table
+ * so the workspace can restore file tree and preview on project reopen.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
-import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,15 +25,13 @@ export async function POST(
     description?: string;
     stack?: string;
     metadata?: Record<string, unknown>;
-    threadId?: string;
-    files?: Record<string, string>;
   };
 
-  if (!body || (typeof body.code !== 'string' && !body.files)) {
-    return NextResponse.json({ error: 'code or files field is required' }, { status: 400 });
+  if (!body || typeof body.code !== 'string') {
+    return NextResponse.json({ error: 'code field is required' }, { status: 400 });
   }
 
-  // ── Save to generations table (backward compatible) ──────────────────
+  // Get the current max version
   const { data: latest } = await auth.supabase
     .from('generations')
     .select('version')
@@ -45,14 +42,12 @@ export async function POST(
 
   const nextVersion = (latest?.version || 0) + 1;
 
-  const code = body.code || serializeFiles(body.files || {});
-
   const { error } = await auth.supabase
     .from('generations')
     .insert({
       user_id: auth.user!.id,
       project_id: id,
-      code,
+      code: body.code,
       version: nextVersion,
       description: body.description || null,
       prompt: body.prompt || null,
@@ -64,48 +59,5 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // ── Save to project_files table (per-file persistence) ──────────────────
-  if (body.files) {
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (serviceKey) {
-        const admin = createClient(supabaseUrl, serviceKey);
-        for (const [path, content] of Object.entries(body.files)) {
-          await admin.from('project_files').upsert({
-            project_id: id,
-            path,
-            content,
-            language: detectLanguage(path),
-            status: 'modified',
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'project_id,path' });
-        }
-      }
-    } catch {
-      // Best-effort — generations table is the primary persistence
-    }
-  }
-
   return NextResponse.json({ ok: true, version: nextVersion });
-}
-
-function serializeFiles(files: Record<string, string>): string {
-  return Object.entries(files)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([path, content]) => {
-      const lang = detectLanguage(path);
-      return `// File: ${path}\n\`\`\`${lang}\n${content}\n\`\`\`\n`;
-    })
-    .join('\n');
-}
-
-function detectLanguage(path: string): string {
-  const ext = path.split('.').pop()?.toLowerCase() || '';
-  const map: Record<string, string> = {
-    tsx: 'tsx', ts: 'ts', jsx: 'jsx', js: 'js',
-    css: 'css', scss: 'scss', html: 'html', json: 'json',
-    md: 'markdown', mdx: 'mdx', svg: 'svg',
-  };
-  return map[ext] || '';
 }

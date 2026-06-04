@@ -77,6 +77,14 @@ interface ChatMessage {
   toolCallId?: string;
 }
 
+interface ServerChatMessage {
+  id: string;
+  role: string;
+  content?: string | null;
+  created_at?: string | null;
+  metadata?: unknown;
+}
+
 interface ToolCall {
   id: string;
   name: string;
@@ -672,7 +680,7 @@ export function EnhancedChatPanel({
     });
     if (!res.ok) return;
     const j = await res.json().catch(() => ({}));
-    const list = (j?.messages || []) as Array<any>;
+    const list = (j?.messages || []) as ServerChatMessage[];
 
     const serverMessages: ChatMessage[] = list.map((m) => {
       const content = String(m.content || '');
