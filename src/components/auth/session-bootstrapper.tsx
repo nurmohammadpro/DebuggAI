@@ -9,7 +9,7 @@ import type {
 } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore, type PlanType } from '@/store/session-store';
-import { setCachedSession } from '@/hooks/use-session';
+import { setCachedSession as setCachedSessionFn } from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
 import { csrfHeader } from '@/lib/csrf-client';
 import {
@@ -172,20 +172,29 @@ export function SessionBootstrapper() {
       }
     };
 
-    // onAuthStateChange fires synchronously with the current session on subscribe,
-    // so we don't need a separate getSession() call that would race with it.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
-      setCachedSession(session);
-      await handleSession(session);
-    });
+    // Check if Supabase is available before subscribing
+    try {
+      // onAuthStateChange fires synchronously with the current session on subscribe,
+      // so we don't need a separate getSession() call that would race with it.
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+        setCachedSessionFn(session);
+        await handleSession(session);
+      });
 
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-      unsubscribeCredits();
-    };
+      return () => {
+        active = false;
+        subscription.unsubscribe();
+        unsubscribeCredits();
+      };
+    } catch (error) {
+      // Supabase env vars are missing or client failed to initialize
+      console.warn('[SessionBootstrapper] Supabase not available, skipping auth setup', error);
+      return () => {
+        active = false;
+      };
+    }
   }, []);
 
   return null;
