@@ -6,6 +6,37 @@ import { generateCsrfToken, getCsrfCookieHeader, validateCsrfToken, requiresCsrf
 const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/verify-email', '/auth/callback'];
 const PUBLIC_PREFIXES = ['/api/', '/_next/', '/favicon.ico'];
 
+function buildContentSecurityPolicy(appOrigin: string): string {
+  return [
+    "default-src 'self'",
+    // Next.js + Monaco need eval/inline during the editor runtime.
+    // Monaco workers are created from blob: URLs and load worker scripts from jsDelivr.
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
+    "script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+    "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    [
+      "connect-src 'self'",
+      'https://*.supabase.co',
+      'https://api.deepseek.com',
+      'https://api.openai.com',
+      'https://api.anthropic.com',
+      'https://static.cloudflareinsights.com',
+      'https://cloudflareinsights.com',
+      'https://*.cloudflareinsights.com',
+      'https://cdn.jsdelivr.net',
+      'ws://localhost:*',
+      'wss://*.supabase.co',
+    ].join(' '),
+    "worker-src 'self' blob:",
+    `frame-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
+    `child-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
+    "frame-ancestors 'self'",
+  ].join('; ');
+}
+
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -38,25 +69,10 @@ export async function proxy(request: NextRequest) {
   // Content-Security-Policy
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const appOrigin = appUrl ? new URL(appUrl).origin : '';
+  const contentSecurityPolicy = buildContentSecurityPolicy(appOrigin);
 
-  response.headers.set(
-    'Content-Security-Policy',
-    [
-      "default-src 'self'",
-      // Monaco requires 'unsafe-eval' and blob: workers. Cloudflare Insights uses static.cloudflareinsights.com.
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
-      "script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-      "img-src 'self' data: https:",
-      "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com https://static.cloudflareinsights.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net",
-      "worker-src 'self' blob:",
-      `frame-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
-      `child-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
-      "frame-ancestors 'self'",
-    ].join('; ')
-  );
+  response.headers.set('Content-Security-Policy', contentSecurityPolicy);
+  response.headers.set('Content-Security-Policy-Report-Only', contentSecurityPolicy);
 
   // Set CSRF token cookie on every response that doesn't already have one.
   // The client reads this cookie and sends it back as an X-CSRF-Token header on
