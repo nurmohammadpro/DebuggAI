@@ -17,7 +17,7 @@ export function Logo({ className = '' }: { className?: string }) {
     <Image
       src={src}
       alt="DeBuggAI"
-      width={120}
+      width={24}
       height={24}
       className={className}
       priority

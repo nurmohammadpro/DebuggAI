@@ -23,10 +23,6 @@ import {
   Settings,
   Search,
   MessageSquare,
-  Pin,
-  PinOff,
-  Clock,
-  Bell,
   FolderKanban,
   GripVertical,
 } from 'lucide-react';
@@ -37,26 +33,26 @@ import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNowStrict } from 'date-fns';
 
+interface WorkspaceSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
 /**
- * Fully enhanced workspace sidebar — P1, P2, P3 features:
+ * Workspace sidebar — v0-style single sidebar.
  *
- * P1: Conversation history, project context section, command palette
- * P2: Drag-to-reorder nav, notification badges, width drag-resize
- * P3: Collapse animation, last-active timestamps, search bar
+ * Hidden by default. When opened, it shows navigation, recent items,
+ * and can be collapsed with the button beside the logo.
  */
-export function WorkspaceSidebar() {
+export function WorkspaceSidebar({ isOpen, onClose }: WorkspaceSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useSessionStore();
   const { resolvedTheme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const [locked, setLocked] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(220);
-  const hoverRef = useRef(false);
-  const touchStartX = useRef(0);
   const [showSecondary, setShowSecondary] = useState(false);
+  const touchStartX = useRef(0);
   const [sidebarSearch, setSidebarSearch] = useState('');
 
   // ── Data ──
@@ -145,8 +141,6 @@ export function WorkspaceSidebar() {
   );
 
   const credits = user?.credits;
-  const effectiveExpanded = expanded || locked;
-  const finalWidth = effectiveExpanded ? sidebarWidth : 48;
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
@@ -154,7 +148,6 @@ export function WorkspaceSidebar() {
       if (!e.metaKey && !e.ctrlKey) return;
       switch (e.key.toLowerCase()) {
         case 'b': e.preventDefault(); if (activeProjectId) router.push(`/dashboard?project=${activeProjectId}`); break;
-        case '\\': e.preventDefault(); setLocked(l => !l); break;
         case 'h': e.preventDefault(); router.push('/dashboard/home'); break;
         case 'k': e.preventDefault(); setSidebarSearch(''); break;
       }
@@ -174,56 +167,14 @@ export function WorkspaceSidebar() {
   // ── Escape ──
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setMobileOpen(false); setLocked(false); }
+      if (e.key === 'Escape') {
+        setMobileOpen(false);
+        onClose();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  // ── Width drag-resize ──
-  const resizeRef = useRef<{ startX: number; startWidth: number; dragging: boolean }>({
-    startX: 0, startWidth: 220, dragging: false,
-  });
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    resizeRef.current = { startX: e.clientX, startWidth: sidebarWidth, dragging: true };
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  };
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (!resizeRef.current.dragging) return;
-      const dx = e.clientX - resizeRef.current.startX;
-      setSidebarWidth(Math.max(160, Math.min(400, resizeRef.current.startWidth + dx)));
-    };
-    const onUp = () => {
-      if (resizeRef.current.dragging) {
-        resizeRef.current.dragging = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        try { localStorage.setItem('debuggai.sidebar.width', String(sidebarWidth)); } catch {}
-      }
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, [sidebarWidth]);
-
-  // Load saved width
-  useEffect(() => {
-    try {
-      const w = localStorage.getItem('debuggai.sidebar.width');
-      if (w) setSidebarWidth(Math.max(160, Math.min(400, Number(w))));
-    } catch {}
-  }, []);
-
-  // ── Desktop: hover-to-preview, click-to-lock ──
-  const handleMouseEnter = () => { hoverRef.current = true; if (!locked) setExpanded(true); };
-  const handleMouseLeave = () => {
-    hoverRef.current = false;
-    if (!locked) setTimeout(() => { if (!hoverRef.current && !locked) setExpanded(false); }, 150);
-  };
+  }, [onClose]);
 
   // ══════════════════════════════════════════════════════════════════════
   //  MOBILE DRAWER
@@ -304,89 +255,80 @@ export function WorkspaceSidebar() {
   // ══════════════════════════════════════════════════════════════════════
   const desktopRail = (
     <div
-      className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-[var(--app-panel)] border-r border-[var(--app-border)] select-none transition-all duration-200 ease-out"
-      style={{ width: finalWidth }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}>
+      className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 w-72 flex-col bg-[var(--app-panel)] border-r border-[var(--app-border)] select-none">
       {/* Logo */}
       <div className="h-16 flex items-center shrink-0 border-b border-[var(--app-border)] overflow-hidden px-2">
         <Link href="/dashboard/home" className="flex items-center rounded-md hover:bg-[var(--app-surface)] transition-all duration-150"
-          style={{ padding: effectiveExpanded ? '6px 10px' : '6px' }}>
+          style={{ padding: '6px 10px' }}>
           <div className="w-8 h-8 rounded-lg bg-[var(--ds-green)] flex items-center justify-center shrink-0 shadow-sm"><span className="text-[12px] font-black text-white">D</span></div>
-          {effectiveExpanded && (
-            <div className="ml-3 overflow-hidden transition-opacity duration-200">
-              <span className="text-sm font-bold text-[var(--app-text)] whitespace-nowrap">DeBuggAI</span>
-              <span className="block text-[10px] text-[var(--app-text-dim)] -mt-0.5">Workspace</span>
-            </div>
-          )}
+          <div className="ml-3 overflow-hidden transition-opacity duration-200">
+            <span className="text-sm font-bold text-[var(--app-text)] whitespace-nowrap">DeBuggAI</span>
+            <span className="block text-[10px] text-[var(--app-text-dim)] -mt-0.5">Workspace</span>
+          </div>
         </Link>
-        {effectiveExpanded && (
-          <button onClick={e => { e.stopPropagation(); setLocked(l => !l); }}
-            className="ml-auto w-7 h-7 rounded-md flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150 shrink-0"
-            title={locked ? 'Unpin sidebar' : 'Pin sidebar'}>
-            {locked ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4 rotate-45" />}
-          </button>
-        )}
+        <button
+          onClick={onClose}
+          className="ml-auto w-7 h-7 rounded-md flex items-center justify-center text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150 shrink-0"
+          title="Collapse sidebar"
+          aria-label="Collapse sidebar"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Quick action + search */}
-      <div className={cn('shrink-0 border-b border-[var(--app-border)] transition-all duration-200',
-        effectiveExpanded ? 'px-3 py-3 space-y-2' : 'px-1.5 py-3')}>
+      <div className="shrink-0 border-b border-[var(--app-border)] px-3 py-3 space-y-2">
         <Link href="/dashboard?create=1" className={cn(
           'flex items-center rounded-lg bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 active:scale-95 shadow-sm hover:shadow-md',
-          effectiveExpanded ? 'gap-2.5 px-3 py-2.5 text-[12px] font-semibold w-full justify-start' : 'w-10 h-10 mx-auto justify-center')}
-          title={effectiveExpanded ? undefined : 'New Project'}>
+          'gap-2.5 px-3 py-2.5 text-[12px] font-semibold w-full justify-start')}
+          title="New Project">
           <Plus className="h-4 w-4 shrink-0" />
-          {effectiveExpanded && 'New Project'}
+          New Project
         </Link>
         {/* Search bar (P3) */}
-        {effectiveExpanded && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--app-text-dim)]" />
-            <input value={sidebarSearch} onChange={e => setSidebarSearch(e.target.value)}
-              placeholder="Search..." className="w-full h-9 rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] pl-9 pr-8 text-[12px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--ds-green)]/50 focus:ring-1 focus:ring-[var(--ds-green)]/20 transition-all" />
-            {sidebarSearch && (
-              <button onClick={() => setSidebarSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-        )}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--app-text-dim)]" />
+          <input value={sidebarSearch} onChange={e => setSidebarSearch(e.target.value)}
+            placeholder="Search..." className="w-full h-9 rounded-md bg-[var(--app-surface)] border border-[var(--app-border)] pl-9 pr-8 text-[12px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--ds-green)]/50 focus:ring-1 focus:ring-[var(--ds-green)]/20 transition-all" />
+          {sidebarSearch && (
+            <button onClick={() => setSidebarSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-2 px-1.5 space-y-0.5 overflow-hidden overflow-y-auto">
         {/* Primary nav */}
         {filteredPrimary.map(item => (
-          <NavLinkDesktop key={item.key} item={item} expanded={effectiveExpanded}
-            onDragStart={effectiveExpanded ? (e) => handleDragStart(e, item.key) : undefined}
-            onDragOver={effectiveExpanded ? (e) => handleDragOverSlot(e, item.key) : undefined}
-            onDrop={effectiveExpanded ? (e) => handleDrop(e, item.key) : undefined}
+          <NavLinkDesktop key={item.key} item={item} expanded={true}
+            onDragStart={(e) => handleDragStart(e, item.key)}
+            onDragOver={(e) => handleDragOverSlot(e, item.key)}
+            onDrop={(e) => handleDrop(e, item.key)}
             isDragOver={dragOver === item.key} isDragging={dragging === item.key}
-            showGrip={effectiveExpanded} />
+            showGrip={true} />
         ))}
 
         {/* Separator */}
         <div className="px-1.5 pt-3 pb-1">
-          {effectiveExpanded ? (
-            <button onClick={() => setShowSecondary(!showSecondary)}
-              className="flex items-center gap-2 w-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
-              Tools {showSecondary ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
-            </button>
-          ) : <div className="h-px bg-[var(--app-border)]" />}
+          <button onClick={() => setShowSecondary(!showSecondary)}
+            className="flex items-center gap-2 w-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
+            Tools {showSecondary ? <ChevronUp className="h-3 w-3 ml-auto" /> : <ChevronDown className="h-3 w-3 ml-auto" />}
+          </button>
         </div>
 
         {showSecondary && filteredSecondary.map(item => (
-          <NavLinkDesktop key={item.key} item={item} expanded={effectiveExpanded}
-            onDragStart={effectiveExpanded ? (e) => handleDragStart(e, item.key) : undefined}
-            onDragOver={effectiveExpanded ? (e) => handleDragOverSlot(e, item.key) : undefined}
-            onDrop={effectiveExpanded ? (e) => handleDrop(e, item.key) : undefined}
+          <NavLinkDesktop key={item.key} item={item} expanded={true}
+            onDragStart={(e) => handleDragStart(e, item.key)}
+            onDragOver={(e) => handleDragOverSlot(e, item.key)}
+            onDrop={(e) => handleDrop(e, item.key)}
             isDragOver={dragOver === item.key} isDragging={dragging === item.key}
-            showGrip={effectiveExpanded} />
+            showGrip={true} />
         ))}
 
         {/* ── Project context (P1) ── */}
-        {effectiveExpanded && currentProject && (
+        {currentProject && (
           <div className="mt-3 pt-3 border-t border-[var(--app-border)]">
             <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--app-text-dim)] flex items-center gap-1.5">
               <FolderKanban className="h-3 w-3" /> Project
@@ -407,7 +349,7 @@ export function WorkspaceSidebar() {
         )}
 
         {/* ── Recent threads (P1) ── */}
-        {effectiveExpanded && recentThreads.length > 0 && (
+        {recentThreads.length > 0 && (
           <div className={cn('pt-4', !currentProject && 'mt-4 border-t border-[var(--app-border)]')}>
             <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[var(--app-text-dim)] flex items-center gap-1.5">
               <History className="h-3.5 w-3.5" /> Recent
@@ -431,28 +373,18 @@ export function WorkspaceSidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className={cn('border-t border-[var(--app-border)] py-3 space-y-1 shrink-0',
-        effectiveExpanded ? 'px-2' : 'flex flex-col items-center px-1')}>
-        <div className={cn('flex items-center text-[var(--app-text-muted)] rounded-lg transition-all duration-150',
-          effectiveExpanded ? 'gap-3 px-3 py-2 text-[12px] hover:bg-[var(--app-surface)]' : 'justify-center w-10 h-10 mx-auto')}>
-          <Zap className={cn('shrink-0', effectiveExpanded ? 'h-4 w-4' : 'h-5 w-5', 'text-[var(--app-text-dim)]')} />
-          {effectiveExpanded && <span className="truncate font-medium">{credits === -1 ? 'Unlimited' : `${credits ?? 0} credits`}</span>}
+      <div className="border-t border-[var(--app-border)] py-3 px-2 space-y-1 shrink-0">
+        <div className="flex items-center text-[var(--app-text-muted)] rounded-lg transition-all duration-150 gap-3 px-3 py-2 text-[12px] hover:bg-[var(--app-surface)]">
+          <Zap className="shrink-0 h-4 w-4 text-[var(--app-text-dim)]" />
+          <span className="truncate font-medium">{credits === -1 ? 'Unlimited' : `${credits ?? 0} credits`}</span>
         </div>
         <button onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className={cn('rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150',
-            effectiveExpanded ? 'flex items-center gap-3 px-3 py-2 w-full text-[12px] font-medium' : 'flex items-center justify-center w-10 h-10 mx-auto')}>
+          className="rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150 flex items-center gap-3 px-3 py-2 w-full text-[12px] font-medium">
           {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {effectiveExpanded && (resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode')}
+          {resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
         </button>
-        <div className={effectiveExpanded ? 'px-3 py-2' : 'flex justify-center w-10 h-10 mx-auto'}><WorkspaceAccountMenu /></div>
+        <div className="px-3 py-2"><WorkspaceAccountMenu /></div>
       </div>
-
-      {/* ── Resize handle (P2) ── */}
-      {effectiveExpanded && (
-        <div onMouseDown={handleResizeMouseDown}
-          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-[var(--ds-green)]/30 transition-colors duration-150 z-50"
-          title="Drag to resize sidebar" />
-      )}
     </div>
   );
 
@@ -464,7 +396,7 @@ export function WorkspaceSidebar() {
         onClick={() => setMobileOpen(true)} aria-label="Open menu">
         <PanelLeft className="w-5 h-5" />
       </button>
-      {desktopRail}
+      {isOpen && desktopRail}
       {mobileDrawer}
     </>
   );
