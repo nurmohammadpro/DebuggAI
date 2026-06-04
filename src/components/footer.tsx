@@ -3,7 +3,7 @@
  */
 
 import Link from 'next/link';
-import { Logo } from '@/components/logo';
+import { BrandLockup } from '@/components/logo';
 
 export function Footer() {
   return (
@@ -12,8 +12,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center space-x-2 mb-3">
-              <Logo className="h-6 w-auto" />
+            <Link href="/" className="inline-flex items-center mb-3">
+              <BrandLockup logoClassName="h-6 w-6" textClassName="text-sm" />
             </Link>
             <p className="text-xs text-[var(--app-text-dim)] leading-relaxed max-w-xs">
               AI-powered debugging and web building platform for developers. Ship faster, stress less.

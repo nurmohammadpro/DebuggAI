@@ -13,6 +13,7 @@ import { useGenerationStore } from '@/store/generation-store';
 import { Panel } from '@/components/panel/panel';
 import { useConfirmDialog } from '@/components/admin/confirm-dialog';
 import { useQueryClient } from '@tanstack/react-query';
+import { BrandLockup } from '@/components/logo';
 
 interface UnifiedSidebarProps {
   recentThreads?: ThreadRow[];
@@ -74,8 +75,8 @@ export function UnifiedSidebar({
         {/* Header - v0 style with better visual hierarchy */}
         <div className="h-16 flex items-center justify-between px-3 shrink-0 border-b border-[var(--app-border)]">
           {!collapsed && (
-            <Link href="/dashboard" className="font-bold text-sm text-[var(--app-text)] tracking-tight hover:text-[var(--ds-green)] transition-colors">
-              DeBuggAI
+            <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
+              <BrandLockup logoClassName="h-6 w-6" textClassName="text-sm font-semibold" />
             </Link>
           )}
           {onToggleCollapsed && (

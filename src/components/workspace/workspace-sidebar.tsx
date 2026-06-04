@@ -14,7 +14,6 @@ import {
   Sun,
   Moon,
   X,
-  PanelLeft,
   PanelLeftClose,
   Plus,
   ChevronDown,
@@ -31,6 +30,7 @@ import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-m
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { cn } from '@/lib/utils';
+import { BrandLockup } from '@/components/logo';
 import { formatDistanceToNowStrict } from 'date-fns';
 
 interface WorkspaceSidebarProps {
@@ -59,6 +59,10 @@ export function WorkspaceSidebar({ isOpen, onClose }: WorkspaceSidebarProps) {
   const activeProjectId = searchParams?.get('project') || '';
   const { data: threads = [] } = useMyThreads(10, !!activeProjectId, activeProjectId || null);
   const { data: projects = [] } = useMyProjects(8);
+
+  useEffect(() => {
+    setMobileOpen(isOpen);
+  }, [isOpen]);
 
   // ── Draggable nav order (persisted) ──
   const [navOrder, setNavOrder] = useState<string[]>(() => {
@@ -132,7 +136,6 @@ export function WorkspaceSidebar({ isOpen, onClose }: WorkspaceSidebarProps) {
 
   // ── Recent threads (conversation history) ──
   const recentThreads = useMemo(() => threads.slice(0, 5), [threads]);
-  const recentProjects = useMemo(() => projects.slice(0, 5), [projects]);
 
   // ── Current project context ──
   const currentProject = useMemo(
@@ -196,8 +199,8 @@ export function WorkspaceSidebar({ isOpen, onClose }: WorkspaceSidebarProps) {
         {/* Mobile header */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-[var(--app-border)] shrink-0">
           <Link href="/dashboard/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-lg bg-[var(--ds-green)] flex items-center justify-center shadow-sm"><span className="text-xs font-black text-white">D</span></div>
-            <div><span className="text-sm font-bold text-[var(--app-text)]">DeBuggAI</span><span className="block text-[10px] text-[var(--app-text-dim)]">Workspace</span></div>
+            <BrandLockup logoClassName="h-8 w-8" textClassName="text-sm font-semibold" />
+            <span className="sr-only">Workspace</span>
           </Link>
           <button onClick={() => setMobileOpen(false)} className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-150 active:scale-95"><X className="w-5 h-5" /></button>
         </div>
@@ -260,11 +263,11 @@ export function WorkspaceSidebar({ isOpen, onClose }: WorkspaceSidebarProps) {
       <div className="h-16 flex items-center shrink-0 border-b border-[var(--app-border)] overflow-hidden px-2">
         <Link href="/dashboard/home" className="flex items-center rounded-md hover:bg-[var(--app-surface)] transition-all duration-150"
           style={{ padding: '6px 10px' }}>
-          <div className="w-8 h-8 rounded-lg bg-[var(--ds-green)] flex items-center justify-center shrink-0 shadow-sm"><span className="text-[12px] font-black text-white">D</span></div>
-          <div className="ml-3 overflow-hidden transition-opacity duration-200">
-            <span className="text-sm font-bold text-[var(--app-text)] whitespace-nowrap">DeBuggAI</span>
-            <span className="block text-[10px] text-[var(--app-text-dim)] -mt-0.5">Workspace</span>
-          </div>
+          <BrandLockup
+            className="gap-3"
+            logoClassName="h-8 w-8"
+            textClassName="text-sm font-semibold whitespace-nowrap"
+          />
         </Link>
         <button
           onClick={onClose}
@@ -390,14 +393,8 @@ export function WorkspaceSidebar({ isOpen, onClose }: WorkspaceSidebarProps) {
 
   return (
     <>
-      {/* Mobile hamburger */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--app-panel)] border border-[var(--app-border)] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150 shadow-lg active:scale-95 touch-manipulation"
-        onClick={() => setMobileOpen(true)} aria-label="Open menu">
-        <PanelLeft className="w-5 h-5" />
-      </button>
       {isOpen && desktopRail}
-      {mobileDrawer}
+      {isOpen && mobileDrawer}
     </>
   );
 }

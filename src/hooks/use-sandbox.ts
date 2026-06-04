@@ -41,6 +41,7 @@ export function useSandbox(options: UseSandboxOptions = {}) {
   const createInFlightRef = useRef(false);
   const logsRef = useRef<string[]>([]);
   const logsAbortRef = useRef<AbortController | null>(null);
+  const createTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const update = useCallback((partial: Partial<SandboxState>) => {
     setState((prev) => ({ ...prev, ...partial }));
@@ -49,6 +50,13 @@ export function useSandbox(options: UseSandboxOptions = {}) {
   const appendLog = useCallback((text: string) => {
     logsRef.current = [...logsRef.current, text];
     setState((prev) => ({ ...prev, logs: [...prev.logs, text] }));
+  }, []);
+
+  const clearCreateTimeout = useCallback(() => {
+    if (createTimeoutRef.current) {
+      clearTimeout(createTimeoutRef.current);
+      createTimeoutRef.current = null;
+    }
   }, []);
 
   const connectLogs = useCallback(
@@ -110,12 +118,23 @@ export function useSandbox(options: UseSandboxOptions = {}) {
               } else if (status === 'starting') {
                 update({ status: 'installing', framework: parsed?.framework || null });
               } else if (status === 'running') {
+                clearCreateTimeout();
                 update({ status: 'running', previewUrl: `/preview/${id}` });
                 options.onStatusChange?.('running');
+              } else if (status === 'error') {
+                clearCreateTimeout();
+                update({
+                  status: 'error',
+                  error: typeof parsed?.error === 'string' ? parsed.error : 'Preview failed to start',
+                  previewUrl: null,
+                });
+                options.onStatusChange?.('error');
               } else if (status === 'exited') {
+                clearCreateTimeout();
                 update({
                   status: 'error',
                   error: `Process exited with code ${parsed?.code ?? 'unknown'}`,
+                  previewUrl: null,
                 });
                 options.onStatusChange?.('error');
               }
@@ -124,8 +143,17 @@ export function useSandbox(options: UseSandboxOptions = {}) {
 
             if (eventName === 'ping') {
               if (parsed?.status === 'running') {
+                clearCreateTimeout();
                 update({ status: 'running', previewUrl: `/preview/${id}` });
                 options.onStatusChange?.('running');
+              } else if (parsed?.status === 'error') {
+                clearCreateTimeout();
+                update({
+                  status: 'error',
+                  error: typeof parsed?.error === 'string' ? parsed.error : 'Preview failed to start',
+                  previewUrl: null,
+                });
+                options.onStatusChange?.('error');
               }
               if (typeof parsed?.port === 'number') update({ port: parsed.port });
               return;
@@ -172,7 +200,7 @@ export function useSandbox(options: UseSandboxOptions = {}) {
         options.onStatusChange?.('error');
       }
     },
-    [appendLog, update, options],
+    [appendLog, clearCreateTimeout, update, options],
   );
 
   const createSandbox = useCallback(
@@ -217,11 +245,24 @@ export function useSandbox(options: UseSandboxOptions = {}) {
         update({ id: data.id, status: 'installing', port: data.port });
         options.onStatusChange?.('installing');
 
+        clearCreateTimeout();
+        createTimeoutRef.current = setTimeout(() => {
+          update({
+            status: 'error',
+            error: logsRef.current.length
+              ? `Preview did not become ready in time.\n\nRecent logs:\n${logsRef.current.slice(-20).join('\n')}`
+              : 'Preview did not become ready in time. Check Docker and sandbox logs.',
+            previewUrl: null,
+          });
+          options.onStatusChange?.('error');
+        }, 150000);
+
         // Start listening to logs
         connectLogs(data.id);
 
         return data.id;
       } catch (err: unknown) {
+        clearCreateTimeout();
         const message = err instanceof Error ? err.message : 'Failed to create sandbox';
         update({ status: 'error', error: message, previewUrl: null });
         options.onStatusChange?.('error');
@@ -230,7 +271,7 @@ export function useSandbox(options: UseSandboxOptions = {}) {
         createInFlightRef.current = false;
       }
     },
-    [update, connectLogs, options],
+    [clearCreateTimeout, update, connectLogs, options],
   );
 
   const stopSandbox = useCallback(async () => {
@@ -244,9 +285,10 @@ export function useSandbox(options: UseSandboxOptions = {}) {
       });
     } catch {}
     logsAbortRef.current?.abort();
+    clearCreateTimeout();
     update({ status: 'stopped', previewUrl: null });
     options.onStatusChange?.('stopped');
-  }, [state.id, update, options]);
+  }, [state.id, clearCreateTimeout, update, options]);
 
   const exportZip = useCallback(async () => {
     if (!state.id) return;
@@ -274,8 +316,9 @@ export function useSandbox(options: UseSandboxOptions = {}) {
   useEffect(() => {
     return () => {
       logsAbortRef.current?.abort();
+      clearCreateTimeout();
     };
-  }, []);
+  }, [clearCreateTimeout]);
 
   const clearError = useCallback(() => {
     update({ error: null });

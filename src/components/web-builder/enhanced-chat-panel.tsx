@@ -41,6 +41,7 @@ import { serializeVirtualFiles } from '@/lib/project/virtual-files';
 import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
+import { BRAND_NAME, Logo } from '@/components/logo';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1136,9 +1137,9 @@ export function EnhancedChatPanel({
                 <>
                   <div className="flex items-center gap-1.5">
                     <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[var(--app-surface)] border border-[var(--app-border)]">
-                      <Bot className="h-3 w-3 text-[var(--app-text-muted)]" />
+                      <Logo className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-[10px] font-medium text-[var(--app-text-dim)]">DeBuggAI</span>
+                    <span className="text-[10px] font-medium text-[var(--app-text-dim)]">{BRAND_NAME}</span>
                     {message.status === 'thinking' && (
                       <span className="ml-1 inline-flex items-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
                         Thinking

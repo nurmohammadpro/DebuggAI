@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Menu, Zap } from 'lucide-react';
-import { Logo } from '@/components/logo';
+import { BrandLockup } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
 import { useEffect, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -68,12 +68,11 @@ export function Navigation() {
   return (
     <nav className="navbar w-full">
       <div className="container mx-auto px-4 flex items-center">
-        {/* Logo & Brand - JetBrains Mono font */}
-        <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo flex items-center gap-2.5">
-          <Logo className="h-5 w-auto" />
-          <span className="font-semibold text-base font-mono" style={{ color: 'var(--app-text)' }}>
-            DeBuggAI
-          </span>
+        <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo">
+          <BrandLockup
+            logoClassName="h-6 w-6"
+            textClassName="text-[15px] font-semibold"
+          />
         </Link>
 
         {/* Desktop Nav Links */}

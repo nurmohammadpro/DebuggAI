@@ -23,7 +23,7 @@ import { CommandPalette } from '@/components/dashboard/command-palette';
 import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { getSession } from '@/hooks/use-session';
-import { Logo } from '@/components/logo';
+import { BrandLockup } from '@/components/logo';
 import { Menu } from 'lucide-react';
 
 export function WorkspaceDashboard() {
@@ -32,14 +32,14 @@ export function WorkspaceDashboard() {
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
   const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, currentThreadId } = useGenerationStore();
-  const { recentThreads, recentProjects, openCommandPalette, setOpenCommandPalette } = useDashboardShell();
+  const { openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
   const [rightView, setRightView] = useState<V0RightView>('code');
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [workspaceSidebarOpen, setWorkspaceSidebarOpen] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
-  const [loadingThread, setLoadingThread] = useState(false);
+  const [, setLoadingThread] = useState(false);
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
   const threadBootedRef = useRef<string | null>(null);
@@ -50,7 +50,7 @@ export function WorkspaceDashboard() {
   const effectiveProjectId = urlProjectId;
   const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
 
-  const { remoteCursors, broadcastCursor } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
+  const { remoteCursors } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
 
   useEffect(() => {
     if (urlProjectId && urlProjectId !== selectedProjectId) {
@@ -239,12 +239,15 @@ export function WorkspaceDashboard() {
       <button
         type="button"
         onClick={() => setWorkspaceSidebarOpen(true)}
-        className="fixed left-3 top-3 z-50 inline-flex items-center gap-2 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)]/95 px-3 py-2 text-[12px] font-medium text-[var(--app-text)] shadow-lg shadow-black/10 backdrop-blur hover:bg-[var(--app-surface)] transition-colors md:left-4 md:top-4"
+        className={`fixed left-3 top-3 z-50 inline-flex items-center gap-2 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)]/95 px-3 py-2 text-[12px] font-medium text-[var(--app-text)] shadow-lg shadow-black/10 backdrop-blur hover:bg-[var(--app-surface)] transition-all md:left-4 md:top-4 ${workspaceSidebarOpen ? 'opacity-0 pointer-events-none -translate-x-2' : 'opacity-100 translate-x-0'}`}
         aria-label="Open workspace sidebar"
         title="Open sidebar"
       >
-        <Logo className="h-5 w-5" />
-        <span className="hidden sm:inline">DeBuggAI</span>
+        <BrandLockup
+          className="gap-2"
+          logoClassName="h-5 w-5"
+          textClassName="hidden text-[12px] font-medium sm:inline"
+        />
         <Menu className="h-4 w-4 text-[var(--app-text-dim)]" />
       </button>
 
