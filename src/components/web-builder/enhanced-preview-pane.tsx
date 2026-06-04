@@ -99,13 +99,12 @@ export function EnhancedPreviewPane({
     // Helper: detect npm packages from import statements
     // Filter out: next (server-side), @/ aliases, empty/self-references
     const SKIP_PACKAGES = new Set([
-      'next',          // server-side framework, cannot run in Sandpack browser
-      'next/router',   // server-side routing
-      'next/navigation', // server-side
-      'next/headers',  // server-side
-      '@',             // @/ path alias, not a real package
-      '@/lib', '@/utils', '@/components', '@/hooks', '@/store', '@/types',
+      'next', 'next/router', 'next/navigation', 'next/headers',
+      '@', '@/lib', '@/utils', '@/components', '@/hooks', '@/store', '@/types',
       '@/styles', '@/assets', '@/app', '@/config', '@/context',
+      // Dev-only / build-time packages — never needed in Sandpack browser
+      'tailwindcss', 'autoprefixer', 'postcss',
+      'typescript', 'tslib', '@types/node', '@types/react', '@types/react-dom',
     ]);
     const PKG_VERSIONS: Record<string, string> = {
       'react': '18.3.1',
@@ -123,6 +122,7 @@ export function EnhancedPreviewPane({
       'recharts': '2.13.3',
       'class-variance-authority': '0.7.1',
     };
+    const DEFAULT_VERSION = '18.3.1'; // React-safe fallback for unknown packages
     const detectDeps = (code: string) => {
       const re = /from\s+['"]([^'"]+)['"]/g;
       let m: RegExpExecArray | null;
@@ -132,8 +132,11 @@ export function EnhancedPreviewPane({
         if (dep.startsWith('.') || dep.startsWith('/') || dep.startsWith('@/')) continue;
         const pkg = dep.startsWith('@') ? dep.split('/').slice(0, 2).join('/') : dep.split('/')[0]!;
         if (!pkg || SKIP_PACKAGES.has(pkg) || SKIP_PACKAGES.has(dep)) continue;
-        if (!deps[pkg]) {
-          deps[pkg] = PKG_VERSIONS[pkg] || '18.3.1'; // default to React version for most packages
+        // Only include packages with known-good versions — prevents
+        // assigning React's version (18.3.1) to unrelated packages
+        // like tailwindcss, postcss, etc.
+        if (PKG_VERSIONS[pkg]) {
+          deps[pkg] = PKG_VERSIONS[pkg];
         }
       }
     };
