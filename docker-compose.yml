@@ -12,9 +12,16 @@ services:
       NODE_ENV: production
       PROJECTS_DIR: /var/lib/debuggai/projects
       SANDBOX_BASE_PORT: "4000"
-      MAX_SANDBOXES: "10"
-      SANDBOX_TIMEOUT_MS: "1800000"
+      MAX_SANDBOXES: "4"
+      MAX_SANDBOXES_PER_USER: "1"
+      SANDBOX_REPLACE_USER_ACTIVE: "true"
+      SANDBOX_TIMEOUT_MS: "900000"
       SANDBOX_DOCKER_IMAGE: node:20-slim
+      SANDBOX_NETWORK: bridge
+      SANDBOX_LIMIT_CPUS: "1.0"
+      SANDBOX_LIMIT_MEMORY: 1024m
+      SANDBOX_MAX_FILES: "80"
+      SANDBOX_MAX_TOTAL_BYTES: "2097152"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/debuggai/projects:/var/lib/debuggai/projects

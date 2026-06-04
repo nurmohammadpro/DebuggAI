@@ -40,11 +40,18 @@ const PROJECTS_DIR =
   process.env.PROJECTS_DIR || path.join(os.tmpdir(), 'debuggai-projects');
 const STATE_FILE = path.join(PROJECTS_DIR, 'sandbox-state.json');
 const BASE_PORT = parseInt(process.env.SANDBOX_BASE_PORT || '4000', 10);
-const MAX_SANDBOXES = parseInt(process.env.MAX_SANDBOXES || '10', 10);
+const MAX_SANDBOXES = parseInt(process.env.MAX_SANDBOXES || '4', 10);
+const MAX_SANDBOXES_PER_USER = parseInt(
+  process.env.MAX_SANDBOXES_PER_USER || '1',
+  10,
+);
+const SANDBOX_REPLACE_USER_ACTIVE =
+  process.env.SANDBOX_REPLACE_USER_ACTIVE !== '0' &&
+  process.env.SANDBOX_REPLACE_USER_ACTIVE !== 'false';
 const DOCKER_IMAGE =
   process.env.SANDBOX_DOCKER_IMAGE || 'node:20-slim';
 const SANDBOX_TIMEOUT_MS = parseInt(
-  process.env.SANDBOX_TIMEOUT_MS || '1800000',
+  process.env.SANDBOX_TIMEOUT_MS || '900000',
   10,
 );
 const SANDBOX_REAPER_INTERVAL_MS = parseInt(
@@ -54,8 +61,20 @@ const SANDBOX_REAPER_INTERVAL_MS = parseInt(
 const SANDBOX_LIMIT_CPUS = process.env.SANDBOX_LIMIT_CPUS || '1.0';
 const SANDBOX_LIMIT_MEMORY = process.env.SANDBOX_LIMIT_MEMORY || '1024m';
 const SANDBOX_LIMIT_PIDS = process.env.SANDBOX_LIMIT_PIDS || '256';
-// Network isolation: restrict sandbox egress to registry + localhost only
-const SANDBOX_NETWORK = process.env.SANDBOX_NETWORK || 'none'; // 'bridge', 'none', or custom network name
+const SANDBOX_MAX_FILES = parseInt(process.env.SANDBOX_MAX_FILES || '80', 10);
+const SANDBOX_MAX_FILE_BYTES = parseInt(
+  process.env.SANDBOX_MAX_FILE_BYTES || `${256 * 1024}`,
+  10,
+);
+const SANDBOX_MAX_TOTAL_BYTES = parseInt(
+  process.env.SANDBOX_MAX_TOTAL_BYTES || `${2 * 1024 * 1024}`,
+  10,
+);
+const SANDBOX_NPM_CACHE_DIR =
+  process.env.SANDBOX_NPM_CACHE_DIR || path.join(PROJECTS_DIR, '.npm-cache');
+// The preview container must have egress during npm install. Use a custom Docker
+// network plus host firewall/proxy if stronger isolation is required in prod.
+const SANDBOX_NETWORK = process.env.SANDBOX_NETWORK || 'bridge'; // 'bridge', 'none', or custom network name
 const SANDBOX_DNS_SERVERS = process.env.SANDBOX_DNS_SERVERS || '8.8.8.8';
 // Egress allowlist: domains sandbox containers can reach (comma-separated)
 const SANDBOX_EGRESS_ALLOWLIST = (process.env.SANDBOX_EGRESS_ALLOWLIST || 'registry.npmjs.org,cdn.jsdelivr.net,unpkg.com').split(',');
@@ -74,6 +93,8 @@ class SandboxManager {
 
   private async _init(): Promise<void> {
     await fs.mkdir(PROJECTS_DIR, { recursive: true });
+    await fs.mkdir(SANDBOX_NPM_CACHE_DIR, { recursive: true });
+    await fs.chmod(SANDBOX_NPM_CACHE_DIR, 0o777).catch(() => {});
     await this.loadState();
     await this.cleanupStale();
 
@@ -91,14 +112,28 @@ class SandboxManager {
   ): Promise<SandboxRecord> {
     await this.init();
     this.assertDockerAvailable();
+    this.validateFiles(files);
 
-    // Enforce per-user limit
-    const userCount = Array.from(this.sandboxes.values()).filter(
-      (s) => s.userId === userId && s.status !== 'stopped',
-    ).length;
-    if (userCount >= MAX_SANDBOXES) {
+    let activeSandboxes = Array.from(this.sandboxes.values()).filter(
+      (s) => s.status !== 'stopped',
+    );
+    const userActiveSandboxes = activeSandboxes.filter((s) => s.userId === userId);
+    if (SANDBOX_REPLACE_USER_ACTIVE) {
+      for (const sandbox of userActiveSandboxes) {
+        await this.stop(sandbox.id).catch(() => {});
+      }
+    } else if (userActiveSandboxes.length >= MAX_SANDBOXES_PER_USER) {
       throw new Error(
-        `Maximum ${MAX_SANDBOXES} concurrent sandboxes reached. Stop an existing one first.`,
+        `Only ${MAX_SANDBOXES_PER_USER} active preview is allowed per user. Stop the current preview first.`,
+      );
+    }
+
+    activeSandboxes = Array.from(this.sandboxes.values()).filter(
+      (s) => s.status !== 'stopped',
+    );
+    if (activeSandboxes.length >= MAX_SANDBOXES) {
+      throw new Error(
+        `Preview capacity is full (${MAX_SANDBOXES} active). Try again in a minute.`,
       );
     }
 
@@ -212,6 +247,37 @@ class SandboxManager {
     }
   }
 
+  private validateFiles(files: Record<string, string>) {
+    const entries = Object.entries(files);
+    if (entries.length > SANDBOX_MAX_FILES) {
+      throw new Error(
+        `Preview is limited to ${SANDBOX_MAX_FILES} files. Export or deploy larger projects instead.`,
+      );
+    }
+
+    let totalBytes = 0;
+    for (const [filePath, content] of entries) {
+      if (typeof content !== 'string') {
+        throw new Error(`Invalid file content for ${filePath}`);
+      }
+
+      const bytes = Buffer.byteLength(content, 'utf-8');
+      if (bytes > SANDBOX_MAX_FILE_BYTES) {
+        throw new Error(
+          `${filePath} is too large for live preview (${Math.ceil(bytes / 1024)} KB).`,
+        );
+      }
+
+      totalBytes += bytes;
+    }
+
+    if (totalBytes > SANDBOX_MAX_TOTAL_BYTES) {
+      throw new Error(
+        `Preview is limited to ${Math.ceil(SANDBOX_MAX_TOTAL_BYTES / 1024 / 1024)} MB of source files.`,
+      );
+    }
+  }
+
   private generateStartScript(): string {
     return `#!/bin/sh
 set -e
@@ -224,11 +290,11 @@ echo "---SANDBOX_INSTALL_START---"
 # 1) root package.json (single app or workspaces)
 # 2) common split repos: client/ + server/
 if [ -f "package.json" ]; then
-  npm install 2>&1
+  npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund 2>&1
 elif [ -f "client/package.json" ]; then
-  (cd client && npm install 2>&1)
+  (cd client && npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund 2>&1)
   if [ -f "server/package.json" ]; then
-    (cd server && npm install 2>&1)
+    (cd server && npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund 2>&1)
   fi
 else
   echo "No package.json found. Nothing to install."
@@ -347,6 +413,7 @@ fi
     // Docker interprets bind mount source paths from the host filesystem,
     // not the container's — so we must translate via docker inspect.
     const hostProjectDir = this.resolveHostPath(projectDir);
+    const hostNpmCacheDir = this.resolveHostPath(SANDBOX_NPM_CACHE_DIR);
 
     // Run Docker container with startup script as main command (no docker exec).
     // This way docker logs -f captures npm install + dev server output.
@@ -364,6 +431,9 @@ fi
       '--dns', SANDBOX_DNS_SERVERS,
       '-p', `${port}:3000`,
       '-v', `${hostProjectDir}:/app`,
+      '-v', `${hostNpmCacheDir}:/npm-cache`,
+      '-e', 'npm_config_cache=/npm-cache',
+      '-e', 'NEXT_TELEMETRY_DISABLED=1',
       '-w', '/app',
       '--restart', 'no',
     ];
