@@ -1,6 +1,5 @@
-export {
-  dynamic,
-  GET,
-  revalidate,
-  runtime,
-} from './[...slug]/route';
+export { GET } from './[...slug]/route';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
