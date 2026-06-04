@@ -9,7 +9,6 @@ import { create } from 'zustand';
 import {
   extractVirtualFiles,
   serializeVirtualFiles,
-  type VirtualFile,
   type VirtualProjectFiles,
 } from '@/lib/project/virtual-files';
 
@@ -72,7 +71,6 @@ interface GenerationState {
   // Reset
   reset: () => void;
   loadFromProject: (code: string, description?: string) => void;
-  loadFromProjectFiles: (files: Record<string, string>, description?: string) => void;
 }
 
 const initialState = {
@@ -208,44 +206,6 @@ export const useGenerationStore = create<GenerationState>()(
           currentVersionId: baseVersion.id,
           // Preserve thread + project context; otherwise the chat panel "resets"
           // when we reload the project code.
-          currentProjectId: state.currentProjectId,
-          currentThreadId: state.currentThreadId,
-        };
-      }),
-
-    loadFromProjectFiles: (flatFiles, description) =>
-      set((state) => {
-        const fileEntries: Record<string, VirtualFile> = {};
-        for (const [path, content] of Object.entries(flatFiles)) {
-          const ext = path.split('.').pop()?.toLowerCase() || '';
-          const langMap: Record<string, string> = {
-            tsx: 'typescript', ts: 'typescript', jsx: 'javascript', js: 'javascript',
-            css: 'css', scss: 'scss', html: 'html', json: 'json', md: 'markdown',
-          };
-          fileEntries[path] = { path, content, status: 'unchanged', language: langMap[ext] };
-        }
-
-        const entryPath = fileEntries['app/page.tsx'] ? 'app/page.tsx'
-          : fileEntries['src/App.tsx'] ? 'src/App.tsx'
-          : Object.keys(fileEntries)[0] || 'app/page.tsx';
-
-        const parsed: VirtualProjectFiles = { entryPath, files: fileEntries };
-
-        const serialized = serializeVirtualFiles(parsed);
-        const baseVersion: CodeVersion = {
-          id: Date.now().toString(),
-          code: serialized,
-          timestamp: Date.now(),
-          description: description || 'Loaded from project_files',
-        };
-        return {
-          ...initialState,
-          currentCode: fileEntries[entryPath]?.content || Object.values(flatFiles)[0] || '',
-          files: parsed,
-          activeFilePath: entryPath,
-          savedSnapshot: serialized,
-          versions: [baseVersion],
-          currentVersionId: baseVersion.id,
           currentProjectId: state.currentProjectId,
           currentThreadId: state.currentThreadId,
         };

@@ -54,11 +54,6 @@ const SANDBOX_REAPER_INTERVAL_MS = parseInt(
 const SANDBOX_LIMIT_CPUS = process.env.SANDBOX_LIMIT_CPUS || '1.0';
 const SANDBOX_LIMIT_MEMORY = process.env.SANDBOX_LIMIT_MEMORY || '1024m';
 const SANDBOX_LIMIT_PIDS = process.env.SANDBOX_LIMIT_PIDS || '256';
-// Network isolation: restrict sandbox egress to registry + localhost only
-const SANDBOX_NETWORK = process.env.SANDBOX_NETWORK || 'none'; // 'bridge', 'none', or custom network name
-const SANDBOX_DNS_SERVERS = process.env.SANDBOX_DNS_SERVERS || '8.8.8.8';
-// Egress allowlist: domains sandbox containers can reach (comma-separated)
-const SANDBOX_EGRESS_ALLOWLIST = (process.env.SANDBOX_EGRESS_ALLOWLIST || 'registry.npmjs.org,cdn.jsdelivr.net,unpkg.com').split(',');
 
 class SandboxManager {
   private sandboxes: Map<string, SandboxRecord> = new Map();
@@ -350,33 +345,25 @@ fi
 
     // Run Docker container with startup script as main command (no docker exec).
     // This way docker logs -f captures npm install + dev server output.
-    // Build Docker run args with network isolation
-    const runArgs = [
-      'docker', 'run', '-d',
-      '--name', containerName,
-      '--cpus', SANDBOX_LIMIT_CPUS,
-      '--memory', SANDBOX_LIMIT_MEMORY,
-      '--pids-limit', SANDBOX_LIMIT_PIDS,
-      '--security-opt', 'no-new-privileges',
-      '--cap-drop', 'ALL',
-      '--tmpfs', '/tmp:rw,nosuid,nodev,size=64m',
-      '--network', SANDBOX_NETWORK,
-      '--dns', SANDBOX_DNS_SERVERS,
-      '-p', `${port}:3000`,
-      '-v', `${hostProjectDir}:/app`,
-      '-w', '/app',
-      '--restart', 'no',
-    ];
-
-    // Egress filtering: if using bridge network, add custom iptables rules
-    // via container labels for external enforcement
-    if (SANDBOX_NETWORK === 'bridge') {
-      runArgs.push('--label', `debuggai.egress=${SANDBOX_EGRESS_ALLOWLIST.join(',')}`);
-    }
-
-    runArgs.push(DOCKER_IMAGE, 'sh', '/app/.start.sh');
-
-    execSync(runArgs.join(' '), { stdio: 'ignore' });
+    execSync(
+      [
+        'docker', 'run', '-d',
+        '--name', containerName,
+        '--cpus', SANDBOX_LIMIT_CPUS,
+        '--memory', SANDBOX_LIMIT_MEMORY,
+        '--pids-limit', SANDBOX_LIMIT_PIDS,
+        '--security-opt', 'no-new-privileges',
+        '--cap-drop', 'ALL',
+        '--tmpfs', '/tmp:rw,nosuid,nodev,size=64m',
+        '-p', `${port}:3000`,
+        '-v', `${hostProjectDir}:/app`,
+        '-w', '/app',
+        '--restart', 'no',
+        DOCKER_IMAGE,
+        'sh', '/app/.start.sh',
+      ].join(' '),
+      { stdio: 'ignore' },
+    );
 
     record.containerId = containerName;
 

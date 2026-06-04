@@ -97,43 +97,14 @@ export function EnhancedPreviewPane({
     };
 
     // Helper: detect npm packages from import statements
-    // Filter out: next (server-side), @/ aliases, empty/self-references
-    const SKIP_PACKAGES = new Set([
-      'next',          // server-side framework, cannot run in Sandpack browser
-      'next/router',   // server-side routing
-      'next/navigation', // server-side
-      'next/headers',  // server-side
-      '@',             // @/ path alias, not a real package
-      '@/lib', '@/utils', '@/components', '@/hooks', '@/store', '@/types',
-      '@/styles', '@/assets', '@/app', '@/config', '@/context',
-    ]);
-    const PKG_VERSIONS: Record<string, string> = {
-      'react': '18.3.1',
-      'react-dom': '18.3.1',
-      'react-router-dom': '6.26.2',
-      'axios': '1.7.7',
-      'lucide-react': '0.460.0',
-      'date-fns': '4.1.0',
-      'framer-motion': '11.11.17',
-      'zustand': '5.0.1',
-      'zod': '3.23.8',
-      'clsx': '2.1.1',
-      'tailwind-merge': '2.6.0',
-      'sonner': '1.7.1',
-      'recharts': '2.13.3',
-      'class-variance-authority': '0.7.1',
-    };
     const detectDeps = (code: string) => {
       const re = /from\s+['"]([^'"]+)['"]/g;
       let m: RegExpExecArray | null;
       while ((m = re.exec(code)) !== null) {
         const dep = m[1];
-        // Skip relative imports and path aliases
-        if (dep.startsWith('.') || dep.startsWith('/') || dep.startsWith('@/')) continue;
-        const pkg = dep.startsWith('@') ? dep.split('/').slice(0, 2).join('/') : dep.split('/')[0]!;
-        if (!pkg || SKIP_PACKAGES.has(pkg) || SKIP_PACKAGES.has(dep)) continue;
-        if (!deps[pkg]) {
-          deps[pkg] = PKG_VERSIONS[pkg] || '18.3.1'; // default to React version for most packages
+        if (!dep.startsWith('.') && !dep.startsWith('/')) {
+          const pkg = dep.split('/')[0]!;
+          if (!deps[pkg]) deps[pkg] = 'latest';
         }
       }
     };
@@ -219,9 +190,8 @@ export function EnhancedPreviewPane({
       }
     }
 
-    // Always include React — Sandpack template requires it
-    deps['react'] = '18.3.1';
-    deps['react-dom'] = '18.3.1';
+    if (!deps['react']) deps['react'] = '^18.3.1';
+    if (!deps['react-dom']) deps['react-dom'] = '^18.3.1';
 
     const template: 'react' | 'react-ts' = isTs ? 'react-ts' : 'react';
     return { sandpackFiles: result, sandpackTemplate: template, dependencies: deps };
