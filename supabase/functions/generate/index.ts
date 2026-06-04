@@ -437,12 +437,11 @@ You have access to tools: list_dir, view_file, write_file, line_replace, search_
 
           const finalText = assistantBuffer.trim();
           if (finalText) {
-            const chatText = extractPlainChatText(finalText);
             await supabase.from('thread_messages').insert({
               thread_id: threadId,
               user_id: user.id,
               role: 'assistant',
-              content: chatText || 'Generated files → code pane',
+              content: finalText,
               model: aiModel,
               tokens_in: usage?.input_tokens ?? null,
               tokens_out: usage?.output_tokens ?? null,

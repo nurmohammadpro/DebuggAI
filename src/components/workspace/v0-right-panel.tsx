@@ -47,8 +47,8 @@ export function V0RightPanel({
   const hasBootedRef = useRef(false);
   const sandboxRef = useRef(sandbox);
   sandboxRef.current = sandbox;
-  // In production the Docker socket is often unavailable. Once we fail,
-  // skip all future sandbox attempts — Sandpack instant preview handles it.
+  // In production the Docker socket may be unavailable. Once a sandbox create
+  // attempt fails, wait for an explicit refresh/run instead of retrying forever.
   const dockerUnavailableRef = useRef(false);
 
   // Split position (percentage for preview, code takes the rest)
@@ -105,7 +105,7 @@ export function V0RightPanel({
 
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
-    if (dockerUnavailableRef.current) return; // Sandpack handles it
+    if (dockerUnavailableRef.current) return;
     if (sandbox.status === 'stopped' || sandbox.status === 'error') {
       if (!files || Object.keys(files.files).length === 0) return;
       const flatFiles: Record<string, string> = {};

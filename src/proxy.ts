@@ -50,10 +50,10 @@ export async function proxy(request: NextRequest) {
       "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com https://static.cloudflareinsights.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net https://*.codesandbox.io",
+      "connect-src 'self' https://*.supabase.co https://api.deepseek.com https://api.openai.com https://api.anthropic.com https://static.cloudflareinsights.com ws://localhost:* wss://*.supabase.co https://cdn.jsdelivr.net",
       "worker-src 'self' blob:",
-      `frame-src 'self' http://localhost:* ${appOrigin} https://*.codesandbox.io blob:`.trim(),
-      `child-src 'self' http://localhost:* ${appOrigin} https://*.codesandbox.io blob:`.trim(),
+      `frame-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
+      `child-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
       "frame-ancestors 'self'",
     ].join('; ')
   );
