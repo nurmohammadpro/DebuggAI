@@ -43,7 +43,8 @@ export async function GET(
   // Build the target path
   const subPath = slug?.length ? '/' + slug.join('/') : '/';
   const search = req.nextUrl.search;
-  const targetUrl = `http://127.0.0.1:${sandbox.port}${subPath}${search}`;
+  const dockerHost = sandboxManager.dockerHostIp;
+  const targetUrl = `http://${dockerHost}:${sandbox.port}${subPath}${search}`;
 
   try {
     const response = await fetch(targetUrl);
@@ -54,13 +55,18 @@ export async function GET(
     if (contentType.includes('text/html')) {
       let body = await response.text();
 
-      // Rewrite asset references to go through our proxy
+      // Rewrite asset references to go through our proxy.
+      // Order matters: _next paths are replaced first, then a generic catch
+      // handles bare absolute paths (src="/...", href="/..."). The generic
+      // catch MUST exclude already-prefixed paths to avoid double-prefixing.
       const publicHost = `/preview/${id}`;
       body = body
         .replace(/\/_next\//g, `${publicHost}/_next/`)
         .replace(/\/__nextjs_original-stack-frame/g, `${publicHost}/__nextjs_original-stack-frame`)
-        // Generic catch for common asset path patterns
-        .replace(/(?<=(?:src|href|srcSet|action)\s*=\s*["'])\/(?=[^/])/g, `${publicHost}/`);
+        .replace(
+          /(?<=(?:src|href|srcSet|action)\s*=\s*["'])\/(?!preview\/)/g,
+          `${publicHost}/`,
+        );
 
       return new NextResponse(body, {
         headers: {

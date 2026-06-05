@@ -108,6 +108,19 @@ export function WorkspaceEditor({
           2
         );
     }
+
+    // When package.json exists but page.tsx is missing (AI often generates
+    // components without the root page), create a fallback page so Next.js
+    // doesn't return 404 for every route. Check both src/app and app layouts.
+    const hasPage = !!(out['app/page.tsx'] || out['src/app/page.tsx'] || out['page.tsx']);
+    const hasLayout = !!(out['app/layout.tsx'] || out['src/app/layout.tsx']);
+    if (!hasPage && hasLayout) {
+      const pageDir = out['src/app/layout.tsx'] ? 'src/app' : 'app';
+      out[`${pageDir}/page.tsx`] =
+        'export default function Page() {\n' +
+        '  return <main className="min-h-screen p-8" />;\n' +
+        '}\n';
+    }
     return out;
   }, [files]);
 

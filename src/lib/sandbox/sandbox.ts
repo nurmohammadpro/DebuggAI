@@ -79,7 +79,42 @@ const SANDBOX_DNS_SERVERS = process.env.SANDBOX_DNS_SERVERS || '8.8.8.8';
 // Egress allowlist: domains sandbox containers can reach (comma-separated)
 const SANDBOX_EGRESS_ALLOWLIST = (process.env.SANDBOX_EGRESS_ALLOWLIST || 'registry.npmjs.org,cdn.jsdelivr.net,unpkg.com').split(',');
 
+/**
+ * Docker host IP address reachable from inside this container.
+ *
+ * When the app runs inside Docker (DinD setup), 127.0.0.1 is the container's own
+ * loopback, not the host's. Published sandbox ports are only reachable through
+ * the Docker bridge gateway IP. This function reads /proc/net/route to discover
+ * the default gateway (= the Docker host) and caches the result.
+ */
+let _dockerHostIp: string | undefined;
+function getDockerHostIp(): string {
+  if (_dockerHostIp) return _dockerHostIp;
+  try {
+    const route = require('fs').readFileSync('/proc/net/route', 'utf8');
+    for (const line of route.split('\n')) {
+      const p = line.trim().split(/\s+/);
+      if (p[0] && p[1] === '00000000' && p[2] && p[2] !== '00000000') {
+        const h = p[2];
+        _dockerHostIp = [
+          parseInt(h.substring(6, 8), 16),
+          parseInt(h.substring(4, 6), 16),
+          parseInt(h.substring(2, 4), 16),
+          parseInt(h.substring(0, 2), 16),
+        ].join('.');
+        return _dockerHostIp;
+      }
+    }
+  } catch {
+    // fall through to 127.0.0.1
+  }
+  _dockerHostIp = '127.0.0.1';
+  return _dockerHostIp;
+}
+
 class SandboxManager {
+  /** Exposed for preview proxy to reach sandbox containers from this container. */
+  readonly dockerHostIp: string = getDockerHostIp();
   private sandboxes: Map<string, SandboxRecord> = new Map();
   private initPromise: Promise<void> | null = null;
   private monitors: Map<string, NodeJS.Timeout> = new Map();
@@ -480,7 +515,7 @@ fi
           // Health check: try to reach the dev server
           try {
             const httpCode = execSync(
-              `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://127.0.0.1:${port} 2>/dev/null || echo ""`,
+              `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${port} 2>/dev/null || echo ""`,
               { timeout: 3000 },
             ).toString().trim();
             if (httpCode && httpCode !== '000') {
