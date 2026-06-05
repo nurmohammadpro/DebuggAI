@@ -563,7 +563,7 @@ export function ProfessionalFileTree({
             node.type === 'folder' && "font-semibold text-[var(--app-text)]",
             node.type === 'file' && "text-[var(--app-text-muted)] hover:text-[var(--app-text)]",
           )}
-          style={{ paddingLeft: `${node.depth * 12 + 8}px` }}
+          style={{ paddingLeft: `${node.depth * 8 + 8}px` }}
           onClick={() => handleNodeClick(node)}
           onContextMenu={(e) => handleContextMenu(e, node)}
           draggable={node.type === 'file'}
@@ -667,15 +667,12 @@ export function ProfessionalFileTree({
 
         {/* Children */}
         {node.type === 'folder' && isExpanded && node.children.length > 0 && (
-          <div
-            className="relative"
-            style={{ marginLeft: `${node.depth * 12 + 20}px` }}
-          >
+          <div className="relative ml-2">
             <div
               className="absolute left-0 top-0 bottom-0 w-px bg-[var(--app-border)]"
               style={{ height: 'calc(100% - 36px)' }}
             />
-            <div className="pl-3">
+            <div>
               {node.children.map(child => renderNode(child))}
             </div>
           </div>

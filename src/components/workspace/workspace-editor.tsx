@@ -109,6 +109,29 @@ export function WorkspaceEditor({
         );
     }
 
+    // Validate Next.js config files — AI sometimes generates a component
+    // whose content gets attributed to next.config.* during file extraction.
+    // Check all three variants (Next.js prefers .mjs > .js > .ts) and fix
+    // any that contain JSX instead of valid Node.js config.
+    const CONFIG_VARIANTS = ['next.config.mjs', 'next.config.js', 'next.config.ts'];
+    const VALID_CONFIG =
+      '/** @type {import("next").NextConfig} */\n' +
+      'const nextConfig = {};\n' +
+      'module.exports = nextConfig;\n';
+    let hasAnyConfig = false;
+    for (const cf of CONFIG_VARIANTS) {
+      if (out[cf]) {
+        hasAnyConfig = true;
+        // If the file starts with < (after whitespace), it's JSX, not a config
+        if (/^\s*</.test(out[cf])) {
+          out[cf] = VALID_CONFIG;
+        }
+      }
+    }
+    if (!hasAnyConfig) {
+      out['next.config.js'] = VALID_CONFIG;
+    }
+
     // When package.json exists but page.tsx is missing (AI often generates
     // components without the root page), create a fallback page so Next.js
     // doesn't return 404 for every route. Check both src/app and app layouts.

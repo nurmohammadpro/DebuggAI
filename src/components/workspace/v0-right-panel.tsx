@@ -329,7 +329,7 @@ export function V0RightPanel({
               <WorkspaceEditor
                 editorView="code"
                 showToolbar={false}
-                showFileTree={false}
+                showFileTree={true}
                 onEditorViewChange={(view) => onViewChange(view as V0RightView)}
               />
             </div>
