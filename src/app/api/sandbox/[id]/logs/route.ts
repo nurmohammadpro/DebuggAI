@@ -68,6 +68,13 @@ export async function GET(
           } else if (line.includes('---SANDBOX_DETECTED:')) {
             const framework = line.split(':')[1]?.replace('---', '') || 'unknown';
             send('status', { status: 'starting', framework });
+          } else if (line.includes('---SANDBOX_BUILD_CHECK_START---')) {
+            send('status', { status: 'build_check' });
+          } else if (line.includes('---SANDBOX_BUILD_CHECK_PASSED---')) {
+            send('status', { status: 'build_check_passed' });
+          } else if (line.includes('---SANDBOX_BUILD_FAILED:')) {
+            const exitCode = line.split(':')[1]?.replace('---', '') || '1';
+            send('status', { status: 'build_failed', exitCode: Number(exitCode) });
           }
         }
       });

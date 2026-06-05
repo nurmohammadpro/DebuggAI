@@ -19,6 +19,8 @@ export interface SandboxState {
   error: string | null;
   framework: string | null;
   port: number | null;
+  buildFailed: boolean;
+  buildErrors: string[];
 }
 
 interface UseSandboxOptions {
@@ -34,6 +36,8 @@ export function useSandbox(options: UseSandboxOptions = {}) {
     error: null,
     framework: null,
     port: null,
+    buildFailed: false,
+    buildErrors: [],
   });
 
   // In React Strict Mode, effects can run twice in dev.
@@ -104,7 +108,16 @@ export function useSandbox(options: UseSandboxOptions = {}) {
 
             if (eventName === 'log') {
               const text = typeof parsed?.text === 'string' ? parsed.text : '';
-              if (text) appendLog(text);
+              if (text) {
+                appendLog(text);
+                // Track build errors from log content
+                if (/error TS\d+|Cannot find module|Module not found|ERR!|Unexpected token|SyntaxError/.test(text)) {
+                  setState((prev) => ({
+                    ...prev,
+                    buildErrors: [...prev.buildErrors, text],
+                  }));
+                }
+              }
               return;
             }
 
@@ -137,6 +150,10 @@ export function useSandbox(options: UseSandboxOptions = {}) {
                   previewUrl: null,
                 });
                 options.onStatusChange?.('error');
+              } else if (status === 'build_check') {
+                setState((prev) => ({ ...prev, buildFailed: false, buildErrors: [] }));
+              } else if (status === 'build_failed') {
+                setState((prev) => ({ ...prev, buildFailed: true }));
               }
               return;
             }

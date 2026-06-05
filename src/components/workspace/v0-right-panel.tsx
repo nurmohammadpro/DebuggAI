@@ -6,8 +6,6 @@ import {
   Container,
   Database,
   Eye,
-  Files,
-  LayoutPanelTop,
   Loader2,
   Maximize2,
   Minimize2,
@@ -28,18 +26,15 @@ import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
 import { cn } from '@/lib/utils';
 import { serializeVirtualFiles } from '@/lib/project/virtual-files';
-import { WorkspaceFileTree } from '@/components/workspace/workspace-file-tree';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
-import { VisualEditor } from '@/components/visual-editor/visual-editor';
 import { SchemaGenerator } from '@/components/schema-generator/schema-generator';
+import { useBuildVerification } from '@/hooks/use-build-verification';
 
 export type V0RightView =
   | 'preview'
   | 'code'
-  | 'files'
   | 'console'
   | 'connections'
-  | 'visual'
   | 'schema';
 
 const WORKSPACE_TABS: Array<{
@@ -49,10 +44,8 @@ const WORKSPACE_TABS: Array<{
 }> = [
   { id: 'preview', label: 'Preview', icon: Eye },
   { id: 'code', label: 'Code', icon: Code2 },
-  { id: 'files', label: 'Files', icon: Files },
   { id: 'console', label: 'Console', icon: Terminal },
   { id: 'connections', label: 'Connect', icon: Plug },
-  { id: 'visual', label: 'Visual', icon: LayoutPanelTop },
   { id: 'schema', label: 'Schema', icon: Database },
 ];
 
@@ -156,6 +149,13 @@ export function V0RightPanel({
   const hasFiles = files && Object.keys(files.files).filter(p => files.files[p]?.status !== 'deleted').length > 0;
   const fileCount = files ? Object.values(files.files).filter((file) => file.status !== 'deleted').length : 0;
   const latestLog = sandbox.logs[sandbox.logs.length - 1] || '';
+  const isBuildError = sandbox.buildFailed && sandbox.buildErrors.length > 0;
+
+  const { isAutoFixing, fixAttempt, triggerAutoFix } = useBuildVerification({
+    onAutoFixComplete: () => {
+      handleRefresh();
+    },
+  });
 
   useEffect(() => {
     if (sandbox.status === 'error') {
@@ -333,8 +333,6 @@ export function V0RightPanel({
                 onEditorViewChange={(view) => onViewChange(view as V0RightView)}
               />
             </div>
-          ) : activeView === 'files' ? (
-            <WorkspaceFileTree view="explorer" width={360} />
           ) : activeView === 'console' ? (
             <DockerConsole
               status={sandbox.status}
@@ -342,11 +340,14 @@ export function V0RightPanel({
               logs={sandbox.logs}
               latestLog={latestLog}
               onRetry={handleRefresh}
+              buildFailed={isBuildError}
+              buildErrors={sandbox.buildErrors}
+              onFixErrors={() => triggerAutoFix(sandbox.buildErrors)}
+              isAutoFixing={isAutoFixing}
+              fixAttempt={fixAttempt}
             />
           ) : activeView === 'connections' ? (
             <WorkspaceConnectionsPanel />
-          ) : activeView === 'visual' ? (
-            <VisualEditor className="h-full" />
           ) : activeView === 'schema' ? (
             <SchemaGenerator />
           ) : (
@@ -378,14 +379,25 @@ function DockerConsole({
   logs,
   latestLog,
   onRetry,
+  buildFailed,
+  buildErrors,
+  onFixErrors,
+  isAutoFixing,
+  fixAttempt,
 }: {
   status: ReturnType<typeof useSandbox>['status'];
   error: string | null;
   logs: string[];
   latestLog: string;
   onRetry: () => void;
+  buildFailed?: boolean;
+  buildErrors?: string[];
+  onFixErrors?: () => void;
+  isAutoFixing?: boolean;
+  fixAttempt?: number;
 }) {
   const hasError = status === 'error' || !!error;
+  const showFixButton = buildFailed && onFixErrors && !!buildErrors?.length;
   return (
     <div className="flex-1 min-h-0 bg-[var(--app-bg)] flex flex-col">
       <div className="h-10 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)] px-3 flex items-center gap-2">
@@ -404,6 +416,23 @@ function DockerConsole({
             {error || latestLog || 'Docker output appears here while the preview starts.'}
           </p>
         </div>
+        {showFixButton && (
+          <button
+            type="button"
+            onClick={onFixErrors}
+            disabled={isAutoFixing}
+            className="h-7 rounded-[6px] border border-[var(--app-accent)]/30 px-2.5 text-[11px] font-semibold text-[var(--app-accent)] hover:bg-[var(--app-accent)]/10 transition-colors disabled:opacity-50"
+          >
+            {isAutoFixing ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Fixing... ({fixAttempt})
+              </span>
+            ) : (
+              `Fix with AI${fixAttempt ? ` (attempt ${fixAttempt})` : ''}`
+            )}
+          </button>
+        )}
         <button
           type="button"
           onClick={onRetry}

@@ -273,6 +273,7 @@ export async function POST(req: NextRequest) {
 - NEVER use raw hex (#xxx) in JSX — use Tailwind semantic classes
 - Use @/ import alias for local imports
 - Keep edits SMALL — one logical change per turn
+- Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
 
 ## BOOTSTRAP (empty project)
 Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs

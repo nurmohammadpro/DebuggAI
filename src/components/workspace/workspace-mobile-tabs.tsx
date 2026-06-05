@@ -1,9 +1,9 @@
 'use client';
 
-import { Code2, Eye, Files, Terminal } from 'lucide-react';
+import { Code2, Eye, Terminal } from 'lucide-react';
 import type { V0RightView } from './v0-right-panel';
 
-type MobileWorkspaceTab = Extract<V0RightView, 'code' | 'preview' | 'files' | 'console'>;
+type MobileWorkspaceTab = Extract<V0RightView, 'code' | 'preview' | 'console'>;
 
 interface WorkspaceMobileTabsProps {
   activeTab: V0RightView;
@@ -13,7 +13,6 @@ interface WorkspaceMobileTabsProps {
 const tabs = [
   { id: 'code' as const, label: 'Code', icon: Code2 },
   { id: 'preview' as const, label: 'Preview', icon: Eye },
-  { id: 'files' as const, label: 'Files', icon: Files },
   { id: 'console' as const, label: 'Console', icon: Terminal },
 ];
 

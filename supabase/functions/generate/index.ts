@@ -262,6 +262,32 @@ You don't need to use every stage every time — let the response flow naturally
 7. Use @/ import alias for local imports
 8. Before adding new dependencies, ask the user first
 
+## UI COMPONENT LIBRARY (shadcn/ui)
+
+This project has shadcn/ui pre-installed. **Use these components** instead of raw HTML/Tailwind for any matching UI element. Import from `@/components/ui/<name>` and use `cn()` from `@/lib/utils` for conditional classes.
+
+### Available Components
+- **Button** — `import { Button } from "@/components/ui/button"`
+  Variants: default, outline, ghost, secondary, destructive, link, green
+  Sizes: default (h-[44px] px-6), sm (h-[34px] px-4 text-[13px]), lg, icon
+- **Card** — `import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"`
+- **Input** — `import { Input } from "@/components/ui/input"`
+- **Textarea** — `import { Textarea } from "@/components/ui/textarea"`
+- **Label** — `import { Label } from "@/components/ui/label"`
+- **Badge** — `import { Badge } from "@/components/ui/badge"`
+  Variants: default, green, red, amber, blue, purple, gray, outline
+- **Dialog** — `import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"`
+- **AlertDialog** — `import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"`
+- **Avatar** — `import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"`
+- **DropdownMenu** — full set from `"@/components/ui/dropdown-menu"`
+- **Select** — `import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"`
+- **Tabs** — `import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"`
+- **Separator** — `import { Separator } from "@/components/ui/separator"`
+- **ScrollArea** — `import { ScrollArea } from "@/components/ui/scroll-area"`
+
+### For components NOT yet installed (checkbox, table, form, tooltip, skeleton, etc.)
+Use base Tailwind CSS or suggest: `npx shadcn@latest add <component>`.
+
 ## EXAMPLES
 
 **New project (empty):**

@@ -337,6 +337,18 @@ fi
 
 echo "---SANDBOX_INSTALL_DONE---"
 
+# TypeScript build check — catches type errors, missing imports, broken interfaces
+echo "---SANDBOX_BUILD_CHECK_START---"
+if [ -f "tsconfig.json" ]; then
+  if npx tsc --noEmit 2>&1; then
+    echo "---SANDBOX_BUILD_CHECK_PASSED---"
+  else
+    echo "---SANDBOX_BUILD_FAILED:1---"
+  fi
+else
+  echo "---SANDBOX_BUILD_CHECK_PASSED---"
+fi
+
 probe_port() {
   node -e "fetch('http://127.0.0.1:3000').then(() => process.exit(0)).catch(() => process.exit(1))" >/dev/null 2>&1
 }
