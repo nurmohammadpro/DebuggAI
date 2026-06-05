@@ -29,6 +29,9 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Brain,
+  CircleCheck,
+  Wand,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
@@ -608,6 +611,100 @@ function TypingIndicator({ label = 'Thinking' }: { label?: string }) {
   );
 }
 
+// ── Status Badge ─────────────────────────────────────────────────────────────
+
+function StatusBadge({
+  status,
+  hasContent,
+  hasFiles,
+}: {
+  status: MessageStatus;
+  hasContent: boolean;
+  hasFiles: boolean;
+}) {
+  const iconClass = 'h-2.5 w-2.5';
+
+  if (status === 'thinking') {
+    return (
+      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+        <Brain className={iconClass} />
+        Thinking
+      </span>
+    );
+  }
+
+  if (status === 'streaming') {
+    return (
+      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+        <Wand className={iconClass} />
+        {hasContent ? 'Writing' : 'Generating'}
+      </span>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-danger)]">
+        <AlertTriangle className={iconClass} />
+        Error
+      </span>
+    );
+  }
+
+  // done
+  return (
+    <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+      <CircleCheck className={cn(iconClass, hasFiles ? 'text-emerald-400' : '')} />
+      {hasFiles ? 'Complete' : 'Done'}
+    </span>
+  );
+}
+
+// ── Skeleton Streaming Content ───────────────────────────────────────────────
+
+function SkeletonStreamingContent({ content }: { content: string }) {
+  return (
+    <div className="space-y-2">
+      {content && (
+        <div className="animate-fade-in">
+          <MarkdownRenderer content={content} />
+        </div>
+      )}
+      <div className="space-y-2 pt-1">
+        <div
+          className="h-3 rounded-[4px] bg-gradient-to-r from-[var(--app-surface)] via-[var(--app-panel-2)] to-[var(--app-surface)] bg-[length:200%_100%] animate-shimmer"
+          style={{ width: '70%' }}
+        />
+        <div
+          className="h-3 rounded-[4px] bg-gradient-to-r from-[var(--app-surface)] via-[var(--app-panel-2)] to-[var(--app-surface)] bg-[length:200%_100%] animate-shimmer"
+          style={{ width: '85%', animationDelay: '0.15s' }}
+        />
+        <div
+          className="h-3 rounded-[4px] bg-gradient-to-r from-[var(--app-surface)] via-[var(--app-panel-2)] to-[var(--app-surface)] bg-[length:200%_100%] animate-shimmer"
+          style={{ width: '60%', animationDelay: '0.3s' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Generated Files Badge ────────────────────────────────────────────────────
+
+function GeneratedFilesBadge({ codeBlocks }: { codeBlocks: Array<{ fileName?: string; language?: string }> }) {
+  const fileNames = codeBlocks.map((b) => b.fileName).filter(Boolean) as string[];
+  const displayText = fileNames.length > 0
+    ? fileNames.slice(0, 3).join(', ') + (fileNames.length > 3 ? ` +${fileNames.length - 3}` : '')
+    : `${codeBlocks.length} files`;
+
+  return (
+    <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px] text-[var(--app-text-dim)]">
+      <FileCode2 className="h-3 w-3 shrink-0" />
+      <span className="truncate">{displayText}</span>
+      <span className="shrink-0 opacity-60">· view in code pane</span>
+    </div>
+  );
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function EnhancedChatPanel({
@@ -1056,6 +1153,9 @@ export function EnhancedChatPanel({
           const isLast = index === messages.length - 1;
           const canRegen = message.role === 'assistant' && isLast && !isLoading;
           const isUser = message.role === 'user';
+          const { text: extractedText, codeBlocks: extractedCodeBlocks } = message.content
+            ? extractCodeBlocks(message.content)
+            : { text: '', codeBlocks: [] as Array<{ fileName?: string; language?: string }> };
 
           return (
             <div
@@ -1140,15 +1240,12 @@ export function EnhancedChatPanel({
                       <Logo className="h-3.5 w-3.5" />
                     </div>
                     <span className="text-[10px] font-medium text-[var(--app-text-dim)]">{BRAND_NAME}</span>
-                    {message.status === 'thinking' && (
-                      <span className="ml-1 inline-flex items-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                        Thinking
-                      </span>
-                    )}
-                    {message.status === 'streaming' && (
-                      <span className="ml-1 inline-flex items-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
-                        Streaming
-                      </span>
+                    {message.status && (
+                      <StatusBadge
+                        status={message.status}
+                        hasContent={!!extractedText.trim()}
+                        hasFiles={extractedCodeBlocks.length > 0}
+                      />
                     )}
                   </div>
 
@@ -1190,18 +1287,24 @@ export function EnhancedChatPanel({
                       />
                     ) : (
                       <div className="rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
-                        {message.content.trim() ? (
-                          <MarkdownRenderer content={message.content} />
-                        ) : (
-                          <TypingIndicator label={message.status === 'thinking' ? 'Thinking' : 'Streaming'} />
+                        {message.status === 'thinking' && !message.content.trim() ? (
+                          <TypingIndicator label="Thinking" />
+                        ) : message.status === 'streaming' ? (
+                          <SkeletonStreamingContent content={extractedText} />
+                        ) : extractedText.trim() ? (
+                          <MarkdownRenderer content={extractedText} />
+                        ) : null}
+
+                        {/* File badges */}
+                        {extractedCodeBlocks.length > 0 && message.status !== 'done' && (
+                          <GeneratedFilesBadge codeBlocks={extractedCodeBlocks} />
                         )}
-                        {message.status === 'streaming' && message.content.trim() && (
-                          <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle rounded-[2px]" />
-                        )}
-                        {message.fileCount && message.fileCount > 0 && (
-                          <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px] text-[var(--app-text-dim)]">
-                            <FileCode2 className="h-3 w-3" />
-                            {message.fileCount} file{message.fileCount !== 1 ? 's' : ''} generated → view in code pane
+                        {message.status === 'done' && extractedCodeBlocks.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px]">
+                            <CircleCheck className="h-3 w-3 shrink-0 text-emerald-400" />
+                            <span className="text-emerald-400">
+                              {extractedCodeBlocks.length} file{extractedCodeBlocks.length !== 1 ? 's' : ''} ready · check the code pane
+                            </span>
                           </div>
                         )}
                       </div>
