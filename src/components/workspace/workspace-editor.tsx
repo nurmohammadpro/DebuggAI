@@ -5,6 +5,7 @@ import { EnhancedPreviewPane } from '@/components/web-builder/enhanced-preview-p
 import { ProfessionalFileTree } from '@/components/workspace/professional-file-tree';
 import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
+import { normalizePreviewFiles } from '@/lib/project/package-normalizer';
 import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import {
   Code2,
@@ -144,7 +145,7 @@ export function WorkspaceEditor({
         '  return <main className="min-h-screen p-8" />;\n' +
         '}\n';
     }
-    return out;
+    return normalizePreviewFiles(out);
   }, [files]);
 
   const shouldUseDockerSandbox = useMemo(

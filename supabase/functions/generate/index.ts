@@ -25,7 +25,12 @@ function extractPlainChatText(full: string) {
   const trimmed = (full || '').trim();
   if (!trimmed) return '';
 
-  const lines = trimmed.split('\n');
+  const withoutGeneratedSummary = trimmed.replace(
+    /^\s*(?:generated\s+\*\*\d+\s+files?\*\*.*|\d+\s+files?\s+generated\s*(?:→|->).*)$/gim,
+    '',
+  );
+
+  const lines = withoutGeneratedSummary.split('\n');
   const out: string[] = [];
   for (const line of lines) {
     const isFileMarker = /^\s*\/\/\s*File:\s+[\w./-]+\.[a-zA-Z0-9]+\s*$/.test(line);
@@ -34,7 +39,7 @@ function extractPlainChatText(full: string) {
     out.push(line);
   }
 
-  return out.join('\n').trim();
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 type DbAiProviderConfig = {
@@ -242,6 +247,7 @@ serve(async (req) => {
 - **Give status updates** — after each logical step, briefly say what you did and what you found
 - **Code blocks support the narrative** — use code blocks to show relevant code changes, but frame them with plain-English explanation. Don't dump code as the entire response
 - **Summarize at the end** — a quick recap of what changed and why
+- **Never list generated files in chat** — the UI extracts files into the code pane. In chat, mention outcomes and next steps only.
 
 ## RESPONSE STRUCTURE
 A typical response flows through these stages naturally:
@@ -261,6 +267,16 @@ You don't need to use every stage every time — let the response flow naturally
 6. If the project is empty and the user asks you to build something, bootstrap the required files (package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs)
 7. Use @/ import alias for local imports
 8. Before adding new dependencies, ask the user first
+9. Always write production-grade code: typed props, accessible labels, responsive states, empty states, loading states, error states, stable keys, and reusable components.
+10. For generated projects, output a short natural-language response first, then all files using exact file markers:
+    // File: path/to/file.tsx
+    \`\`\`tsx
+    ...
+    \`\`\`
+11. Do not repeat the filename inside the code block. For example, package.json must start with "{" and never with "// package.json".
+12. Do not put generated source code in the narrative section. Source code only belongs after file markers.
+13. If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
+14. If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
 
 ## UI COMPONENT LIBRARY (shadcn/ui)
 
@@ -291,24 +307,24 @@ Use base Tailwind CSS or suggest: \`npx shadcn@latest add <component>\`.
 ## EXAMPLES
 
 **New project (empty):**
-"I'll set up a fresh Next.js project with the essentials — starting with the config files and app layout."
+"I'll set up a fresh Next.js project with the essentials: configuration, app layout, global styles, and a first usable screen. I'll keep the structure easy to extend and make sure the generated files are ready for the editor pane."
 
 package.json (Next.js 16 + React 19), tsconfig.json, next.config.js:
+// File: package.json
 \`\`\`json
-// package.json (key dependencies)
-{ "next": "^16.2.3", "react": "^19.2.4", ... }
+{ "dependencies": { "next": "^16.2.7", "react": "^19.2.4", "react-dom": "^19.2.4", "@radix-ui/react-slot": "^1.2.4", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "tailwind-merge": "^3.4.0", "lucide-react": "^0.552.0" }, "devDependencies": { "typescript": "^5.9.3", "@types/node": "^20.19.25", "@types/react": "^19.2.7", "@types/react-dom": "^19.2.3", "tailwindcss": "^3.4.18", "postcss": "^8.5.6", "autoprefixer": "^10.4.22" } }
 \`\`\`
 
-"Config layer is ready. Now I'll scaffold the app layout with Tailwind and a global CSS reset."
+"Config layer is ready. Now I'll scaffold the app layout with Tailwind, theme tokens, and a responsive first screen."
 
 app/layout.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs:
+// File: app/layout.tsx
 \`\`\`tsx
-// app/layout.tsx
 import './globals.css';
 export default function RootLayout(...) { ... }
 \`\`\`
 
-"All set — you have a working Next.js project with TypeScript and Tailwind. Check the file tree on the left to see the structure."
+"All set. The project files are ready in the editor pane. Start with app/page.tsx, then open the preview to verify the UI."
 
 **Editing existing code:**
 "Let me check the current navbar to understand its structure before making changes."
@@ -505,11 +521,12 @@ export default function PricingPage() { ... }
 
           const finalText = assistantBuffer.trim();
           if (finalText) {
+            const chatText = extractPlainChatText(finalText);
             await supabase.from('thread_messages').insert({
               thread_id: threadId,
               user_id: user.id,
               role: 'assistant',
-              content: finalText,
+              content: chatText || 'I prepared the project files. You can review them in the editor pane.',
               model: aiModel,
               tokens_in: usage?.input_tokens ?? null,
               tokens_out: usage?.output_tokens ?? null,

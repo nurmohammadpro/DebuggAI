@@ -28,7 +28,7 @@ services:
     security_opt:
       - no-new-privileges:false
     group_add:
-      - "2"
+      - "988"
     cap_drop:
       - ALL
     cap_add:
@@ -62,3 +62,8 @@ services:
     networks:
       - dokploy-network
       - default
+
+networks:
+  dokploy-network:
+    external: true
+  default:

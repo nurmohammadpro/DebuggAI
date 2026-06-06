@@ -334,7 +334,7 @@ export default function PricingPage() {
             <h3 className="font-semibold mb-2">Do credits roll over?</h3>
             <p className="text-xs text-muted-foreground">
               No, credits reset each billing cycle. However, your history and generated code
-              are preserved based on your plan's retention period.
+              are preserved based on your plan&apos;s retention period.
             </p>
           </Card>
           <Card className="p-4">

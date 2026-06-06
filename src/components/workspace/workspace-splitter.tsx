@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export function WorkspaceSplitter({
   ariaLabel,
@@ -10,6 +10,7 @@ export function WorkspaceSplitter({
   onResize: (deltaX: number) => void;
 }) {
   const startXRef = useRef<number | null>(null);
+  const endDragRef = useRef<(() => void) | null>(null);
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
@@ -26,9 +27,15 @@ export function WorkspaceSplitter({
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
     window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('pointerup', endDrag);
-    window.removeEventListener('pointercancel', endDrag);
+    if (endDragRef.current) {
+      window.removeEventListener('pointerup', endDragRef.current);
+      window.removeEventListener('pointercancel', endDragRef.current);
+    }
   }, [onPointerMove]);
+
+  useEffect(() => {
+    endDragRef.current = endDrag;
+  }, [endDrag]);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {

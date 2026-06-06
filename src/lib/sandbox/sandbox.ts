@@ -8,11 +8,12 @@
  * On init, stale containers from previous runs are cleaned up.
  */
 
-import { promises as fs } from 'fs';
+import { promises as fs, readFileSync } from 'fs';
 import { execSync, spawnSync } from 'child_process';
 import path from 'path';
 import crypto from 'crypto';
 import os from 'os';
+import { normalizePreviewFiles } from '@/lib/project/package-normalizer';
 
 export type SandboxStatus =
   | 'creating'
@@ -91,7 +92,7 @@ let _dockerHostIp: string | undefined;
 function getDockerHostIp(): string {
   if (_dockerHostIp) return _dockerHostIp;
   try {
-    const route = require('fs').readFileSync('/proc/net/route', 'utf8');
+    const route = readFileSync('/proc/net/route', 'utf8');
     for (const line of route.split('\n')) {
       const p = line.trim().split(/\s+/);
       if (p[0] && p[1] === '00000000' && p[2] && p[2] !== '00000000') {
@@ -147,7 +148,8 @@ class SandboxManager {
   ): Promise<SandboxRecord> {
     await this.init();
     this.assertDockerAvailable();
-    this.validateFiles(files);
+    const previewFiles = normalizePreviewFiles(files);
+    this.validateFiles(previewFiles);
 
     let activeSandboxes = Array.from(this.sandboxes.values()).filter(
       (s) => s.status !== 'stopped',
@@ -179,13 +181,13 @@ class SandboxManager {
 
     // Write all project files to disk
     await fs.mkdir(projectDir, { recursive: true });
-    for (const [filePath, content] of Object.entries(files)) {
+    for (const [filePath, content] of Object.entries(previewFiles)) {
       // Security: prevent directory traversal
       const sanitized = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
       const fullPath = path.join(projectDir, sanitized);
       if (!fullPath.startsWith(projectDir)) continue;
       await fs.mkdir(path.dirname(fullPath), { recursive: true });
-      await fs.writeFile(fullPath, content, 'utf-8');
+      await fs.writeFile(fullPath, stripGeneratedFilenameHeader(content, sanitized), 'utf-8');
     }
 
     // Generate a docker-compatible startup script
@@ -480,6 +482,8 @@ fi
       '-v', `${hostProjectDir}:/app`,
       '-v', `${hostNpmCacheDir}:/npm-cache`,
       '-e', 'npm_config_cache=/npm-cache',
+      '-e', 'HOME=/tmp',
+      '-e', 'XDG_CONFIG_HOME=/tmp',
       '-e', 'NEXT_TELEMETRY_DISABLED=1',
       '-w', '/app',
       '--restart', 'no',
@@ -723,6 +727,17 @@ fi
       this.sandboxes = new Map();
     }
   }
+}
+
+function stripGeneratedFilenameHeader(content: string, filePath: string): string {
+  const normalized = filePath.replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+  const basename = normalized.split('/').pop() || normalized;
+  const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const marker = new RegExp(
+    `^\\s*(?:(?:\\/\\/|#)\\s*(?:file:\\s*)?(?:${escapeRegex(normalized)}|${escapeRegex(basename)})|\\/\\*\\s*(?:file:\\s*)?(?:${escapeRegex(normalized)}|${escapeRegex(basename)})\\s*\\*\\/)\\s*\\r?\\n`,
+    'i',
+  );
+  return content.replace(marker, '');
 }
 
 export const sandboxManager = new SandboxManager();

@@ -163,7 +163,7 @@ function Hero() {
               </div>
               <div className="p-3 font-mono text-[9px] leading-loose">
                 <span className="text-[var(--app-text-dim)]">const</span> controller = <span className="text-[var(--app-text-dim)]">new</span> AbortController();<br />
-                <span className="text-[var(--app-text-muted)] italic">// Cancel stale profile request</span><br />
+                <span className="text-[var(--app-text-muted)] italic">{'// Cancel stale profile request'}</span><br />
                 <span className="text-[var(--app-text-dim)]">return</span> () =&gt; controller.abort();
               </div>
             </div>
@@ -334,7 +334,7 @@ NameError: name 'name' is not defined`}
                 <span className="text-[var(--app-text-dim)]">original error, so</span> name <span className="text-[var(--app-text-dim)]">was never assigned.</span>{'\n\n'}
                 <span className="text-[var(--app-text-dim)]">## Fix</span>{'\n'}
                 <span className="text-[var(--app-accent)]">+ def get_user(user_id: int) -&gt; dict | None:</span>{'\n'}
-                <span className="text-[var(--app-accent)]">+     result = db.query("SELECT * FROM users WHERE id = ?", [user_id])</span>{'\n'}
+                <span className="text-[var(--app-accent)]">+     result = db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [user_id])</span>{'\n'}
                 <span className="text-[var(--app-accent)]">+     return result[0] if result else None</span>{'\n'}
               </pre>
             </div>
@@ -453,7 +453,7 @@ function Pricing() {
         </motion.div>
 
         <InViewStagger className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)]">
-          {planData.map((plan, i) => (
+          {planData.map((plan) => (
             <FadeItem key={plan.key}>
               <div
                 className={`bg-[var(--app-panel-2)] p-6 flex flex-col relative ${plan.popular ? 'xl:-mt-3 xl:mb-[-12px] xl:pt-9 xl:pb-8 xl:rounded-[4px] xl:border xl:border-[var(--app-accent)] xl:shadow-[0_0_0_1px_var(--app-accent)]' : ''}`}

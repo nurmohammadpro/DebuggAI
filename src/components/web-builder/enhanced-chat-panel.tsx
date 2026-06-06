@@ -32,6 +32,8 @@ import {
   Brain,
   CircleCheck,
   Wand,
+  Hammer,
+  Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StackSelector } from './stack-selector';
@@ -42,7 +44,7 @@ import { cn } from '@/lib/utils';
 import { useGenerationStore } from '@/store/generation-store';
 import { serializeVirtualFiles } from '@/lib/project/virtual-files';
 import { getSession } from '@/hooks/use-session';
-import { extractCodeBlocks } from '@/lib/utils/code-extraction';
+import { extractCodeBlocks, sanitizeChatContent } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
 import { BRAND_NAME, Logo } from '@/components/logo';
 
@@ -619,6 +621,67 @@ function TypingIndicator({ label = 'Thinking' }: { label?: string }) {
   );
 }
 
+function AssistantActivityList({
+  status,
+  hasFiles,
+  fileCount,
+}: {
+  status?: MessageStatus;
+  hasFiles: boolean;
+  fileCount?: number;
+}) {
+  const isActive = status === 'thinking' || status === 'streaming';
+  const tasks = [
+    {
+      label: status === 'thinking' ? 'Reading your request' : 'Writing the response',
+      icon: Brain,
+      active: status === 'thinking' || status === 'streaming',
+      done: status === 'done' || status === 'streaming',
+    },
+    {
+      label: hasFiles || fileCount ? `${fileCount || ''} file${fileCount === 1 ? '' : 's'} prepared`.trim() : 'Preparing project files',
+      icon: Hammer,
+      active: isActive && !hasFiles,
+      done: hasFiles || Boolean(fileCount),
+    },
+    {
+      label: 'Code is available in the editor pane',
+      icon: Eye,
+      active: false,
+      done: hasFiles || Boolean(fileCount),
+    },
+  ];
+
+  return (
+    <div className="space-y-1.5">
+      {tasks.map((task) => {
+        const Icon = task.icon;
+        return (
+          <div key={task.label} className="flex items-center gap-2 text-[11px] text-[var(--app-text-muted)]">
+            <span
+              className={cn(
+                'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+                task.done
+                  ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-400'
+                  : task.active
+                    ? 'border-[var(--app-accent)]/30 bg-[var(--app-accent)]/10 text-[var(--app-accent)]'
+                    : 'border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-dim)]',
+              )}
+            >
+              {task.done ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Icon className={cn('h-3 w-3', task.active && 'animate-pulse')} />
+              )}
+            </span>
+            <span>{task.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Status Badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({
@@ -780,8 +843,8 @@ export function EnhancedChatPanel({
     const list = (j?.messages || []) as ServerChatMessage[];
 
     const serverMessages: ChatMessage[] = list.map((m) => {
-      const content = String(m.content || '');
-      const { codeBlocks } = extractCodeBlocks(content);
+      const rawContent = String(m.content || '');
+      const { text: content, codeBlocks } = extractCodeBlocks(rawContent);
       if (codeBlocks.length > 0) addCodeBlocks(codeBlocks);
       const metadata = m && typeof m.metadata === 'object' && m.metadata ? (m.metadata as Record<string, unknown>) : {};
       const toolCalls = normalizeToolCalls(metadata.tool_calls ?? metadata.toolCalls);
@@ -887,9 +950,11 @@ export function EnhancedChatPanel({
 
   const appendStreamingChunk = useCallback((chunk: string) => {
     if (!chunk) return;
+    const rawAccumulated = useGenerationStore.getState().accumulated || chunk;
+    const displayContent = sanitizeChatContent(rawAccumulated);
     updateStreamingAssistant((message) => ({
       ...message,
-      content: `${message.content || ''}${chunk}`,
+      content: displayContent,
       status: 'streaming',
     }));
   }, [updateStreamingAssistant]);
@@ -907,16 +972,17 @@ export function EnhancedChatPanel({
 
       // Count files that were generated
       const generatedFileCount = currentFiles
-        ? Object.values(currentFiles.files).filter((f) => f.status === 'added').length
+        ? Object.keys(currentFiles.files).length
         : parsedCodeBlocks.length;
 
       if (parsedCodeBlocks.length > 0) {
         addCodeBlocks(parsedCodeBlocks);
       }
 
-      const finalContent = fullText || (
+      const sanitizedText = sanitizeChatContent(fullText);
+      const finalContent = sanitizedText || (
         generatedFileCount > 0
-          ? `I generated ${generatedFileCount} file${generatedFileCount !== 1 ? 's' : ''}. View them in the editor panel.`
+          ? 'I prepared the project files. You can review them in the editor pane.'
           : 'Done.'
       );
 
@@ -1164,6 +1230,7 @@ export function EnhancedChatPanel({
           const { text: extractedText, codeBlocks: extractedCodeBlocks } = message.content
             ? extractCodeBlocks(message.content)
             : { text: '', codeBlocks: [] as Array<{ fileName?: string; language?: string }> };
+          const displayText = sanitizeChatContent(extractedText);
 
           return (
             <div
@@ -1296,22 +1363,24 @@ export function EnhancedChatPanel({
                     ) : (
                       <div className="rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
                         {message.status === 'thinking' && !message.content.trim() ? (
-                          <TypingIndicator label="Thinking" />
+                          <div className="space-y-3">
+                            <TypingIndicator label="Thinking" />
+                            <AssistantActivityList status={message.status} hasFiles={false} fileCount={message.fileCount} />
+                          </div>
                         ) : message.status === 'streaming' ? (
-                          <SkeletonStreamingContent content={extractedText} />
-                        ) : extractedText.trim() ? (
-                          <MarkdownRenderer content={extractedText} />
+                          <div className="space-y-3">
+                            <SkeletonStreamingContent content={displayText} />
+                            <AssistantActivityList status={message.status} hasFiles={extractedCodeBlocks.length > 0 || Boolean(message.fileCount)} fileCount={message.fileCount || extractedCodeBlocks.length || undefined} />
+                          </div>
+                        ) : displayText.trim() ? (
+                          <MarkdownRenderer content={displayText} />
                         ) : null}
 
-                        {/* File badges */}
-                        {extractedCodeBlocks.length > 0 && message.status !== 'done' && (
-                          <GeneratedFilesBadge codeBlocks={extractedCodeBlocks} />
-                        )}
-                        {message.status === 'done' && extractedCodeBlocks.length > 0 && (
+                        {message.status === 'done' && (message.fileCount || extractedCodeBlocks.length > 0) && (
                           <div className="mt-2 pt-2 border-t border-[var(--app-border)] flex items-center gap-1.5 text-[10px]">
                             <CircleCheck className="h-3 w-3 shrink-0 text-emerald-400" />
                             <span className="text-emerald-400">
-                              {extractedCodeBlocks.length} file{extractedCodeBlocks.length !== 1 ? 's' : ''} ready · check the code pane
+                              {message.fileCount || extractedCodeBlocks.length} file{(message.fileCount || extractedCodeBlocks.length) !== 1 ? 's' : ''} ready · check the code pane
                             </span>
                           </div>
                         )}

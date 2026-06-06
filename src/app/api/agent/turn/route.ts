@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const enqueue = (data: string) => { try { controller.enqueue(encoder.encode(data)); } catch {} };
-      let cancelled = false;
+      const cancelled = false;
       const heartbeat = setInterval(() => { if (!cancelled) enqueue(ssePing()); }, 15_000);
 
       try {
@@ -274,6 +274,8 @@ export async function POST(req: NextRequest) {
 - Use @/ import alias for local imports
 - Keep edits SMALL — one logical change per turn
 - Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
+- If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
+- If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
 
 ## BOOTSTRAP (empty project)
 Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs

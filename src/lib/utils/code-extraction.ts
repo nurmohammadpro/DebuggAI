@@ -17,6 +17,49 @@ export interface ParsedContent {
   codeBlocks: CodeBlock[];
 }
 
+const COMPLETE_CODE_BLOCK_REGEX =
+  /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*[\w./-]+\.[a-zA-Z0-9]+\s*\n)?\s*```[a-zA-Z0-9_-]*(?:[^\n]*?filename=(?:"|')[^"']+(?:"|'))?[^\n]*\n[\s\S]*?```/gi;
+
+const FILE_MARKER_REGEX =
+  /(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*[\w./-]+\.[a-zA-Z0-9]+\s*(?:-->)?/i;
+
+const GENERATED_SUMMARY_LINE_REGEX =
+  /^\s*(?:generated\s+\*\*\d+\s+files?\*\*.*|\d+\s+files?\s+generated\s*(?:→|->).*)$/gim;
+
+/**
+ * Return only the assistant-facing prose.
+ *
+ * Generated files belong in the file tree/code pane, not the chat transcript.
+ * This function removes complete code fences, unfinished streamed code fences,
+ * file-marker sections, and old "Generated 8 files..." status summaries.
+ */
+export function sanitizeChatContent(content: string): string {
+  if (!content) return '';
+
+  let cleaned = content.replace(COMPLETE_CODE_BLOCK_REGEX, '\n');
+
+  const fileMarker = cleaned.search(FILE_MARKER_REGEX);
+  if (fileMarker >= 0) {
+    cleaned = cleaned.slice(0, fileMarker);
+  }
+
+  const fenceMatches = [...cleaned.matchAll(/```/g)];
+  if (fenceMatches.length % 2 === 1) {
+    const lastFence = fenceMatches[fenceMatches.length - 1];
+    cleaned = cleaned.slice(0, lastFence?.index ?? cleaned.length);
+  }
+
+  cleaned = cleaned.replace(GENERATED_SUMMARY_LINE_REGEX, '');
+
+  return cleaned
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\n+|\n+$/g, '')
+    .trim();
+}
+
 /**
  * Extract code blocks from markdown content
  *
@@ -55,8 +98,7 @@ export function extractCodeBlocks(content: string): ParsedContent {
   }
 
   // ── Remove code blocks from content (fresh regex, untainted lastIndex) ───
-  const replaceRegex = /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```[a-zA-Z0-9_-]*(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n[\s\S]*?```/gi;
-  let cleanedContent = content.replace(replaceRegex, '');
+  let cleanedContent = sanitizeChatContent(content);
 
   // ── Clean up whitespace (preserve single blank lines between paragraphs) ──
   cleanedContent = cleanedContent
@@ -66,21 +108,6 @@ export function extractCodeBlocks(content: string): ParsedContent {
     .replace(/\n{3,}/g, '\n\n') // max two consecutive newlines
     .replace(/^\n+|\n+$/g, '')   // trim leading/trailing
     .trim();
-
-  // ── If all content was code blocks, generate a brief summary ─────────────
-  if (!cleanedContent && codeBlocks.length > 0) {
-    const filenames = codeBlocks
-      .map(b => b.filename)
-      .filter(Boolean)
-      .slice(0, 5);
-
-    let summary = `Generated **${codeBlocks.length} file${codeBlocks.length !== 1 ? 's' : ''}**`;
-    if (filenames.length > 0) {
-      const fileList = filenames.map(f => `\`${f}\``).join(', ');
-      summary += `: ${fileList}`;
-    }
-    cleanedContent = summary;
-  }
 
   return {
     text: cleanedContent,

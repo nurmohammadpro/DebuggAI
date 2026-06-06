@@ -19,7 +19,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
     const normalized = normalizePath(path);
     if (!normalized) return;
     
-    const formattedContent = content.replace(/\s+$/, '') + '\n';
+    const formattedContent = stripLeadingFilenameHeader(content, normalized).replace(/\s+$/, '') + '\n';
     let status: VirtualFile['status'] = 'added';
     
     if (base && base.files[normalized]) {
@@ -136,6 +136,18 @@ function extractLeadingFilenameComment(code: string) {
     firstLine.match(/^\s*\/\/\s*(?:file:\s*)?([\w./-]+\.[a-zA-Z0-9]+)\s*$/i) ||
     firstLine.match(/^\s*\/\*\s*(?:file:\s*)?([\w./-]+\.[a-zA-Z0-9]+)\s*\*\/\s*$/i);
   return m?.[1] || null;
+}
+
+function stripLeadingFilenameHeader(content: string, path: string) {
+  const normalized = normalizePath(path);
+  const escapedPath = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const basename = normalized.split('/').pop() || normalized;
+  const escapedBase = basename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const firstLineMarker = new RegExp(
+    `^\\s*(?:(?:\\/\\/|#)\\s*(?:file:\\s*)?(?:${escapedPath}|${escapedBase})|\\/\\*\\s*(?:file:\\s*)?(?:${escapedPath}|${escapedBase})\\s*\\*\\/)\\s*\\r?\\n`,
+    'i',
+  );
+  return content.replace(firstLineMarker, '');
 }
 
 function extractFileHeaderMarker(code: string) {

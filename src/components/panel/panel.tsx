@@ -52,6 +52,13 @@ export function Panel({
   onMobileClose,
   className,
 }: PanelProps) {
+  useEffect(() => {
+    if (!mobile || !mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [mobile, mobileOpen]);
+
   /* ── Collapsed (desktop) ──────────────────────────────────── */
   if (collapsed && !mobile) {
     return (
@@ -77,15 +84,6 @@ export function Panel({
       </aside>
     );
   }
-
-  // Lock body scroll when mobile overlay is open
-  useEffect(() => {
-    if (mobile && mobileOpen) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = prev; };
-    }
-  }, [mobile, mobileOpen]);
 
   /* ── Mobile overlay ────────────────────────────────────────── */
   if (mobile) {

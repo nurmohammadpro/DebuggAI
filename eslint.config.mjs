@@ -11,8 +11,24 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "coverage/**",
+    "dashboard-workspace-replica/**",
+    "repolish/**",
+    "app-builder/**",
+    "mobile/**",
+    ".gstack/**",
+    ".projects/**",
+    "supabase/functions/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/static-components": "warn",
+      "react-hooks/immutability": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

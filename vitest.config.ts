@@ -6,7 +6,15 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
-    exclude: ['e2e/**', 'node_modules/**', '.projects/**'],
+    exclude: [
+      'e2e/**',
+      'node_modules/**',
+      '.projects/**',
+      'dashboard-workspace-replica/**',
+      'repolish/**',
+      'app-builder/**',
+      'mobile/**',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'lcov'],
