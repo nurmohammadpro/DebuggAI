@@ -1,0 +1,1037 @@
+[
+  {
+    "name": "home",
+    "route": "/",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Debug complex logic.Build at runtime speed.",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 16,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "See full comparison →",
+          "w": 126,
+          "h": 15,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 5
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "login",
+    "route": "/login",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/login",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Sign in",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 21,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Forgot password?",
+          "w": 93,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resend confirmation email",
+          "w": 308,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Create one",
+          "w": 66,
+          "h": 16,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Privacy",
+          "w": 44,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Terms",
+          "w": 37,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 16
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "dashboard-home-protected",
+    "route": "/dashboard/home",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/login?redirect=%2Fdashboard%2Fhome",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Sign in",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 21,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Forgot password?",
+          "w": 93,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resend confirmation email",
+          "w": 308,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Create one",
+          "w": 66,
+          "h": 16,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Privacy",
+          "w": 44,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Terms",
+          "w": 37,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 16
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "workspace-protected",
+    "route": "/dashboard?project=test-mobile",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/login?redirect=%2Fdashboard",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Sign in",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 21,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Forgot password?",
+          "w": 93,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resend confirmation email",
+          "w": 308,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Create one",
+          "w": 66,
+          "h": 16,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Privacy",
+          "w": 44,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Terms",
+          "w": 37,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 16
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "debug-protected",
+    "route": "/dashboard/debug",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/login?redirect=%2Fdashboard%2Fdebug",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Sign in",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 21,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Forgot password?",
+          "w": 93,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resend confirmation email",
+          "w": 308,
+          "h": 17,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Create one",
+          "w": 66,
+          "h": 16,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Privacy",
+          "w": 44,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Terms",
+          "w": 37,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 16
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "demo-dashboard",
+    "route": "/demo/ui/dashboard",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/demo/ui/dashboard",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 25,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Back to UI demos",
+          "w": 123,
+          "h": 18,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 25,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "New project",
+          "w": 96,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Suggestions",
+          "w": 120,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "View all",
+          "w": 80,
+          "h": 28,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Privacy",
+          "w": 44,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Terms",
+          "w": 37,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 18
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "demo-workspace",
+    "route": "/demo/ui/workspace",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/demo/ui/workspace",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 18,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Back to UI demos",
+          "w": 123,
+          "h": 18,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Share",
+          "w": 63,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Run",
+          "w": 70,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Send",
+          "w": 53,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Attach",
+          "w": 63,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Privacy",
+          "w": 44,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Terms",
+          "w": 37,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 18
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "demo-debugger",
+    "route": "/demo/ui/debugger",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/demo/ui/debugger",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 24,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 103,
+          "h": 30,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Sign In",
+          "w": 74,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Toggle menu",
+          "w": 36,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Back to UI demos",
+          "w": 123,
+          "h": 18,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "History",
+          "w": 91,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Analyze",
+          "w": 324,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Ask follow-up",
+          "w": 324,
+          "h": 36,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Summary",
+          "w": 90,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Root Cause",
+          "w": 65,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Fix",
+          "w": 42,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Tests",
+          "w": 63,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Copy",
+          "w": 71,
+          "h": 32,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "DeBuggAI",
+          "w": 99,
+          "h": 24,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Features",
+          "w": 53,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Pricing",
+          "w": 42,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Web Builder",
+          "w": 73,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "About",
+          "w": 36,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Careers",
+          "w": 47,
+          "h": 19,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Contact",
+          "w": 48,
+          "h": 19,
+          "visible": true
+        }
+      ],
+      "smallTargetCount": 22
+    },
+    "consoleErrors": [],
+    "failedRequests": []
+  }
+]

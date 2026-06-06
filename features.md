@@ -1,1952 +1,1080 @@
----
-name: features
-description: Implemented features documentation for DeBuggAI
-type: reference
----
+# DeBuggAI — Complete Feature Documentation
 
-# DeBuggAI Implemented Features
-
-## Overview
-
-This document tracks all implemented features in detail. Each feature is added as it's completed.
+**App**: DeBuggAI v0.1.0  
+**URL**: [debuggaidemo.appbrainer.tech](https://debuggaidemo.appbrainer.tech)  
+**Tech Stack**: Next.js 16 (App Router), TypeScript (strict), Tailwind CSS v4, Supabase (Postgres + Auth), Zustand, TanStack React Query, Monaco Editor, Docker, Stripe, Sentry, Framer Motion, Playwright, Vitest
 
 ---
 
-## Phase 0: Project Setup ✅
+## Table of Contents
 
-### F001: Next.js Project Initialization
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Initialized a Next.js 15+ project with TypeScript, Tailwind CSS v4, and App Router.
-
-**Tech Stack**:
-- Next.js 15.2.3 with Turbopack
-- TypeScript with strict mode
-- Tailwind CSS v4
-- ESLint configured
-
-**Files Created**:
-- `package.json` - Dependencies and scripts
-- `tsconfig.json` - TypeScript configuration
-- `next.config.ts` - Next.js configuration
-- `tailwind.config.ts` - Tailwind configuration
-- `postcss.config.mjs` - PostCSS configuration
-- `.eslintrc.json` - ESLint rules
-
-**Commands**:
-```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run ESLint
-```
+1. [Authentication & User Management](#1-authentication--user-management)
+2. [AI Debugging](#2-ai-debugging)
+3. [Web Builder / Code Generation](#3-web-builder--code-generation)
+4. [Agent System (Tool-Calling)](#4-agent-system-tool-calling)
+5. [Visual Editor (Drag-and-Drop UI Builder)](#5-visual-editor-drag-and-drop-ui-builder)
+6. [Workspace / IDE](#6-workspace--ide)
+7. [Project Management](#7-project-management)
+8. [Docker Sandbox (Live Preview)](#8-docker-sandbox-live-preview)
+9. [Credit System & Billing](#9-credit-system--billing)
+10. [Referral Program](#10-referral-program)
+11. [Admin Panel](#11-admin-panel)
+12. [Real-Time Collaboration](#12-real-time-collaboration)
+13. [Notifications](#13-notifications)
+14. [Design System & Theming](#14-design-system--theming)
+15. [Public / Marketing Pages](#15-public--marketing-pages)
+16. [API Routes](#16-api-routes)
+17. [Infrastructure & DevOps](#17-infrastructure--devops)
+18. [Database Schema](#18-database-schema)
+19. [Testing](#19-testing)
+20. [State Management Stores](#20-state-management-stores)
+21. [Custom Hooks](#21-custom-hooks)
 
 ---
 
-### F002: Dependencies Installation
+## 1. Authentication & User Management
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 1.1 Sign-Up
+- **File**: `src/app/signup/page.tsx`, `src/components/auth/signup-form.tsx`
+- **Route**: `/signup`
+- Email/password registration with full name field
+- OAuth via Google and GitHub
+- Password minimum 8-character validation
+- Terms of service acknowledgment
+- Email verification flow (`/verify-email`)
 
-**Description**:
-Installed all required dependencies for state management, data fetching, code editing, database, and UI.
+### 1.2 Login
+- **File**: `src/app/login/page.tsx`, `src/components/auth/login-form.tsx`
+- **Route**: `/login`
+- Email/password sign-in
+- OAuth via Google and GitHub
+- Forgot password link → `/reset-password`
 
-**Dependencies**:
-- `zustand` - Lightweight state management
-- `@tanstack/react-query` - Data fetching and caching
-- `axios` - HTTP client
-- `@monaco-editor/react` - Code editor (VS Code's editor)
-- `@supabase/supabase-js` - Supabase client
-- `lucide-react` - Icon library
-- `class-variance-authority` - Utility for variant-based className
-- `clsx` - Conditional className utility
-- `tailwind-merge` - Merge Tailwind classes
+### 1.3 Password Reset
+- **File**: `src/app/reset-password/page.tsx`
+- **Route**: `/reset-password`
+- Email-based reset link
+- Update password after reset flow
 
-**UI Components** (shadcn/ui):
-- Button, Card, Input, Label, Dialog, Dropdown Menu
-- Tabs, Sonner (toasts), Select, Textarea, Badge
-- Separator, Scroll Area, Avatar
+### 1.4 Session Management
+- **File**: `src/lib/auth.ts`, `src/lib/client-auth.ts`, `src/lib/server/auth.ts`
+- Supabase SSR cookie-based sessions
+- Server actions: `signUp`, `signIn`, `signOut`, `resetPassword`, `updatePassword`
+- `SessionBootstrapper` component for client-side session init
+- `SupabaseLockHandler` for auth lock states
+- `useSession` hook for React consumption
+- Auto-redirect to login if unauthenticated (dashboard routes)
 
----
+### 1.5 Auth Callback
+- **File**: `src/app/auth/callback/page.tsx`, `src/components/auth/auth-callback-client.tsx`
+- **Route**: `/auth/callback`
+- OAuth redirect handler
+- Server-side sign-in route: `src/app/auth/signin/route.ts`
 
-### F003: Project Structure
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created complete directory structure for app routes, components, stores, services, hooks, utilities, and Supabase functions.
-
-**Directory Structure**:
-```
-src/
-├── app/
-│   ├── (auth)/          # Authentication routes
-│   │   ├── login/
-│   │   ├── signup/
-│   │   └── reset-password/
-│   ├── (dashboard)/     # Protected dashboard routes
-│   │   ├── debug/
-│   │   ├── web-builder/
-│   │   ├── pricing/
-│   │   ├── settings/
-│   │   └── referrals/
-│   ├── api/             # API routes
-│   ├── layout.tsx       # Root layout with Toaster
-│   └── page.tsx         # Home page
-├── components/
-│   ├── debug/           # Debug components
-│   ├── web-builder/     # Web builder components
-│   ├── ui/              # shadcn/ui components
-│   └── navigation.tsx   # Main navigation
-├── store/               # Zustand stores
-├── services/            # API services
-├── hooks/               # Custom React hooks
-└── lib/                 # Utilities and helpers
-
-supabase/
-├── migrations/          # SQL migrations
-└── functions/           # Edge functions
-```
+### 1.6 CSRF Protection
+- **File**: `src/lib/server/csrf.ts`, `src/lib/csrf-client.ts`
+- Server-side CSRF token generation and validation
+- Client-side header injection
 
 ---
 
-### F004: SSE Parser Utility
+## 2. AI Debugging
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 2.1 Core Debug Screen
+- **File**: `src/app/dashboard/debug/page.tsx`, `src/components/dashboard/debug/enhanced-debug-tracer.tsx`
+- **Route**: `/dashboard/debug`
+- Language selector (12 languages)
+- Code input with syntax hinting
+- Optional error message input
+- Quick example prompts (find bugs, review best practices, analyze error)
+- Auto language detection from code patterns
+- Real-time analysis results with streaming
+- Two-column layout: input pane + results pane
 
-**Description**:
-Created Server-Sent Events parser for handling streaming AI responses. Includes critical [DONE] sentinel check before JSON parsing.
+### 2.2 Debug History
+- **File**: `src/app/dashboard/debug/history/page.tsx`, `src/components/dashboard/debug/debug-history.tsx`
+- **Route**: `/dashboard/debug/history`
+- Search by code, error, or explanation
+- Filter by programming language
+- Re-run analysis
+- Delete individual sessions / clear all
+- Timestamps with relative time
+- Language badges, error message preview, code preview, tags display
+- Empty state for no sessions or no matching results
 
-**File**: `src/lib/sse-parser.ts`
+### 2.3 Supported Debug Languages
+JavaScript, TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, Swift, Kotlin, C++
 
-**Key Features**:
-- Buffer chunks until complete lines
-- Parse `data: {...}` format
-- Check for `[DONE]` BEFORE JSON.parse() (critical!)
-- Extract delta content from OpenAI/Groq format
-- Callback support for real-time updates
+### 2.4 Debug Analysis Backend
+- **Edge Function**: `supabase/functions/debug-ai-analyze/index.ts`
+- **API Route**: `POST /api/debug-analyze` (non-streaming JSON)
+- Structured analysis response:
+  - Root cause identification
+  - Corrected code with language-specific fences
+  - Explanation of fix
+  - Best practices to avoid recurrence
+  - Related concepts to learn
+- Language-specific error hints (e.g., JS: TypeError/ReferenceError, Python: IndentationError, Go: nil pointer)
+- Analysis saved to `debug_sessions` table
 
-**Functions**:
-```typescript
-parseSSEResponse(response: Response): Promise<SSEResponse>
-parseSSEResponseWithCallback(response: Response, onChunk: (chunk: string) => void): Promise<string>
-```
-
-**Critical Implementation**:
-```typescript
-if (data === '[DONE]') {
-  return accumulated; // Check BEFORE JSON.parse
-}
-const parsed = JSON.parse(data);
-```
-
----
-
-### F005: Code Extraction Utility
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created utility to extract code blocks from AI markdown responses. Supports multiple languages and formats.
-
-**File**: `src/lib/extract-code.ts`
-
-**Functions**:
-- `extractCode(markdown: string): string | null` - Extract single code block
-- `extractMultipleCodes(markdown: string): string[]` - Extract multiple blocks
-- `extractLanguage(markdown: string): string | null` - Get language from fence
-- `hasCodeBlock(markdown: string): boolean` - Check if code exists
-
-**Pattern Priority**:
-1. TSX with language tag
-2. JSX with language tag
-3. TypeScript with language tag
-4. TS with language tag
-5. JavaScript with language tag
-6. JS with language tag
-7. Any code fence with language
-8. Generic code fence (no language)
-
-**Fallback**: If response contains `export default` and `return (`, use as-is.
+### 2.5 Language Detection
+- **Edge Function**: `supabase/functions/detect-language/index.ts`
+- Pattern matching (language-specific regex)
+- Keyword scoring with confidence calculation
+- Returns detected language, confidence score (0-1), alternatives
 
 ---
 
-### F006: Zustand Stores
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created three Zustand stores for state management with persistence.
-
-**Files**:
-- `src/store/generation-store.ts` - Web builder state
-- `src/store/session-store.ts` - User/auth state
-- `src/store/debug-store.ts` - Debug state
-
-**Generation Store**:
-- State: currentCode, isGenerating, accumulated, versions, lastError
-- Actions: setCurrentCode, addVersion, setCurrentVersion, deleteVersion
-- Persistence: Versions, currentVersionId, currentCode
-
-**Session Store**:
-- State: user, isAuthenticated, isLoading
-- Actions: setUser, setCredits, decrementCredits, incrementCredits, logout
-- Persistence: Full state
-
-**Debug Store**:
-- State: currentLanguage, currentCode, currentError, isDebugging, debugResult, sessions
-- Actions: setCurrentLanguage, setCurrentCode, addSession, clearSessions
-- Persistence: Sessions (last 50)
-
----
-
-### F007: useGeneration Hook
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created custom hook for AI code generation with SSE streaming. Used by both web builder and debugger.
-
-**File**: `src/hooks/use-generation.ts`
-
-**Features**:
-- SSE streaming with real-time updates
-- Code extraction from markdown
-- Automatic version saving
-- Error handling
-- Loading state management
-
-**Usage**:
-```typescript
-const { generate, debug, isLoading, error } = useGeneration({
-  onChunk: (chunk) => console.log('Received:', chunk),
-  onDone: (code) => console.log('Complete:', code),
-  onError: (error) => console.error('Error:', error),
-});
-
-// Generate code
-await generate({ prompt: 'Create a login form' });
-
-// Debug code
-await debug(code, errorMessage);
-```
-
----
-
-### F008: Supabase Client Configuration
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Configured Supabase client with environment variables.
-
-**File**: `src/lib/supabase.ts`
-
-**Exports**:
-- `supabase` - Main Supabase client
-- `supabaseStorage` - Storage API
-- `supabaseAuth` - Auth API
-
-**Environment Variables**:
-```bash
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-```
-
----
-
-### F009: Application Constants
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Defined application-wide constants for credit costs, plans, stacks, and languages.
-
-**File**: `src/lib/constants.ts`
-
-**Constants**:
-- `CREDIT_COSTS` - Cost for each action (debug: 1, web_builder_small: 20, etc.)
-- `PLANS` - Plan details (Free, Pro, Enterprise)
-- `WEB_BUILDER_STACKS` - Available stacks (MERN, MEAN, Laravel, Django, etc.)
-- `DEBUG_LANGUAGES` - Supported debug languages (JS, TS, PHP, Python, Go, Ruby, etc.)
-
----
-
-## Phase 1: Database & Auth ✅
-
-### F010: Database Schema
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created complete database schema with all tables, indexes, RLS policies, and triggers.
-
-**File**: `supabase/migrations/001_initial_schema.sql`
-
-**Tables**:
-1. **profiles** - User profiles (extends auth.users)
-   - id, email, full_name, avatar_url, plan, is_admin
-2. **credit_wallets** - Credit balances
-   - id, owner_id, balance
-3. **credit_transactions** - Transaction ledger
-   - id, wallet_id, amount, type, source, description, metadata
-4. **generations** - Web builder code versions
-   - id, user_id, code, version, description, stack, prompt, metadata
-5. **debug_sessions** - Debugging sessions
-   - id, user_id, language, code, error_message, fix, explanation, tags
-6. **messages** - Chat messages for AI context
-   - id, user_id, role, content, generation_id, metadata
-7. **referrals** - Referral relationships
-   - id, referrer_id, referee_id, code, status, credits_earned
-8. **referral_payouts** - Payout tracking
-   - id, referral_id, user_id, amount, status
-9. **notifications** - User notifications
-   - id, user_id, type, title, message, read, metadata
-
-**Features**:
-- Row Level Security (RLS) on all tables
-- Auto-create profile and wallet on user signup
-- 30 free credits for new users
-- Welcome notification on signup
-- Indexes for query performance
-- Updated_at triggers
-
-**Triggers**:
-- `on_auth_user_created` - Creates profile and wallet on signup
-- `update_profiles_updated_at` - Updates timestamp
-- `update_credit_wallets_updated_at` - Updates timestamp
-
----
-
-### F011: Authentication Server Actions
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created server actions for authentication using Supabase Auth.
-
-**File**: `src/lib/auth.ts`
-
-**Actions**:
-- `signUp(formData: FormData): Promise<AuthResult>` - Create new account
-- `signIn(formData: FormData): Promise<AuthResult>` - Sign in existing user
-- `signOut(): Promise<void>` - Sign out current user
-- `resetPassword(formData: FormData): Promise<AuthResult>` - Send reset email
-- `updatePassword(formData: FormData): Promise<AuthResult>` - Update password after reset
-
-**Features**:
-- Form data handling
-- Error handling with user-friendly messages
-- Email verification for signup
-- Password reset with email flow
-- Revalidation of paths
-- Redirects after actions
-
----
-
-### F012: Login Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created login page with email/password and OAuth options.
-
-**File**: `src/app/(auth)/login/page.tsx`
-
-**Features**:
-- OAuth provider buttons (Google, GitHub)
-- Email/password form
-- "Forgot password" link
-- Link to signup page
-- Gradient background design
-- Card-based layout
-
-**Route**: `/login`
-
----
-
-### F013: Signup Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created signup page with name, email, and password fields.
-
-**File**: `src/app/(auth)/signup/page.tsx`
-
-**Features**:
-- OAuth provider buttons (Google, GitHub)
-- Full name, email, password fields
-- Password minimum length validation (8 characters)
-- Link to login page
-- Terms of service notice
-- Gradient background design
-
-**Route**: `/signup`
-
----
-
-### F014: Password Reset Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created password reset page where users enter their email to receive a reset link.
-
-**File**: `src/app/(auth)/reset-password/page.tsx`
-
-**Features**:
-- Email input field
-- Send reset link button
-- Back to login link
-- Card-based layout
-
-**Route**: `/reset-password`
-
----
-
-### F015: Navigation Component
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created main navigation component with user menu and credit display.
-
-**File**: `src/components/navigation.tsx`
-
-**Features**:
-- Logo with bug icon
-- Main navigation links (Debug, Web Builder, Upgrade)
-- Credits badge display
-- User dropdown menu with:
-  - Settings link
-  - Referrals link
-  - Sign out button
-- Real-time credit updates via Supabase
-- Session management
-- Mobile menu button
-
-**State Integration**:
-- Uses session store for user data
-- Fetches credits from credit_wallets table
-- Listens to auth state changes
-
----
-
-### F016: Dashboard Home Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created dashboard home page with quick actions and stats.
-
-**File**: `src/app/(dashboard)/page.tsx`
-
-**Features**:
-- Welcome message
-- Credits badge display
-- Quick action cards:
-  - Debug Code button
-  - Web Builder button
-- Stats cards:
-  - Total debug sessions
-  - Apps generated
-  - Credits remaining
-- Quick links:
-  - Upgrade plan
-  - Settings
-  - Referrals
-
-**Route**: `/dashboard`
-
----
-
-### F017: Supabase Production Connection
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Connected Supabase production instance to the application.
-
-**Configuration**:
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://gaelygqwuzcoyduzedkm.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-**Status**:
-- Production Supabase project created
-- Environment variables configured
-- Ready for migration deployment
-
----
-
-## Phase 3: SSE Streaming Infrastructure ✅
-
-### F018: Generate Edge Function
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created Supabase edge function for AI code generation with Server-Sent Events (SSE) streaming.
-
-**File**: `supabase/functions/generate/index.ts`
-
-**Features**:
-- CORS support for cross-origin requests
-- JWT authentication via Supabase Auth
-- Fetches last 20 messages from database for context
-- Streams AI response in real-time
-- Critical [DONE] sentinel check before JSON.parse
-- Delta content extraction from OpenAI/Groq format
-- Error handling with appropriate HTTP status codes
-
-**System Prompt**:
-```
-You are DeBuggAI, an expert code generator. Generate clean, production-ready code.
-- Always respond with code blocks in appropriate language
-- Include helpful comments
-- Follow best practices
-- Keep explanations concise
-```
-
-**Request Format**:
-```typescript
-{
-  prompt: string;
-  history?: Array<{ role: string; content: string }>;
-}
-```
-
-**Response Format**: SSE stream
-```
-data: {"content": "Here's a login"}\n\n
-data: {"content": " form component"}\n\n
-data: [DONE]\n\n
-```
-
-**Environment Variables Required**:
-```bash
-SUPABASE_URL
-SUPABASE_ANON_KEY
-AI_API_KEY
-AI_BASE_URL (optional, defaults to Groq)
-AI_MODEL (optional, defaults to llama-3.3-70b-versatile)
-```
-
----
-
-### F019: Debug Edge Function
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created Supabase edge function for debugging code with error messages using SSE streaming.
-
-**File**: `supabase/functions/debug/index.ts`
-
-**Features**:
-- Same streaming infrastructure as /generate
-- Debug-focused system prompt
-- Accepts code + error message + optional language
-- Lower temperature (0.3) for more precise fixes
-- Returns corrected code + explanation
-
-**System Prompt**:
-```
-You are DeBuggAI, an expert code debugger.
-1. Analyze the error message and identify root cause
-2. Provide corrected code in markdown
-3. Include brief explanation of fix
-4. Only fix the specific error - don't refactor unless necessary
-```
-
-**Request Format**:
-```typescript
-{
-  code: string;
-  errorMessage: string;
-  language?: string;
-  prompt?: string;
-  history?: Array<{ role: string; content: string }>;
-}
-```
-
-**Response Format**: Same SSE streaming as /generate
-
-**AI Parameters**:
-- Temperature: 0.3 (lower for precision)
-- Max tokens: 4096
-- Stream: true
-
----
-
-### F020: API Routes for Generate and Debug
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created Next.js API routes that proxy requests to Supabase edge functions with proper SSE streaming support.
-
-**Files**:
-- `src/app/api/generate/route.ts`
-- `src/app/api/debug/route.ts`
-
-**Features**:
-- Authentication check via Supabase session
-- Direct fetch to edge functions (not through SDK for proper streaming)
-- Streams response body directly to client
-- Proper SSE headers: `text/event-stream`, `Cache-Control: no-cache`
-- Error handling with appropriate status codes
-
-**Why Not Use Supabase SDK?**
-The Supabase JS SDK doesn't properly handle streaming responses. Using `fetch` directly allows:
-- Proper SSE streaming
-- Direct passthrough of response body
-- Control over headers
-
-**Authentication Flow**:
-1. Client calls `/api/generate` or `/api/debug`
-2. API route validates session via Supabase Auth
-3. API route calls edge function with `Bearer` token
-4. Edge function validates JWT and processes request
-5. Response streams back through API route to client
-
-**Example Usage**:
-```typescript
-// Generate code
-const response = await fetch('/api/generate', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ prompt: 'Create a button' }),
-});
-
-// Stream the response
-const reader = response.body.getReader();
-// ... parse SSE
-```
-
----
-
-### F021: Updated useGeneration Hook
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Updated the useGeneration hook to use the new API routes with proper error handling.
-
-**File**: `src/hooks/use-generation.ts`
-
-**Changes**:
-- Updated to call `/api/generate` and `/api/debug`
-- Proper error handling with try/catch
-- Type-safe request interfaces
-- Separate `generate()` and `debug()` methods
-
-**Usage**:
-```typescript
-const { generate, debug, isLoading, error } = useGeneration({
-  onChunk: (chunk) => console.log('Streaming:', chunk),
-  onDone: (code) => console.log('Complete:', code),
-  onError: (error) => console.error('Error:', error),
-});
-
-// Generate code
-await generate({ prompt: 'Create a login form' });
-
-// Debug code
-await debug(code, errorMessage, 'typescript');
-```
-
----
-
-## In Progress
-
-*None currently*
-
----
-
-## Next: Phase 4
-
-**Current Task**: T020 - Create Monaco Editor component
-
-**Upcoming**:
-- Monaco Editor integration
-- Iframe sandbox with Babel
-- Chat panel component
-- Preview pane with version selector
-
----
-
-*Last updated: 2026-04-16*
-
-## Phase 4: Web Builder Sandbox ✅
-
-### F022: Monaco Editor Component
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created Monaco Editor component for code editing with TypeScript/JSX support and two-way sync with generation store.
-
-**File**: `src/components/web-builder/code-editor.tsx`
-
-**Features**:
-- Monaco Editor (VS Code's editor) integration
-- TypeScript/TSX language support
-- Dark theme (vs-dark)
-- Syntax highlighting and code formatting
-- Font ligatures support (Fira Code, JetBrains Mono)
-- Two-way sync with generation store
-- Configurable height and read-only mode
-- Line numbers and word wrap
-- Smooth scrolling and cursor animations
-
-**Editor Options**:
-```typescript
-{
-  language: 'typescript',
-  theme: 'vs-dark',
-  fontSize: 14,
-  fontFamily: "'Fira Code', 'JetBrains Mono', monospace",
-  fontLigatures: true,
-  minimap: { enabled: false },
-  scrollBeyondLastLine: false,
-  automaticLayout: true,
-  tabSize: 2,
-  insertSpaces: true,
-  wordWrap: 'on',
-  lineNumbers: 'on',
-  cursorBlinking: 'smooth',
-  cursorSmoothCaretAnimation: 'on',
-  smoothScrolling: true,
-}
-```
-
-**State Integration**:
-- Reads `currentCode` from generation store
-- Updates store on every code change
-- Works seamlessly with preview pane
-
----
-
-### F023: Preview Builder Utility
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created utility to build HTML for iframe preview with React runtime and Babel transformation.
-
-**File**: `src/lib/preview-builder.ts`
-
-**Features**:
-- Builds complete HTML document for iframe
-- Includes React 18 development runtime
-- Includes Babel standalone for JSX transformation
-- Custom CSS for preview styling
-- Error capture via `window.onerror`
-- Captures unhandled promise rejections
-- Captures console.error calls
-- Automatic component rendering
-
-**Error Capture**:
-```javascript
-window.onerror = function(message, source, lineno, colno, error) {
-  window.parent.postMessage({
-    type: 'runtime-error',
-    payload: { message, source, lineno, colno, error }
-  }, '*');
-  return true;
-};
-```
-
-**Sandbox Security**:
-- `allow-scripts` - Required for React/Babel
-- `allow-same-origin` - Required for postMessage
-- No other permissions (isolated)
-
-**Functions**:
-- `buildPreviewHTML(code: string): string` - Build HTML for iframe
-- `buildPreviewTSX(code: string): string` - Alias for TSX
-- `buildPreviewJSX(code: string): string` - Alias for JSX
-
----
-
-### F024: Preview Pane Component
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created preview pane component with live iframe, version selector, and error display.
-
-**File**: `src/components/web-builder/preview-pane.tsx`
-
-**Features**:
-- Live code preview in iframe
-- Version history with dropdown selector
-- Refresh button to rebuild preview
-- Collapse button to hide preview
-- Runtime error display with details
-- Clear error button
-- 500ms debounced updates (prevents excessive recompiles)
-- Auto-scroll to bottom on errors
-
-**Version Management**:
-- Shows all saved versions from generation store
-- Displays timestamp and description
-- Click to switch between versions
-- Current version highlighted
-
-**Error Display**:
-```typescript
-interface RuntimeError {
-  message: string;
-  source?: string;
-  lineno?: number;
-  colno?: number;
-}
-```
-
-**Debounce Implementation**:
-```typescript
-const debouncedUpdate = useCallback(
-  (() => {
-    let timeoutId: NodeJS.Timeout;
-    return (code: string) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        updatePreview(code);
-      }, 500); // 500ms debounce
-    };
-  })(),
-  []
-);
-```
-
----
-
-### F025: Chat Panel Component
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created chat panel interface for AI code generation with streaming responses.
-
-**File**: `src/components/web-builder/chat-panel.tsx`
-
-**Features**:
+## 3. Web Builder / Code Generation
+
+### 3.1 AI Chat Panel
+- **File**: `src/components/web-builder/enhanced-chat-panel.tsx`, `src/components/web-builder/chat-panel.tsx`
+- v0.dev-style step-by-step AI chat with structured steps:
+  1. **Thought** — AI thinks about the request
+  2. **Explore** — AI explores the codebase
+  3. **Action** — AI takes file-system actions
+  4. **Code** — AI writes code
+  5. **Completion** — Task complete
+- Real-time SSE streaming of AI responses
 - Chat history with timestamps
-- Real-time streaming of AI responses
 - Auto-scroll to latest message
 - Quick action prompts (login form, todo list, dashboard)
 - Loading indicator during generation
 - Textarea with Enter to send, Shift+Enter for new line
 - Character limit and auto-resize
 - Empty state with suggestions
+- "New Project" button for stack selection
 
-**Message Format**:
-```typescript
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-}
-```
+### 3.2 Code Editor (Monaco)
+- **File**: `src/components/web-builder/code-editor.tsx`
+- Monaco Editor (VS Code's editor) integration
+- TypeScript/TSX language support
+- Dark theme (vs-dark)
+- Syntax highlighting and code formatting
+- Font ligatures (Fira Code, JetBrains Mono)
+- Two-way sync with generation store
+- Configurable height and read-only mode
+- Line numbers and word wrap
+- Smooth scrolling and cursor animations
+- Intellisense and autocompletion
 
-**Quick Prompts**:
-- "Create a login form with email and password fields"
-- "Create a todo list component with add and delete functionality"
-- "Create a dashboard with stats cards and a chart"
+### 3.3 Preview Pane
+- **File**: `src/components/web-builder/enhanced-preview-pane.tsx`
+- Live preview via Docker sandbox containers
+- Version history with dropdown selector
+- Refresh button to rebuild preview
+- Collapse button to hide preview
+- Runtime error display with "Debug This" button
+- 500ms debounced updates
+- Error console with message, source, line, and column
 
-**Integration**:
-- Uses `useGeneration` hook for streaming
-- Displays accumulated response in real-time
-- Toast notifications for success/error
-- Updates preview pane automatically
+### 3.4 Technology Stack Selector
+- **File**: `src/components/web-builder/stack-selector.tsx`
+- Modal dialog with 7 stack cards
+- Feature selection checkboxes (Auth, Database, REST API, File Upload, Docker, Testing)
+- Project name input
+- Generate button with loading state
+- **Supported stacks**: MERN, MEAN, Laravel, Django, Flask, Rails, Go
 
----
+### 3.5 Template Generation
+- **Edge Function**: `supabase/functions/web-builder-templates/index.ts`
+- Full project structure generation per stack
+- MERN template includes: client/server split, React frontend, Express API, Mongoose models, JWT auth, Multer uploads, CORS config
+- Configurable features per project
 
-### F026: Error Console Component
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created error console component for displaying and debugging runtime errors.
-
-**File**: `src/components/web-builder/error-console.tsx`
-
-**Features**:
-- Displays runtime errors from iframe
-- Shows error message, source, line, and column
-- "Debug This" button to fix errors with AI
-- Clear button to dismiss errors
-- Loading state during debugging
-- Empty state when no errors
-- Instructions for users
-
-**Debug Flow**:
-1. Runtime error occurs in iframe
-2. Error captured via postMessage
-3. Error displayed in console
-4. User clicks "Debug This"
-5. Current code + error sent to `/debug` endpoint
-6. Fixed code streams in
-7. Preview updates with fixed code
-8. Error cleared
-
-**Integration**:
-- Reads `lastError` from generation store
-- Reads `currentCode` for debugging
-- Uses `useGeneration` hook's `debug` method
-- Updates store on successful fix
+### 3.6 Streaming Infrastructure
+- **Edge Function**: `supabase/functions/generate/index.ts`
+- **API Route**: `POST /api/generate` (SSE streaming)
+- CORS support, JWT auth, conversation context (last 20 messages)
+- SSE Parser utility: `src/lib/sse-parser.ts`
+- Code extraction from markdown: `src/lib/extract-code.ts`
+- Multiple code block extraction, language detection from fences
 
 ---
 
-### F027: Web Builder Page Layout
+## 4. Agent System (Tool-Calling)
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 4.1 Agent Loop
+- **API Route**: `POST /api/agent/turn`
+- **File**: `src/lib/agent/tools.ts`, `src/lib/ai/router.ts`
+- Iterative tool-calling loop for AI agents
+- Intent detection (code_edit, planning, generate, debug)
 
-**Description**:
-Created main web builder page with three-column responsive layout.
+### 4.2 Agent Tools (10 tools)
+| Tool | Description |
+|------|-------------|
+| `list_dir` | List directory contents |
+| `view_file` | Read file contents |
+| `write_file` | Write content to file |
+| `line_replace` | Replace specific lines |
+| `search_files` | Search across files |
+| `read_dev_logs` | Read development logs |
+| `exec_command` | Execute shell command |
+| `write_new_file` | Create new file |
+| `delete_file` | Delete file |
+| `install_package` | Install npm package |
 
-**File**: `src/app/(dashboard)/web-builder/page.tsx`
+### 4.3 AI Provider Router
+- **File**: `src/lib/ai/router.ts`
+- Routes requests based on intent:
+  - **Groq** (Llama models) — fast, cheap, used for simple edits
+  - **DeepSeek** — reasoning/planning, used for complex tasks
+- Request-level intent classification
 
-**Layout**:
-```
-┌─────────────────────────────────────────────────────────┐
-│ Header                                                  │
-├─────────────────────────────────────────────────────────┤
-│ ┌─────────┐ ┌─────────┐ ┌─────────┐                   │
-│ │  Chat   │ │  Editor │ │ Preview │                   │
-│ │ Panel   │ │         │ │  Pane   │                   │
-│ │         │ │         │ │         │                   │
-│ │         │ │         │ │         │                   │
-│ └─────────┘ └─────────┘ └─────────┘                   │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Features**:
-- Authentication check (redirects to login if not authenticated)
-- Three-column layout on large screens
-- Stacked layout on mobile
-- Fixed height with scrollable panels
-- Header with help link
-- Responsive grid (lg:grid-cols-3)
-
-**Route**: `/web-builder`
-
-**Authentication**:
-- Checks `isAuthenticated` from session store
-- Redirects to `/login` if not authenticated
-- Shows loading spinner during check
+### 4.4 Visual Editor Bridge
+- **File**: `src/lib/agent/visual-editor-bridge.ts`
+- Bridges visual editor selections with agent tool calls
+- Converts visual editor component selections to agent-readable context
+- Maps property changes to code modifications
 
 ---
 
-## In Progress
+## 5. Visual Editor (Drag-and-Drop UI Builder)
 
-*None currently*
+### 5.1 Core Visual Editor
+- **File**: `src/components/visual-editor/visual-editor.tsx`
+- **Route**: Embedded in workspace
+- Full drag-and-drop visual UI builder
+- Three-panel layout: palette → canvas → properties
+- One-click code generation from visual layout
+- Multi-page support
 
----
+### 5.2 Component Palette
+- **File**: `src/components/visual-editor/component-palette.tsx`
+- 24+ draggable component types:
+  - Layout: container, row, column, section, grid
+  - Content: heading, text, badge, divider, list, alert, link, table
+  - Forms: button, input, textarea, select, checkbox, radio, form
+  - Navigation: navbar, breadcrumbs
+  - Media: image, video, icon
+  - Feedback: progress, spinner
 
-## Next: Phase 5
+### 5.3 Visual Canvas
+- **File**: `src/components/visual-editor/visual-editor-canvas.tsx`
+- Drag-and-drop component placement
+- Resizable canvas
+- Keyboard shortcuts (delete, duplicate, undo/redo)
+- Component selection and highlighting
 
-**Current Task**: Complete web builder testing
+### 5.4 Property Panel
+- **File**: `src/components/visual-editor/property-panel.tsx`
+- Component property editing (position, size, styling, content)
+- Real-time preview updates
+- Type-specific controls per component
 
-**Upcoming**:
-- Test end-to-end generation flow
-- Test debug flow with runtime errors
-- Add more error handling
-- Polish UI/UX
+### 5.5 Prompt Templates
+- **File**: `src/components/visual-editor/prompt-templates.tsx`
+- AI prompt templates for generating components
+- Context-aware suggestions
 
----
-
-*Last updated: 2026-04-16*
-
-## Phase 6: Multi-Language Debugging ✅
-
-### F028: Language Detection Edge Function
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created edge function for automatic programming language detection from code snippets.
-
-**File**: `supabase/functions/detect-language/index.ts`
-
-**Supported Languages**:
-- TypeScript
-- JavaScript
-- Python
-- PHP
-- Go
-- Ruby
-- Java
-- C#
-- Rust
-
-**Detection Method**:
-1. **Pattern Matching**: Language-specific regex patterns
-2. **Keyword Scoring**: Frequency of language keywords
-3. **Confidence Calculation**: Highest score / total score
-
-**Pattern Examples**:
-```typescript
-typescript: /:\s*(string|number|boolean)/, /interface\s+\w+/
-javascript: /const\s+\w+\s*=/, /=>\s*/
-python: /def\s+\w+/, /from\s+\w+\s+import/
-php: /\$\w+/, /function\s+/
-go: /func\s+/, /package\s+/
-```
-
-**Response Format**:
-```typescript
-{
-  language: string;
-  confidence: number; // 0-1
-  alternatives?: Array<{ language: string; confidence: number }>;
-}
-```
-
-**Usage**:
-```bash
-curl -X POST https://your-supabase.supabase.co/functions/v1/detect-language \
-  -H "Authorization: Bearer <token>" \
-  -d '{"code": "const x = 1;"}'
-```
+### 5.6 State
+- **File**: `src/store/visual-editor-store.ts` (Zustand, persisted)
+- Tracks pages, components per page, global CSS, libraries
+- Full undo/redo support via `useUndoRedo` hook
 
 ---
 
-### F029: Debug AI Analyze Edge Function
+## 6. Workspace / IDE
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 6.1 Main Workspace
+- **File**: `src/components/workspace/workspace-dashboard.tsx`
+- Orchestrator for chat panel + right panel layout
+- Resizable split panes
+- Responsive design (desktop sidebar, mobile bottom tabs)
 
-**Description**:
-Created edge function for multi-language code analysis with AI-powered debugging insights.
+### 6.2 Workspace Sidebar
+- **File**: `src/components/workspace/workspace-sidebar.tsx`, `src/components/dashboard/sidebar/unified-sidebar.tsx`
+- Navigation links (Home, Debug, Web Builder, Settings)
+- Thread list with search
+- Project list with switching
+- Collapsible sections
 
-**File**: `supabase/functions/debug-ai-analyze/index.ts`
+### 6.3 File Tree
+- **File**: `src/components/workspace/workspace-file-tree.tsx`, `src/components/workspace/professional-file-tree.tsx`
+- File explorer with folder expansion
+- File creation, deletion, renaming
+- Syntax-highlighted file type icons
 
-**Features**:
-- Multi-language support (10+ languages)
-- Automatic language detection
-- Language-specific error hints
-- Structured analysis response
-- Session saving to database
-- Context from chat history
+### 6.4 Right Panel (Tabs)
+- **File**: `src/components/workspace/workspace-right-panel.tsx`
+- Tabbed interface:
+  - **Code** — Monaco editor
+  - **Preview** — Live preview via Docker sandbox
+  - **Files** — File tree
+  - **Console** — Runtime error log
+  - **Connections** — Integration connections
+  - **Visual** — Visual editor
+  - **Schema** — Database schema generator
 
-**Response Format**:
-```typescript
-{
-  analysis: string; // Formatted analysis
-  language: string; // Detected or specified language
-  sessionId: string; // Database session ID
-}
-```
+### 6.5 Connections Panel
+- **File**: `src/components/workspace/workspace-connections-panel.tsx`
+- Integration connection management: GitHub, Vercel, Netlify, Supabase
+- OAuth connection flows per service
+- Connection status indicators
 
-**Analysis Structure**:
-```
-**Root Cause:** [what's causing the error]
+### 6.6 Version Management
+- **File**: `src/components/workspace/workspace-save-version-button.tsx`, `src/components/workspace/workspace-versions-list.tsx`
+- Save named versions of project code
+- Version history list with timestamps
+- Restore previous versions
 
-**Fix:**
-```language
-[corrected code]
-```
+### 6.7 Deploy Modal
+- **File**: `src/components/workspace/deploy-modal.tsx`
+- Deploy configuration (build command, output directory, environment)
+- Deployment trigger
 
-**Explanation:** [what was wrong and how the fix works]
+### 6.8 Export
+- **File**: `src/components/workspace/export-actions.tsx`
+- Export project as zip archive
+- Export via Docker sandbox API
 
-**Best Practices:** [how to avoid this error]
-
-**Related Concepts:** [what to learn]
-```
-
-**Language-Specific Hints**:
-Each language has predefined common errors:
-- JavaScript: TypeError, ReferenceError, Promise rejection
-- Python: IndentationError, NameError, KeyError
-- PHP: Fatal Error, Notice, Warning
-- Go: panic, nil pointer, import cycle
-- Ruby: NoMethodError, NameError, ArgumentError
-
-**Database Integration**:
-- Saves to `debug_sessions` table
-- Stores: language, code, error_message, fix, explanation, tags
-- Limits code/fix to 10,000 characters
-
----
-
-### F030: Debug Screen UI
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created multi-language debug interface with code input, language selection, and analysis results.
-
-**File**: `src/app/(dashboard)/debug/page.tsx`
-
-**Features**:
-- Language selector with 10+ options
-- Code textarea with syntax hinting
-- Optional error message input
-- Quick example prompts
-- Real-time analysis results
-- Auto-detected language display
-- Navigate to history page
-
-**Quick Examples**:
-1. **Find potential bugs**: Shows code with obvious bug
-2. **Review for best practices**: Code that works but could be better
-3. **Analyze error**: Error message analysis
-
-**Two-Column Layout**:
-```
-┌─────────────────────┬─────────────────────┐
-│ Input               │ Results             │
-│ - Language selector │ - Analysis display  │
-│ - Code input        │ - Detected language │
-│ - Error input       │ - Markdown render   │
-│ - Quick prompts     │                     │
-│ - Analyze button    │                     │
-└─────────────────────┴─────────────────────┘
-```
-
-**State Management**:
-- Uses `useDebugStore` for sessions
-- Auto-saves completed analyses
-- Tracks selected language
-
-**Route**: `/debug`
+### 6.9 Command Palette
+- **File**: `src/components/dashboard/command-palette.tsx`
+- Cmd+K quick-action palette
+- Search across projects, threads, and actions
 
 ---
 
-### F031: Debug History Page
+## 7. Project Management
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 7.1 Projects Hub
+- **File**: `src/components/dashboard/projects/projects-hub.tsx`, `src/components/dashboard/projects/project-card.tsx`
+- **Route**: `/dashboard` (when no project selected, shows ProjectsHub)
+- Project listing with search and filters
+- Project cards with name, description, framework, last updated
+- Create, rename, delete projects with confirmation dialogs
 
-**Description**:
-Created history view for past debugging sessions with filtering and re-run capabilities.
+### 7.2 Project Settings
+- **File**: `src/app/dashboard/projects/[id]/settings/page.tsx`
+- **Route**: `/dashboard/projects/[id]/settings`
+- Project name and description
+- Framework selection
+- Build command configuration
+- Environment type
 
-**File**: `src/app/(dashboard)/debug/history/page.tsx`
+### 7.3 Custom Domains
+- **File**: `src/app/dashboard/projects/[id]/settings/domains/page.tsx`, `src/components/project/domains-manager.tsx`
+- **Route**: `/dashboard/projects/[id]/settings/domains`
+- Add/remove custom domains
+- Domain verification status
+- DNS configuration guidance
 
-**Features**:
-- List all debug sessions
-- Search by code, error, or explanation
-- Filter by programming language
-- Re-run analysis button
-- Delete individual sessions
-- Clear all sessions
-- Timestamp with relative time
-- Language badges
-- Error message preview
-- Code preview
-- Tags display
+### 7.4 Environment Variables
+- **File**: `src/app/dashboard/projects/[id]/settings/env-vars/page.tsx`, `src/components/project/env-vars-manager.tsx`
+- **Route**: `/dashboard/projects/[id]/settings/env-vars`
+- Add, edit, delete environment variables
+- Key/value pairs with masked values
+- Per-project isolation
 
-**Card Layout**:
-```
-┌────────────────────────────┐
-│ [Language] [2 hours ago]    │
-│ ─────────────────────────  │
-│ Error: TypeError...         │
-│                            │
-│ const arr = null;          │
-│ arr.push(1);               │
-│                            │
-│ [error] [typescript]       │
-│ ─────────────────────────  │
-│ [Re-run] [Delete]          │
-└────────────────────────────┘
-```
+### 7.5 Integrations
+- **File**: `src/app/dashboard/projects/[id]/settings/integrations/page.tsx`, `src/components/project/integrations-manager.tsx`
+- **Route**: `/dashboard/projects/[id]/settings/integrations`
+- Third-party service connections: GitHub, Vercel, Netlify, Supabase
+- OAuth-based authentication
+- Connection status indicators
 
-**Empty State**:
-- No sessions yet message (if none)
-- No matching sessions message (if filtered)
+### 7.6 Git Branch Management
+- **File**: `src/components/dashboard/branches/enhanced-branches-manager.tsx`
+- **Route**: `/dashboard/branches`
+- View, create, switch branches
+- Branch comparison and merge
 
-**Navigation**:
-- Link from main debug page header
-- Back button to debug screen
+### 7.7 Runs / Build History
+- **File**: `src/app/dashboard/runs/page.tsx`, `src/app/dashboard/runs/[id]/page.tsx`
+- **Route**: `/dashboard/runs`, `/dashboard/runs/[id]`
+- Execution/session history list
+- Run detail view (status, duration, logs, output)
 
-**Route**: `/debug/history`
-
----
-
-### F032: Debug Analyze API Route
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created Next.js API route that proxies debug analyze requests to Supabase edge function.
-
-**File**: `src/app/api/debug-analyze/route.ts`
-
-**Features**:
-- Session validation via Supabase Auth
-- Proxies to `/functions/v1/debug-ai-analyze`
-- Returns JSON response (non-streaming)
-- Error handling with status codes
-
-**Request Format**:
-```typescript
-{
-  code: string;
-  errorMessage?: string;
-  language?: string; // Optional - auto-detected if not provided
-  history?: Array<{ role: string; content: string }>;
-}
-```
-
-**Response Format**:
-```typescript
-{
-  analysis: string;
-  language: string;
-  sessionId: string;
-}
-```
-
-**Route**: `POST /api/debug-analyze`
+### 7.8 Project API Routes
+- `GET/POST /api/projects` — list/create
+- `GET/PUT/DELETE /api/projects/[id]` — CRUD
+- `GET/PUT /api/projects/[id]/settings` — settings
+- `POST /api/projects/[id]/deploy` — deploy
+- `POST /api/projects/[id]/save-code` — save code
 
 ---
 
-## In Progress
+## 8. Docker Sandbox (Live Preview)
 
-*None currently*
+### 8.1 Sandbox Manager
+- **File**: `src/lib/sandbox/sandbox.ts`
+- Creates isolated Docker containers from project files
+- Real-time log streaming via SSE (`/api/sandbox/[id]/logs`)
+- Container stop and cleanup (`POST /api/sandbox/[id]/stop`)
+- Export project as zip (`GET /api/sandbox/[id]/export`)
 
----
+### 8.2 Resource Limits
+- CPU: 1 core per container
+- Memory: 1GB RAM
+- PIDs: 256 process limit
+- Writable `/tmp`: memory-limited tmpfs (64MB)
+- No-new-privileges security flag
+- All capabilities dropped (`--cap-drop ALL`)
 
-## Next: Phase 7
+### 8.3 Network Isolation
+- Isolated Docker network per sandbox
+- Egress allowlist for security (only allowlisted external hosts)
+- Internal ports (4000+) — no external access
 
-**Current Task**: Credits & Stripe Integration
+### 8.4 Auto-Reaping
+- Orphaned container cleanup on boot
+- Periodic reaping every 5 minutes
+- Admin kill-switch via sandbox config API
 
-**Upcoming**:
-- Stripe checkout edge function
-- Stripe webhook handler
-- Pricing page
-- Credit deduction logic
-- Transaction history
-
----
-
-*Last updated: 2026-04-16*
-
-## Phase 7: Credits & Stripe Integration ✅
-
-### F033: Stripe Checkout Edge Function
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created Stripe checkout edge function for creating subscription sessions.
-
-**File**: `supabase/functions/create-checkout/index.ts`
-
-**Features**:
-- Creates Stripe checkout session
-- Handles Free/Pro/Enterprise plans
-- Creates or retrieves Stripe customer
-- Stores customer ID in profile
-- Trial period for Pro plan (7 days)
-- Success/cancel redirects
-
-**Plan Credits**:
-- Free: 30 credits
-- Pro: 300 credits/month
-- Enterprise: Unlimited (-1)
-
-**Webhook Metadata**:
-```typescript
-subscription_data.metadata = {
-  supabase_user_id: userId,
-  plan_type: 'pro' | 'enterprise',
-}
-```
-
-**Response**:
-```typescript
-{
-  url: string; // Stripe checkout URL
-}
-```
+### 8.5 Preview Proxy
+- **Route**: `/preview/[id]/[...slug]`
+- Proxies requests to sandbox containers
+- Avoids CORS issues between main app and sandbox
 
 ---
 
-### F034: Stripe Webhook Edge Function
+## 9. Credit System & Billing
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 9.1 Pricing Tiers
+| Plan | Price | Credits | Features |
+|------|-------|---------|----------|
+| Free | $0 | 30 | Basic features, 7-day history, 10 req/min |
+| Pro | $9/mo | 300 | Priority AI, 90-day history, 30 req/min |
+| Team | $99/mo | — | Team collaboration, shared resources |
+| Business | $299/mo | — | Advanced features, dedicated support |
+| Enterprise | $999+/mo | Custom | Custom SLA, dedicated AI, unlimited history |
 
-**Description**:
-Created Stripe webhook handler for subscription lifecycle management.
+### 9.2 Credit Costs
+| Action | Cost |
+|--------|------|
+| Debug analysis | 1 credit |
+| Reverse debugging | 2 credits |
+| Web builder small | 20 credits |
+| Web builder medium | 50 credits |
+| Web builder large | 100 credits |
+| Save session | 10 credits |
 
-**File**: `supabase/functions/stripe-webhook/index.ts`
-
-**Handled Events**:
-1. `checkout.session.completed` - Initial subscription
-2. `customer.subscription.created` - New subscription
-3. `customer.subscription.updated` - Plan changes
-4. `customer.subscription.deleted` - Cancellations
-5. `invoice.payment_succeeded` - Monthly payments
-
-**Actions Per Event**:
-- **New Subscription**: Update user plan, add credits
-- **Subscription Updated**: Update plan, reset credits if active
-- **Subscription Deleted**: Downgrade to free, reset credits
-- **Payment Succeeded**: Reset monthly credits for Pro users
-
-**Security**:
+### 9.3 Stripe Integration
+- **Edge Functions**: `supabase/functions/create-checkout/index.ts`, `supabase/functions/stripe-webhook/index.ts`
+- **API Routes**: `POST /api/create-checkout`, `GET /api/user/invoices`
+- Checkout session creation per plan
+- Webhook handling: subscription created, updated, deleted, payment succeeded
+- Stripe customer ID stored in profile
+- 7-day trial for Pro plan
 - Webhook signature verification
-- Service role key for database writes
-- Metadata validation
 
----
-
-### F035: Database Migration for Stripe
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `supabase/migrations/002_add_stripe_columns.sql`
-
-**Changes**:
-- Added `stripe_customer_id` column to `profiles` table
-- Created index for Stripe customer lookups
-- Ensured `plan` column exists with proper constraints
-
----
-
-### F036: Pricing Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created pricing page with three-tier subscription display.
-
-**File**: `src/app/(dashboard)/pricing/page.tsx`
-
-**Plans Displayed**:
-1. **Free** ($0/month)
-   - 30 credits
-   - Basic features
-   - 7-day history
-   - 10 req/min
-
-2. **Pro** ($9/month)
-   - 300 credits
-   - Priority AI
-   - 90-day history
-   - 30 req/min
-   - Popular badge
-
-3. **Enterprise** ($49/month)
-   - Unlimited credits
-   - Dedicated AI
-   - Unlimited history
-   - SLA guarantee
-
-**Features**:
-- Feature comparison list
-- Checkout buttons per plan
-- Current plan indicator
-- FAQ section
-- Responsive grid layout
-
-**Route**: `/pricing`
-
----
-
-### F037: Credits Service
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/lib/credits-service.ts`
-
-**Functions**:
-- `checkCredits(userId, action)` - Check if user has enough credits
-- `deductCredits(userId, action, description)` - Deduct credits and record transaction
-- `addCredits(userId, amount, source, description)` - Add credits
-- `getCredits(userId)` - Get current balance
-- `getTransactions(userId, limit)` - Get transaction history
-
-**Credit Costs**:
-```typescript
-{
-  DEBUG_ANALYSIS: 1,
-  REVERSE_DEBUGGING: 2,
-  WEB_BUILDER_SMALL: 20,
-  WEB_BUILDER_MEDIUM: 50,
-  WEB_BUILDER_LARGE: 100,
-  SAVE_SESSION: 10,
-}
-```
-
-**Transaction Recording**:
-- All credit operations logged
-- Type: earned/spent/refunded
-- Source: action name
-- Timestamp recorded
-
----
-
-### F038: Transactions History Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/app/(dashboard)/settings/transactions/page.tsx`
-
-**Features**:
+### 9.4 Transaction History
+- **File**: `src/app/dashboard/settings/transactions/page.tsx`, `src/components/dashboard/settings/transactions-history.tsx`
+- **Route**: `/dashboard/settings/transactions`
 - List all credit transactions
 - Filter by type (earned/spent/refunded)
 - Search by source/description
 - Export to CSV
-- Refresh button
-- Relative timestamps
-- Color-coded amounts (green for earned, red for spent)
+- Relative timestamps, color-coded amounts
 
-**Transaction Display**:
-```
-┌─────────────────────────────────────┐
-│ [Earned] subscription           +300 │
-│ Monthly credits reset              │
-│ 2 hours ago                        │
-└─────────────────────────────────────┘
-```
-
-**Route**: `/settings/transactions`
+### 9.5 Coupon System
+- **API Route**: `POST /api/coupons/redeem`
+- Coupon code redemption
+- Internal test coupon support
 
 ---
 
-### F039: Updated Navigation
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/components/navigation.tsx`
-
-**Updates**:
-- Real-time credit updates via Supabase realtime
-- Added Transactions link to user menu
-- Subscribe to credit_wallet changes
-- Show "∞" for unlimited credits
-- Clean up subscription on logout
-
-**Realtime Channel**:
-```typescript
-supabase
-  .channel(`credits:${userId}`)
-  .on('postgres_changes', {
-    event: 'UPDATE',
-    table: 'credit_wallets',
-    filter: `owner_id=eq.${userId}`,
-  }, (payload) => {
-    setCredits(payload.new.balance);
-  })
-```
-
----
-
-### F040: Settings Page
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/app/(dashboard)/settings/page.tsx`
-
-**Features**:
-- Current plan display with badge
-- Credits remaining
-- Upgrade button
-- Settings sections:
-  - Account (Profile, Password)
-  - Billing (Subscription, Transactions)
-  - Developer (API Keys, Webhooks)
-- Danger zone (Delete Account, Export Data)
-
-**Route**: `/settings`
-
----
-
-### F041: Checkout API Route
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/app/api/create-checkout/route.ts`
-
-**Features**:
-- Session validation
-- Proxies to create-checkout edge function
-- Returns Stripe checkout URL
-- Error handling
-
-**Route**: `POST /api/create-checkout`
-
----
-
-## In Progress
-
-*None currently*
-
----
-
-## Next: Phase 8
-
-**Current Task**: Web Builder Templates
-
-**Upcoming**:
-- MERN stack template generator
-- Laravel template generator
-- Django template generator
-- Flask template generator
-- Rails template generator
-- Go stack template generator
-- Stack selector UI
-- Template system implementation
-
----
-
-*Last updated: 2026-04-16*
-
-## Phase 8: Web Builder Templates ✅
-
-### F042: Web Builder Template Generator
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created edge function for generating complete project structures for different tech stacks.
-
-**File**: `supabase/functions/web-builder-templates/index.ts`
-
-**Supported Stacks**:
-- **MERN**: MongoDB, Express, React, Node.js
-- **MEAN**: MongoDB, Express, Angular, Node.js
-- **Laravel**: PHP, Laravel Framework, MySQL
-- **Django**: Python, Django, PostgreSQL
-- **Flask**: Python, Flask, SQLAlchemy
-- **Rails**: Ruby, Rails, PostgreSQL
-- **Go**: Go, Gin/Echo, PostgreSQL
-
-**MERN Template Features**:
-- Full project structure (client/server)
-- React frontend with routing
-- Express API with controllers
-- Mongoose models and schemas
-- JWT authentication
-- File upload handling with Multer
-- CORS configuration
-- Environment setup
-- Docker support (optional)
-- Testing setup (optional)
-
-**Generated Files**:
-```
-my-app/
-├── client/
-│   ├── public/index.html
-│   ├── src/App.js
-│   └── src/App.css
-├── server/
-│   ├── index.js
-│   ├── models/User.js
-│   ├── routes/auth.js
-│   └── routes/api.js
-├── package.json
-├── .env.example
-└── README.md
-```
-
-**Features Included**:
-- Authentication: JWT with signup/login
-- Database: Mongoose models
-- API: REST endpoints with Express
-- Upload: Multer for file handling
-
-**Configurable Options**:
-- Project name
-- Features: auth, database, api, upload, docker, testing
-
----
-
-### F043: Stack Selector Component
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/components/web-builder/stack-selector.tsx`
-
-**Features**:
-- Modal dialog for stack selection
-- 7 tech stack cards with icons
-- Feature selection checkboxes:
-  - Authentication
-  - Database Models
-  - REST API
-  - File Upload
-  - Docker Ready
-  - Testing Setup
-- Project name input
-- Generate button with loading state
-
-**Stack Cards Display**:
-```
-┌─────────────────┐  ┌─────────────────┐
-│ ⚛️ MERN          │  │ 🅰️ MEAN          │
-│ Mongo, Express  │  │ Mongo, Express  │
-│ React, Node      │  │ Angular, Node    │
-└─────────────────┘  └─────────────────┘
-```
-
-**User Flow**:
-1. Click "New Project" button in chat panel
-2. Modal opens with stack selection
-3. Select stack (MERN, MEAN, etc.)
-4. Optionally select features
-5. Enter project name
-6. Click "Generate Project"
-7. AI generates complete project structure
-8. Files appear in editor
-
----
-
-### F044: Updated Chat Panel
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/components/web-builder/chat-panel.tsx`
-
-**Updates**:
-- Added "New Project" button in header
-- Added "Create New Project" button in empty state
-- Integrated StackSelector modal
-- Layers icon for project creation
-- Improved empty state messaging
-
-**New Buttons**:
-- Header button: Quick access to create new project
-- Empty state button: Prominent call-to-action
-
----
-
-## In Progress
-
-*None currently*
-
----
-
-## Phase 9: Referral Program ✅
-
-### F045: Referral Code Generation
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created edge function for generating unique referral codes for users.
-
-**File**: `supabase/functions/generate-referral-code/index.ts`
-
-**Features**:
-- Generates unique 9-character referral codes
-- Code format: `{username_prefix}{3_random_chars}` (e.g., "JOHNDO7X3")
-- Checks for existing codes to ensure uniqueness
-- Returns full referral URL with code
-- Prevents duplicate codes for same user
-
-**Code Generation Algorithm**:
-1. Extract first 6 characters of username (cleaned)
-2. Generate 3 random alphanumeric characters (no confusing chars like 0/O, 1/I)
-3. Combine and uppercase
-4. Check uniqueness
-5. Retry if collision occurs
-
-**Response Format**:
-```typescript
-{
-  code: "JOHNDO7X3",
-  url: "https://debugg.ai?ref=JOHNDO7X3"
-}
-```
-
-**API Route**: `POST /api/referrals/generate`
-
----
-
-### F046: Referral Tracking System
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created referral tracking system that processes signups with referral codes and awards credits to both parties.
-
-**File**: `supabase/functions/track-referral/index.ts`
-
-**Reward Structure**:
-- **Referrer**: 10 credits per successful signup
-- **Referee**: 5 bonus credits for using referral code
-
-**Validation**:
-- Checks referral code exists
-- Prevents self-referral
-- Prevents code reuse
-- Updates referral status to "completed"
-
-**Actions Per Successful Referral**:
-1. Update referral record with referee_id
-2. Award 10 credits to referrer
-3. Award 5 bonus credits to new user
-4. Record transactions for both
-5. Create notifications
-6. Check for ambassador milestones
-
-**Ambassador Milestones**:
-- **Bronze** (5 referrals): +25 bonus credits
-- **Silver** (10 referrals): +50 bonus credits
-- **Gold** (25 referrals): +150 bonus credits
-- **Platinum** (50 referrals): +350 bonus credits
-- **Diamond** (100 referrals): +1000 bonus credits
-
-**API Route**: `POST /api/referrals/track`
-
----
-
-### F047: Referral Dashboard
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `src/app/(dashboard)/referrals/page.tsx`
-
-**Features**:
-- Hero section with program description
-- Stats grid showing:
-  - Total referrals
-  - Completed referrals
-  - Credits earned
-  - Ambassador tier
-- Referral link/code display
-- Copy-to-clipboard functionality
+## 10. Referral Program
+
+### 10.1 Referral Code Generation
+- **Edge Function**: `supabase/functions/generate-referral-code/index.ts`
+- **API Route**: `POST /api/referrals/generate`
+- Unique 9-character codes: `{username_prefix}{3_random_chars}`
+- Ambiguous character avoidance (0/O, 1/I)
+- Uniqueness checking with retry
+
+### 10.2 Referral Tracking
+- **Edge Function**: `supabase/functions/track-referral/index.ts`
+- **API Route**: `POST /api/referrals/track`
+- Reward structure: referrer gets 10 credits, referee gets 5 bonus credits
+- Self-referral prevention
+- Code reuse prevention
+- Status tracking (pending → completed → paid)
+
+### 10.3 Ambassador Tiers
+| Tier | Referrals | Bonus Credits |
+|------|-----------|---------------|
+| Bronze | 5 | +25 |
+| Silver | 10 | +50 |
+| Gold | 25 | +150 |
+| Platinum | 50 | +350 |
+| Diamond | 100 | +1000 |
+
+### 10.4 Referral Dashboard
+- **File**: `src/app/dashboard/referrals/page.tsx`, `src/components/dashboard/referrals/referrals-page.tsx`
+- **Route**: `/dashboard/referrals`
+- Stats grid: total referrals, completed, credits earned, ambassador tier
+- Referral link/code copy-to-clipboard
 - Social share button
 - Ambassador milestone progress bar
 - Referral history list
-- Tabbed view (My Referrals / Leaderboard)
+- Tabbed view: My Referrals / Leaderboard
 
-**Stats Display**:
-```
-┌─────────────┬─────────────┬─────────────┬─────────────┐
-│ Total       │ Completed   │ Earned      │ Tier        │
-│ Referrals   │ Referrals   │ Credits     │             │
-├─────────────┼─────────────┼─────────────┼─────────────┤
-│     12      │      10     │     100     │   Bronze    │
-└─────────────┴─────────────┴─────────────┴─────────────┘
-```
-
-**Ambassador Progress Bar**:
-```
-SILVER Tier
-6 / 10 referrals
-████████░░░░░░░░ 60%
-
-Next Milestone Bonus
-Reach 10 referrals    +50 🪙
-```
-
-**Route**: `/referrals`
-
----
-
-### F048: Ambassador Leaderboard
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Created ambassador leaderboard showing top referrers and their tiers.
-
-**File**: `src/components/referrals/ambassador-leaderboard.tsx`
-
-**Edge Function**: `supabase/functions/ambassador-leaderboard/index.ts`
-
-**Features**:
+### 10.5 Ambassador Leaderboard
+- **File**: `src/components/referrals/ambassador-leaderboard.tsx`
+- **Edge Function**: `supabase/functions/ambassador-leaderboard/index.ts`
+- **API Route**: `GET /api/referrals/leaderboard`
 - Tier information cards (Bronze → Diamond)
-- Top 50 ambassadors displayed
-- Real-time ranking
-- Shows:
-  - Rank position (with crown/trophy/medal for top 3)
-  - Avatar and name
-  - Ambassador tier badge
-  - Total referrals count
-  - Total credits earned
-
-**Tier Display**:
-```
-┌─────────┬─────────┬─────────┬─────────┬─────────┐
-│ 🥉      │ 🥈      │ 🏆      │ 💎      │ 💠      │
-│ BRONZE  │ SILVER  │ GOLD    │ PLATINUM│ DIAMOND │
-│ 5 refs  │ 10 refs │ 25 refs │ 50 refs │100 refs │
-│ +25     │ +50     │ +150    │ +350    │ +1000   │
-└─────────┴─────────┴─────────┴─────────┴─────────┘
-```
-
-**Leaderboard Entry**:
-```
-#1  👤 John Doe    🏆 Gold    42 referrals    520 earned
-```
-
-**Database Function**: `get_ambassador_leaderboard(limit_count INTEGER)`
-- Aggregates referral data
-- Joins with profiles
-- Orders by referral count DESC
-- Returns referrer stats with tier info
-
-**API Route**: `GET /api/referrals/leaderboard`
+- Top 50 ambassadors with rank, avatar, name, tier badge, referral count, credits earned
+- Crown/trophy/medal for top 3
 
 ---
 
-### F049: useReferrals Hook
+## 11. Admin Panel
 
-**Status**: ✅ Completed
-**Date**: 2026-04-16
+### 11.1 Admin Dashboard
+- **File**: `src/app/dashboard/admin/page.tsx`, `src/components/admin/admin-dashboard.tsx`
+- **Route**: `/dashboard/admin`
+- Platform-wide analytics and stats overview
+- Quick stats cards (users, runs, revenue, etc.)
+- Protected by `AdminRouteGuard`
 
-**File**: `src/hooks/use-referrals.ts`
+### 11.2 User Management
+- **File**: `src/app/dashboard/admin/users/page.tsx`, `src/components/admin/admin-users.tsx`
+- **Route**: `/dashboard/admin/users`
+- User list with search and filter
+- Ban/unban users
+- Adjust user credits
+- User detail view
+- Pagination
 
-**Functions**:
-- `generateCode()` - Generate referral code for current user
-- `trackReferral(code)` - Track signup with referral code
-- `getStats()` - Get referral statistics
-- `getReferrals()` - Get referral list with details
+### 11.3 Credit Management
+- **File**: `src/app/dashboard/admin/credits/page.tsx`, `src/components/admin/admin-credits.tsx`
+- **Route**: `/dashboard/admin/credits`
+- Credit audit log across all users
+- Manual credit adjustments
 
-**Stats Return Type**:
-```typescript
-interface ReferralStats {
-  totalReferrals: number;
-  pendingReferrals: number;
-  completedReferrals: number;
-  totalCreditsEarned: number;
-  ambassadorTier: string | null;
-  nextMilestone: {
-    tier: string;
-    referrals: number;
-    bonus: number;
-  } | null;
-}
+### 11.4 System Monitoring
+- **File**: `src/app/dashboard/admin/monitoring/page.tsx`, `src/components/admin/admin-monitoring.tsx`
+- **Route**: `/dashboard/admin/monitoring`
+- System health status
+- Performance metrics
+- Sandbox container status
+
+### 11.5 AI Provider Configuration
+- **File**: `src/app/dashboard/admin/ai/page.tsx`, `src/components/admin/admin-ai-provider.tsx`
+- **Route**: `/dashboard/admin/ai`
+- Configure AI provider endpoints and API keys
+- Toggle between providers
+
+### 11.6 Runs Dashboard
+- **File**: `src/app/dashboard/admin/runs/page.tsx`, `src/components/admin/admin-runs-dashboard.tsx`
+- **Route**: `/dashboard/admin/runs`
+- All runs across all users
+- Run detail view
+
+### 11.7 Admin API Routes
+| Route | Purpose |
+|-------|---------|
+| `GET /api/admin/users` | List users |
+| `GET/PUT /api/admin/users/[userId]` | User detail/edit |
+| `POST /api/admin/users/[userId]/ban` | Ban/unban |
+| `POST /api/admin/users/[userId]/credits` | Adjust credits |
+| `GET /api/admin/credits` | Credit audit |
+| `GET /api/admin/stats` | Platform statistics |
+| `GET /api/admin/analytics` | Analytics data |
+| `GET /api/admin/runs` | All runs |
+| `GET /api/admin/runs/[runId]` | Run detail |
+| `GET/PUT /api/admin/abuse` | Abuse reports |
+| `GET /api/admin/health` | Health check |
+| `GET /api/admin/metrics` | Platform metrics |
+| `GET /api/admin/audit` | Audit log |
+| `POST /api/admin/verify` | Admin verification |
+| `POST /api/admin/maintenance` | Maintenance actions |
+| `POST /api/admin/newsletter` | Send newsletter |
+| `GET/PUT /api/admin/sandbox-config` | Sandbox configuration |
+| `GET/PUT /api/admin/throttles` | Rate limit config |
+| `GET/PUT /api/admin/ai-provider` | AI provider config |
+| `GET /api/admin/contact-messages` | Contact form messages |
+
+---
+
+## 12. Real-Time Collaboration
+
+### 12.1 Collab Cursors
+- **File**: `src/components/workspace/collab-cursors.tsx`
+- Real-time collaborator cursor overlay on the canvas
+- Multi-user awareness in workspace
+
+### 12.2 Collaboration Provider
+- **File**: `src/lib/collaboration/collab-provider.ts`
+- Shared editing state management
+- Cursor position broadcasting
+- Real-time updates via Supabase Realtime
+
+---
+
+## 13. Notifications
+
+### 13.1 Notification Center
+- **File**: `src/components/dashboard/notification-center.tsx`
+- **API Route**: `GET /api/notifications`, `POST /api/notifications/[id]/read`
+- User notification panel in dashboard
+- Notification types: system, referral, billing, project activity
+- Read/unread status tracking
+
+### 13.2 Database Notifications
+- `notifications` table with: user_id, type, title, message, read status, metadata
+- Welcome notification on signup
+- Referral milestone notifications
+- Subscription/billing state change notifications
+
+---
+
+## 14. Design System & Theming
+
+### 14.1 Design Philosophy ("The Workbench")
+- Dark-first, flat surfaces with tonal layering
+- Green (#00C853) as the sole accent color — used on ≤10% of any screen
+- Type-driven hierarchy — scale and weight for separation, not borders or backgrounds
+- Sparse borders — whitespace and font weight create structure
+- Flat and precise — minimal elevation, no shadows on surfaces
+- 6px consistent border-radius on all interactive and container elements
+
+### 14.2 Color Palette
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Workspace Black | #0A0D0A | Page background |
+| Cast Iron | #111411 | Card/panel surfaces |
+| Ash | #171C17 | Secondary surfaces, toolbars |
+| Deep Moss | #1E261E | Tertiary surfaces, hover fills |
+| Vine Border | #1F2B1F | Default borders |
+| Thicker Vine | #283228 | Stronger borders |
+| Terminal Green | #00C853 | Primary accent (CTAs, active states) |
+| Bright Green | #00E676 | Hover state for primary |
+| Alert Red | #FF5252 | Destructive actions, errors |
+| Signal Amber | #FFAB00 | Warnings, pending |
+| Link Blue | #40C4FF | Links, info badges |
+| Accent Purple | #CE93D8 | Experimental/labs features |
+
+### 14.3 Typography
+| Style | Size | Weight | Usage |
+|-------|------|--------|-------|
+| Display | 32px | 600 | Page titles, hero sections |
+| Headline | 22px | 600 | Section headers |
+| Title | 17px | 600 | Card titles, panel headings |
+| Subtitle | 14px | 500 | Small headings, group labels |
+| Body | 13px | 400 | Primary reading text |
+| Caption | 11px | 400 | Metadata, timestamps |
+| Stat | 24px | 600 | Numeric values (green) |
+| Mono | 12px | 400 | Code, data, shortcuts |
+
+- **Primary font**: Inter (with system-sans fallback)
+- **Mono font**: JetBrains Mono
+
+### 14.4 Theme
+- **File**: `src/components/theme-provider.tsx`, `src/components/theme-toggle.tsx`, `src/components/theme-init-script.tsx`
+- Dark-first default with light/dark toggle
+- Theme init script prevents flash on load
+- Next-themes based implementation
+
+### 14.5 Key Design Rules
+- No gradient text, glassmorphism, or decorative blur effects
+- No box-shadow on cards or static surfaces
+- No em dashes
+- No animated layout properties (animations on transforms and opacity only)
+- WCAG 2.1 AA contrast ratios (4.5:1 minimum)
+- `prefers-reduced-motion` support
+
+---
+
+## 15. Public / Marketing Pages
+
+### 15.1 Landing Page
+- **Route**: `/` (src/app/page.tsx)
+- Hero section with animated tagline
+- Capabilities bento grid (AI Debugging, Web Builder, Multiple languages)
+- Live demo mock section
+- Supported languages bar
+- Pricing section with 5 tiers
+- Call-to-action section
+- Framer Motion scroll animations
+
+### 15.2 Features Page
+- **Route**: `/features`
+- AI debugging showcase
+- Speed/latency highlights
+- Web builder overview
+- 10+ languages display
+- Security and best practices
+
+### 15.3 Pricing Page
+- **Route**: `/pricing`
+- 5 plan cards: Free ($0), Pro ($9), Team ($99), Business ($299), Enterprise ($999+)
+- Detailed feature comparison table
+- Plan-specific CTAs
+
+### 15.4 About Page
+- **Route**: `/about`
+- Mission statement
+- Story section
+- Stats: 10+ languages, <3s debug, 94% accuracy, 12k+ users
+- Values section
+
+### 15.5 Demo
+- **Route**: `/demo`
+- 4-step walkthrough: buggy code → AI analysis → root cause breakdown → fixed code
+- Sub-pages: `/demo/ui`, `/demo/ui/dashboard`, `/demo/ui/debugger`, `/demo/ui/workspace`
+
+### 15.6 Documentation
+- **Route**: `/docs`
+- Product documentation page
+
+### 15.7 FAQ
+- **Route**: `/faq`
+- Accordion-style Q&A (5+ questions about security, pricing, languages)
+
+### 15.8 Languages
+- **Route**: `/languages`
+- 12 supported programming languages display
+
+### 15.9 Other Public Pages
+| Route | Page |
+|-------|------|
+| `/contact` | Contact form (name, email, subject, message) |
+| `/terms` | Terms of Service |
+| `/privacy` | Privacy Policy |
+| `/careers` | Careers page (remote-first, benefits, open positions) |
+
+---
+
+## 16. API Routes
+
+### 16.1 AI & Generation
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/generate` | AI code generation (SSE streaming) |
+| POST | `/api/generate/schema` | Schema generation |
+| POST | `/api/generate/template` | Template generation |
+| POST | `/api/debug` | AI debugging (SSE streaming) |
+| POST | `/api/debug-analyze` | Structured analysis (JSON) |
+| GET/POST | `/api/debug-sessions` | Debug session CRUD |
+| GET/DELETE | `/api/debug-sessions/[id]` | Debug session CRUD |
+| POST | `/api/agent/turn` | Agent tool-calling loop |
+
+### 16.2 Threads & Chat
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET/POST | `/api/threads` | List/create threads |
+| GET/PUT/DELETE | `/api/threads/[threadId]` | Thread CRUD |
+| GET/POST | `/api/threads/[threadId]/messages` | Messages in thread |
+
+### 16.3 Projects
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET/POST | `/api/projects` | List/create projects |
+| GET/PUT/DELETE | `/api/projects/[id]` | Project CRUD |
+| GET/PUT | `/api/projects/[id]/settings` | Settings |
+| GET/POST | `/api/projects/[id]/branches` | Git branches |
+| POST | `/api/projects/[id]/deploy` | Deploy |
+| GET/POST/DELETE | `/api/projects/[id]/domains` | Custom domains |
+| GET/POST/DELETE | `/api/projects/[id]/env-vars` | Environment variables |
+| POST | `/api/projects/[id]/git` | Git operations |
+| POST | `/api/projects/[id]/git/push` | Git push |
+| GET/POST/DELETE | `/api/projects/[id]/integrations` | Integrations |
+| GET/POST | `/api/projects/[id]/pull-requests` | Pull requests |
+| POST | `/api/projects/[id]/save-code` | Save code |
+
+### 16.4 Sandbox / Execution
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET/POST | `/api/runs` | List/create runs |
+| GET | `/api/runs/[runId]` | Run details |
+| POST | `/api/runs/[runId]/cancel` | Cancel run |
+| POST | `/api/runs/[runId]/execute` | Execute run |
+| POST | `/api/sandbox/create` | Create sandbox |
+| GET | `/api/sandbox/[id]/logs` | Sandbox logs (SSE) |
+| POST | `/api/sandbox/[id]/stop` | Stop sandbox |
+| GET | `/api/sandbox/[id]/export` | Export as zip |
+
+### 16.5 Auth & Users
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/auth/session` | Current session |
+| GET | `/api/user/invoices` | User invoices |
+
+### 16.6 Credits & Billing
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/credits` | Credit balance |
+| GET | `/api/transactions` | Transaction history |
+| POST | `/api/create-checkout` | Stripe checkout |
+| POST | `/api/coupons/redeem` | Redeem coupon |
+
+### 16.7 Referrals
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/referrals/generate` | Generate code |
+| POST | `/api/referrals/track` | Track referral |
+| GET | `/api/referrals/leaderboard` | Ambassador leaderboard |
+
+### 16.8 Workspace
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET/POST | `/api/workspaces` | Workspace CRUD |
+| GET/POST | `/api/workspaces/[id]/members` | Members |
+| GET/POST | `/api/workspaces/[id]/invitations` | Invitations |
+
+### 16.9 Infrastructure
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/health` | Health check |
+| GET | `/api/notifications` | User notifications |
+| POST | `/api/notifications/[id]/read` | Mark read |
+| POST | `/api/newsletter` | Newsletter subscription |
+| POST | `/api/contact` | Contact form |
+| GET | `/api/github/repos` | GitHub repos |
+| POST | `/api/deploy/trigger` | Deploy trigger |
+| POST | `/api/deploy/archive` | Deploy archive |
+
+---
+
+## 17. Infrastructure & DevOps
+
+### 17.1 Production Architecture
+- All-in-one VPS (Hostinger KVM2): Next.js app + Docker sandboxes on same host
+- Caddy reverse proxy terminates TLS (Let's Encrypt)
+- Supabase cloud-hosted (separate from VPS)
+
+### 17.2 Docker Deployment
+- **File**: `deploy/docker-compose.yml`, `Dockerfile`
+- Standalone Next.js output (output: "standalone")
+- Multi-stage Docker build
+- Caddyfile for reverse proxy configuration
+
+### 17.3 Monitoring
+- **Sentry**: `sentry.client.config.ts`, `sentry.edge.config.ts`, `sentry.server.config.ts`
+- Error tracking across client, edge, and server
+- Health check endpoint: `GET /api/health`
+- Admin monitoring page with system metrics
+
+### 17.4 CI/CD
+- GitHub Actions on every PR: lint, typecheck, test, build
+- Supabase migrations and edge functions deploy from `main`
+- Auto-build and deploy via Docker Compose
+
+### 17.5 Security
+- Row Level Security (RLS) on all Supabase tables
+- CSRF protection on API routes
+- Server-side plan enforcement and rate limiting (`src/lib/server/plan-enforcement.ts`)
+- Audit logging (`src/lib/server/audit-log.ts`)
+- Graceful shutdown handler (`src/lib/server/shutdown.ts`)
+- Admin emails allowlist in environment variables
+
+### 17.6 SEO
+- **File**: `src/lib/seo.ts`, `src/app/sitemap.ts`, `src/app/robots.ts`
+- Dynamic sitemap generation
+- Robots.txt
+- Per-page metadata builder
+
+---
+
+## 18. Database Schema
+
+### 18.1 Tables (`supabase/migrations/001_initial_schema.sql`)
+
+| Table | Description |
+|-------|-------------|
+| `profiles` | User profiles (extends auth.users): id, email, full_name, avatar_url, plan, is_admin, stripe_customer_id |
+| `credit_wallets` | Credit balances: id, owner_id, balance |
+| `credit_transactions` | Transaction ledger: id, wallet_id, amount, type (earned/spent/refunded), source, description, metadata |
+| `generations` | Web builder code versions: id, user_id, code, version, description, stack, prompt, metadata |
+| `debug_sessions` | Debugging sessions: id, user_id, language, code, error_message, fix, explanation, tags |
+| `messages` | Chat messages for AI context: id, user_id, role, content, generation_id, metadata |
+| `referrals` | Referral relationships: id, referrer_id, referee_id, code, status, credits_earned |
+| `referral_payouts` | Payout tracking: id, referral_id, user_id, amount, status |
+| `notifications` | User notifications: id, user_id, type, title, message, read, metadata |
+
+### 18.2 Key Features
+- RLS policies on all tables
+- Auto-create profile and wallet on user signup
+- 30 free credits for new users
+- Welcome notification on signup
+- Updated_at triggers on profiles and credit_wallets
+- Indexes for query performance
+
+### 18.3 Migrations
+| File | Changes |
+|------|---------|
+| `001_initial_schema.sql` | Core tables, RLS, triggers |
+| `002_add_stripe_columns.sql` | `stripe_customer_id` on profiles, indexes |
+| `003_add_referral_ambassador.sql` | `get_ambassador_leaderboard()` SQL function, indexes |
+
+---
+
+## 19. Testing
+
+### 19.1 Unit Tests (Vitest)
+**File**: `vitest.config.ts`
+
+| Test File | Tests |
+|-----------|-------|
+| `src/__tests__/api-error.test.ts` | API error handling |
+| `src/__tests__/auth-flow.test.ts` | Auth flow logic |
+| `src/__tests__/credits-service.test.ts` | Credit operations |
+| `src/__tests__/csrf.test.ts` | CSRF protection |
+| `src/__tests__/generation-store.test.ts` | Generation store |
+| `src/__tests__/middleware.test.ts` | Middleware logic |
+| `src/__tests__/rate-limit.test.ts` | Rate limiting |
+| `src/__tests__/schema-generator.test.ts` | Schema generation |
+| `src/__tests__/session-store.test.ts` | Session store |
+| `src/__tests__/validation-schemas.test.ts` | Zod schemas |
+| `src/__tests__/workspace-store.test.ts` | Workspace store |
+| Visual editor tests | component-palette, property-panel, visual-editor-canvas, visual-editor-root |
+
+### 19.2 E2E Tests (Playwright)
+**File**: `playwright.config.ts`
+- End-to-end browser tests
+- Playwright test reporter
+- Test results in `test-results/`, `playwright-report/`
+
+---
+
+## 20. State Management Stores
+
+All stores use **Zustand** with persistence where noted.
+
+| Store | File | Persisted | Key State |
+|-------|------|-----------|-----------|
+| generation-store | `src/store/generation-store.ts` | Yes | currentCode, activeFile, virtualFiles, previewNonce, versions, runtimeErrors, accumulated text |
+| session-store | `src/store/session-store.ts` | Yes | user, isAuthenticated, isLoading, credits, plan |
+| debug-store | `src/store/debug-store.ts` | Yes | language, code, error, result, sessions |
+| workspace-store | `src/store/workspace-store.ts` | Yes | mode (build/debug), selectedProject, projectKey |
+| visual-editor-store | `src/store/visual-editor-store.ts` | Yes | pages, components, globalCSS, libraries |
+| shell-store | `src/store/shell-store.ts` | No | Shell UI state |
+| code-blocks-store | `src/store/code-blocks-store.ts` | No | Code block extraction state |
+
+---
+
+## 21. Custom Hooks
+
+### 21.1 Feature Hooks
+| Hook | File | Purpose |
+|------|------|---------|
+| `useGeneration` | `src/hooks/use-generation.ts` | AI code generation + debugging with SSE streaming, file extraction, version saving |
+| `useSandbox` | `src/hooks/use-sandbox.ts` | Docker sandbox lifecycle (create, logs SSE, stop, export) |
+| `useSession` | `src/hooks/use-session.ts` | Supabase session management |
+| `useReferrals` | `src/hooks/use-referrals.ts` | Referral code, tracking, stats |
+| `useUndoRedo` | `src/hooks/use-undo-redo.ts` | Undo/redo with snapshot history |
+| `useDashboardShell` | `src/hooks/use-dashboard-shell.ts` | Dashboard shell state |
+
+### 21.2 Query Hooks (TanStack React Query)
+| Hook | File | Query Key |
+|------|------|-----------|
+| `useMe` | `src/hooks/queries/use-me.ts` | Current user profile |
+| `useMyProjects` | `src/hooks/queries/use-my-projects.ts` | User's projects |
+| `useProject` | `src/hooks/queries/use-project.ts` | Single project |
+| `useProjectVersions` | `src/hooks/queries/use-project-versions.ts` | Version history |
+| `useMyRuns` | `src/hooks/queries/use-my-runs.ts` | User's runs |
+| `useRunDetails` | `src/hooks/queries/use-run-details.ts` | Single run |
+| `useMyThreads` | `src/hooks/queries/use-my-threads.ts` | Chat threads |
+| `useMyDebugSessions` | `src/hooks/queries/use-my-debug-sessions.ts` | Debug history |
+| `useMyTransactions` | `src/hooks/queries/use-my-transactions.ts` | Transactions |
+| `useAdminUsers` | `src/hooks/queries/use-admin-users.ts` | Admin: users |
+| `useAdminCredits` | `src/hooks/queries/use-admin-credits.ts` | Admin: credits |
+| `useAdminAnalytics` | `src/hooks/queries/use-admin-analytics.ts` | Admin: analytics |
+| `useAdminAuth` | `src/hooks/queries/use-admin-auth.ts` | Admin: auth |
+
+---
+
+## File Structure Reference
+
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── layout.tsx                # Root layout (ThemeProvider, QueryProvider, Toaster)
+│   ├── page.tsx                  # Landing page
+│   ├── sitemap.ts                # Dynamic sitemap
+│   ├── robots.ts                 # Robots.txt
+│   ├── login/                    # /login
+│   ├── signup/                   # /signup
+│   ├── reset-password/           # /reset-password
+│   ├── verify-email/             # /verify-email
+│   ├── auth/                     # Auth callback + signin route
+│   ├── pricing/                  # /pricing
+│   ├── features/                 # /features
+│   ├── about/                    # /about
+│   ├── contact/                  # /contact
+│   ├── docs/                     # /docs
+│   ├── faq/                      # /faq
+│   ├── languages/                # /languages
+│   ├── terms/                    # /terms
+│   ├── privacy/                  # /privacy
+│   ├── careers/                  # /careers
+│   ├── demo/                     # /demo walkthrough
+│   ├── preview/[id]/[...slug]/   # Sandbox preview proxy
+│   ├── dashboard/                # Protected dashboard
+│   │   ├── page.tsx              # Workspace root / ProjectsHub
+│   │   ├── home/                 # Dashboard home (stats, recent items)
+│   │   ├── debug/                # AI debugger + history
+│   │   ├── web-builder/          # Web builder (redirects to workspace)
+│   │   ├── pricing/              # Dashboard pricing
+│   │   ├── referrals/            # Referral program
+│   │   ├── runs/                 # Run history
+│   │   ├── branches/             # Git branches
+│   │   ├── settings/             # Account settings
+│   │   ├── projects/[id]/        # Project settings
+│   │   ├── admin/                # Admin panel
+│   │   └── layout.tsx            # Dashboard layout
+│   └── api/                      # API routes
+├── components/
+│   ├── ui/                       # shadcn/ui primitives
+│   ├── auth/                     # Auth forms & session
+│   ├── dashboard/                # Dashboard components
+│   ├── workspace/                # Workspace/IDE components
+│   ├── web-builder/              # Chat panel, code editor, preview
+│   ├── visual-editor/            # Drag-and-drop builder
+│   ├── schema-generator/         # DB schema generator
+│   ├── project/                  # Project settings sections
+│   ├── admin/                    # Admin panel components
+│   ├── referrals/                # Referral components
+│   ├── pricing/                  # Pricing components
+│   ├── docs/                     # Docs page
+│   ├── navigation.tsx            # Site navigation
+│   ├── footer.tsx                # Site footer
+│   ├── public-layout.tsx         # Public page layout
+│   ├── logo.tsx                  # App logo
+│   ├── theme-provider.tsx        # Theme context
+│   ├── theme-toggle.tsx          # Dark/light toggle
+│   ├── theme-init-script.tsx     # Flash prevention
+│   ├── query-provider.tsx        # TanStack Query provider
+│   ├── supabase-lock-handler.tsx # Auth lock handler
+│   ├── loading-skeleton.tsx      # Loading skeletons
+│   └── animations.tsx            # Framer Motion helpers
+├── hooks/                        # Custom React hooks
+│   ├── queries/                  # TanStack Query hooks
+│   ├── use-generation.ts
+│   ├── use-sandbox.ts
+│   ├── use-session.ts
+│   ├── use-referrals.ts
+│   ├── use-undo-redo.ts
+│   └── use-dashboard-shell.ts
+├── lib/
+│   ├── server/                   # Server-only modules
+│   ├── ai/                       # AI provider router
+│   ├── agent/                    # Agent tools & bridges
+│   ├── sandbox/                  # Docker sandbox manager
+│   ├── project/                  # Virtual files, file tree, file ops
+│   ├── collaboration/            # Real-time collaboration provider
+│   ├── validations/              # Zod schemas
+│   ├── supabase.ts               # Supabase client
+│   ├── auth.ts                   # Auth server actions
+│   ├── client-auth.ts            # Client auth helpers
+│   ├── admin-auth.ts             # Admin auth
+│   ├── constants.ts              # App constants
+│   ├── utils.ts                  # General utilities
+│   ├── seo.ts                    # Metadata builder
+│   ├── analytics.ts              # Analytics helpers
+│   ├── extract-code.ts           # Code extraction
+│   ├── sse-parser.ts             # SSE parser
+│   ├── credits-service.ts        # Credit operations
+│   └── csrf-client.ts            # CSRF helpers
+├── store/                        # Zustand stores
+├── services/                     # (empty — logic in API routes & lib/)
+├── proxy.ts                      # Sandbox proxy
+└── __tests__/                    # Unit tests
 ```
 
-**Referral Return Type**:
-```typescript
-interface Referral {
-  id: string;
-  code: string;
-  status: 'pending' | 'completed' | 'paid';
-  credits_earned: number;
-  created_at: string;
-  completed_at: string | null;
-  referee?: {
-    email: string;
-    full_name: string;
-  };
-}
-```
-
 ---
 
-### F050: Database Migration for Referrals
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**File**: `supabase/migrations/003_add_referral_ambassador.sql`
-
-**Changes**:
-- Added `get_ambassador_leaderboard()` SQL function
-- Ensured `metadata` column is JSONB on profiles table
-- Created index for referral queries
-- Granted execute permissions to authenticated users
-
-**SQL Function**:
-```sql
-get_ambassador_leaderboard(limit_count INTEGER DEFAULT 50)
-```
-
-**Returns**:
-- referrer_id
-- email
-- full_name
-- avatar_url
-- total_referrals (count)
-- total_credits (sum)
-- ambassador_tier (from metadata)
-
----
-
-### F051: Settings Page Integration
-
-**Status**: ✅ Completed
-**Date**: 2026-04-16
-
-**Description**:
-Added referral program link to settings page.
-
-**File**: `src/app/(dashboard)/settings/page.tsx`
-
-**Update**:
-- Added "Referral Program" link under Billing section
-- Links to `/referrals` page
-
----
-
-## In Progress
-
-*None currently*
-
----
-
-## Next: Phase 10
-
-**Current Task**: Admin Dashboard
-
-**Upcoming**:
-- Admin authentication
-- User management screen
-- Analytics dashboard
-- Credit management screen
-
----
-
-*Last updated: 2026-04-16*
+*This document was generated from codebase exploration. Last updated: 2026-06-04.*

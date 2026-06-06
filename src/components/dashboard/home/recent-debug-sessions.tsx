@@ -13,10 +13,8 @@ export function RecentDebugSessions() {
     <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--app-border)]">
         <div className="text-xs font-medium text-[var(--app-text)]">Recent Debug Sessions</div>
-        <Link href="/dashboard/debug/history">
-          <button className="p-1 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors">
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+        <Link href="/dashboard/debug/history" className="inline-flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation" aria-label="Open debug history">
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 

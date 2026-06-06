@@ -123,7 +123,7 @@ export default function ReferralsPage() {
 
   if (loadingStats) {
     return (
-      <div className="min-h-screen bg-[var(--app-bg)] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[var(--app-bg)] flex items-center justify-center">
         <div className="animate-pulse text-[var(--app-text-muted)]">Loading...</div>
       </div>
     );

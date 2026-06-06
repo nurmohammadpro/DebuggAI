@@ -11,6 +11,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@utility touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+@utility touch-target-sm {
+  min-height: 40px;
+  min-width: 40px;
+  touch-action: manipulation;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -740,13 +752,13 @@
 }
 
 @keyframes width-expand {
-  from { width: 0; opacity: 0; }
+  from { transform: scaleX(0); opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes tab-indicator {
-  from { width: 0; opacity: 0; }
-  to { width: 100%; opacity: 1; }
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
 }
 
 @keyframes pulse {

@@ -35,12 +35,14 @@ export async function POST(request: NextRequest) {
       provider,
       projectName,
       archivePath,
+      archiveFilename,
       config,
     } = body as {
       deploymentId: string;
       provider: 'vercel' | 'netlify';
       projectName: string;
       archivePath: string;
+      archiveFilename?: string;
       config: {
         framework: string;
         buildCommand: string;
@@ -166,6 +168,7 @@ export async function POST(request: NextRequest) {
         url: deployUrl,
         deployUrl,
         manual: true,
+        archiveFilename: archiveFilename || null,
         message: `Deployment prepared. Visit the provider dashboard to complete deployment.`,
       });
     }

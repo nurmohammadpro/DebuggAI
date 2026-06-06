@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Image from 'next/image';
 import { CreditCard, Shield, User, Camera } from 'lucide-react';
 import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabase';
@@ -108,7 +109,7 @@ export default function SettingsPage() {
               className="w-16 h-16 rounded-[6px] bg-[var(--app-surface)] flex items-center justify-center text-[var(--app-text-muted)] overflow-hidden border border-[var(--app-border)] hover:border-[var(--app-accent)] transition-colors"
             >
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <Image src={user.avatarUrl} alt="" fill className="object-cover" unoptimized />
               ) : (
                 <User className="h-8 w-8" />
               )}

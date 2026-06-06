@@ -40,7 +40,7 @@ export function UnifiedHeader({
   toolTabsClassName,
 }: UnifiedHeaderProps) {
   return (
-    <header className="h-14 flex items-center justify-between px-4 bg-[var(--app-panel)] border-b border-[var(--app-border)] shrink-0">
+    <header className="min-h-16 sm:min-h-14 flex items-center justify-between px-3 sm:px-4 bg-[var(--app-panel)] border-b border-[var(--app-border)] shrink-0">
       {/* Left: Mobile Menu Button + Title + Tool Tabs */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Mobile Menu Button */}
@@ -101,7 +101,7 @@ export function UnifiedHeader({
         {showHelp && (
           <Link
             href="/docs"
-            className="w-9 h-9 flex items-center justify-center rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-all duration-150"
+            className="touch-target-sm sm:h-9 sm:w-9 flex items-center justify-center rounded-[6px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.96] transition-all duration-150"
             aria-label="Help"
             title="Documentation"
           >
@@ -110,7 +110,7 @@ export function UnifiedHeader({
         )}
 
         {/* User Account Menu */}
-        {showAccountMenu && <AccountMenu align="end" className="h-9 w-9" />}
+        {showAccountMenu && <AccountMenu align="end" className="h-11 w-11 sm:h-9 sm:w-9" />}
       </div>
     </header>
   );

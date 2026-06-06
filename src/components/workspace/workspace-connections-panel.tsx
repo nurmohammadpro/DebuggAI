@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Plug, ExternalLink } from 'lucide-react';
 import { useWorkspaceStore } from '@/store/workspace-store';
 import { supabase } from '@/lib/supabase';
@@ -66,7 +67,7 @@ export function WorkspaceConnectionsPanel() {
           >
             <div className="w-8 h-8 rounded-[6px] bg-[var(--app-panel-2)] flex items-center justify-center shrink-0">
               {integration.icon ? (
-                <img src={integration.icon} alt="" className="w-5 h-5" />
+                <Image src={integration.icon} alt="" width={20} height={20} className="w-5 h-5" unoptimized />
               ) : (
                 <ExternalLink className="h-4 w-4 text-[var(--app-text-dim)]" />
               )}

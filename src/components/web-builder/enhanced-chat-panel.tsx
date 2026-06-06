@@ -80,6 +80,14 @@ interface ChatMessage {
   toolCallId?: string;
 }
 
+interface ServerChatMessage {
+  id: string;
+  role: string;
+  content?: string | null;
+  created_at?: string | null;
+  metadata?: unknown;
+}
+
 interface ToolCall {
   id: string;
   name: string;
@@ -769,7 +777,7 @@ export function EnhancedChatPanel({
     });
     if (!res.ok) return;
     const j = await res.json().catch(() => ({}));
-    const list = (j?.messages || []) as Array<any>;
+    const list = (j?.messages || []) as ServerChatMessage[];
 
     const serverMessages: ChatMessage[] = list.map((m) => {
       const content = String(m.content || '');
@@ -849,7 +857,7 @@ export function EnhancedChatPanel({
       const token = session.session?.access_token;
       if (!token) return;
 
-      const prompt = state.accumulated?.slice(0, 200) || undefined;
+      const promptText = state.accumulated?.slice(0, 200) || undefined;
 
       await fetch(`/api/projects/${currentProjectId}/save-code`, {
         method: 'POST',
@@ -859,7 +867,7 @@ export function EnhancedChatPanel({
         },
         body: JSON.stringify({
           code: serializedCode,
-          prompt,
+          prompt: promptText,
           description: `Auto-saved ${new Date().toLocaleString()}`,
           stack: undefined,
         }),
@@ -1107,7 +1115,7 @@ export function EnhancedChatPanel({
           <StackSelector>
             <button
               onClick={() => setShowTemplates(true)}
-              className="inline-flex items-center gap-1.5 rounded-[6px] h-7 px-2 text-[11px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-[6px] h-10 sm:h-7 px-3 sm:px-2 text-[12px] sm:text-[11px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] active:scale-[0.98] transition-colors touch-manipulation"
             >
               <Layers className="h-3.5 w-3.5" />
               Templates
@@ -1137,7 +1145,7 @@ export function EnhancedChatPanel({
                 <button
                   key={p}
                   onClick={() => setInput(p)}
-                  className="w-full text-left p-3 rounded-[8px] bg-[var(--app-panel)] border border-[var(--app-border)] hover:border-[var(--app-accent)]/40 hover:bg-[var(--app-surface)] transition-all group"
+                  className="w-full min-h-11 text-left p-3 rounded-[8px] bg-[var(--app-panel)] border border-[var(--app-border)] hover:border-[var(--app-accent)]/40 hover:bg-[var(--app-surface)] active:scale-[0.99] transition-all group touch-manipulation"
                 >
                   <p className="text-[11px] text-[var(--app-text-muted)] group-hover:text-[var(--app-text)] transition-colors">
                     {p}
@@ -1190,11 +1198,11 @@ export function EnhancedChatPanel({
                       <div className="flex justify-end gap-2 mt-2">
                         <button
                           onClick={() => { setEditingMessageId(null); setEditingContent(''); }}
-                          className="h-6 px-2 text-[10px] font-medium rounded bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]"
+                        className="h-10 sm:h-7 px-3 sm:px-2 text-[12px] sm:text-[10px] font-medium rounded bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] touch-manipulation"
                         >Cancel</button>
                         <button
                           onClick={handleSaveEdit}
-                          className="h-6 px-2 text-[10px] font-semibold rounded bg-[var(--app-accent)] text-white flex items-center gap-1"
+                          className="h-10 sm:h-7 px-3 sm:px-2 text-[12px] sm:text-[10px] font-semibold rounded bg-[var(--app-accent)] text-white flex items-center gap-1 touch-manipulation"
                         >
                           <CheckCheck className="h-3 w-3" /> Save
                         </button>
@@ -1206,24 +1214,24 @@ export function EnhancedChatPanel({
                     </div>
                   )}
                   {/* User message actions */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-row-reverse">
+                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-row-reverse">
                     <button
                       onClick={() => handleCopyMessage(message.content, message.id)}
-                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      className="h-10 w-10 sm:h-6 sm:w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
                       title="Copy"
                     >
                       {copiedMessageId === message.id ? <Check className="h-3 w-3 text-[var(--app-success)]" /> : <Copy className="h-3 w-3" />}
                     </button>
                     <button
                       onClick={() => handleEditMessage(message.id, message.content)}
-                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      className="h-10 w-10 sm:h-6 sm:w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
                       title="Edit"
                     >
                       <Edit2 className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => handleDeleteMessage(message.id)}
-                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors"
+                      className="h-10 w-10 sm:h-6 sm:w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors touch-manipulation"
                       title="Delete"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -1312,10 +1320,10 @@ export function EnhancedChatPanel({
                   </div>
 
                   {/* Assistant message actions */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleCopyMessage(message.content, message.id)}
-                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                      className="h-10 w-10 sm:h-6 sm:w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
                       title="Copy"
                     >
                       {copiedMessageId === message.id ? <Check className="h-3 w-3 text-[var(--app-success)]" /> : <Copy className="h-3 w-3" />}
@@ -1323,7 +1331,7 @@ export function EnhancedChatPanel({
                     {canRegen && (
                       <button
                         onClick={handleRegenerate}
-                        className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                        className="h-10 w-10 sm:h-6 sm:w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
                         title="Regenerate"
                       >
                         <RotateCcw className="h-3 w-3" />
@@ -1331,7 +1339,7 @@ export function EnhancedChatPanel({
                     )}
                     <button
                       onClick={() => handleDeleteMessage(message.id)}
-                      className="h-6 w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors"
+                      className="h-10 w-10 sm:h-6 sm:w-6 rounded-[4px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-danger)] transition-colors touch-manipulation"
                       title="Delete"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -1353,21 +1361,21 @@ export function EnhancedChatPanel({
           onClick={() => setShowTemplates(false)}
         >
           <div
-            className="bg-[var(--app-panel)] border border-[var(--app-border)] rounded-[10px] w-[680px] max-h-[80vh] overflow-y-auto shadow-2xl"
+            className="bg-[var(--app-panel)] border border-[var(--app-border)] rounded-[10px] w-[min(680px,calc(100vw-24px))] max-h-[82dvh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 h-11 border-b border-[var(--app-border)] sticky top-0 bg-[var(--app-panel)]">
               <span className="text-[12px] font-semibold text-[var(--app-text)]">Prompt Templates</span>
               <button
                 onClick={() => setShowTemplates(false)}
-                className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+                className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
             <PromptTemplates
-              onSelect={(prompt) => {
-                setInput(prompt);
+              onSelect={(selectedPrompt) => {
+                setInput(selectedPrompt);
                 setShowTemplates(false);
               }}
             />
@@ -1376,7 +1384,7 @@ export function EnhancedChatPanel({
       )}
 
       {/* Input Area */}
-      <div className="p-3 shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)]">
+      <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)]">
         <div className="flex items-end gap-2 rounded-xl border border-[var(--app-border)] focus-within:border-[var(--app-accent)]/50 focus-within:shadow-[0_0_0_2px_rgba(0,200,83,0.08)] transition-all bg-[var(--app-bg)] p-2.5">
           <textarea
             ref={textareaRef}
@@ -1389,14 +1397,14 @@ export function EnhancedChatPanel({
                 : 'What do you want to build?'
             }
             data-dashboard-composer
-            className="flex-1 min-h-[40px] max-h-[160px] resize-none bg-transparent text-[13px] leading-relaxed text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none"
+            className="flex-1 min-h-[44px] max-h-[180px] resize-none bg-transparent text-[16px] sm:text-[13px] leading-relaxed text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none"
             rows={1}
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="h-9 w-9 rounded-lg shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 disabled:opacity-40 transition-all inline-flex items-center justify-center"
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-lg shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 active:scale-[0.96] disabled:opacity-40 transition-all inline-flex items-center justify-center touch-manipulation"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -1405,7 +1413,7 @@ export function EnhancedChatPanel({
             )}
           </button>
         </div>
-        <p className="text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1">
+        <p className="hidden sm:block text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1">
           Press <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Enter</kbd> to send · <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Shift+Enter</kbd> for newline
         </p>
       </div>

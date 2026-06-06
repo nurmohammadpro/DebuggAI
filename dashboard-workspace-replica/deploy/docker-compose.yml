@@ -1,0 +1,84 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: debuggai_app
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: https://debuggaidemo.appbrainer.tech
+      PROJECTS_DIR: /var/lib/debuggai/projects
+      SANDBOX_BASE_PORT: "4000"
+      MAX_SANDBOXES: "10"
+      SANDBOX_TIMEOUT_MS: "1800000"
+      SANDBOX_REAPER_INTERVAL_MS: "300000"
+      SANDBOX_DOCKER_IMAGE: "node:20-slim"
+      SANDBOX_LIMIT_CPUS: "1.0"
+      SANDBOX_LIMIT_MEMORY: "1024m"
+      SANDBOX_LIMIT_PIDS: "256"
+      SANDBOX_DISABLED: "0"
+    volumes:
+      # Required so the app can start/stop sandbox containers on the host.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persist sandboxes and exported zips across deploys/restarts.
+      # Bind mount to host path so sandbox containers resolve /var/lib/debuggai/projects correctly.
+      - /var/lib/debuggai/projects:/var/lib/debuggai/projects
+    group_add:
+      # Match the host docker.sock group so the app container can call docker.
+      # If your host uses a different docker group GID, update this value to match.
+      - "988"
+    # Healthcheck so Caddy won't route traffic until app is ready
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Don't expose port 3000 directly — let Caddy handle TLS on 443
+    expose:
+      - "3000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: debuggai_caddy
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

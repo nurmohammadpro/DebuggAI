@@ -11,15 +11,19 @@ import { useGenerationStore } from '@/store/generation-store';
 import { getProjectKey } from '@/lib/project/project-key';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
 import { WorkspaceMobileTabs } from '@/components/workspace/workspace-mobile-tabs';
-import { toast } from 'sonner';
 import { EnhancedChatPanel } from '@/components/web-builder/enhanced-chat-panel';
 import { WorkspaceSidebar } from '@/components/workspace/workspace-sidebar';
 import { V0RightPanel } from '@/components/workspace/v0-right-panel';
 import type { V0RightView } from '@/components/workspace/v0-right-panel';
+import dynamic from 'next/dynamic';
 import { Panel } from '@/components/panel/panel';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
-import { DeployModal } from '@/components/workspace/deploy-modal';
+import { ShareDialog } from '@/components/workspace/share-dialog';
 import { CommandPalette } from '@/components/dashboard/command-palette';
+
+const DeployModal = dynamic(() => import('@/components/workspace/deploy-modal').then(m => m.DeployModal), {
+  loading: () => null,
+});
 import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { getSession } from '@/hooks/use-session';
@@ -39,6 +43,7 @@ export function WorkspaceDashboard() {
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [workspaceSidebarOpen, setWorkspaceSidebarOpen] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [, setLoadingThread] = useState(false);
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
@@ -202,21 +207,8 @@ export function WorkspaceDashboard() {
     return null;
   }
 
-  const handleRun = () => {
-    setRightView('preview');
-    setRightCollapsed(false);
-    bumpPreviewNonce();
-  };
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/dashboard?project=${effectiveProjectId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success('Link copied');
-    } catch {
-      toast.message(url);
-    }
-  };
+  const handleShare = () => setShareDialogOpen(true);
+  const shareUrl = `${window.location.origin}/dashboard?project=${effectiveProjectId}`;
 
   const projectName = project?.description || project?.prompt || 'Untitled Project';
 
@@ -235,11 +227,18 @@ export function WorkspaceDashboard() {
         projectName={projectName}
       />
 
+      <ShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        projectName={projectName}
+        url={shareUrl}
+      />
+
       {/* Workspace sidebar trigger — hidden by default, v0-style */}
       <button
         type="button"
         onClick={() => setWorkspaceSidebarOpen(true)}
-        className={`fixed left-3 top-3 z-50 inline-flex items-center gap-2 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)]/95 px-3 py-2 text-[12px] font-medium text-[var(--app-text)] shadow-lg shadow-black/10 backdrop-blur hover:bg-[var(--app-surface)] transition-all md:left-4 md:top-4 ${workspaceSidebarOpen ? 'opacity-0 pointer-events-none -translate-x-2' : 'opacity-100 translate-x-0'}`}
+        className={`fixed left-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-50 inline-flex touch-target items-center gap-2 rounded-[10px] border border-[var(--app-border)] bg-[var(--app-panel)]/95 px-3 text-[12px] font-medium text-[var(--app-text)] shadow-lg shadow-black/10 backdrop-blur hover:bg-[var(--app-surface)] active:scale-[0.98] transition-all md:left-4 md:top-4 ${workspaceSidebarOpen ? 'opacity-0 pointer-events-none -translate-x-2' : 'opacity-100 translate-x-0'}`}
         aria-label="Open workspace sidebar"
         title="Open sidebar"
       >
@@ -259,7 +258,7 @@ export function WorkspaceDashboard() {
 
       {/* Main workspace — no top bar, v0.dev clean layout */}
       <WorkspaceSaveVersionButton className="hidden" ref={saveButtonRef} />
-      <main className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 flex flex-col pb-[env(safe-area-inset-bottom)] sm:pb-0">
         {/* IDE Workspace: chat | preview+code */}
         <div className="flex-1 min-h-0 flex min-w-0">
           {/* Chat panel — narrow, no scrollbar-visible */}
@@ -267,8 +266,8 @@ export function WorkspaceDashboard() {
             data-chat-panel
             className={
             showOnlyChat
-              ? "flex-1 min-w-0 max-w-[720px] mx-auto bg-[var(--app-bg)] flex flex-col min-h-0"
-              : "w-[360px] min-w-[300px] max-w-[420px] bg-[var(--app-bg)] flex flex-col min-h-0 border-r border-[var(--app-border)]"
+              ? "flex-1 min-w-0 max-w-[720px] mx-auto bg-[var(--app-bg)] flex flex-col min-h-0 w-full"
+              : "w-full sm:w-[360px] sm:min-w-[300px] sm:max-w-[420px] bg-[var(--app-bg)] flex flex-col min-h-0 sm:border-r border-[var(--app-border)]"
           }>
             <EnhancedChatPanel
               chromeless
@@ -310,7 +309,6 @@ export function WorkspaceDashboard() {
               onViewChange={setRightView}
               collapsed={rightCollapsed}
               onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-              onRun={handleRun}
               onDeploy={() => setDeployModalOpen(true)}
               onShare={handleShare}
               onSave={() => saveButtonRef.current?.click()}
@@ -328,7 +326,6 @@ export function WorkspaceDashboard() {
             <V0RightPanel
               activeView={rightView}
               onViewChange={setRightView}
-              onRun={handleRun}
               onDeploy={() => setDeployModalOpen(true)}
               onShare={handleShare}
             />

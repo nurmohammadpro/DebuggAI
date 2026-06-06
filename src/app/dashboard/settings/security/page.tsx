@@ -5,6 +5,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Shield, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -111,7 +112,7 @@ export default function SecuritySettingsPage() {
               Scan this QR code with your authenticator app, then enter the verification code.
             </p>
             <div className="bg-[var(--app-panel-2)] p-4 rounded-[6px] inline-block">
-              <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+              <Image src={qrCode} alt="QR Code" width={192} height={192} className="w-48 h-48" />
             </div>
             <div className="flex items-center gap-3 max-w-sm">
               <input

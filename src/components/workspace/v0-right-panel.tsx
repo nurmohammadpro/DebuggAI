@@ -11,7 +11,6 @@ import {
   Minimize2,
   PanelRightClose,
   PanelRightOpen,
-  Play,
   Plug,
   RefreshCw,
   Rocket,
@@ -24,11 +23,15 @@ import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { EnhancedPreviewPane } from '@/components/web-builder/enhanced-preview-pane';
 import { useGenerationStore } from '@/store/generation-store';
 import { useSandbox } from '@/hooks/use-sandbox';
+import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { serializeVirtualFiles } from '@/lib/project/virtual-files';
 import { WorkspaceConnectionsPanel } from '@/components/workspace/workspace-connections-panel';
-import { SchemaGenerator } from '@/components/schema-generator/schema-generator';
 import { useBuildVerification } from '@/hooks/use-build-verification';
+
+const SchemaGenerator = dynamic(() => import('@/components/schema-generator/schema-generator').then(m => m.SchemaGenerator), {
+  loading: () => <div className="flex-1 flex items-center justify-center text-sm text-[var(--app-text-dim)]">Loading schema...</div>,
+});
 
 export type V0RightView =
   | 'preview'
@@ -54,7 +57,6 @@ interface V0RightPanelProps {
   onViewChange: (view: V0RightView) => void;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
-  onRun?: () => void;
   onDeploy?: () => void;
   onShare?: () => void;
   onSave?: () => void;
@@ -69,7 +71,6 @@ export function V0RightPanel({
   onViewChange,
   collapsed = false,
   onToggleCollapsed,
-  onRun,
   onDeploy,
   onShare,
   onSave,
@@ -171,7 +172,7 @@ export function V0RightPanel({
       )}
     >
       {/* Header — minimal, builder-focused */}
-      <div className="h-10 flex items-center gap-1.5 px-3 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
+      <div className="min-h-12 sm:min-h-10 flex flex-wrap sm:flex-nowrap items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-0 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
         {/* Preview indicator — always visible */}
         <div className="flex items-center gap-1.5">
           <div className={cn(
@@ -198,7 +199,7 @@ export function V0RightPanel({
         <div className="flex-1" />
 
         {hasFiles && (
-          <div className="h-7 min-w-0 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-bg)] p-0.5 flex items-center gap-0.5 overflow-x-auto">
+          <div className="h-10 sm:h-7 max-w-full min-w-0 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-bg)] p-0.5 flex items-center gap-0.5 overflow-x-auto">
             {WORKSPACE_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeView === tab.id;
@@ -209,7 +210,7 @@ export function V0RightPanel({
                   type="button"
                   onClick={() => onViewChange(tab.id)}
                   className={cn(
-                    'h-6 px-2.5 rounded-[5px] inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors shrink-0',
+                    'h-9 sm:h-6 px-3 sm:px-2.5 rounded-[5px] inline-flex items-center gap-1.5 text-[12px] sm:text-[11px] font-medium transition-colors shrink-0 touch-manipulation',
                     isActive
                       ? 'bg-[var(--app-surface)] text-[var(--app-text)]'
                       : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]',
@@ -217,8 +218,8 @@ export function V0RightPanel({
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="hidden xl:inline">{tab.label}</span>
+                  <Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  <span className="inline sm:hidden xl:inline">{tab.label}</span>
                   {hasConsoleIssue && (
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--app-danger)]" />
                   )}
@@ -233,14 +234,14 @@ export function V0RightPanel({
           <>
             <button
               onClick={handleRefresh}
-              className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+              className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] active:scale-[0.98] transition-colors touch-manipulation"
               title="Refresh preview"
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+              className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] active:scale-[0.98] transition-colors touch-manipulation"
               title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
             >
               {isFullscreen ? (
@@ -254,21 +255,10 @@ export function V0RightPanel({
 
         <div className="w-px h-5 bg-[var(--app-border)] mx-0.5" />
 
-        {onRun && (
-          <button
-            onClick={onRun}
-            className="h-7 px-2.5 rounded-[6px] flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-tight bg-[var(--app-accent)] text-white hover:opacity-90 transition-opacity"
-            title="Run"
-          >
-            <Play className="h-3.5 w-3.5" />
-            Run
-          </button>
-        )}
-
         {onSave && (
           <button
             onClick={onSave}
-            className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+            className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] active:scale-[0.98] transition-colors touch-manipulation"
             title="Save version"
           >
             <Save className="h-3.5 w-3.5" />
@@ -278,27 +268,29 @@ export function V0RightPanel({
         {onShare && (
           <button
             onClick={onShare}
-            className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+            className="h-10 sm:h-7 px-3 sm:px-2.5 rounded-[6px] flex items-center gap-1.5 text-[12px] sm:text-[11px] font-semibold border border-[var(--app-border)] text-[var(--app-text-muted)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.98] transition-colors touch-manipulation"
             title="Share"
           >
             <Share2 className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Share</span>
           </button>
         )}
 
         {onDeploy && (
           <button
             onClick={onDeploy}
-            className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+            className="h-10 sm:h-7 px-3 sm:px-2.5 rounded-[6px] flex items-center gap-1.5 text-[12px] sm:text-[11px] font-semibold uppercase tracking-tight bg-[var(--app-accent)] text-white hover:opacity-90 active:scale-[0.98] transition-opacity touch-manipulation"
             title="Deploy"
           >
             <Rocket className="h-3.5 w-3.5" />
+            <span className="hidden xl:inline">Deploy</span>
           </button>
         )}
 
         {onToggleCollapsed && (
           <button
             onClick={onToggleCollapsed}
-            className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+            className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] active:scale-[0.98] transition-colors touch-manipulation"
             title={collapsed ? 'Show panel' : 'Hide panel'}
           >
             {collapsed ? (
@@ -363,7 +355,7 @@ export function V0RightPanel({
         )}
       </div>
       {hasFiles && activeView === 'code' && (
-        <div className="h-7 shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)] px-3 flex items-center gap-2 text-[10px] text-[var(--app-text-dim)]">
+        <div className="min-h-8 shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)] px-3 py-1.5 flex items-center gap-2 text-[10px] text-[var(--app-text-dim)]">
           <span>{fileCount} files</span>
           <span>·</span>
           <span className="truncate">{activeFilePath || 'No file selected'}</span>
@@ -400,7 +392,7 @@ function DockerConsole({
   const showFixButton = buildFailed && onFixErrors && !!buildErrors?.length;
   return (
     <div className="flex-1 min-h-0 bg-[var(--app-bg)] flex flex-col">
-      <div className="h-10 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)] px-3 flex items-center gap-2">
+      <div className="min-h-12 sm:min-h-10 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)] px-3 py-2 sm:py-0 flex flex-wrap sm:flex-nowrap items-center gap-2">
         {hasError ? (
           <AlertTriangle className="h-4 w-4 text-[var(--app-danger)]" />
         ) : status === 'installing' || status === 'creating' ? (
@@ -421,7 +413,7 @@ function DockerConsole({
             type="button"
             onClick={onFixErrors}
             disabled={isAutoFixing}
-            className="h-7 rounded-[6px] border border-[var(--app-accent)]/30 px-2.5 text-[11px] font-semibold text-[var(--app-accent)] hover:bg-[var(--app-accent)]/10 transition-colors disabled:opacity-50"
+            className="h-10 sm:h-7 rounded-[6px] border border-[var(--app-accent)]/30 px-3 sm:px-2.5 text-[12px] sm:text-[11px] font-semibold text-[var(--app-accent)] hover:bg-[var(--app-accent)]/10 active:scale-[0.98] transition-colors disabled:opacity-50 touch-manipulation"
           >
             {isAutoFixing ? (
               <span className="flex items-center gap-1.5">
@@ -436,7 +428,7 @@ function DockerConsole({
         <button
           type="button"
           onClick={onRetry}
-          className="h-7 rounded-[6px] border border-[var(--app-border)] px-2.5 text-[11px] font-medium text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+          className="h-10 sm:h-7 rounded-[6px] border border-[var(--app-border)] px-3 sm:px-2.5 text-[12px] sm:text-[11px] font-medium text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] active:scale-[0.98] transition-colors touch-manipulation"
         >
           Retry
         </button>

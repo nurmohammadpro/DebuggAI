@@ -8,7 +8,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bug, Play, Pause, RefreshCw, ChevronDown, ChevronRight, Eye, EyeOff, Save, FolderOpen, Download } from 'lucide-react';
+import { Bug, Play, Pause, RefreshCw, ChevronDown, ChevronRight, Eye, Save, FolderOpen, Download, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TraceStep {
@@ -220,14 +220,24 @@ console.log("Result:", result);`);
   };
 
   return (
-    <div className="h-[calc(100vh-56px)] flex flex-col bg-[var(--app-bg)]">
+    <div className="min-h-[calc(100dvh-56px)] h-[calc(100dvh-56px)] flex flex-col bg-[var(--app-bg)]">
+      <div className="shrink-0 border-b border-[var(--app-border)] bg-[var(--app-accent-soft)] px-3 sm:px-4 py-2 text-[12px] text-[var(--app-text)]">
+        <div className="flex items-start gap-2">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--app-accent)]" />
+          <p>
+            Prototype mode: this screen currently simulates stepping, variables, and console output locally.
+            It is not connected to the AI debug analyzer or a real execution sandbox yet.
+          </p>
+        </div>
+      </div>
+
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3 sm:px-4 py-2 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             onClick={handleRun}
             disabled={isRunning}
-            className="p-2 rounded-lg bg-[var(--app-accent)] text-[#071006] hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="touch-target rounded-lg bg-[var(--app-accent)] text-[#071006] hover:opacity-90 active:scale-[0.96] disabled:opacity-50 transition-opacity"
             title="Run"
           >
             <Play className="w-4 h-4" />
@@ -235,7 +245,7 @@ console.log("Result:", result);`);
           <button
             onClick={isPaused ? handleContinue : handlePause}
             disabled={!isRunning}
-            className="p-2 rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] disabled:opacity-50 transition-colors"
+            className="touch-target rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.96] disabled:opacity-50 transition-colors"
             title={isPaused ? 'Continue' : 'Pause'}
           >
             {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
@@ -243,7 +253,7 @@ console.log("Result:", result);`);
           <button
             onClick={handleStepOver}
             disabled={!isPaused}
-            className="p-2 rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] disabled:opacity-50 transition-colors"
+            className="touch-target rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.96] disabled:opacity-50 transition-colors"
             title="Step Over"
           >
             <ChevronRight className="w-4 h-4" />
@@ -251,30 +261,33 @@ console.log("Result:", result);`);
           <button
             onClick={handleReset}
             disabled={!isRunning && traceSteps.length === 0}
-            className="p-2 rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] disabled:opacity-50 transition-colors"
+            className="touch-target rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.96] disabled:opacity-50 transition-colors"
             title="Reset"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-[var(--app-text-muted)]">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex min-h-11 items-center gap-2 text-xs text-[var(--app-text-muted)]">
             <Bug className="w-4 h-4" />
             <span>{language}</span>
+            <span className="rounded-full border border-[var(--app-border)] px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+              simulated
+            </span>
           </div>
           <div className="h-4 w-px bg-[var(--app-border)]" />
           <div className="flex items-center gap-2">
             <button
               onClick={handleSaveSession}
-              className="p-2 rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+              className="touch-target rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.96] transition-colors"
               title="Save Session"
             >
               <Save className="w-4 h-4" />
             </button>
             <button
               onClick={handleExportTrace}
-              className="p-2 rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] transition-colors"
+              className="touch-target rounded-lg bg-[var(--app-panel-2)] text-[var(--app-text)] hover:bg-[var(--app-surface)] active:scale-[0.96] transition-colors"
               title="Export Trace"
             >
               <Download className="w-4 h-4" />
@@ -284,11 +297,11 @@ console.log("Result:", result);`);
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Code Editor Panel */}
-        <div className="flex-1 flex flex-col border-r border-[var(--app-border)]">
+        <div className="flex-1 min-h-0 flex flex-col lg:border-r border-[var(--app-border)]">
           {/* Editor Header */}
-          <div className="flex items-center justify-between px-4 py-2 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
+          <div className="flex items-center justify-between gap-3 px-3 sm:px-4 py-2 bg-[var(--app-panel)] border-b border-[var(--app-border)]">
             <div className="flex items-center gap-2">
               <FolderOpen className="w-4 h-4 text-[var(--app-text-dim)]" />
               <span className="text-sm font-medium text-[var(--app-text)]">debug-trace.js</span>
@@ -299,10 +312,13 @@ console.log("Result:", result);`);
               </span>
             </div>
           </div>
+          <div className="shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)] px-3 py-2 text-[11px] text-[var(--app-text-dim)] sm:hidden">
+            Swipe horizontally in the code area to read long lines.
+          </div>
 
           {/* Code Editor */}
-          <div className="flex-1 overflow-auto p-4 font-mono text-sm bg-[var(--app-bg)]">
-            <div className="relative">
+          <div className="flex-1 overflow-auto p-2 sm:p-4 font-mono text-[13px] sm:text-sm bg-[var(--app-bg)]">
+            <div className="relative min-w-max">
               {code.split('\n').map((line, index) => {
                 const lineNumber = index + 1;
                 const isCurrentLine = lineNumber === currentLine;
@@ -312,13 +328,13 @@ console.log("Result:", result);`);
                 return (
                   <div
                     key={lineNumber}
-                    className={`flex group relative ${
+                    className={`flex group relative min-h-8 sm:min-h-6 items-center ${
                       isCurrentLine ? 'bg-[var(--app-accent-soft)]' : isTraceLine ? 'bg-[var(--app-surface)]' : ''
                     }`}
                   >
                     {/* Line Number */}
                     <div
-                      className={`w-12 text-right pr-3 select-none cursor-pointer ${
+                      className={`w-14 sm:w-12 min-h-8 sm:min-h-6 text-right pr-3 select-none cursor-pointer touch-manipulation ${
                         isCurrentLine ? 'text-[var(--app-accent)]' : 'text-[var(--app-text-dim)]'
                       }`}
                       onClick={() => handleToggleBreakpoint(lineNumber)}
@@ -327,7 +343,7 @@ console.log("Result:", result);`);
                     </div>
 
                     {/* Breakpoint Indicator */}
-                    <div className="w-6 flex items-center justify-center">
+                    <div className="w-8 sm:w-6 flex items-center justify-center">
                       {hasBreakpoint && (
                         <div className="w-2 h-2 rounded-full bg-[var(--app-danger)]" />
                       )}
@@ -352,16 +368,16 @@ console.log("Result:", result);`);
         </div>
 
         {/* Right Panel */}
-        <div className="w-80 flex flex-col bg-[var(--app-panel)]">
+        <div className="h-[42dvh] min-h-[320px] lg:h-auto lg:min-h-0 w-full lg:w-80 flex flex-col bg-[var(--app-panel)] border-t lg:border-t-0 border-[var(--app-border)]">
           {/* Tabs */}
           <div className="flex border-b border-[var(--app-border)]">
-            <button className="flex-1 px-4 py-2 text-xs font-medium text-[var(--app-accent)] border-b-2 border-[var(--app-accent)]">
+            <button className="flex-1 min-h-11 px-4 py-2 text-xs font-medium text-[var(--app-accent)] border-b-2 border-[var(--app-accent)] touch-manipulation">
               Variables
             </button>
-            <button className="flex-1 px-4 py-2 text-xs font-medium text-[var(--app-text-muted)] hover:text-[var(--app-text)]">
+            <button className="flex-1 min-h-11 px-4 py-2 text-xs font-medium text-[var(--app-text-muted)] hover:text-[var(--app-text)] touch-manipulation">
               Trace
             </button>
-            <button className="flex-1 px-4 py-2 text-xs font-medium text-[var(--app-text-muted)] hover:text-[var(--app-text)]">
+            <button className="flex-1 min-h-11 px-4 py-2 text-xs font-medium text-[var(--app-text-muted)] hover:text-[var(--app-text)] touch-manipulation">
               Console
             </button>
           </div>
@@ -386,7 +402,7 @@ console.log("Result:", result);`);
                     <div key={scope} className="border border-[var(--app-border)] rounded-lg overflow-hidden">
                       <button
                         onClick={() => handleToggleScope(scope)}
-                        className="w-full flex items-center justify-between px-3 py-2 bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors"
+                        className="w-full min-h-11 flex items-center justify-between px-3 py-2 bg-[var(--app-surface)] hover:bg-[var(--app-panel-2)] transition-colors touch-manipulation"
                       >
                         <span className="text-xs font-medium text-[var(--app-text)] capitalize">{scope}</span>
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-[var(--app-text-dim)]" /> : <ChevronRight className="w-4 h-4 text-[var(--app-text-dim)]" />}
@@ -394,7 +410,7 @@ console.log("Result:", result);`);
                       {isExpanded && (
                         <div className="p-2 space-y-1">
                           {scopeVariables.map(variable => (
-                            <div key={variable.name} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[var(--app-surface)]">
+                            <div key={variable.name} className="min-h-9 flex items-center justify-between gap-3 px-2 py-1 rounded hover:bg-[var(--app-surface)]">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-[var(--app-text)]">{variable.name}</span>
                                 <span className="text-xs text-[var(--app-text-dim)]">({variable.type})</span>
@@ -427,7 +443,7 @@ console.log("Result:", result);`);
                       setSelectedTraceId(step.id);
                       setCurrentLine(step.line);
                     }}
-                    className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer ${
+                    className={`min-h-10 flex items-center gap-2 px-2 py-1 rounded cursor-pointer touch-manipulation ${
                       selectedTraceId === step.id ? 'bg-[var(--app-accent-soft)]' : 'hover:bg-[var(--app-surface)]'
                     }`}
                   >
@@ -441,7 +457,7 @@ console.log("Result:", result);`);
           </div>
 
           {/* Console Output */}
-          <div className="h-32 border-t border-[var(--app-border)] p-3 overflow-auto">
+          <div className="h-36 sm:h-32 border-t border-[var(--app-border)] p-3 overflow-auto">
             <h3 className="text-xs font-medium text-[var(--app-text)] mb-2">Console Output</h3>
             {consoleOutput.length === 0 ? (
               <p className="text-xs text-[var(--app-text-muted)] text-center py-2">No console output</p>

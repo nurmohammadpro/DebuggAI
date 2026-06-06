@@ -39,7 +39,7 @@ function DialogTrigger({
   )
 }
 
-(DialogTrigger as any).displayName = "DialogTrigger"
+Object.assign(DialogTrigger, { displayName: "DialogTrigger" })
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
@@ -88,7 +88,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute right-4 top-4 rounded-ds opacity-70 hover:opacity-100 focus:outline-none transition-opacity"
+            className="absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-ds opacity-70 hover:opacity-100 focus:outline-none transition-opacity sm:right-4 sm:top-4 sm:h-8 sm:w-8"
           >
             <XIcon className="h-4 w-4 text-text2" />
             <span className="sr-only">Close</span>

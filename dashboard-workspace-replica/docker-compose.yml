@@ -1,0 +1,57 @@
+services:
+  debuggai_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: debuggai_app
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+      PROJECTS_DIR: /var/lib/debuggai/projects
+      SANDBOX_BASE_PORT: "4000"
+      MAX_SANDBOXES: "10"
+      SANDBOX_TIMEOUT_MS: "1800000"
+      SANDBOX_DOCKER_IMAGE: node:20-slim
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/debuggai/projects:/var/lib/debuggai/projects
+    security_opt:
+      - no-new-privileges:false
+    group_add:
+      - "988"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - SYS_PTRACE
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.rule=Host(`debuggaidemo.appbrainer.tech`)
+      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.entrypoints=web,websecure
+      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.tls.certresolver=letsencrypt
+      - traefik.http.routers.appbrainer-debuggai-r1cdzf-21-web.service=appbrainer-debuggai-r1cdzf-21-web
+      - traefik.http.services.appbrainer-debuggai-r1cdzf-21-web.loadbalancer.server.port=3000
+    networks:
+      - dokploy-network
+      - default

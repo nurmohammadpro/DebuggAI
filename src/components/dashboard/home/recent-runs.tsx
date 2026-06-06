@@ -21,14 +21,13 @@ export function RecentRuns() {
     <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--app-border)]">
         <div className="text-xs font-medium text-[var(--app-text)]">Recent Runs</div>
-        <Link href="/dashboard">
-          <button
-            className="p-1 rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
-            title="Open workspace"
-            aria-label="Open workspace"
-          >
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+        <Link
+          href="/dashboard"
+          className="inline-flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-[6px] text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
+          title="Open workspace"
+          aria-label="Open workspace"
+        >
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
@@ -56,7 +55,7 @@ export function RecentRuns() {
             <Link
               key={r.id}
               href={`/dashboard/runs/${r.id}`}
-              className="block p-2.5 hover:bg-[var(--app-surface)] transition-colors"
+              className="block min-h-14 p-2.5 hover:bg-[var(--app-surface)] transition-colors touch-manipulation"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
@@ -78,6 +78,15 @@ export function Panel({
     );
   }
 
+  // Lock body scroll when mobile overlay is open
+  useEffect(() => {
+    if (mobile && mobileOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [mobile, mobileOpen]);
+
   /* ── Mobile overlay ────────────────────────────────────────── */
   if (mobile) {
     return (
@@ -101,6 +110,7 @@ export function Panel({
               className={cn(
                 'absolute inset-0 flex flex-col',
                 'bg-[var(--app-panel)]',
+                'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
                 'shadow-[0_18px_55px_rgba(0,0,0,0.35)] overflow-hidden',
                 side === 'left'
                   ? 'w-[min(320px,100vw)]'

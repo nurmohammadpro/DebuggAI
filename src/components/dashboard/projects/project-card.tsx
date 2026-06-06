@@ -26,19 +26,17 @@ export function ProjectCard({
     (project.prompt ? truncate(project.prompt, 60) : 'Untitled project');
 
   return (
-    <div className="border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
-      <div className="p-3 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer">
-        <div className="flex items-start gap-3">
+    <div className="min-w-0 bg-[var(--app-panel)]">
+      <div className="p-3 hover:bg-[var(--bg-tertiary)] transition-colors">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
           {/* Stack Icon */}
-          <div className="w-8 h-8 rounded bg-gray-50 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 sm:w-8 sm:h-8 rounded bg-gray-50 flex items-center justify-center shrink-0">
             {project.stack === 'react' ? (
               <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
               </svg>
             ) : project.stack === 'nextjs' ? (
-              <svg className="w-4 h-4 text-gray-800" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8-8zm0-14c-3.314 0-6 2.686-6 6s2.686 6 6 6 6-2.686 6-6-2.686-6-6-6z"/>
-              </svg>
+              <span className="text-[11px] font-black tracking-[-0.08em] text-gray-900">N</span>
             ) : (
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -69,32 +67,30 @@ export function ProjectCard({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="grid grid-cols-4 gap-1 sm:flex sm:items-center sm:gap-1 shrink-0">
             <button
-              className="p-1.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors"
+              className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors touch-manipulation"
               title="Duplicate"
               onClick={() => onDuplicate(project)}
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
-              className="p-1.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors"
+              className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors touch-manipulation"
               title="Rename"
               onClick={() => setRenameOpen(true)}
             >
               <span className="text-[10px] font-semibold">Aa</span>
             </button>
             <button
-              className="p-1.5 rounded hover:bg-red-200 text-gray-400 hover:text-red-800 transition-colors"
+              className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-red-200 text-gray-400 hover:text-red-800 transition-colors touch-manipulation"
               title="Delete"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
-            <Link href={`/dashboard?project=${project.id}`}>
-              <button className="p-1.5 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors ml-1">
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+            <Link href={`/dashboard?project=${project.id}`} className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors touch-manipulation" aria-label={`Open ${title}`}>
+              <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

@@ -1,0 +1,4 @@
+export const INTERNAL_TEST_COUPON_EMAIL = 'nurprodev@gmail.com';
+export const INTERNAL_TEST_COUPON_CODE = 'NURPRODEV-UNLIMITED-TEST';
+export const INTERNAL_TEST_CREDIT_BALANCE = 1_000_000;
+

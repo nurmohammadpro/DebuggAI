@@ -15,7 +15,7 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--app-bg)]">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--app-bg)]">
       <div className="text-center max-w-md px-6">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-[6px] bg-[var(--app-danger)]/10 mb-6">
           <AlertTriangle className="h-6 w-6 text-[var(--app-danger)]" />

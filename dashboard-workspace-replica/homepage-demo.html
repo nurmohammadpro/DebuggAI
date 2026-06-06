@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeBuggAI — Debug and build, faster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0A0D0A;
+    --surface:   #111411;
+    --surface2:  #171C17;
+    --surface3:  #1E261E;
+    --border:    #1F2B1F;
+    --border2:   #283228;
+    --text:      #E8F5E9;
+    --text2:     #8BAD8B;
+    --text3:     #4D6B4D;
+    --green:     #00C853;
+    --green-bright: #00E676;
+    --red:       #FF5252;
+    --amber:     #FFAB00;
+    --blue:      #40C4FF;
+    --purple:    #CE93D8;
+    --radius:    6px;
+  }
+
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- Nav --- */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 48px; padding: 0 24px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .logo { font-weight: 600; font-size: 13px; color: var(--text); text-decoration: none; letter-spacing: -0.2px; }
+  nav .logo span { color: var(--green); }
+  nav .links { display: flex; align-items: center; gap: 20px; }
+  nav .links a { font-size: 12px; color: var(--text2); text-decoration: none; transition: color 150ms; }
+  nav .links a:hover { color: var(--text); }
+  nav .cta {
+    height: 32px; padding: 0 14px; border-radius: var(--radius);
+    background: var(--green); color: #000; font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer; transition: background 150ms; text-decoration: none;
+    display: inline-flex; align-items: center;
+  }
+  nav .cta:hover { background: var(--green-bright); }
+
+  /* --- Layout --- */
+  section { max-width: 960px; margin: 0 auto; padding: 80px 24px; }
+
+  /* --- Hero --- */
+  .hero { padding-top: 64px; padding-bottom: 64px; }
+  .hero h1 {
+    font-size: 48px; font-weight: 600; line-height: 1.15; letter-spacing: -1.2px;
+    max-width: 640px;
+  }
+  .hero h1 em { font-style: normal; color: var(--green); }
+  .hero .sub {
+    font-size: 15px; color: var(--text2); margin-top: 16px; max-width: 500px; line-height: 1.6;
+  }
+  .hero .actions { display: flex; align-items: center; gap: 14px; margin-top: 28px; }
+  .btn-primary {
+    height: 44px; padding: 0 24px; border-radius: var(--radius);
+    background: var(--green); color: #000; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    transition: background 150ms;
+  }
+  .btn-primary:hover { background: var(--green-bright); }
+  .btn-ghost {
+    height: 44px; padding: 0 24px; border-radius: var(--radius);
+    background: transparent; color: var(--text); font-size: 14px; font-weight: 500;
+    border: 1px solid var(--border2); cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; transition: background 150ms, border-color 150ms;
+  }
+  .btn-ghost:hover { background: var(--surface2); border-color: var(--text3); }
+
+  /* --- Demo Panel --- */
+  .demo-panel {
+    margin-top: 48px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--border2); background: var(--border2);
+  }
+  .demo-panel > div { background: var(--surface); padding: 20px; }
+  .demo-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text3); margin-bottom: 12px;
+  }
+  .demo-panel textarea {
+    width: 100%; height: 160px; resize: vertical;
+    background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius);
+    color: var(--text); font-family: "JetBrains Mono", monospace; font-size: 11px;
+    padding: 12px; line-height: 1.6; outline: none;
+    transition: border-color 150ms;
+  }
+  .demo-panel textarea:focus { border-color: var(--green); }
+  .demo-panel .error-input { height: 80px; margin-top: 10px; }
+  .demo-run {
+    margin-top: 12px; height: 36px; padding: 0 16px; border-radius: var(--radius);
+    background: var(--green); color: #000; font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: background 150ms;
+  }
+  .demo-run:hover { background: var(--green-bright); }
+
+  .demo-result {
+    font-family: "JetBrains Mono", monospace; font-size: 11px; line-height: 1.8; color: var(--text2);
+    white-space: pre-wrap;
+  }
+  .demo-result .cause { color: var(--red); }
+  .demo-result .fix { color: var(--green); }
+  .demo-result .dim { color: var(--text3); }
+
+  /* --- Section Labels --- */
+  .section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text3); margin-bottom: 12px;
+  }
+
+  /* --- Capabilities --- */
+  .caps { background: var(--surface); }
+  .caps h2 {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px;
+  }
+  .caps .sub { font-size: 14px; color: var(--text2); max-width: 480px; margin-bottom: 40px; }
+  .caps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .caps-grid .cap {
+    background: var(--surface2); padding: 28px 24px;
+    display: flex; flex-direction: column;
+  }
+  .caps-grid .cap .label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--green); margin-bottom: 12px;
+  }
+  .caps-grid .cap h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; margin-bottom: 6px; }
+  .caps-grid .cap p { font-size: 13px; color: var(--text2); line-height: 1.6; flex: 1; }
+  .caps-grid .cap .snippet {
+    margin-top: 16px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px; line-height: 1.7; color: var(--text2);
+    overflow-x: auto;
+  }
+  .caps-grid .cap .snippet .add { color: var(--green); }
+  .caps-grid .cap .snippet .del { color: var(--red); }
+  .caps-grid .cap .snippet .info { color: var(--blue); }
+
+  /* --- Web Builder Demo --- */
+  .builder { padding-top: 0; }
+  .builder-demo {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--border2); background: var(--border2);
+  }
+  .builder-demo > div { background: var(--surface); }
+  .builder-left { display: flex; flex-direction: column; }
+  .builder-prompt {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .builder-prompt input {
+    flex: 1; height: 36px; padding: 0 12px; border-radius: var(--radius);
+    background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); font-family: "JetBrains Mono", monospace; font-size: 11px;
+    outline: none;
+  }
+  .builder-prompt input:focus { border-color: var(--green); }
+  .builder-prompt .send {
+    height: 36px; width: 36px; border-radius: var(--radius);
+    background: var(--green); color: #000; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 150ms;
+  }
+  .builder-prompt .send:hover { background: var(--green-bright); }
+  .builder-tabs {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .builder-tab {
+    height: 32px; padding: 0 14px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text3); background: transparent; border: none; cursor: pointer;
+    border-bottom: 2px solid transparent; transition: color 150ms, border-color 150ms;
+  }
+  .builder-tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .builder-code {
+    flex: 1; min-height: 220px; padding: 16px 20px;
+    font-family: "JetBrains Mono", monospace; font-size: 10px; line-height: 1.8;
+    color: var(--text2); overflow: auto;
+    white-space: pre;
+  }
+  .builder-code .kw { color: var(--purple); }
+  .builder-code .str { color: var(--amber); }
+  .builder-code .fn { color: var(--blue); }
+  .builder-code .cm { color: var(--text3); font-style: italic; }
+  .builder-code .tag { color: var(--red); }
+  .builder-code .attr { color: var(--amber); }
+  .builder-code .val { color: var(--green); }
+
+  .builder-right {
+    display: flex; flex-direction: column;
+  }
+  .builder-preview-bar {
+    height: 28px; padding: 0 12px;
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+  }
+  .builder-preview-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .builder-preview-dot:nth-child(1) { background: #FF5F56; }
+  .builder-preview-dot:nth-child(2) { background: #FFBD2E; }
+  .builder-preview-dot:nth-child(3) { background: #27C93F; }
+  .builder-preview-url {
+    margin-left: 8px; font-size: 10px; font-family: "JetBrains Mono", monospace;
+    color: var(--text3); background: var(--surface3); padding: 2px 8px; border-radius: 4px;
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .builder-iframe {
+    flex: 1; min-height: 340px; background: #fff;
+    border: none; display: flex; align-items: center; justify-content: center;
+  }
+  .builder-iframe-inner {
+    width: 100%; height: 100%; padding: 24px;
+    background: #fafafa; color: #1a1a1a; font-family: Inter, system-ui, sans-serif;
+    overflow: auto;
+  }
+  .preview-todo {
+    max-width: 360px; margin: 0 auto;
+    background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 24px;
+  }
+  .preview-todo h4 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a; }
+  .preview-todo .add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .preview-todo .add-row input {
+    flex: 1; height: 36px; padding: 0 10px; border-radius: 6px;
+    border: 1px solid #e0e0e0; font-size: 13px; outline: none;
+  }
+  .preview-todo .add-row input:focus { border-color: #00C853; }
+  .preview-todo .add-row button {
+    height: 36px; padding: 0 14px; border-radius: 6px;
+    background: #00C853; color: #fff; border: none; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .preview-todo .task {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333;
+  }
+  .preview-todo .task input[type="checkbox"] { accent-color: #00C853; width: 16px; height: 16px; }
+  .preview-todo .task.done { color: #aaa; text-decoration: line-through; }
+  .preview-todo .meta { font-size: 11px; color: #999; margin-top: 12px; text-align: center; }
+
+  /* --- Language badges --- */
+  .langs { text-align: center; }
+  .langs h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 24px; }
+  .lang-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .lang-badge {
+    height: 32px; padding: 0 12px; border-radius: var(--radius);
+    border: 1px solid var(--border2); background: var(--surface2);
+    font-size: 11px; font-weight: 500; color: var(--text2);
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: border-color 150ms;
+  }
+  .lang-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .lang-dot.js  { background: #F7DF1E; }
+  .lang-dot.py  { background: #3776AB; }
+  .lang-dot.php { background: #777BB4; }
+  .lang-dot.go  { background: #00ADD8; }
+  .lang-dot.rb  { background: #CC342D; }
+  .lang-dot.ts  { background: #3178C6; }
+  .lang-dot.java{ background: #ED8B00; }
+  .lang-dot.cs  { background: #9B4F96; }
+  .lang-dot.html{ background: #E34F26; }
+  .lang-dot.cp  { background: #00599C; }
+  .lang-dot.dart{ background: #00B4AB; }
+  .lang-dot.rs  { background: #CE422B; }
+
+  /* --- How it works --- */
+  .how { text-align: center; padding-top: 40px; padding-bottom: 80px; }
+  .how p { font-size: 15px; color: var(--text2); line-height: 1.8; }
+  .how p strong { color: var(--text); font-weight: 600; }
+
+  /* --- Pricing --- */
+  .price { background: var(--surface); }
+  .price h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .price .sub { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
+  .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .price-card {
+    background: var(--surface2); padding: 32px 28px;
+    display: flex; flex-direction: column;
+  }
+  .price-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .price-card .amount { font-size: 36px; font-weight: 600; color: var(--green); letter-spacing: -1px; margin: 12px 0 4px; }
+  .price-card .amount span { font-size: 14px; font-weight: 400; color: var(--text2); }
+  .price-card .credit { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
+  .price-card ul { list-style: none; font-size: 12px; color: var(--text2); line-height: 2; flex: 1; }
+  .price-card ul li::before { content: "â†’ "; color: var(--green); font-weight: 600; }
+  .price-link { display: block; text-align: center; margin-top: 20px; font-size: 12px; color: var(--text2); }
+
+  /* --- CTA --- */
+  .cta-section { text-align: center; padding-top: 64px; padding-bottom: 100px; }
+  .cta-section h2 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .cta-section p { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+
+  /* --- Footer --- */
+  footer {
+    border-top: 1px solid var(--border); padding: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 960px; margin: 0 auto; font-size: 11px; color: var(--text3);
+  }
+  footer .links { display: flex; gap: 16px; }
+  footer .links a { color: var(--text3); text-decoration: none; transition: color 150ms; }
+  footer .links a:hover { color: var(--text2); }
+
+  @media (max-width: 720px) {
+    .hero h1 { font-size: 32px; letter-spacing: -0.7px; }
+    .demo-panel { grid-template-columns: 1fr; }
+    .builder-demo { grid-template-columns: 1fr; }
+    .builder-iframe { min-height: 260px; }
+    .caps-grid { grid-template-columns: 1fr; }
+    .price-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">DeBugg<span>AI</span></a>
+  <div class="links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="/docs">Docs</a>
+    <a href="/login">Sign in</a>
+    <a href="/signup" class="cta">Start free</a>
+  </div>
+</nav>
+
+<!-- Hero + Demo -->
+<section class="hero">
+  <h1>Debug and build, <em>faster</em></h1>
+  <p class="sub">Paste code, describe a bug, get an explained fix in seconds. Then build and deploy from the same workspace.</p>
+  <div class="actions">
+    <a href="/signup" class="btn-primary">Start debugging</a>
+    <a href="#pricing" class="btn-ghost">See pricing</a>
+  </div>
+
+  <div class="demo-panel">
+    <div>
+      <div class="demo-label">Input</div>
+      <textarea readonly style="height:140px">def get_user(id):
+    user = db.query(f"SELECT * FROM users WHERE id = {id}")
+    return user.name
+
+# Usage
+name = get_user(42)
+print(f"Hello, {name}")</textarea>
+      <textarea class="error-input" readonly>Traceback (most recent call last):
+  File "app.py", line 7, in &lt;module&gt;
+    print(f"Hello, {name}")
+NameError: name 'name' is not defined</textarea>
+      <button class="demo-run" onclick="document.getElementById('result').scrollIntoView({behavior:'smooth'})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Analyze
+      </button>
+    </div>
+    <div id="result">
+      <div class="demo-label">Result</div>
+      <div class="demo-result"><span class="dim">## Summary</span>
+<span class="cause">NameError</span>: <span class="dim">variable</span> name <span class="dim">referenced before assignment</span>
+
+<span class="dim">## Root Cause</span>
+get_user() <span class="dim">may return</span> None <span class="dim">when the query finds no row.
+If</span> db.query(...) <span class="dim">returns</span> None<span class="dim">, accessing</span> .name <span class="dim">raises</span> AttributeError<span class="dim">.
+The</span> NameError <span class="dim">at line 7 is a cascade: the try/except swallowed the
+original error, so</span> name <span class="dim">was never assigned.</span>
+
+<span class="dim">## Fix</span>
+<span class="fix">+ def get_user(user_id: int) -> dict | None:</span>
+<span class="fix">+     result = db.query("SELECT * FROM users WHERE id = ?", [user_id])</span>
+<span class="fix">+     return result[0] if result else None</span>
+<span class="fix">+ </span>
+<span class="fix">+ user = get_user(42)</span>
+<span class="fix">+ if user is None:</span>
+<span class="fix">+     print("User not found")</span>
+<span class="fix">+ else:</span>
+<span class="fix">+     print(f"Hello, {user['name']}")</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Capabilities -->
+<section class="caps" id="features">
+  <div class="section-label">Capabilities</div>
+  <h2>Everything you need to ship</h2>
+  <p class="sub">Three surfaces, one workspace. Debug, build, and deploy without leaving the tool.</p>
+
+  <div class="caps-grid">
+    <div class="cap">
+      <div class="label">Debug</div>
+      <h3>AI-powered analysis</h3>
+      <p>Paste code and an error. Get root cause, explained fix, and suggested tests. 10+ languages, streaming responses.</p>
+      <div class="snippet">
+        <span class="del">- user = db.query(f"SELECT * FROM</span>
+        <span class="del">  users WHERE id = {id}")</span>
+        <span class="add">+ import re; sanitized =</span>
+        <span class="add">  re.sub(r'[^\w]','',str(id))</span>
+        <span class="add">+ db.query("SELECT * FROM users</span>
+        <span class="add">  WHERE id = ?", [sanitized])</span>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="label">Build</div>
+      <h3>Visual web builder</h3>
+      <p>Describe what you want. The AI generates a full app with live Monaco editor and instant iframe preview.</p>
+      <div class="snippet">
+        <span class="info">> Build a todo app with dark</span>
+        <span class="info">  mode toggle and localStorage</span>
+        <span class="info">  persistence</span>
+        &nbsp;
+        <span class="dim">â†’ Generated index.html,</span>
+        <span class="dim">   style.css, app.js</span>
+        <span class="dim">   Ready in 4.2s</span>
+      </div>
+    </div>
+    <div class="cap">
+      <div class="label">Deploy</div>
+      <h3>Ship from the workspace</h3>
+      <p>One-click deploy to Vercel or Netlify. Export as zip. Project versioning and team branches built in.</p>
+      <div class="snippet">
+        <span class="dim">$ debuggai deploy</span>
+        <span class="dim">  Building project...</span>
+        <span class="dim">  Uploading to Vercel</span>
+        <span class="green">  Live at â†’</span>
+        <span class="green">  myapp.vercel.app</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Web Builder Demo -->
+<section class="builder">
+  <div class="section-label">Live Demo</div>
+
+  <div class="builder-demo">
+    <!-- Left: prompt + generated code -->
+    <div class="builder-left">
+      <div class="builder-prompt">
+        <input type="text" readonly value="Build a dark-mode todo app with localStorage persistence">
+        <button class="send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </button>
+      </div>
+      <div class="builder-tabs">
+        <button class="builder-tab active">index.html</button>
+        <button class="builder-tab">style.css</button>
+        <button class="builder-tab">app.js</button>
+      </div>
+      <div class="builder-code"><span class="cm">&lt;!-- index.html --&gt;</span>
+<span class="tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tag">&lt;html</span> <span class="attr">lang</span>=<span class="val">"en"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="val">"UTF-8"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"viewport"</span> <span class="attr">content</span>=<span class="val">"width=device-width"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;title&gt;</span>Tasks<span class="tag">&lt;/title&gt;</span>
+  <span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="val">"stylesheet"</span> <span class="attr">href</span>=<span class="val">"style.css"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"container"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"header"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;h1&gt;</span>Tasks<span class="tag">&lt;/h1&gt;</span>
+      <span class="tag">&lt;button</span> <span class="attr">id</span>=<span class="val">"themeToggle"</span><span class="tag">&gt;</span>🌙<span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"add-row"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;input</span> <span class="attr">id</span>=<span class="val">"taskInput"</span> <span class="attr">placeholder</span>=<span class="val">"Add a task..."</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;button</span> <span class="attr">id</span>=<span class="val">"addBtn"</span><span class="tag">&gt;</span>Add<span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;ul</span> <span class="attr">id</span>=<span class="val">"taskList"</span><span class="tag">&gt;&lt;/ul&gt;</span>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"meta"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;span</span> <span class="attr">id</span>=<span class="val">"count"</span><span class="tag">&gt;</span>0<span class="tag">&lt;/span&gt;</span> tasks, <span class="tag">&lt;span</span> <span class="attr">id</span>=<span class="val">"remaining"</span><span class="tag">&gt;</span>0<span class="tag">&lt;/span&gt;</span> remaining
+    <span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"app.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></div>
+    </div>
+
+    <!-- Right: live preview -->
+    <div class="builder-right">
+      <div class="builder-preview-bar">
+        <span class="builder-preview-dot"></span>
+        <span class="builder-preview-dot"></span>
+        <span class="builder-preview-dot"></span>
+        <span class="builder-preview-url">localhost:3000/preview</span>
+      </div>
+      <div class="builder-iframe">
+        <div class="builder-iframe-inner">
+          <div class="preview-todo">
+            <h4>Tasks</h4>
+            <div class="add-row">
+              <input type="text" readonly placeholder="Add a task..." value="Write unit tests">
+              <button>Add</button>
+            </div>
+            <div class="task done"><input type="checkbox" checked readonly> Set up project</div>
+            <div class="task done"><input type="checkbox" checked readonly> Install dependencies</div>
+            <div class="task"><input type="checkbox" readonly> Write unit tests</div>
+            <div class="task"><input type="checkbox" readonly> Add dark mode toggle</div>
+            <div class="task"><input type="checkbox" readonly> Deploy to production</div>
+            <div class="meta">5 tasks, 3 remaining</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Languages + How it works -->
+<section class="langs">
+  <h2>12 languages, one tool</h2>
+  <div class="lang-grid">
+    <span class="lang-badge"><span class="lang-dot js"></span>JavaScript</span>
+    <span class="lang-badge"><span class="lang-dot py"></span>Python</span>
+    <span class="lang-badge"><span class="lang-dot php"></span>PHP</span>
+    <span class="lang-badge"><span class="lang-dot go"></span>Go</span>
+    <span class="lang-badge"><span class="lang-dot rb"></span>Ruby</span>
+    <span class="lang-badge"><span class="lang-dot ts"></span>TypeScript</span>
+    <span class="lang-badge"><span class="lang-dot java"></span>Java</span>
+    <span class="lang-badge"><span class="lang-dot cs"></span>C#</span>
+    <span class="lang-badge"><span class="lang-dot html"></span>HTML/CSS</span>
+    <span class="lang-badge"><span class="lang-dot cp"></span>C++</span>
+    <span class="lang-badge"><span class="lang-dot dart"></span>Dart</span>
+    <span class="lang-badge"><span class="lang-dot rs"></span>Rust</span>
+  </div>
+
+  <div class="how">
+    <p><strong>Paste code and error</strong> â†’ <strong>AI analyzes in real-time</strong> â†’ <strong>Apply the fix or iterate.</strong> Or <strong>describe an app</strong> â†’ <strong>AI generates it live</strong> â†’ <strong>preview instantly.</strong> Two loops, one tool. No setup, no config.</p>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="price" id="pricing">
+  <div class="section-label">Pricing</div>
+  <h2>Start free, upgrade when you need more</h2>
+  <p class="sub">No credit card required. Cancel anytime.</p>
+
+  <div class="price-row">
+    <div class="price-card">
+      <h3>Free</h3>
+      <div class="amount">$0<span>/month</span></div>
+      <div class="credit">30 credits per month</div>
+      <ul>
+        <li>Basic debugging features</li>
+        <li>7-day session history</li>
+        <li>Web builder templates</li>
+        <li>10 requests per minute</li>
+      </ul>
+      <a href="/signup" class="btn-ghost" style="margin-top:20px;justify-content:center">Get started</a>
+    </div>
+    <div class="price-card">
+      <h3>Pro</h3>
+      <div class="amount">$9<span>/month</span></div>
+      <div class="credit">300 credits per month</div>
+      <ul>
+        <li>Priority AI processing</li>
+        <li>90-day session history</li>
+        <li>Full web builder access</li>
+        <li>Zero-knowledge mode</li>
+        <li>Priority support</li>
+      </ul>
+      <a href="/signup" class="btn-primary" style="margin-top:20px;justify-content:center">Start free trial</a>
+    </div>
+  </div>
+  <a href="/pricing" class="price-link">See all plans â†’ Team, Business, Enterprise</a>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>Start debugging for free</h2>
+  <p>No credit card required. Setup takes under two minutes.</p>
+  <a href="/signup" class="btn-primary" style="height:48px;padding:0 32px;font-size:15px">Create free account</a>
+</section>
+
+<footer>
+  <span>DeBuggAI</span>
+  <div class="links">
+    <a href="/docs">Docs</a>
+    <a href="/pricing">Pricing</a>
+    <a href="/blog">Blog</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+  </div>
+</footer>
+
+</body>
+</html>

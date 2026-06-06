@@ -74,7 +74,7 @@ export function CreateProjectDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {children ? (
-        <DialogTrigger className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--ds-green)] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[var(--ds-green-bright)]">
+        <DialogTrigger className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-[8px] bg-[var(--ds-green)] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[var(--ds-green-bright)] active:scale-[0.99] touch-manipulation">
           {children}
         </DialogTrigger>
       ) : null}
@@ -97,7 +97,7 @@ export function CreateProjectDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My next app"
-              className="w-full h-9 rounded-[8px] border-0 bg-[var(--app-panel)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+              className="w-full h-11 sm:h-9 rounded-[8px] border-0 bg-[var(--app-panel)] px-3 text-[16px] sm:text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
             />
           </div>
 
@@ -107,7 +107,7 @@ export function CreateProjectDialog({
               {WEB_BUILDER_STACKS.map((stack) => (
                 <div
                   key={stack.id}
-                  className={`cursor-pointer rounded-[8px] bg-[var(--app-panel)] p-4 transition-all ${
+                  className={`min-h-24 cursor-pointer rounded-[8px] bg-[var(--app-panel)] p-4 transition-all touch-manipulation ${
                     selectedStack === stack.id ? 'ring-2 ring-[var(--app-accent)]' : ''
                   }`}
                   onClick={() => setSelectedStack(stack.id)}
@@ -145,14 +145,14 @@ export function CreateProjectDialog({
               <button
                 onClick={() => setOpen(false)}
                 disabled={creating}
-                className="flex-1 sm:flex-none rounded-[8px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50"
+                className="flex-1 sm:flex-none min-h-11 rounded-[8px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] disabled:opacity-50 touch-manipulation"
               >
                 Cancel
               </button>
               <button
                 onClick={onCreate}
                 disabled={creating}
-                className="flex-1 sm:flex-none inline-flex items-center gap-2 rounded-[8px] bg-[var(--ds-green)] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[var(--ds-green-bright)] disabled:opacity-50"
+                className="flex-1 sm:flex-none inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-[var(--ds-green)] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[var(--ds-green-bright)] disabled:opacity-50 touch-manipulation"
               >
                 {creating ? (
                   <>

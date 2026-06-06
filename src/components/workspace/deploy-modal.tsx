@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Rocket, Globe, Settings, Check, Loader2, ExternalLink,
-  AlertTriangle, ChevronRight, Copy, Eye
+  AlertTriangle, ChevronRight, Copy, Eye, Download
 } from 'lucide-react';
 import { ReactSelect } from '@/components/ui/react-select';
 import { toast } from 'sonner';
@@ -60,6 +60,7 @@ export function DeployModal({
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<DeployStatus>('idle');
   const [deployUrl, setDeployUrl] = useState<string | null>(null);
+  const [archiveFilename, setArchiveFilename] = useState<string | null>(null);
   const [deployLogs, setDeployLogs] = useState<string[]>([]);
   const [config, setConfig] = useState<DeployConfig>({
     provider: 'vercel',
@@ -223,6 +224,7 @@ export function DeployModal({
           provider: config.provider,
           projectName: config.projectName,
           archivePath: archiveData.path,
+          archiveFilename: archiveData.filename,
           config: {
             framework: config.framework,
             buildCommand: config.buildCommand,
@@ -250,6 +252,7 @@ export function DeployModal({
       const deployData = await deployRes.json();
       const url = deployData.url || deployData.deployUrl || `https://${config.projectName}.vercel.app`;
       setDeployUrl(url);
+      if (deployData.archiveFilename) setArchiveFilename(deployData.archiveFilename);
 
       // 4. Mark deployment as success
       await supabase
@@ -287,6 +290,7 @@ export function DeployModal({
         setStep(0);
         setStatus('idle');
         setDeployUrl(null);
+        setArchiveFilename(null);
         setLogs([]);
       }
     }}>
@@ -605,6 +609,17 @@ export function DeployModal({
               </button>
 
               <div className="flex items-center gap-2">
+                {archiveFilename && (
+                  <a
+                    href={`/api/deploy/archive?filename=${encodeURIComponent(archiveFilename)}`}
+                    download
+                    className="h-8 px-3 rounded-[6px] border border-[var(--app-border)] text-[12px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download Archive
+                  </a>
+                )}
+
                 {deployUrl && (
                   <>
                     <button

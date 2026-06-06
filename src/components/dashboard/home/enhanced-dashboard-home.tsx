@@ -41,12 +41,12 @@ export function EnhancedDashboardHome() {
   // Handle create=1 URL parameter
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (url.searchParams.get('create') === '1') {
-      setCreateOpen(true);
-      url.searchParams.delete('create');
-      const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
-      router.replace(next);
-    }
+    if (url.searchParams.get('create') !== '1') return;
+    const openTimer = setTimeout(() => setCreateOpen(true), 0);
+    url.searchParams.delete('create');
+    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
+    router.replace(next);
+    return () => clearTimeout(openTimer);
   }, [router]);
 
   const { data: projects, isLoading: projectsLoading } = useMyProjects(10, true);
@@ -76,22 +76,22 @@ export function EnhancedDashboardHome() {
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-[100dvh] bg-[var(--app-bg)] p-4 pb-24 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
           <div>
             <h1 className="text-2xl font-semibold text-[var(--app-text)]">
               Welcome back, {user?.displayName?.split(' ')[0] || 'Developer'}
             </h1>
             <p className="text-sm text-[var(--app-text-muted)] mt-1">
-              Here's what's happening with your projects today
+              Here&apos;s what&apos;s happening with your projects today
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <button
               onClick={() => setSelectedTimeRange('7d')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`min-h-11 px-4 py-2 text-sm sm:text-xs font-medium rounded-lg transition-colors touch-manipulation ${
                 selectedTimeRange === '7d'
                   ? 'bg-[var(--app-accent)] text-[#071006]'
                   : 'bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]'
@@ -101,7 +101,7 @@ export function EnhancedDashboardHome() {
             </button>
             <button
               onClick={() => setSelectedTimeRange('30d')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`min-h-11 px-4 py-2 text-sm sm:text-xs font-medium rounded-lg transition-colors touch-manipulation ${
                 selectedTimeRange === '30d'
                   ? 'bg-[var(--app-accent)] text-[#071006]'
                   : 'bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]'
@@ -111,7 +111,7 @@ export function EnhancedDashboardHome() {
             </button>
             <button
               onClick={() => setSelectedTimeRange('90d')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              className={`min-h-11 px-4 py-2 text-sm sm:text-xs font-medium rounded-lg transition-colors touch-manipulation ${
                 selectedTimeRange === '90d'
                   ? 'bg-[var(--app-accent)] text-[#071006]'
                   : 'bg-[var(--app-panel)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)]'
@@ -127,7 +127,7 @@ export function EnhancedDashboardHome() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Link
           href="/dashboard/home?create=1"
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
+          className="group min-h-32 bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] active:scale-[0.99] transition-all block touch-manipulation"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-accent-soft)] flex items-center justify-center">
@@ -141,7 +141,7 @@ export function EnhancedDashboardHome() {
 
         <Link
           href="/dashboard/debug"
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
+          className="group min-h-32 bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] active:scale-[0.99] transition-all block touch-manipulation"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-warning-soft)] flex items-center justify-center">
@@ -155,7 +155,7 @@ export function EnhancedDashboardHome() {
 
         <Link
           href="/dashboard/branches"
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
+          className="group min-h-32 bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] active:scale-[0.99] transition-all block touch-manipulation"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-info-soft)] flex items-center justify-center">
@@ -169,7 +169,7 @@ export function EnhancedDashboardHome() {
 
         <Link
           href="/dashboard/settings"
-          className="group bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] transition-all block"
+          className="group min-h-32 bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] active:scale-[0.99] transition-all block touch-manipulation"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--app-purple-soft)] flex items-center justify-center">

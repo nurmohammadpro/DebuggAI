@@ -2,7 +2,7 @@
 
 import { ReactNode, useState } from 'react';
 import { Menu } from 'lucide-react';
-import { UnifiedSidebar } from '@/components/dashboard/sidebar/unified-sidebar';
+import { WorkspaceSidebar } from '@/components/workspace/workspace-sidebar';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
 import { useShellStore } from '@/store/shell-store';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
@@ -31,13 +31,16 @@ export function UnifiedLayout({
     <div className="h-[100dvh] w-full overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex">
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
 
-      {/* Sidebar — mobile overlay handled internally */}
+      {/* Sidebar — inline flex with collapsible icon rail */}
       {showSidebar && (
-        <UnifiedSidebar
-          recentThreads={recentThreads}
-          recentProjects={recentProjects}
+        <WorkspaceSidebar
+          isOpen={true}
+          variant="inline"
           collapsed={sidebarCollapsed}
           onToggleCollapsed={toggleSidebar}
+          recentProjects={recentProjects}
+          recentThreads={recentThreads}
+          onClose={() => {}}
           mobileOpen={mobileMenuOpen}
           onMobileClose={() => setMobileMenuOpen(false)}
         />
@@ -53,7 +56,7 @@ export function UnifiedLayout({
           mobileMenuButton={
             showSidebar ? (
               <button
-                className="md:hidden w-8 h-8 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all"
+                className="md:hidden touch-target flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] active:scale-[0.96] transition-all"
                 onClick={() => setMobileMenuOpen(true)}
                 aria-label="Open menu"
               >

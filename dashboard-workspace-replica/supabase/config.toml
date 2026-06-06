@@ -1,0 +1,85 @@
+# DeBuggAI — Supabase Configuration
+project_id = "debuggai"
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[api.tls]
+enabled = true
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 200
+
+[db.seed]
+enabled = true
+sql_paths = ["./supabase/seed.sql"]
+
+[realtime]
+enabled = true
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://debuggai.vercel.app"]
+jwt_expiry = 3600
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = false
+
+[auth.external]
+
+[analytics]
+enabled = false
+
+[functions.generate]
+enabled = true
+
+[functions.debug]
+enabled = true
+
+[functions.debug-ai-analyze]
+enabled = true
+
+[functions.create-checkout]
+enabled = true
+
+[functions.agent-worker]
+enabled = true
+verify_jwt = true
+
+[functions.ambassador-leaderboard]
+enabled = true
+
+[functions.monitoring]
+enabled = true
+
+[functions.web-builder-templates]
+enabled = true
+
+[edge_runtime]
+policy = "per_worker"

@@ -62,12 +62,17 @@ export function EnhancedPreviewPane({
   }, [onRefresh, setLastError]);
 
   useEffect(() => {
-    if (!isGenerating && wasGeneratingRef.current && hasFiles) {
-      setShowTransition(true);
-      const timer = setTimeout(() => setShowTransition(false), 1200);
-      return () => clearTimeout(timer);
-    }
+    const wasGenerating = wasGeneratingRef.current;
     wasGeneratingRef.current = isGenerating;
+
+    if (!isGenerating && wasGenerating && hasFiles) {
+      const startTimer = setTimeout(() => setShowTransition(true), 0);
+      const endTimer = setTimeout(() => setShowTransition(false), 1200);
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(endTimer);
+      };
+    }
   }, [isGenerating, hasFiles]);
 
   return (
@@ -220,7 +225,7 @@ function PreviewHeader({
   isReady: boolean;
 }) {
   return (
-    <div className="h-11 flex items-center gap-1.5 px-3 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
+    <div className="min-h-12 sm:h-11 flex flex-wrap sm:flex-nowrap items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-0 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
       <div className="flex items-center gap-2.5">
         <Play className="h-3.5 w-3.5 text-[var(--app-accent)]" />
         <h3 className="text-[13px] font-semibold tracking-tight uppercase text-[var(--app-text)]">Preview</h3>
@@ -236,16 +241,16 @@ function PreviewHeader({
         </span>
       </div>
 
-      <div className="flex items-center gap-2 ml-2">
-        <button onClick={() => setDeviceMode('desktop')} className={cn('h-7 w-7 rounded-[5px] flex items-center justify-center transition-colors', deviceMode === 'desktop' ? 'bg-[var(--app-surface)] text-[var(--app-text)]' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]')} title="Desktop"><Monitor className="h-3.5 w-3.5" /></button>
-        <button onClick={() => setDeviceMode('tablet')} className={cn('h-7 w-7 rounded-[5px] flex items-center justify-center transition-colors', deviceMode === 'tablet' ? 'bg-[var(--app-surface)] text-[var(--app-text)]' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]')} title="Tablet"><Tablet className="h-3.5 w-3.5" /></button>
-        <button onClick={() => setDeviceMode('mobile')} className={cn('h-7 w-7 rounded-[5px] flex items-center justify-center transition-colors', deviceMode === 'mobile' ? 'bg-[var(--app-surface)] text-[var(--app-text)]' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]')} title="Mobile"><Smartphone className="h-3.5 w-3.5" /></button>
+      <div className="flex items-center gap-1.5 sm:gap-2 ml-0 sm:ml-2">
+        <button onClick={() => setDeviceMode('desktop')} className={cn('h-10 w-10 sm:h-7 sm:w-7 rounded-[5px] flex items-center justify-center transition-colors touch-manipulation', deviceMode === 'desktop' ? 'bg-[var(--app-surface)] text-[var(--app-text)]' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]')} title="Desktop"><Monitor className="h-4 w-4 sm:h-3.5 sm:w-3.5" /></button>
+        <button onClick={() => setDeviceMode('tablet')} className={cn('h-10 w-10 sm:h-7 sm:w-7 rounded-[5px] flex items-center justify-center transition-colors touch-manipulation', deviceMode === 'tablet' ? 'bg-[var(--app-surface)] text-[var(--app-text)]' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]')} title="Tablet"><Tablet className="h-4 w-4 sm:h-3.5 sm:w-3.5" /></button>
+        <button onClick={() => setDeviceMode('mobile')} className={cn('h-10 w-10 sm:h-7 sm:w-7 rounded-[5px] flex items-center justify-center transition-colors touch-manipulation', deviceMode === 'mobile' ? 'bg-[var(--app-surface)] text-[var(--app-text)]' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)] hover:bg-[var(--app-surface)]')} title="Mobile"><Smartphone className="h-4 w-4 sm:h-3.5 sm:w-3.5" /></button>
       </div>
 
       <div className="flex-1" />
       <div className="flex items-center gap-1.5">
-        <button onClick={onRefresh} className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors" title="Refresh preview"><RefreshCw className="h-3.5 w-3.5" /></button>
-        <button onClick={() => setIsFullscreen(!isFullscreen)} className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors" title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+        <button onClick={onRefresh} className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation" title="Refresh preview"><RefreshCw className="h-4 w-4 sm:h-3.5 sm:w-3.5" /></button>
+        <button onClick={() => setIsFullscreen(!isFullscreen)} className="h-10 w-10 sm:h-7 sm:w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors touch-manipulation" title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
       </div>

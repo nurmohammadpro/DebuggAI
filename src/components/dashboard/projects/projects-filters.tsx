@@ -23,7 +23,7 @@ export function ProjectsFilters({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search by prompt or description..."
-            className="w-full h-8 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-2.5 py-1 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)]"
+            className="w-full h-11 sm:h-8 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 sm:px-2.5 py-2 sm:py-1 text-[16px] sm:text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)]"
           />
         </div>
         <div className="space-y-1.5">

@@ -72,14 +72,14 @@ export function DebugHistory() {
   };
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 pb-24 sm:p-6">
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <button
               onClick={() => router.push('/dashboard/debug')}
-              className="inline-flex items-center gap-2 text-[12px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors"
+              className="inline-flex min-h-11 items-center gap-2 text-[12px] text-[var(--app-text-muted)] hover:text-[var(--app-text)] transition-colors touch-manipulation"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Debugger
@@ -92,7 +92,7 @@ export function DebugHistory() {
           <button
             onClick={handleClearAll}
             disabled={(data || []).length === 0}
-            className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-danger)]/25 bg-[var(--app-danger-soft)] px-3 py-1.5 text-[13px] text-[var(--app-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--app-danger-soft)_70%,black)] disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] border border-[var(--app-danger)]/25 bg-[var(--app-danger-soft)] px-4 py-2 text-[13px] text-[var(--app-danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--app-danger-soft)_70%,black)] active:scale-[0.99] disabled:opacity-50 touch-manipulation"
           >
             <Trash2 className="h-4 w-4" />
             Clear All
@@ -112,7 +112,7 @@ export function DebugHistory() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search code or errors..."
-                className="w-full h-9 pl-10 rounded-[6px] border-0 bg-[var(--app-panel-2)] text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
+                className="w-full h-11 sm:h-9 pl-10 rounded-[6px] border-0 bg-[var(--app-panel-2)] text-[16px] sm:text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:ring-2 focus:ring-[var(--app-accent)]/20"
               />
             </div>
           </div>
@@ -142,7 +142,7 @@ export function DebugHistory() {
           <div className="mt-4">
             <button
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[6px] border border-[var(--app-border)] bg-transparent px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] touch-manipulation"
             >
               Retry
             </button>
@@ -223,7 +223,7 @@ export function DebugHistory() {
               <div className="p-4 pt-0 border-t border-[var(--app-border)]">
                 <div className="flex gap-2">
                   <button
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-1.5 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]"
+                    className="flex-1 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[6px] border border-[var(--app-border)] bg-transparent px-3 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] touch-manipulation"
                     onClick={() => {
                       const store = useDebugStore.getState();
                       store.setCurrentCode(session.code);
@@ -237,7 +237,7 @@ export function DebugHistory() {
                   </button>
                   <button
                     onClick={() => handleDelete(session.id)}
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-[6px] text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-danger-soft)] hover:text-[var(--app-danger)]"
+                    className="inline-flex items-center justify-center h-11 w-11 sm:h-8 sm:w-8 rounded-[6px] text-[var(--app-text-dim)] transition-colors hover:bg-[var(--app-danger-soft)] hover:text-[var(--app-danger)] touch-manipulation"
                     title="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

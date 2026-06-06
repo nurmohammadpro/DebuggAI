@@ -100,7 +100,7 @@ export function ProjectsHub() {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
+    <div className="p-4 pb-24 sm:p-6 space-y-4 overflow-x-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-medium text-[var(--text-primary)]">Dashboard</div>
@@ -150,7 +150,7 @@ export function ProjectsHub() {
                     router.push(`/dashboard?project=${latestProject.id}`);
                   }}
                   disabled={!latestProject}
-                  className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors px-3 py-2 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-11 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] active:scale-[0.99] transition-colors px-3 py-2 text-left disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 >
                   <div className="text-[11px] font-semibold text-[var(--app-text)]">
                     Latest project
@@ -170,7 +170,7 @@ export function ProjectsHub() {
                     router.push(url);
                   }}
                   disabled={!latestThread}
-                  className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors px-3 py-2 text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-11 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] active:scale-[0.99] transition-colors px-3 py-2 text-left disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                 >
                   <div className="text-[11px] font-semibold text-[var(--app-text)]">
                     Latest thread
@@ -191,7 +191,7 @@ export function ProjectsHub() {
               <div className="mt-3">
                 <button
                   onClick={() => refetch()}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--app-text)] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors rounded-[6px]"
+                  className="inline-flex min-h-11 items-center gap-2 px-4 py-2 text-xs font-medium text-[var(--app-text)] border border-[var(--app-border)] bg-[var(--app-panel-2)] hover:bg-[var(--app-surface)] transition-colors rounded-[6px] touch-manipulation"
                 >
                   Retry
                 </button>
@@ -229,7 +229,7 @@ export function ProjectsHub() {
                   })}
                 </div>
               </div>
-              <div className="border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
+              <div className="overflow-hidden rounded-[8px] border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
                 {projects.map((p) => (
                   <ProjectCard
                     key={p.id}

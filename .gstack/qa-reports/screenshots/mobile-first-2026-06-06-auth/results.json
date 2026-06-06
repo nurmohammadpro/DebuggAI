@@ -1,0 +1,880 @@
+[
+  {
+    "name": "auth-state",
+    "authState": {
+      "url": "http://localhost:3000/dashboard",
+      "loginErrors": [
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ]
+    }
+  },
+  {
+    "name": "dashboard-home",
+    "route": "/dashboard/home",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/dashboard/home",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Projects",
+      "textSample": "DeBuggAI Workspace New Project MAIN Home0 Builder0 TOOLS RECENT Untitled chat 1 day ago Untitled chat 1 day ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 3 days ago Untitled chat 3 days ago 999991 credits remaining Light mode N Projects Manage your projects N Welcome back, Nur Here's what's happening with your projects today 7D 30D 90D New Project Create a new project from scratch Debug Code Start a new debugging session Branches Manage project branches Settings Manage your",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "bodyHeight": 844,
+      "viewportHeight": 844,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 37,
+      "smallTargetCount": 11,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAIWorkspace",
+          "w": 107,
+          "h": 32,
+          "x": -300,
+          "y": 16,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 32,
+          "h": 32,
+          "x": -300,
+          "y": 798,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open menu",
+          "w": 32,
+          "h": 32,
+          "x": 16,
+          "y": 12,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Help",
+          "w": 36,
+          "h": 36,
+          "x": 294,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 36,
+          "h": 36,
+          "x": 338,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "7D",
+          "w": 40,
+          "h": 28,
+          "x": 221,
+          "y": 96,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "30D",
+          "w": 48,
+          "h": 28,
+          "x": 269,
+          "y": 96,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "90D",
+          "w": 49,
+          "h": 28,
+          "x": 326,
+          "y": 96,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "View All",
+          "w": 45,
+          "h": 16,
+          "x": 304,
+          "y": 1773,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "View All",
+          "w": 45,
+          "h": 16,
+          "x": 304,
+          "y": 2087,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "New Project",
+          "w": 44,
+          "h": 26,
+          "x": 16,
+          "y": 2194,
+          "visible": true
+        }
+      ]
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "responses": []
+  },
+  {
+    "name": "workspace-new",
+    "route": "/dashboard?create=1",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/dashboard",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "",
+      "textSample": "Dashboard Projects, threads, and recent activity. Create 15 PROJECTS In your workspace 0 DEBUG SESSIONS Last 100 sessions 46 THREADS Last 50 threads Search Stack All stacks CONTINUE Pick up your latest project or thread. Latest project New 10 Latest thread a4320bdd 15 projects Updated 1 day ago New 10 NEXTJS Create a Next.js App Router app: New 10 1 day ago Aa New 9 NEXTJS Create a Next.js App Router app: New 9 2 days ago Aa New 8 NEXTJS Create a Next.js App Router app: New 8 2 days ago Aa New 7 NEXTJS Create a Next.js App Router app: New 7 2 days ago Aa New 6 NEXTJS Create a Next.js App Route",
+      "scrollWidth": 485,
+      "clientWidth": 390,
+      "bodyWidth": 484,
+      "bodyHeight": 2810,
+      "viewportHeight": 1048,
+      "horizontalOverflow": true,
+      "visibleInteractiveCount": 99,
+      "smallTargetCount": 90,
+      "smallTargets": [
+        {
+          "tag": "BUTTON",
+          "label": "New ProjectCreate",
+          "w": 358,
+          "h": 28,
+          "x": 16,
+          "y": 68,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "Search by prompt or description...",
+          "w": 326,
+          "h": 32,
+          "x": 32,
+          "y": 495,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "w": 3,
+          "h": 17,
+          "x": 39,
+          "y": 565,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 351,
+          "y": 1473,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Aa",
+          "w": 25,
+          "h": 32,
+          "x": 381,
+          "y": 1471,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 410,
+          "y": 1473,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "/dashboard?project=6c1da4ba-15d1-46ed-b680-3f3da0f02c27",
+          "w": 30,
+          "h": 26,
+          "x": 440,
+          "y": 1473,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 444,
+          "y": 1473,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 351,
+          "y": 1562,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Aa",
+          "w": 25,
+          "h": 32,
+          "x": 381,
+          "y": 1560,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 410,
+          "y": 1562,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "/dashboard?project=54dd260c-6543-4d28-b8ac-93dc7f78bd27",
+          "w": 30,
+          "h": 26,
+          "x": 440,
+          "y": 1562,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 444,
+          "y": 1562,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 351,
+          "y": 1651,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Aa",
+          "w": 25,
+          "h": 32,
+          "x": 381,
+          "y": 1649,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 410,
+          "y": 1651,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "/dashboard?project=4ec467ed-e22d-4d12-9bcc-c9a024a409b5",
+          "w": 30,
+          "h": 26,
+          "x": 440,
+          "y": 1651,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 444,
+          "y": 1651,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 351,
+          "y": 1740,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Aa",
+          "w": 25,
+          "h": 32,
+          "x": 381,
+          "y": 1738,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 410,
+          "y": 1740,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "/dashboard?project=9a328a3c-d3bd-4025-bb0f-c4ea6df9a3d0",
+          "w": 30,
+          "h": 26,
+          "x": 440,
+          "y": 1740,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 444,
+          "y": 1740,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "",
+          "w": 26,
+          "h": 26,
+          "x": 351,
+          "y": 1829,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Aa",
+          "w": 25,
+          "h": 32,
+          "x": 381,
+          "y": 1827,
+          "visible": true
+        }
+      ]
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 400 ()",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Error: <path> attribute d: Expected number, \"… 8-3.582 8-8 8-8zm0-14c-3.314 0-…\".",
+      "Failed to load resource: the server responded with a status of 400 ()"
+    ],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "responses": [
+      "400 https://gaelygqwuzcoyduzedkm.supabase.co/rest/v1/credit_transactions?select=id%2Camount%2Ctype%2Csource%2Cdescription%2Ccreated_at&wallet_id=eq.be344a64-9db2-46fd-9e31-c0877cd936b0&order=created_at.desc&limit=5",
+      "400 https://gaelygqwuzcoyduzedkm.supabase.co/rest/v1/credit_transactions?select=id%2Camount%2Ctype%2Csource%2Cdescription%2Ccreated_at&wallet_id=eq.be344a64-9db2-46fd-9e31-c0877cd936b0&order=created_at.desc&limit=5"
+    ]
+  },
+  {
+    "name": "debug-session",
+    "route": "/dashboard/debug",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/dashboard/debug",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Debug Session",
+      "textSample": "DeBuggAI Workspace New Project MAIN Home0 Builder0 TOOLS 0 credits remaining Light mode N Debug Session AI-powered code debugging N javascript debug-trace.js Ready 1 function fibonacci(n) { 2 if (n <= 1) return n; 3 return fibonacci(n - 1) + fibonacci(n - 2); 4 } 5 6 console.log(\"Calculating fibonacci(10)...\"); 7 const result = fibonacci(10); 8 console.log(\"Result:\", result); Variables Trace Console No variables to display Run the code to see variables Execution Timeline No execution trace yet Console Output No console output",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "bodyHeight": 844,
+      "viewportHeight": 844,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 20,
+      "smallTargetCount": 5,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAIWorkspace",
+          "w": 107,
+          "h": 32,
+          "x": -300,
+          "y": 16,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 32,
+          "h": 32,
+          "x": -300,
+          "y": 798,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open menu",
+          "w": 32,
+          "h": 32,
+          "x": 16,
+          "y": 12,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Help",
+          "w": 36,
+          "h": 36,
+          "x": 294,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 36,
+          "h": 36,
+          "x": 338,
+          "y": 10,
+          "visible": true
+        }
+      ]
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "responses": []
+  },
+  {
+    "name": "debug-history",
+    "route": "/dashboard/debug/history",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/dashboard/debug/history",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Dashboard",
+      "textSample": "DeBuggAI Workspace New Project MAIN Home0 Builder0 TOOLS RECENT Untitled chat 1 day ago Untitled chat 1 day ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 2 days ago Untitled chat 3 days ago Untitled chat 3 days ago 999991 credits remaining Light mode N Dashboard N Back to Debugger Debug History View and manage your past debugging sessions Clear All Search Filter by Language All Languages No debug sessions yet Your debugging history will appear here after you analyze code.",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "bodyHeight": 844,
+      "viewportHeight": 844,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 25,
+      "smallTargetCount": 9,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAIWorkspace",
+          "w": 107,
+          "h": 32,
+          "x": -300,
+          "y": 16,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 32,
+          "h": 32,
+          "x": -300,
+          "y": 798,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open menu",
+          "w": 32,
+          "h": 32,
+          "x": 16,
+          "y": 12,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Help",
+          "w": 36,
+          "h": 36,
+          "x": 294,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 36,
+          "h": 36,
+          "x": 338,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Back to Debugger",
+          "w": 126,
+          "h": 18,
+          "x": 16,
+          "y": 72,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Clear All",
+          "w": 358,
+          "h": 34,
+          "x": 16,
+          "y": 154,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "Search code or errors...",
+          "w": 326,
+          "h": 36,
+          "x": 32,
+          "y": 247,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "w": 4,
+          "h": 20,
+          "x": 41,
+          "y": 328,
+          "visible": true
+        }
+      ]
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "responses": []
+  },
+  {
+    "name": "web-builder",
+    "route": "/dashboard/web-builder",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/dashboard/home",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Projects",
+      "textSample": "DeBuggAI Workspace New Project MAIN Home0 Builder0 TOOLS 0 credits remaining Light mode N Projects Manage your projects N Welcome back, Nur Here's what's happening with your projects today 7D 30D 90D New Project Create a new project from scratch Debug Code Start a new debugging session Branches Manage project branches Settings Manage your preferences +12% 10 Total Projects +8% 0 Debug Sessions +5% 0 Active Threads Stable 0 Credits Remaining Recent Activity New 10 1 day ago New 9 2 days ago New 8 2 days ago Recent Projects View All New 10 NEXTJS New 9 NEXTJS New 8 NEXTJS Debug Sessions View All",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "bodyHeight": 844,
+      "viewportHeight": 844,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 34,
+      "smallTargetCount": 17,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAIWorkspace",
+          "w": 107,
+          "h": 32,
+          "x": -300,
+          "y": 16,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 32,
+          "h": 32,
+          "x": -300,
+          "y": 798,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open menu",
+          "w": 32,
+          "h": 32,
+          "x": 16,
+          "y": 12,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Help",
+          "w": 36,
+          "h": 36,
+          "x": 294,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 36,
+          "h": 36,
+          "x": 338,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "7D",
+          "w": 40,
+          "h": 28,
+          "x": 221,
+          "y": 96,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "30D",
+          "w": 48,
+          "h": 28,
+          "x": 269,
+          "y": 96,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "90D",
+          "w": 49,
+          "h": 28,
+          "x": 326,
+          "y": 96,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "View All",
+          "w": 45,
+          "h": 16,
+          "x": 304,
+          "y": 1773,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "View All",
+          "w": 45,
+          "h": 16,
+          "x": 304,
+          "y": 2087,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "New Project",
+          "w": 44,
+          "h": 26,
+          "x": 16,
+          "y": 2194,
+          "visible": true
+        },
+        {
+          "tag": "SPAN",
+          "label": "",
+          "w": 1,
+          "h": 1,
+          "x": -1,
+          "y": -1,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "My next app",
+          "w": 348,
+          "h": 36,
+          "x": 37,
+          "y": 313,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Cancel",
+          "w": 170,
+          "h": 35,
+          "x": 37,
+          "y": 563,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Create",
+          "w": 170,
+          "h": 35,
+          "x": 215,
+          "y": 563,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close",
+          "w": 16,
+          "h": 16,
+          "x": 373,
+          "y": 226,
+          "visible": true
+        },
+        {
+          "tag": "SPAN",
+          "label": "",
+          "w": 1,
+          "h": 1,
+          "x": -1,
+          "y": -1,
+          "visible": true
+        }
+      ]
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "responses": []
+  },
+  {
+    "name": "settings",
+    "route": "/dashboard/settings",
+    "status": 200,
+    "finalUrl": "http://localhost:3000/dashboard/settings",
+    "metrics": {
+      "title": "DeBuggAI - Debug Code & Build Apps with AI",
+      "h1": "Settings",
+      "textSample": "DeBuggAI Workspace New Project MAIN Home0 Builder0 TOOLS 0 credits remaining Light mode N Settings Manage your account preferences N Settings Manage your account settings and preferences Profile Preferences Security Billing Integrations Danger Zone Profile Settings Update your personal information U Change Avatar JPG, PNG or GIF. Max 2MB. Display Name Email Address Save Changes",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyWidth": 390,
+      "bodyHeight": 844,
+      "viewportHeight": 844,
+      "horizontalOverflow": false,
+      "visibleInteractiveCount": 21,
+      "smallTargetCount": 9,
+      "smallTargets": [
+        {
+          "tag": "A",
+          "label": "DeBuggAIWorkspace",
+          "w": 107,
+          "h": 32,
+          "x": -300,
+          "y": 16,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 32,
+          "h": 32,
+          "x": -300,
+          "y": 798,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Open menu",
+          "w": 32,
+          "h": 32,
+          "x": 16,
+          "y": 12,
+          "visible": true
+        },
+        {
+          "tag": "A",
+          "label": "Help",
+          "w": 36,
+          "h": 36,
+          "x": 294,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Account menu",
+          "w": 36,
+          "h": 36,
+          "x": 338,
+          "y": 10,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Change Avatar",
+          "w": 129,
+          "h": 36,
+          "x": 137,
+          "y": 568,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "Your name",
+          "w": 308,
+          "h": 38,
+          "x": 41,
+          "y": 684,
+          "visible": true
+        },
+        {
+          "tag": "INPUT",
+          "label": "",
+          "w": 308,
+          "h": 38,
+          "x": 41,
+          "y": 762,
+          "visible": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Save Changes",
+          "w": 126,
+          "h": 36,
+          "x": 223,
+          "y": 824,
+          "visible": true
+        }
+      ]
+    },
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "responses": []
+  }
+]

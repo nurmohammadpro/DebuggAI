@@ -149,7 +149,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--app-text)]">
+    <div className="min-h-[100dvh] bg-[var(--app-bg)] text-[var(--app-text)]">
       {/* Mobile overlay */}
       {mobileOpen && (
         <button
@@ -187,8 +187,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main Content */}
-      <main className="min-h-screen lg:pl-[288px]">
-        <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-4 pb-6 pt-4 sm:px-6 lg:px-8">
+      <main className="min-h-[100dvh] lg:pl-[288px]">
+        <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1440px] flex-col px-4 pb-6 pt-4 sm:px-6 lg:px-8">
           {/* Desktop header */}
           <header className="sticky top-0 z-20 mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-[var(--app-border)] bg-[color-mix(in_srgb,var(--app-bg)_88%,transparent)] px-1 py-4 backdrop-blur-xl sm:px-2">
             <div className="flex items-start gap-3">

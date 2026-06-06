@@ -175,7 +175,7 @@ export function EnhancedSettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-[100dvh] bg-[var(--app-bg)] p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">

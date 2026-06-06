@@ -13,7 +13,7 @@ export function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col">
       <SessionBootstrapper />
       <Navigation />
       <main className="flex-1">{children}</main>
