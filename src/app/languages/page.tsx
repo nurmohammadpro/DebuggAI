@@ -37,12 +37,12 @@ export default function LanguagesPage() {
                 Languages
               </div>
               <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-1.5px] leading-[1.08] max-w-[580px]">
-                Debug in any{" "}
-                <span className="text-[var(--app-accent)]">language</span>
+                Debug across common{" "}
+                <span className="text-[var(--app-accent)]">languages</span>
               </h1>
               <p className="mt-5 text-[15px] text-[var(--app-text-muted)] leading-relaxed max-w-[460px]">
-                Debug code in 10+ programming languages with deep AI-powered context analysis.
-                Each language gets syntax-aware debugging tuned to its ecosystem.
+                DeBuggAI is strongest with JavaScript, TypeScript, React, Next.js, and Python. It can
+                also reason over snippets, logs, and errors from other common languages when you provide enough context.
               </p>
             </motion.div>
 
@@ -72,7 +72,7 @@ export default function LanguagesPage() {
             <SectionHeader
               tag="Supported Languages"
               title="Full language list"
-              subtitle="Each language is paired with an optimized AI debugger that understands its idioms and runtime."
+              subtitle="These are the ecosystems DeBuggAI can help reason about from code snippets, stack traces, and project files."
             />
 
             <InViewStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)] mt-10">
@@ -107,7 +107,7 @@ export default function LanguagesPage() {
               Don&apos;t see your language?
             </p>
             <p className="text-[12px] text-[var(--app-text-dim)] mb-8">
-              We&apos;re constantly adding support for new languages and frameworks.
+              Send us the language and framework you want prioritized next.
             </p>
             <Link
               href="/signup"

@@ -108,6 +108,31 @@ serve(async (req) => {
       },
     });
 
+    // 2. Parse request body before using prompt for provider routing.
+    const {
+      threadId,
+      prompt,
+      history = [],
+      idempotencyKey,
+      persistUserMessage = true,
+      creditAmount,
+      creditSource,
+    }: GenerateRequest = await req.json();
+
+    if (!threadId) {
+      return new Response(
+        JSON.stringify({ error: 'threadId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!prompt) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Multi-provider AI config (service role).
     // Supports: DeepSeek (primary), Groq (fast fallback).
     // Falls back to env vars for backwards compatibility.
@@ -125,7 +150,7 @@ serve(async (req) => {
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
       if (serviceKey) {
         const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-        const cfg = getCachedProviderConfig(supabaseAdmin);
+        const cfg = await getCachedProviderConfig(supabaseAdmin);
         if (cfg && cfg.enabled) {
           const base = String(cfg.base_url || '').trim();
           const model = String(cfg.model || '').trim();
@@ -170,31 +195,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Invalid authorization token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 2. Parse request body
-    const {
-      threadId,
-      prompt,
-      history = [],
-      idempotencyKey,
-      persistUserMessage = true,
-      creditAmount,
-      creditSource,
-    }: GenerateRequest = await req.json();
-
-    if (!threadId) {
-      return new Response(
-        JSON.stringify({ error: 'threadId is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!prompt) {
-      return new Response(
-        JSON.stringify({ error: 'Prompt is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

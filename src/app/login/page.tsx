@@ -19,7 +19,7 @@ export default function LoginPage() {
               Sign in
             </h1>
             <p className="text-[13px] text-[var(--app-text-muted)] mt-1">
-              Access your DeBuggAI workspace and projects
+              Continue to your projects, debug sessions, credits, and workspace history.
             </p>
           </div>
 

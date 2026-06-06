@@ -11,7 +11,7 @@ const sections = [
       },
       {
         title: 'Code Snippets',
-        desc: 'We only receive code that you explicitly submit for debugging. Your code is analyzed in real-time and never stored permanently.',
+        desc: 'We receive code, prompts, files, logs, and errors that you submit through the product. Some of this data is retained to support project history, previews, exports, and account features.',
       },
       {
         title: 'Usage Data',
@@ -79,9 +79,9 @@ export default function PrivacyPage() {
               <ul className="flex flex-col gap-2 pl-5 list-disc">
                 {[
                   'To provide, maintain, and improve our services',
-                  'To process your debugging requests and generate code',
+                  'To process debugging, builder, preview, and export requests',
                   'To communicate with you about your account',
-                  'To analyze usage patterns and improve our AI models',
+                  'To understand product usage and improve the service',
                 ].map((item) => (
                   <li key={item} className="text-[13px] leading-relaxed text-[var(--app-text-muted)] pl-1">
                     {item}
@@ -95,9 +95,9 @@ export default function PrivacyPage() {
                 Data Retention
               </h2>
               <p className="text-[13px] leading-relaxed text-[var(--app-text-muted)]">
-                Your code submissions are processed in real-time and are not permanently stored.
-                Debug sessions and generation history are retained according to your account settings.
-                You can delete your account and all associated data at any time.
+                Debug sessions, generated files, project activity, and billing records may be retained
+                to provide the service and maintain account history. Account deletion and data removal
+                options may vary by plan, legal requirement, and operational need.
               </p>
             </section>
 
@@ -106,9 +106,9 @@ export default function PrivacyPage() {
                 Security
               </h2>
               <p className="text-[13px] leading-relaxed text-[var(--app-text-muted)]">
-                We implement industry-standard security measures to protect your information. All data
-                is encrypted in transit using HTTPS, and we maintain appropriate administrative and
-                technical safeguards.
+                We use reasonable administrative and technical safeguards to protect your information. All data
+                is encrypted in transit using HTTPS, and access is limited to systems and people
+                needed to operate the service.
               </p>
             </section>
 

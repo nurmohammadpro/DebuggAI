@@ -58,26 +58,29 @@ function Hero() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, type: 'spring', stiffness: 70, damping: 16 }}
         >
-          <div className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-6">
+          <div
+            suppressHydrationWarning
+            className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel-2)] text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-6"
+          >
             <Zap size={10} className="text-[var(--app-accent)]" />
-            v1.0 Live
+            Public beta
           </div>
           <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-1.5px] leading-[1.08] max-w-[580px]">
-            Debug complex logic.
+            A sharper workspace
             <br />
-            <span className="text-[var(--app-text-dim)]">Build at </span>
-            <span className="text-[var(--app-accent)]">runtime speed.</span>
+            <span className="text-[var(--app-text-dim)]">for debugging and </span>
+            <span className="text-[var(--app-accent)]">building.</span>
           </h1>
           <p className="mt-5 text-[15px] text-[var(--app-text-muted)] leading-relaxed max-w-[460px]">
-            Paste code, describe a bug, get an explained fix in seconds.
-            Then build and deploy from the same workspace — no setup, no config.
+            Bring an error, a stack trace, or a feature prompt. DeBuggAI keeps the conversation,
+            files, preview, and project history in one focused workspace.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <Link
               href="/signup"
               className="inline-flex items-center gap-1.5 h-11 px-6 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-sm font-semibold hover:opacity-90 transition-all active:scale-[0.97]"
             >
-              Start debugging <ArrowRight size={15} />
+              Start a project <ArrowRight size={15} />
             </Link>
             <Link
               href="#pricing"
@@ -109,7 +112,7 @@ function Hero() {
           </div>
         </motion.div>
 
-        {/* Right — Terminal */}
+        {/* Right terminal */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -121,27 +124,27 @@ function Hero() {
               <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
               <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
               <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
-              <span className="ml-3 text-[10px] font-mono text-[var(--app-text-dim)]">debuggai --analyze ./src/auth.ts</span>
+              <span className="ml-3 text-[10px] font-mono text-[var(--app-text-dim)]">workspace/debug-session</span>
             </div>
             <div className="p-5 font-mono text-[12px] leading-relaxed">
               <div className="flex gap-3">
                 <span className="text-[var(--app-accent)]">$</span>
-                <span className="text-[var(--app-text)]">inspect --depth=2 --fix-leaks</span>
+                <span className="text-[var(--app-text)]">analyze ./src/auth.ts</span>
               </div>
               <div className="mt-4 space-y-1.5 text-[var(--app-text-dim)]">
-                <div className="flex gap-3"><span>[1/3]</span><span>Scanning AST...</span></div>
-                <div className="flex gap-3"><span>[2/3]</span><span>Evaluating logic flow...</span></div>
+                <div className="flex gap-3"><span>[1/3]</span><span>Reading the stack trace</span></div>
+                <div className="flex gap-3"><span>[2/3]</span><span>Checking the related auth branch</span></div>
               </div>
               <div className="mt-4 p-3 rounded-[6px] border-l-2 border-[var(--app-danger)] bg-[rgba(255,82,82,0.04)]">
-                <span className="font-bold text-[var(--app-danger)]">CRITICAL:</span>
-                <span className="ml-2 text-[var(--app-text-muted)]">Potential race condition in useAuth() at line 42.</span>
+                <span className="font-bold text-[var(--app-danger)]">Likely cause:</span>
+                <span className="ml-2 text-[var(--app-text-muted)]">Profile fetch runs after the session has expired.</span>
               </div>
               <div className="mt-4 flex gap-3">
                 <span className="text-[var(--app-accent)]">$</span>
-                <span className="text-[var(--app-text)]">fix --suggest</span>
+                <span className="text-[var(--app-text)]">suggest patch</span>
               </div>
               <div className="mt-3 text-[var(--app-accent)]">
-                Refactored with AbortController pattern. 124ms saved.
+                Add a session guard before fetching profile data.
                 <span className="inline-block w-1.5 h-4 ml-1 bg-[var(--app-accent)] animate-pulse align-middle" />
               </div>
             </div>
@@ -160,7 +163,7 @@ function Hero() {
               </div>
               <div className="p-3 font-mono text-[9px] leading-loose">
                 <span className="text-[var(--app-text-dim)]">const</span> controller = <span className="text-[var(--app-text-dim)]">new</span> AbortController();<br />
-                <span className="text-[var(--app-text-muted)] italic">// Cleaned up effect hook</span><br />
+                <span className="text-[var(--app-text-muted)] italic">// Cancel stale profile request</span><br />
                 <span className="text-[var(--app-text-dim)]">return</span> () =&gt; controller.abort();
               </div>
             </div>
@@ -172,14 +175,14 @@ function Hero() {
 }
 
 /* ──────────────────────────────────────────────
-   Capabilities — Asymmetric bento grid
+   Capabilities
    ────────────────────────────────────────────── */
 
 const capabilities = [
   {
     icon: BugPlay,
-    title: 'AI-powered analysis',
-    desc: 'Paste code and an error. Get root cause, explained fix, and suggested tests. 10+ languages, streaming responses.',
+    title: 'Debug with context',
+    desc: 'Paste the error and relevant code. Get a plain-language cause, a proposed patch, and follow-up checks to run.',
     badge: 'debug',
     badgeColor: 'var(--app-accent)',
     code: (
@@ -191,27 +194,27 @@ const capabilities = [
   },
   {
     icon: Blocks,
-    title: 'Visual web builder',
-    desc: 'Describe what you want. The AI generates a full app with live Monaco editor and instant iframe preview.',
+    title: 'Build from a prompt',
+    desc: 'Generate project files, inspect them in the editor, and preview once the workspace has a runnable app.',
     badge: 'build',
     badgeColor: 'var(--app-info)',
     code: (
       <pre className="mt-4 rounded-[6px] bg-[var(--app-bg)] border border-[var(--app-border)] p-3 font-mono text-[10px] leading-[1.7] text-[var(--app-text-muted)] overflow-x-auto">
         <span className="text-[var(--app-info)]">&gt; Build a todo app with dark<br />  mode toggle and localStorage<br />  persistence</span><br /><br />
-        <span className="text-[var(--app-text-dim)]">&rarr; Generated index.html, style.css, app.js<br />  Ready in 4.2s</span>
+        <span className="text-[var(--app-text-dim)]">&rarr; Generated app files<br />  Ready for review</span>
       </pre>
     ),
   },
   {
     icon: Cloud,
-    title: 'Ship from the workspace',
-    desc: 'One-click deploy to Vercel or Netlify. Export as zip. Project versioning and team branches built in.',
+    title: 'Keep project history',
+    desc: 'Threads, generated files, versions, preview attempts, and export actions stay attached to the project.',
     badge: 'deploy',
     badgeColor: 'var(--app-purple)',
     code: (
       <pre className="mt-4 rounded-[6px] bg-[var(--app-bg)] border border-[var(--app-border)] p-3 font-mono text-[10px] leading-[1.7] overflow-x-auto">
-        <span className="text-[var(--app-text-dim)]">{'$'} debuggai deploy<br />  Building project...<br />  Uploading to Vercel</span><br />
-        <span className="text-[var(--app-accent)]">  Live at &rarr; myapp.vercel.app</span>
+        <span className="text-[var(--app-text-dim)]">{'$'} project status<br />  Files generated<br />  Preview queued</span><br />
+        <span className="text-[var(--app-accent)]">  Export available on paid plans</span>
       </pre>
     ),
   },
@@ -233,9 +236,9 @@ function Capabilities() {
           <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
             Capabilities
           </div>
-          <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">Everything you need to ship</h2>
+          <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">One loop from prompt to proof</h2>
           <p className="text-sm text-[var(--app-text-muted)] max-w-[480px] mb-10">
-            Three surfaces, one workspace. Debug, build, and deploy without leaving the tool.
+            Chat, files, code review, and preview status stay in one workspace instead of scattering across tabs.
           </p>
         </motion.div>
 
@@ -264,7 +267,7 @@ function Capabilities() {
 }
 
 /* ──────────────────────────────────────────────
-   Debug Demo — live split panel
+   Debug demo
    ────────────────────────────────────────────── */
 
 function DebugDemo() {
@@ -280,11 +283,11 @@ function DebugDemo() {
         transition={{ duration: 0.5 }}
       >
         <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)] mb-3">
-          Live Demo
+          Workspace Example
         </div>
-        <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">See it in action</h2>
+        <h2 className="text-[28px] font-semibold tracking-[-0.5px] mb-2">See the debugging loop</h2>
         <p className="text-sm text-[var(--app-text-muted)] max-w-[480px] mb-10">
-          Paste code and an error message. The AI analyzes the root cause and suggests a fix in real-time.
+          Paste code and an error message. DeBuggAI explains the likely cause and gives you a patch to inspect.
         </p>
       </motion.div>
 
@@ -343,7 +346,7 @@ NameError: name 'name' is not defined`}
 }
 
 /* ──────────────────────────────────────────────
-   Pricing — real data from constants
+   Pricing data
    ────────────────────────────────────────────── */
 
 const planData = [
@@ -351,7 +354,7 @@ const planData = [
     key: 'FREE',
     name: 'Free',
     price: '$0',
-    desc: 'For individuals learning',
+    desc: 'Evaluate the workflow',
     features: [
       { text: '30 credits/month', included: true },
       { text: 'Basic debugging', included: true },
@@ -366,13 +369,13 @@ const planData = [
     key: 'PRO',
     name: 'Pro',
     price: '$9',
-    desc: 'For serious developers',
+    desc: 'For regular solo use',
     features: [
       { text: '300 credits/month', included: true },
       { text: 'Priority AI responses', included: true },
       { text: '90-day history', included: true },
       { text: 'Web Builder + Templates', included: true },
-      { text: 'Zero-Knowledge Mode', included: true },
+      { text: 'Extended project history', included: true },
       { text: 'Referral program', included: true },
     ],
     cta: 'Start free trial',
@@ -383,7 +386,7 @@ const planData = [
     key: 'TEAM',
     name: 'Team',
     price: '$99',
-    desc: 'For small teams',
+    desc: 'For shared project work',
     features: [
       { text: '2,500 credits/month', included: true },
       { text: '3 seats included', included: true },
@@ -399,11 +402,11 @@ const planData = [
     key: 'BUSINESS',
     name: 'Business',
     price: '$299',
-    desc: 'For growing organizations',
+    desc: 'For teams that need controls',
     features: [
       { text: '10,000 credits/month', included: true },
       { text: '10 seats included', included: true },
-      { text: 'Team analytics', included: true },
+      { text: 'Team activity reporting', included: true },
       { text: 'Priority AI routing', included: true },
       { text: 'Integrations (Git + Deploy)', included: true },
     ],
@@ -415,12 +418,12 @@ const planData = [
     key: 'ENTERPRISE',
     name: 'Enterprise',
     price: '$999',
-    desc: 'For large orgs and security needs',
+    desc: 'For custom security needs',
     features: [
       { text: '40,000+ credits/month', included: true },
       { text: 'Dedicated workspace', included: true },
       { text: 'Admin controls + audit', included: true },
-      { text: 'SLA support', included: true },
+      { text: 'Priority support terms', included: true },
       { text: 'Private deployment option', included: true },
     ],
     cta: 'Contact sales',
@@ -529,9 +532,9 @@ function Cta() {
         viewport={{ once: true }}
         transition={{ type: 'spring', stiffness: 70, damping: 14 }}
       >
-        <h2 className="text-[32px] font-semibold tracking-[-0.8px] mb-3">Start debugging for free</h2>
+        <h2 className="text-[32px] font-semibold tracking-[-0.8px] mb-3">Start with a real project</h2>
         <p className="text-sm text-[var(--app-text-muted)] mb-8 max-w-md mx-auto">
-          No credit card required. Setup takes under two minutes.
+          Create a workspace, paste a bug or project prompt, and inspect the generated result.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <input
@@ -547,7 +550,7 @@ function Cta() {
           </Link>
         </div>
         <p className="mt-4 text-[11px] text-[var(--app-text-muted)]">
-          Teams from Vercel, Stripe, and Linear use DeBuggAI
+          Built for developers who want the file, the answer, and the preview in one place.
         </p>
       </motion.div>
     </section>

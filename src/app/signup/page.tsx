@@ -16,7 +16,7 @@ export default function SignupPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
             <CardDescription>
-              Get 30 free credits to start debugging and building
+              Start with credits for debugging, project generation, and workspace preview.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -52,7 +52,7 @@ export default function SignupPage() {
               </Link>
             </div>
             <p className="text-xs text-[var(--app-text-dim)] text-center">
-              By signing up, you agree to our Terms of Service and Privacy Policy
+              By signing up, you agree to the Terms of Service and Privacy Policy.
             </p>
           </CardFooter>
         </Card>

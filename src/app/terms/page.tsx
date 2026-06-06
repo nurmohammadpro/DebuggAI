@@ -34,8 +34,9 @@ export default function TermsPage() {
                 Description of Service
               </h2>
               <p className="text-[13px] leading-relaxed text-[var(--app-text-muted)]">
-                DeBuggAI provides AI-powered debugging and code generation services. Your use of our
-                service is at your sole risk. The service is provided &quot;as is&quot; without warranty of any kind.
+                DeBuggAI provides AI-assisted debugging, project generation, preview, and workspace
+                services. Your use of our service is at your sole risk. The service is provided
+                &quot;as is&quot; without warranty of any kind.
               </p>
             </section>
 
@@ -48,7 +49,7 @@ export default function TermsPage() {
                   'You must be at least 13 years old to use our service',
                   'You are responsible for maintaining the security of your account',
                   'You must not use our service for any illegal or unauthorized purpose',
-                  'You remain solely responsible for any code generated or modified using our service',
+                  'You remain responsible for reviewing, testing, licensing, and shipping any generated or modified code',
                 ].map((item) => (
                   <li key={item} className="text-[13px] leading-relaxed text-[var(--app-text-muted)] pl-1">
                     {item}

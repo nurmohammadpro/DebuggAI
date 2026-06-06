@@ -10,38 +10,38 @@ import { PublicLayout } from '@/components/public-layout';
 const features = [
   {
     icon: Bug,
-    title: 'AI-Powered Debugging',
-    desc: 'Instantly identify and fix errors with advanced AI analysis that understands context, not just syntax.',
+    title: 'Contextual debugging',
+    desc: 'Paste an error, stack trace, or code path and get a clear explanation, likely cause, and practical next checks.',
     color: 'var(--app-accent)',
   },
   {
     icon: Zap,
-    title: 'Lightning Fast',
-    desc: 'Get results in seconds, not minutes. Our optimized AI pipelines analyze your codebase instantly.',
+    title: 'Streaming responses',
+    desc: 'Assistant replies can appear as they are generated, so you can follow the reasoning instead of waiting on a blank screen.',
     color: 'var(--app-warning)',
   },
   {
     icon: Globe,
-    title: 'Web Builder',
-    desc: 'Build production-ready web apps visually with our AI-powered web builder and starter templates.',
+    title: 'Web builder workspace',
+    desc: 'Generate project files, inspect them in the editor, and use the preview pipeline when the workspace is ready.',
     color: 'var(--app-info)',
   },
   {
     icon: Code2,
-    title: '10+ Languages',
-    desc: 'First-class support for JavaScript, Python, TypeScript, Go, Rust, Java, and more.',
+    title: 'Multi-language input',
+    desc: 'Best suited for JavaScript, TypeScript, React, Next.js, and Python, with snippet-level help for other common languages.',
     color: 'var(--app-purple)',
   },
   {
     icon: Shield,
-    title: 'Secure & Private',
-    desc: 'Your code is never stored permanently. We analyze it in real-time and forget it immediately.',
+    title: 'Project history',
+    desc: 'Threads, generated files, credits, and project activity stay attached to your account so work can be resumed later.',
     color: 'var(--app-accent)',
   },
   {
     icon: Target,
-    title: 'Best Practices',
-    desc: 'Get suggestions that follow industry standards, ensuring your codebase stays clean and maintainable.',
+    title: 'Reviewable suggestions',
+    desc: 'AI output is presented as something to inspect, test, and refine, not as an invisible change pushed into production.',
     color: 'var(--app-warning)',
   },
 ];
@@ -57,8 +57,8 @@ export default function FeaturesPage() {
         <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
           <SectionHeader
             tag="Features"
-            title="Everything you need to debug faster"
-            subtitle="Built for developers who value their time. DeBuggAI integrates seamlessly into your workflow."
+            title="A focused workspace for debugging and building"
+            subtitle="DeBuggAI keeps chat, generated files, preview status, and project actions in one place so the next step stays obvious."
           />
 
           <InViewStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)] mt-10">
@@ -92,14 +92,14 @@ export default function FeaturesPage() {
                   Fits right into your workflow
                 </h2>
                 <p className="text-sm text-[var(--app-text-muted)] leading-relaxed mb-6 max-w-[480px]">
-                  Do not change how you work. DeBuggAI works with your existing setup, analyzing
-                  stack traces, logs, or raw code blocks directly from your terminal or IDE.
+                  Bring the evidence you already have: a console error, a broken component, a stack trace,
+                  or a rough feature prompt. DeBuggAI helps turn that context into reviewable code.
                 </p>
                 <div className="flex flex-col gap-3">
                   {[
-                    'Copy-paste errors for instant fixes',
-                    'Context-aware variable tracking',
-                    'Zero configuration required',
+                    'Explain likely causes before proposing a patch',
+                    'Keep generated files tied to the chat turn',
+                    'Move from prompt to preview inside one workspace',
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-2.5">
                       <Check size={14} className="text-[var(--app-accent)] shrink-0" />
@@ -163,7 +163,7 @@ export default function FeaturesPage() {
             <div className="w-20 h-px bg-[var(--app-border)] mx-auto mb-6" />
             <h2 className="text-[32px] font-semibold tracking-[-0.8px] mb-3">Ready to ship faster?</h2>
             <p className="text-sm text-[var(--app-text-muted)] mb-8 max-w-md mx-auto">
-              Join thousands of developers who debug smarter, not harder.
+              Start with a real bug or a small project prompt and see how the workspace handles it.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link

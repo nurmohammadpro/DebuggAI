@@ -8,20 +8,20 @@ import { Bug, Shield, Zap } from 'lucide-react';
 const values = [
   {
     icon: Bug,
-    title: 'Developer First',
-    desc: 'Everything we build is designed to make developers\' lives easier. We eat our own dogfood every day.',
+    title: 'Context first',
+    desc: 'Useful debugging starts with the right evidence. DeBuggAI keeps prompts, files, errors, and generated work connected inside one project.',
     color: 'var(--app-accent)',
   },
   {
     icon: Shield,
-    title: 'Privacy Focused',
-    desc: 'Your code is never stored. We analyze in real-time and forget immediately. Zero-knowledge mode available.',
+    title: 'Clear data boundaries',
+    desc: 'Project data is stored only to support account history, previews, exports, and collaboration features. Sensitive secrets should stay out of prompts.',
     color: 'var(--app-info)',
   },
   {
     icon: Zap,
-    title: 'Quality Over Speed',
-    desc: 'We prioritize accurate, helpful solutions over quick fixes. AI suggestions are always reviewed for correctness.',
+    title: 'Practical output',
+    desc: 'The goal is not a clever answer. The goal is a patch, a file, a preview, or a next step that a developer can inspect and test.',
     color: 'var(--app-purple)',
   },
 ];
@@ -42,20 +42,20 @@ export default function AboutPage() {
                 About
               </div>
               <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-1.5px] leading-[1.08] max-w-[580px]">
-                Debug smarter,{" "}
-                <span className="text-[var(--app-accent)]">build faster</span>
+                Built for the messy middle of{" "}
+                <span className="text-[var(--app-accent)]">development</span>
               </h1>
               <p className="mt-5 text-[15px] text-[var(--app-text-muted)] leading-relaxed max-w-[460px]">
-                DeBuggAI is an AI-powered development platform built by developers, for developers.
-                We believe debugging shouldn&apos;t be a painful, time-consuming process.
+                Debugging and app building rarely happen in a clean sequence. You move between logs,
+                files, chat, package errors, preview panes, and deployment checks.
               </p>
               <p className="mt-3 text-[13px] text-[var(--app-text-dim)] leading-relaxed max-w-[460px]">
-                Whether you&apos;re debugging JavaScript, Python, Go, or any of the 10+ languages we support,
-                our AI understands context, syntax, and best practices to provide accurate, actionable solutions.
+                DeBuggAI is a focused workspace for that loop: explain the failure, generate or edit
+                files, inspect the result, and keep the project history attached to the work.
               </p>
             </motion.div>
 
-            {/* Right — stat cards */}
+            {/* Stat cards */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -63,10 +63,10 @@ export default function AboutPage() {
               className="grid grid-cols-2 gap-3"
             >
               {[
-                { label: 'Languages', value: '10+' },
-                { label: 'Debug speed', value: '< 3s' },
-                { label: 'Accuracy', value: '94%' },
-                { label: 'Users', value: '12k+' },
+                { label: 'Debug sessions', value: 'Saved' },
+                { label: 'Project files', value: 'Tracked' },
+                { label: 'Preview flow', value: 'Built in' },
+                { label: 'Exports', value: 'Plan gated' },
               ].map((stat) => (
                 <div
                   key={stat.label}
@@ -96,10 +96,9 @@ export default function AboutPage() {
                 </FadeItem>
                 <FadeItem>
                   <p className="text-sm text-[var(--app-text-muted)] leading-relaxed mt-6">
-                    We knew there had to be a better way. By combining modern AI with deep understanding
-                    of programming languages and frameworks, we built a tool that actually helps developers
-                    ship better code, faster. What started as an internal tool quickly became something
-                    bigger — a platform used by thousands of developers worldwide.
+                    The product is designed around the way real work feels: partial context, uncertain
+                    errors, generated files that need inspection, and a preview that must prove the code
+                    actually runs. We would rather make that loop reliable than hide it behind vague AI claims.
                   </p>
                 </FadeItem>
               </InViewStagger>

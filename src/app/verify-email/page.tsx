@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
             Check your email
           </h1>
           <p className="text-[13px] text-[var(--app-text-muted)] mb-6 max-w-[300px] mx-auto">
-            We sent a verification link to your email address. Click the link to verify your account.
+            We sent a verification link to your email address. Open it to activate your DeBuggAI account.
           </p>
 
           <div className="space-y-3">

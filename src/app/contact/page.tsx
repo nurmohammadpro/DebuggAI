@@ -46,11 +46,11 @@ export default function ContactPage() {
                 Contact
               </div>
               <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-1.5px] leading-[1.08] max-w-[580px]">
-                Get in{" "}
-                <span className="text-[var(--app-accent)]">touch</span>
+                Talk to{" "}
+                <span className="text-[var(--app-accent)]">DeBuggAI</span>
               </h1>
               <p className="mt-5 text-[15px] text-[var(--app-text-muted)] leading-relaxed max-w-[460px]">
-                Have questions, enterprise inquiries, or feedback? We&apos;d love to hear from you.
+                Send product questions, billing issues, partnership notes, or enterprise requirements. We will route it to the right place.
               </p>
             </motion.div>
 
@@ -90,7 +90,7 @@ export default function ContactPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="How can we help?"
+                    placeholder="Product question, billing issue, or enterprise request"
                     className="h-10 w-full rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)] transition-colors"
                   />
                 </div>
@@ -100,7 +100,7 @@ export default function ContactPage() {
                   </label>
                   <textarea
                     rows={4}
-                    placeholder="Tell us more..."
+                    placeholder="Share the context, account email if relevant, and what outcome you need."
                     className="w-full rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] px-3 py-2 text-[13px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-accent)] transition-colors resize-y"
                   />
                 </div>
@@ -121,8 +121,8 @@ export default function ContactPage() {
           <div className="max-w-7xl mx-auto px-6 py-24">
             <SectionHeader
               tag="Connect"
-              title="Other ways to reach us"
-              subtitle="Choose the channel that works best for you."
+              title="Direct channels"
+              subtitle="Use the address that best matches the kind of help you need."
             />
 
             <InViewStagger className="grid grid-cols-1 md:grid-cols-3 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)] mt-10">

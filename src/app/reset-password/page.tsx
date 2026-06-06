@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Reset your password</CardTitle>
             <CardDescription>
-              Enter your email and we will send you a reset link
+              Enter your account email and we will send password reset instructions.
             </CardDescription>
           </CardHeader>
           <CardContent>

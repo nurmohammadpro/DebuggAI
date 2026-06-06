@@ -9,26 +9,26 @@ import Link from 'next/link';
 const perks = [
   {
     icon: Globe,
-    title: 'Remote First',
-    desc: 'Work from anywhere in the world. We\'re distributed and async by default, with flexible hours.',
+    title: 'Focused remote work',
+    desc: 'We value clear writing, calm execution, and strong ownership across time zones.',
     color: 'var(--app-accent)',
   },
   {
     icon: Heart,
-    title: 'Competitive Benefits',
-    desc: 'Health insurance, equity, and flexible PTO. Take care of yourself first.',
+    title: 'Sustainable pace',
+    desc: 'We prefer deliberate product work over chaotic sprint theater. Good judgment matters here.',
     color: 'var(--app-danger)',
   },
   {
     icon: Rocket,
-    title: 'Impactful Work',
-    desc: 'Help thousands of developers ship better code every single day.',
+    title: 'Useful product work',
+    desc: 'Work on the core developer loop: context, code generation, preview, billing, and project history.',
     color: 'var(--app-info)',
   },
   {
     icon: BookOpen,
-    title: 'Learn & Grow',
-    desc: 'Work on challenging problems with cutting-edge AI technology. Conference budget included.',
+    title: 'Room to grow',
+    desc: 'Build across AI, product engineering, infrastructure, and developer experience with direct feedback from users.',
     color: 'var(--app-purple)',
   },
 ];
@@ -49,11 +49,11 @@ export default function CareersPage() {
                 Careers
               </div>
               <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-1.5px] leading-[1.08] max-w-[580px]">
-                Build the future of{" "}
-                <span className="text-[var(--app-accent)]">debugging</span>
+                Build tools for developers doing{" "}
+                <span className="text-[var(--app-accent)]">real work</span>
               </h1>
               <p className="mt-5 text-[15px] text-[var(--app-text-muted)] leading-relaxed max-w-[460px]">
-                Join a team of engineers and researchers passionate about making developers&apos; lives better.
+                We are building a focused workspace for debugging, project generation, preview, and export workflows.
               </p>
             </motion.div>
 
@@ -69,15 +69,15 @@ export default function CareersPage() {
                 <span className="text-[12px] text-[var(--app-text-dim)]">Not actively hiring right now</span>
               </div>
               <p className="mt-3 text-[13px] text-[var(--app-text-muted)] leading-relaxed">
-                We&apos;re always looking for exceptional engineers. Drop us a resume even if
-                there&apos;s no open role — we review every submission.
+                We are not actively hiring, but we are open to thoughtful notes from engineers who care
+                about developer tools and reliable product execution.
               </p>
               <Link
                 href="mailto:careers@debuggai.com"
                 className="mt-5 inline-flex items-center gap-1.5 h-10 px-4 rounded-[6px] bg-[var(--app-accent)] text-[#071006] text-xs font-semibold hover:opacity-90 transition-all active:scale-[0.97]"
               >
                 <Mail size={14} />
-                Send Resume
+                Send a note
                 <ArrowRight size={14} />
               </Link>
             </motion.div>
@@ -89,8 +89,8 @@ export default function CareersPage() {
           <div className="max-w-7xl mx-auto px-6 py-24">
             <SectionHeader
               tag="Perks"
-              title="Why DeBuggAI?"
-              subtitle="We invest in our team because great products come from great people."
+              title="How we work"
+              subtitle="Small team, practical standards, and a strong preference for shipping things that actually help."
             />
 
             <InViewStagger className="grid grid-cols-1 md:grid-cols-2 gap-px rounded-[8px] overflow-hidden border border-[var(--app-border)] bg-[var(--app-border)] mt-10">

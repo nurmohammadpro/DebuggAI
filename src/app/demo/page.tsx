@@ -13,13 +13,13 @@ export default function DemoPage() {
         {/* Header Section */}
         <div className="text-center mb-16">
           <p className="text-caption font-medium tracking-widest uppercase mb-3" style={{ color: 'var(--app-accent)' }}>
-            Live Demo
+            Product Walkthrough
           </p>
           <h1 className="text-display mb-4" style={{ color: 'var(--app-text)' }}>
-            Watch DeBuggAI in action
+            See the debugging workflow
           </h1>
           <p className="text-body max-w-2xl mx-auto" style={{ color: 'var(--app-text-muted)' }}>
-            Follow a real-world scenario where DeBuggAI identifies a silent array mutation bug, explains the root cause, and outputs a production-ready fix in seconds.
+            Follow a small example where DeBuggAI organizes the error, explains the likely cause, and proposes a fix you can inspect before using.
           </p>
         </div>
 
@@ -77,13 +77,13 @@ export default function DemoPage() {
             </div>
             <div className="terminal-body">
               <div><span className="term-prompt">$ </span><span className="term-cmd">debuggai run --file userController.js</span></div>
-              <div className="term-output mt-2">  Parsing AST and evaluating execution paths...</div>
-              <div className="term-error mt-2">  &#10005; Critical Error found on Line 4: Array Mutation</div>
+              <div className="term-output mt-2">  Reading the submitted code and notes...</div>
+              <div className="term-error mt-2">  &#10005; Likely issue on line 4: object mutation</div>
               <div className="term-output mt-1">    &rarr; Modifying &apos;user.lastSeen&apos; alters the parent state directly.</div>
-              <div className="term-error mt-3">  &#10005; Logical Error found on Line 10: Invalid Array Slice</div>
+              <div className="term-error mt-3">  &#10005; Secondary issue on line 10: invalid array shape</div>
               <div className="term-output mt-1">    &rarr; Array.map() implicitly returns &apos;undefined&apos; for unmet conditions.</div>
-              <div className="term-output mt-1">    &rarr; Slicing an array with undefined holes results in unexpected UI drops.</div>
-              <div className="term-success mt-4">  &#10003; Generating optimized, immutable fix...</div>
+              <div className="term-output mt-1">    &rarr; Slicing an array with undefined entries can create missing UI rows.</div>
+              <div className="term-success mt-4">  &#10003; Drafting an immutable fix for review...</div>
               <div className="mt-4"><span className="term-prompt">$ </span><span className="term-cursor"></span></div>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function DemoPage() {
             <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--app-accent)', color: 'var(--app-bg)', fontSize: '12px', fontWeight: '600' }}>
               4
             </div>
-            <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>The Production-Ready Fix</h2>
+            <h2 className="text-h2" style={{ color: 'var(--app-text)' }}>A Reviewable Fix</h2>
           </div>
           
           <div className="code-window" style={{ borderColor: 'var(--app-accent)' }}>
@@ -170,10 +170,10 @@ export default function DemoPage() {
         <div className="text-center">
           <div style={{ borderTop: '1px solid var(--app-border)', width: '80px', margin: '0 auto 24px auto' }}></div>
           <h2 className="text-h1 mb-3" style={{ color: 'var(--app-text)' }}>
-            Stop guessing. Start fixing.
+            Bring a real bug into the workspace.
           </h2>
           <p className="text-body max-w-md mx-auto mb-8" style={{ color: 'var(--app-text-muted)' }}>
-            Paste your stack trace, code block, or error logs and let DeBuggAI handle the rest.
+            Paste a stack trace, code block, or error log and inspect the suggested next step.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/signup">

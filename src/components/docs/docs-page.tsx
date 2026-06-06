@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 const sections = [
   {
     title: 'Getting Started',
-    description: 'Sign up, confirm email, and open your first workspace.',
+    description: 'Create an account, confirm email, and open your first project workspace.',
     icon: BookOpen,
     links: [
       { label: 'Create an account', href: '/signup' },
@@ -18,7 +18,7 @@ const sections = [
   },
   {
     title: 'Debug Mode',
-    description: 'Paste errors, attach logs, and keep a history of sessions.',
+    description: 'Paste errors, attach logs, and keep session context tied to your account.',
     icon: Bug,
     links: [
       { label: 'Debug workspace', href: '/dashboard/debug' },
@@ -27,7 +27,7 @@ const sections = [
   },
   {
     title: 'Builder Mode',
-    description: 'Generate and iterate on projects with templates and preview.',
+    description: 'Generate project files, inspect changes, and run preview when the app is ready.',
     icon: Wand2,
     links: [
       { label: 'Projects', href: '/dashboard/home' },
@@ -36,7 +36,7 @@ const sections = [
   },
   {
     title: 'Billing & Credits',
-    description: 'Plans, credits, and transactions.',
+    description: 'Review plans, credits, transactions, and referral activity.',
     icon: CreditCard,
     links: [
       { label: 'Pricing', href: '/dashboard/pricing' },
@@ -45,14 +45,14 @@ const sections = [
     ],
   },
   {
-    title: 'Integrations (v1)',
-    description: 'Connect services at the project level.',
+    title: 'Project Settings',
+    description: 'Manage project-level configuration as new integrations are added.',
     icon: Wrench,
     links: [{ label: 'Project settings', href: '/dashboard/home' }],
   },
   {
     title: 'Security',
-    description: 'Admin and access control are enforced server-side.',
+    description: 'Review account policies, legal terms, and server-side access controls.',
     icon: Shield,
     links: [
       { label: 'Privacy', href: '/privacy' },
@@ -73,7 +73,7 @@ export function DocsPage() {
             </h1>
           </div>
           <p className="text-[13px] text-[var(--app-text-muted)]">
-            Product guides and quick links. Full docs site coming soon.
+            Practical links for the current product. Deeper implementation guides are coming soon.
           </p>
         </div>
 

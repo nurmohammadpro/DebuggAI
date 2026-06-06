@@ -7,8 +7,8 @@ import { SupabaseLockHandler } from "@/components/supabase-lock-handler";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DeBuggAI - Debug Code & Build Apps with AI",
-  description: "Debug any code 10x faster and build production-ready web apps in minutes with AI-powered analysis and code generation.",
+  title: "DeBuggAI - AI Workspace for Debugging and App Building",
+  description: "Bring errors, prompts, generated files, preview status, and project history into one focused developer workspace.",
 };
 
 export default function RootLayout({

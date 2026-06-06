@@ -10,15 +10,15 @@ import { Plus, ArrowRight } from 'lucide-react';
 const faqs = [
   {
     question: 'How does DeBuggAI analyze my code?',
-    answer: 'DeBuggAI uses advanced AI models to analyze your code in real-time. It identifies syntax errors, logic bugs, performance issues, and security vulnerabilities. Your code is never stored — we analyze it and immediately forget it.',
+    answer: 'DeBuggAI sends the context you provide to the configured AI provider, then returns an explanation, likely cause, and suggested next steps. It works best when you include the error, relevant files, and what you expected to happen.',
   },
   {
     question: 'Is my code secure?',
-    answer: 'Yes! We take privacy seriously. Your code is analyzed in real-time and never stored on our servers. All communication is encrypted, and we maintain strict security protocols to protect your intellectual property.',
+    answer: 'Project data is stored to support history, generated files, previews, billing, and account features. Avoid pasting secrets, private keys, production credentials, or customer data into prompts.',
   },
   {
     question: 'What programming languages are supported?',
-    answer: 'We support 10+ programming languages including JavaScript, TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, Swift, Kotlin, and C++. We are constantly adding support for more languages.',
+    answer: 'The strongest support is for JavaScript, TypeScript, React, Next.js, and Python. Other languages can be analyzed from snippets and logs, but depth of support depends on the context provided.',
   },
   {
     question: 'How much does it cost?',
@@ -26,11 +26,11 @@ const faqs = [
   },
   {
     question: 'Can I use DeBuggAI for commercial projects?',
-    answer: 'Absolutely! You can use DeBuggAI for both personal and commercial projects. The code suggestions you receive are yours to use however you like.',
+    answer: 'Yes, but you remain responsible for reviewing, testing, licensing, and shipping any generated or modified code used in a commercial product.',
   },
   {
     question: 'How accurate are the bug fixes?',
-    answer: 'Our AI has been trained on millions of code examples and best practices. It provides highly accurate suggestions, but we always recommend reviewing and testing the fixes before deploying to production.',
+    answer: 'Treat each suggestion like a senior review draft. It can point you toward the likely fix, but you should run tests, inspect the diff, and verify behavior before deploying.',
   },
 ];
 

@@ -7,7 +7,7 @@ const plans = [
   {
     name: 'FREE',
     price: '$0',
-    description: 'For individuals learning',
+    description: 'Evaluate the workflow',
     features: [
       { text: '30 credits/month', included: true },
       { text: 'Basic debugging', included: true },
@@ -21,13 +21,13 @@ const plans = [
   {
     name: 'PRO',
     price: '$9',
-    description: 'For serious developers',
+    description: 'For regular solo use',
     features: [
       { text: '300 credits/month', included: true },
       { text: 'Priority AI responses', included: true },
       { text: '90-day history', included: true },
       { text: 'Web Builder + Templates', included: true },
-      { text: 'Zero-Knowledge Mode', included: true },
+      { text: 'Extended project history', included: true },
       { text: 'Referral program', included: true },
     ],
     cta: 'Upgrade to Pro',
@@ -37,7 +37,7 @@ const plans = [
   {
     name: 'TEAM',
     price: '$99',
-    description: 'For small teams',
+    description: 'For shared project work',
     features: [
       { text: '2,500 credits/month', included: true },
       { text: '3 seats included', included: true },
@@ -52,11 +52,11 @@ const plans = [
   {
     name: 'BUSINESS',
     price: '$299',
-    description: 'For growing organizations',
+    description: 'For teams that need controls',
     features: [
       { text: '10,000 credits/month', included: true },
       { text: '10 seats included', included: true },
-      { text: 'Team analytics', included: true },
+      { text: 'Team activity reporting', included: true },
       { text: 'Priority AI routing', included: true },
       { text: 'Integrations (Git + Deploy)', included: true },
     ],
@@ -67,12 +67,12 @@ const plans = [
   {
     name: 'ENTERPRISE',
     price: '$999+',
-    description: 'For large orgs and security needs',
+    description: 'For custom security needs',
     features: [
       { text: 'Starts at 40,000 credits/month', included: true },
       { text: 'Dedicated workspace', included: true },
       { text: 'Admin controls + audit requirements', included: true },
-      { text: 'SLA support', included: true },
+      { text: 'Priority support terms', included: true },
       { text: 'Private deployment option', included: true },
     ],
     cta: 'Contact Sales',
@@ -89,7 +89,7 @@ const comparisonFeatures = [
   { name: 'Web Builder', free: false, pro: true, team: true, business: true, enterprise: true },
   { name: 'Starter Templates', free: false, pro: true, team: true, business: true, enterprise: true },
   { name: 'Team Seats Included', free: '1', pro: '1', team: '3', business: '10', enterprise: 'Custom' },
-  { name: 'Team Analytics', free: false, pro: false, team: false, business: true, enterprise: true },
+  { name: 'Team Activity Reporting', free: false, pro: false, team: false, business: true, enterprise: true },
   { name: 'Integrations', free: false, pro: false, team: false, business: true, enterprise: true },
   { name: 'SLA Support', free: false, pro: false, team: false, business: true, enterprise: true },
   { name: 'Private Deployment', free: false, pro: false, team: false, business: false, enterprise: true },
@@ -107,7 +107,7 @@ export default function PricingPage() {
             Simple, transparent pricing
           </h1>
           <p className="text-[13px] max-w-md mx-auto text-[var(--app-text-muted)]">
-            Start free, upgrade when you need more power. No hidden fees.
+            Start with the free tier, then upgrade when you need more credits, history, exports, or team controls.
           </p>
         </div>
 
@@ -261,7 +261,7 @@ export default function PricingPage() {
           <div style={{ borderTop: '1px solid var(--app-border)', width: '80px' }} />
           <p className="text-[13px] max-w-lg mx-auto text-[var(--app-text-muted)]">
             Have questions about pricing or need a custom setup for your organization?
-            Our team is ready to help you find the perfect plan.
+            We can help map credits, exports, and workspace access to the way your team actually works.
           </p>
           <Link href="/contact">
             <button className="inline-flex items-center rounded-[6px] px-4 py-2 text-[13px] text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]">
