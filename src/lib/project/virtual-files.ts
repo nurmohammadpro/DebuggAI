@@ -51,6 +51,16 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
       extractLeadingFilenameComment(code) ||
       extractFileHeaderMarker(code);
 
+    // If the preceding marker name looks like a config explanation or
+    // narration rather than a real file path, try harder to find one.
+    if (!extractedName) {
+      const inlineMatch = code.match(/^\s*(?:\/\/|#)\s*File:\s*([\w./-]+\.[a-zA-Z0-9]+)\s*$/im);
+      if (inlineMatch) {
+        pushFile(inlineMatch[1], code, language);
+        continue;
+      }
+    }
+
     pushFile(extractedName || DEFAULT_ENTRY, code, language);
   }
 
