@@ -35,7 +35,7 @@ export function WorkspaceDashboard() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
   const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
-  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, currentThreadId } = useGenerationStore();
+  const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, currentThreadId, reset: resetGenerationStore } = useGenerationStore();
   const { openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
   const [rightView, setRightView] = useState<V0RightView>('code');
@@ -90,6 +90,9 @@ export function WorkspaceDashboard() {
           const threads = (j?.threads || []) as Array<{ id: string }>;
           if (threads.length > 0) {
             setThreadId(threads[0]!.id);
+          } else {
+            // Fresh project — clear any stale thread from a previous project.
+            setThreadId(null);
           }
         } catch {
           // Silently fail — chat will start fresh
@@ -104,12 +107,25 @@ export function WorkspaceDashboard() {
     if (effectiveProjectId) setProjectId(effectiveProjectId);
   }, [effectiveProjectId, setProjectId]);
 
+  // Track the project we last booted so we can reset on switch.
+  const lastBootedProjectRef = useRef<string | null>(null);
+
   // Load project code into generation store
   useEffect(() => {
+    if (!effectiveProjectId) return;
+
+    // When switching to a different project that has no saved code,
+    // reset generation state so old files / versions don't leak in.
+    const switched = lastBootedProjectRef.current !== effectiveProjectId;
+    if (switched && !project?.code) {
+      resetGenerationStore();
+    }
+    lastBootedProjectRef.current = effectiveProjectId;
+
     if (project?.code) {
       loadFromProject(project.code, project.description || 'Loaded project');
     }
-  }, [effectiveProjectId, loadFromProject, project?.code, project?.description]);
+  }, [effectiveProjectId, loadFromProject, project?.code, project?.description, resetGenerationStore]);
 
   // Fallback: restore files from thread messages when no saved code exists
   // Runs AFTER the thread is loaded (currentThreadId is set)
