@@ -42,7 +42,29 @@ const TAILWIND_V4_DEV_DEPENDENCIES: Record<string, string> = {
 
 export function normalizePreviewFiles(files: Record<string, string>): Record<string, string> {
   const normalized = { ...files };
-  const packagePath = findPackagePath(normalized);
+  let packagePath = findPackagePath(normalized);
+
+  // Auto-bootstrap a minimal package.json when we detect a Next.js project
+  // without one. This catches cases where a refactor/fix response only emits
+  // changed files and the virtual-file merger drops root config files.
+  if (!packagePath && isNextProject(normalized)) {
+    const pkg = {
+      name: 'sandbox-app',
+      private: true,
+      scripts: {
+        dev: 'next dev -H 0.0.0.0 -p 3000',
+        build: 'next build',
+        start: 'next start -H 0.0.0.0 -p 3000',
+      },
+      dependencies: { ...NEXT_DEPENDENCIES },
+    };
+    if (usesTypeScript(normalized)) {
+      (pkg as Record<string, unknown>).devDependencies = { ...TYPESCRIPT_DEV_DEPENDENCIES };
+    }
+    normalized['package.json'] = `${JSON.stringify(pkg, null, 2)}\n`;
+    packagePath = 'package.json';
+  }
+
   if (!packagePath) return normalized;
 
   const packageJson = parsePackageJson(normalized[packagePath]);

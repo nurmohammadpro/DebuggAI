@@ -66,13 +66,16 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
     }
   }
 
-  // 3) Detect deleted files (present in base but not in current result)
+  // 3) Carry forward base files not mentioned in the new response as unchanged.
+  //    Refactors / fixes / polishes typically only emit changed files; silently
+  //    dropping everything else would strip package.json, config files, etc.
+  //    from the sandbox and break the preview.
   if (base) {
     for (const path of Object.keys(base.files)) {
       if (!files.has(path)) {
         files.set(path, {
           ...base.files[path],
-          status: 'deleted',
+          status: 'unchanged',
         });
       }
     }
