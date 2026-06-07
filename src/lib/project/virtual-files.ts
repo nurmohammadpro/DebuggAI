@@ -37,7 +37,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 
   // 1) Markdown code fences with optional filename=...
   const fenceRegex =
-    /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
+    /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*(?:-->)?\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
   for (const match of raw.matchAll(fenceRegex)) {
     const precedingName = match[1] || undefined;
     const language = match[2] || undefined;
@@ -62,7 +62,18 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
         pushFile(chunk.path, chunk.content, languageFromPath(chunk.path));
       }
     } else {
-      pushFile(DEFAULT_ENTRY, raw.trimEnd(), 'typescript');
+      // 2b) Try aggressive free-text extraction: look for any file-path-like
+      //     patterns followed by code blocks, even without strict // File: markers.
+      //     Some models (especially smaller ones) may write:
+      //       "Here's the updated app/page.tsx:\n```tsx\n...\n```"
+      const aggressive = extractFilesAggressive(raw);
+      if (aggressive.length > 0) {
+        for (const chunk of aggressive) {
+          pushFile(chunk.path, chunk.content, languageFromPath(chunk.path));
+        }
+      } else {
+        pushFile(DEFAULT_ENTRY, raw.trimEnd(), 'typescript');
+      }
     }
   }
 
@@ -158,6 +169,48 @@ function extractFileHeaderMarker(code: string) {
   return marker?.[1] || null;
 }
 
+function extractFilesAggressive(raw: string) {
+  const chunks: Array<{ path: string; content: string }> = [];
+
+  // Pattern: file path mention followed by a code block.
+  // Captures cases like:
+  //   "app/page.tsx:\n```tsx\n...\n```"
+  //   "**app/page.tsx**\n```tsx\n...\n```"
+  //   "### components/hero.tsx\n```tsx\n...\n```"
+  const segmentRegex =
+    /(?:^|\n)\s*(?:\*{1,2}|#{1,3}\s*)?\s*([\w./-]+\.[a-zA-Z0-9]+)\s*(?:\*{1,2})?\s*(?::)?\s*(?:\n|$)\s*```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)```/gi;
+
+  let match: RegExpExecArray | null;
+  while ((match = segmentRegex.exec(raw)) !== null) {
+    const path = normalizePath(match[1] || '');
+    const code = (match[2] || '').trimEnd();
+    if (path && code && code.length > 20) {
+      chunks.push({ path, content: code });
+    }
+  }
+
+  // If the aggressive regex found nothing, try even looser: find any code block
+  // and try to infer the filename from the line immediately preceding it.
+  if (chunks.length === 0) {
+    const looseRegex = /(?:^|\n)([^\n]{0,200}?)\n\s*```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)```/gi;
+    while ((match = looseRegex.exec(raw)) !== null) {
+      const preceding = (match[1] || '').trim();
+      const code = (match[2] || '').trimEnd();
+      if (!code || code.length < 20) continue;
+
+      // Try to find a file path in the preceding line
+      const pathMatch = preceding.match(/([\w./-]+\.[a-zA-Z0-9]+)/);
+      const path = pathMatch ? normalizePath(pathMatch[1]) : '';
+
+      if (path) {
+        chunks.push({ path, content: code });
+      }
+    }
+  }
+
+  return chunks;
+}
+
 function splitByFileMarkers(raw: string) {
   const lines = raw.split('\n');
   const chunks: Array<{ path: string; content: string }> = [];
@@ -171,8 +224,14 @@ function splitByFileMarkers(raw: string) {
     if (content) chunks.push({ path: currentPath, content });
   };
 
+  // Match various file marker styles:
+  //   // File: path/to/file.tsx
+  //   # File: path/to/file.tsx
+  //   ### File: path/to/file.tsx
+  //   // path/to/file.tsx
+  //   **File: path/to/file.tsx**
   const markerRegex =
-    /^\s*(?:\/\/|#)\s*File:\s*([\w./-]+\.[a-zA-Z0-9]+)\s*$/i;
+    /^\s*(?:\/\/|#|###\s|\*\*)\s*(?:File:\s*)?([\w./-]+\.[a-zA-Z0-9]+)\s*(?:\*\*)?\s*$/i;
 
   for (const line of lines) {
     const m = line.match(markerRegex);

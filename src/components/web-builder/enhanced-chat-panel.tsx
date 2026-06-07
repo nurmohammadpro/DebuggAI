@@ -151,16 +151,16 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
 
   if (builderMode === 'refactor') {
     return [
-      'Mode: refactor existing app.',
+      'Mode: restructure existing app.',
       ...shared,
-      'Make the smallest coherent edit set. Prefer moving or extracting components over replacing whole pages.',
+      'Make minimal targeted improvements. Prefer moving or extracting components over replacing whole pages.',
       'If adding layout UI such as nav, mount it in the right layout file and keep client state isolated to client components.',
     ].join('\n');
   }
 
   if (builderMode === 'fix') {
     return [
-      'Mode: fix runtime or build errors.',
+      'Mode: resolve runtime or build errors.',
       ...shared,
       'Prioritize root cause, TypeScript correctness, missing dependencies, invalid imports, hydration issues, and asset paths.',
       'Do not add visual polish until the app can build and render.',
@@ -179,7 +179,7 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
   return [
     'Mode: auto.',
     ...shared,
-    'Infer whether the user wants a new build, a refactor, an error fix, or a UX polish pass from the prompt and current files.',
+    'Infer whether the user wants a new build, a restructure, error resolution, or a UX polish pass from the prompt and current files.',
   ].join('\n');
 }
 
