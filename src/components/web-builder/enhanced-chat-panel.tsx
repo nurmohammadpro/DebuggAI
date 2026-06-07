@@ -27,7 +27,6 @@ import {
   User,
   Layers,
   AlertTriangle,
-  ChevronDown,
   ChevronRight,
   Brain,
   CircleCheck,
@@ -47,6 +46,7 @@ import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks, sanitizeChatContent } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
 import { BRAND_NAME, Logo } from '@/components/logo';
+import { csrfHeader } from '@/lib/csrf-client';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,6 +54,7 @@ type MessageRole = 'user' | 'assistant' | 'system' | 'tool';
 type MessageStatus = 'thinking' | 'streaming' | 'done' | 'error';
 
 type StepType = 'thought' | 'explore' | 'action' | 'code' | 'completion';
+type BuilderMode = 'auto' | 'refactor' | 'fix' | 'polish';
 
 interface StepData {
   type: StepType;
@@ -104,6 +105,84 @@ interface EnhancedChatPanelProps {
   mode?: 'build' | 'debug';
 }
 
+const BUILDER_MODES: Array<{
+  id: BuilderMode;
+  label: string;
+  description: string;
+  icon: typeof Wand;
+}> = [
+  {
+    id: 'auto',
+    label: 'Auto',
+    description: 'Infer the best workflow',
+    icon: Wand,
+  },
+  {
+    id: 'refactor',
+    label: 'Refactor',
+    description: 'Edit existing files first',
+    icon: Hammer,
+  },
+  {
+    id: 'fix',
+    label: 'Fix',
+    description: 'Prioritize errors and build checks',
+    icon: AlertTriangle,
+  },
+  {
+    id: 'polish',
+    label: 'Polish',
+    description: 'Improve UX without rewriting',
+    icon: Eye,
+  },
+];
+
+function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: boolean) {
+  const projectContext = hasExistingFiles
+    ? 'Existing project files are already loaded. Treat this as an iterative edit unless the user explicitly asks for a rebuild.'
+    : 'No existing files are loaded. Bootstrap a complete, production-ready project.';
+
+  const shared = [
+    projectContext,
+    'Preserve working structure, imports, route names, package versions, and design tokens unless changing them is required.',
+    'Return complete file blocks for every changed file so the editor can apply the update deterministically.',
+    'Use short status lines before meaningful phases: First, Next, Now, Finally, Done, Warning, or Error.',
+  ];
+
+  if (builderMode === 'refactor') {
+    return [
+      'Mode: refactor existing app.',
+      ...shared,
+      'Make the smallest coherent edit set. Prefer moving or extracting components over replacing whole pages.',
+      'If adding layout UI such as nav, mount it in the right layout file and keep client state isolated to client components.',
+    ].join('\n');
+  }
+
+  if (builderMode === 'fix') {
+    return [
+      'Mode: fix runtime or build errors.',
+      ...shared,
+      'Prioritize root cause, TypeScript correctness, missing dependencies, invalid imports, hydration issues, and asset paths.',
+      'Do not add visual polish until the app can build and render.',
+    ].join('\n');
+  }
+
+  if (builderMode === 'polish') {
+    return [
+      'Mode: UX polish.',
+      ...shared,
+      'Improve hierarchy, spacing, states, responsiveness, accessibility, and production details without changing product intent.',
+      'Avoid decorative gradients, glass effects, nested cards, and raw hex colors in JSX.',
+    ].join('\n');
+  }
+
+  return [
+    'Mode: auto.',
+    ...shared,
+    'Infer whether the user wants a new build, a refactor, an error fix, or a UX polish pass from the prompt and current files.',
+  ].join('\n');
+}
+
 // ── Step Parser ──────────────────────────────────────────────────────────────
 
 function parseStepsFromText(text: string): { steps: StepData[]; remaining: string } {
@@ -111,8 +190,6 @@ function parseStepsFromText(text: string): { steps: StepData[]; remaining: strin
 
   // Try to parse structured XML-like steps
   const thoughtRegex = /<thought\s*(?:duration="([^"]*)")?\s*>([\s\S]*?)<\/thought>/gi;
-  const exploreRegex = /<explore\s*(?:files="([^"]*)")?\s*>([\s\S]*?)<\/explore>/gi;
-  const actionRegex = /<action\s*(?:type="([^"]*)")?\s*>([\s\S]*?)<\/action>/gi;
   const codeRegex = /<code_block\s*(?:file="([^"]*)"|language="([^"]*)"|\s)*>([\s\S]*?)<\/code_block>/gi;
 
   let remaining = text;
@@ -174,24 +251,51 @@ function parseStepsFromText(text: string): { steps: StepData[]; remaining: strin
 function detectImplicitSteps(text: string): StepData[] {
   const steps: StepData[] = [];
 
-  // Detect lines that look like action descriptions
-  const actionPatterns = [
-    /^(defined|built|created|added|updated|fixed|removed|implemented|set up|configured|installed|initialized)\s+.+/i,
-    /^(let me|i'll|i will|now let|first|next|then|finally|after that)\s+.+/i,
-  ];
-
   const lines = text.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const isAction = actionPatterns.some((pattern) => pattern.test(trimmed));
-    if (isAction) {
-      steps.push({ type: 'action', content: trimmed, action: 'build' });
+    if (isImplicitStepLine(trimmed)) {
+      const type = inferImplicitStepType(trimmed);
+      steps.push({ type, content: trimmed, action: inferActionKind(trimmed) });
     }
   }
 
   return steps;
+}
+
+function isImplicitStepLine(line: string) {
+  return [
+    /^(first|next|then|now|finally|after that|before that),?\s+/i,
+    /^(i'll|i will|let me|i’m going to|i'm going to|i’ll)\s+/i,
+    /^(created|added|updated|fixed|removed|implemented|configured|installed|initialized|refactored|wired|connected|moved|renamed|cleaned up)\s+.+/i,
+    /^(done|all set|finished|complete|completed)\b/i,
+    /^(warning|error|note):\s+/i,
+  ].some((pattern) => pattern.test(line));
+}
+
+function inferImplicitStepType(line: string): StepType {
+  if (/^(done|all set|finished|complete|completed)\b/i.test(line)) return 'completion';
+  if (/^(warning|error):\s+/i.test(line)) return 'thought';
+  if (/\b(check|inspect|look at|read|scan|found|noticed|see)\b/i.test(line)) return 'explore';
+  return 'action';
+}
+
+function inferActionKind(line: string) {
+  if (/^(first|let me|i'll start|i will start|i’m going to start|i'm going to start)/i.test(line)) return 'plan';
+  if (/\b(check|inspect|look at|read|scan|found|noticed|see)\b/i.test(line)) return 'inspect';
+  if (/^(done|all set|finished|complete|completed)\b/i.test(line)) return 'complete';
+  if (/\b(fix|error|warning|debug)\b/i.test(line)) return 'fix';
+  return 'build';
+}
+
+function removeImplicitStepLines(text: string) {
+  return text
+    .split('\n')
+    .filter((line) => !isImplicitStepLine(line.trim()))
+    .join('\n')
+    .trim();
 }
 
 function normalizeToolCalls(value: unknown): ToolCall[] {
@@ -469,9 +573,26 @@ function ExploreStep({ step }: { step: StepData }) {
 }
 
 function ActionStep({ step, index }: { step: StepData; index: number }) {
+  const Icon =
+    step.action === 'plan'
+      ? Wand
+      : step.action === 'inspect'
+        ? Eye
+        : step.action === 'complete'
+          ? CircleCheck
+          : Hammer;
+
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-start gap-2 rounded-[8px] border border-[var(--app-border)] bg-[var(--app-panel-2)] px-3 py-2">
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--app-accent)]/20 bg-[var(--app-accent)]/10 text-[var(--app-accent)]">
+        <Icon className="h-3 w-3" />
+      </span>
+      <div className="min-w-0">
+        <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">
+          Step {index + 1}
+        </div>
+        <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
+      </div>
     </div>
   );
 }
@@ -512,7 +633,9 @@ function CodeStep({ step, onCopy }: { step: StepData; onCopy?: () => void }) {
 
 function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: number }) {
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-start gap-2 rounded-[8px] border border-emerald-400/20 bg-emerald-400/10 px-3 py-2">
+      <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+      <div className="min-w-0">
       <p className="text-[12px] text-[var(--app-text)] leading-relaxed">{step.content}</p>
       {fileCount && fileCount > 0 && (
         <div className="flex items-center gap-1.5 mt-1">
@@ -520,6 +643,43 @@ function CompletionStep({ step, fileCount }: { step: StepData; fileCount?: numbe
           <span className="text-[11px] font-medium text-[var(--app-text-muted)]">
             {fileCount} file{fileCount !== 1 ? 's' : ''} generated
           </span>
+        </div>
+      )}
+      </div>
+    </div>
+  );
+}
+
+function AssistantResponseContent({
+  content,
+  fileCount,
+}: {
+  content: string;
+  fileCount?: number;
+}) {
+  const parsed = parseStepsFromText(content);
+  const implicitSteps = parsed.steps.length > 0 ? [] : detectImplicitSteps(content);
+  const steps = parsed.steps.length > 0 ? parsed.steps : implicitSteps;
+  const remaining = parsed.steps.length > 0 ? parsed.remaining : removeImplicitStepLines(content);
+
+  if (steps.length === 0) {
+    return <MarkdownRenderer content={content} />;
+  }
+
+  return (
+    <div className="space-y-2">
+      {steps.map((step, index) => {
+        if (step.type === 'thought') return <ThoughtStep key={`${step.type}-${index}`} step={step} />;
+        if (step.type === 'explore') return <ExploreStep key={`${step.type}-${index}`} step={step} />;
+        if (step.type === 'code') return <CodeStep key={`${step.type}-${index}`} step={step} />;
+        if (step.type === 'completion') {
+          return <CompletionStep key={`${step.type}-${index}`} step={step} fileCount={fileCount} />;
+        }
+        return <ActionStep key={`${step.type}-${index}`} step={step} index={index} />;
+      })}
+      {remaining.trim() && (
+        <div className="pt-1">
+          <MarkdownRenderer content={remaining} />
         </div>
       )}
     </div>
@@ -791,15 +951,17 @@ export function EnhancedChatPanel({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+  const [builderMode, setBuilderMode] = useState<BuilderMode>('auto');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
   // Ref gate — prevents empty state flash during thread sync
   const threadBootedRef = useRef(false);
 
-  const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
+  const { currentThreadId, accumulated, resetAccumulated, files } = useGenerationStore();
   const { addCodeBlocks, setStreaming, reset: resetCodeBlocks } = useCodeBlocksStore();
   const { setSidebarCollapsed } = useShellStore();
+  const hasExistingFiles = Boolean(files && Object.values(files.files).some((file) => file.status !== 'deleted'));
 
   // Auto-resize textarea
   useEffect(() => {
@@ -927,6 +1089,7 @@ export function EnhancedChatPanel({
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          ...csrfHeader(),
         },
         body: JSON.stringify({
           code: serializedCode,
@@ -1083,11 +1246,16 @@ export function EnhancedChatPanel({
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
+            ...csrfHeader(),
           },
           body: JSON.stringify({ role: 'user', content: text, metadata: { source: 'chat-panel' } }),
         });
       }
-      await generate({ prompt: text, persistUserMessage: false });
+      await generate({
+        prompt: text,
+        persistUserMessage: false,
+        generationDirective: buildGenerationDirective(builderMode, hasExistingFiles),
+      });
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Generation failed');
@@ -1373,7 +1541,7 @@ export function EnhancedChatPanel({
                             <AssistantActivityList status={message.status} hasFiles={extractedCodeBlocks.length > 0 || Boolean(message.fileCount)} fileCount={message.fileCount || extractedCodeBlocks.length || undefined} />
                           </div>
                         ) : displayText.trim() ? (
-                          <MarkdownRenderer content={displayText} />
+                          <AssistantResponseContent content={displayText} fileCount={message.fileCount} />
                         ) : null}
 
                         {message.status === 'done' && (message.fileCount || extractedCodeBlocks.length > 0) && (
@@ -1454,6 +1622,32 @@ export function EnhancedChatPanel({
 
       {/* Input Area */}
       <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)]">
+        {mode === 'build' && (
+          <div className="mb-2 flex items-center gap-1 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+            {BUILDER_MODES.map((option) => {
+              const Icon = option.icon;
+              const active = builderMode === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setBuilderMode(option.id)}
+                  disabled={isLoading}
+                  title={option.description}
+                  className={cn(
+                    'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[6px] border px-2.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                    active
+                      ? 'border-[var(--app-accent)]/30 bg-[var(--app-accent)]/10 text-[var(--app-accent)]'
+                      : 'border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]',
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="flex items-end gap-2 rounded-xl border border-[var(--app-border)] focus-within:border-[var(--app-accent)]/50 focus-within:shadow-[0_0_0_2px_rgba(0,200,83,0.08)] transition-all bg-[var(--app-bg)] p-2.5">
           <textarea
             ref={textareaRef}

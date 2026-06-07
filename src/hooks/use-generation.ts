@@ -88,6 +88,7 @@ interface GenerationRequest {
   prompt: string;
   history?: Array<{ role: string; content: string }>;
   persistUserMessage?: boolean;
+  generationDirective?: string;
 }
 
 interface DebugRequest {

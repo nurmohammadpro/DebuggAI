@@ -11,6 +11,7 @@ import { useShellStore } from '@/store/shell-store';
 import { cn } from '@/lib/utils';
 import { useGenerationStore } from '@/store/generation-store';
 import { getSession } from '@/hooks/use-session';
+import { csrfHeader } from '@/lib/csrf-client';
 
 type ChatMessage = {
   id: string;
@@ -131,6 +132,7 @@ export function ChatPanel({
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
+            ...csrfHeader(),
           },
           body: JSON.stringify({ role: 'user', content: text, metadata: { source: 'chat-panel' } }),
         });

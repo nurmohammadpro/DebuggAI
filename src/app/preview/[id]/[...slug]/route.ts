@@ -77,17 +77,34 @@ export async function GET(
       });
     }
 
-    // For non-HTML (JS, CSS, images, etc.), stream directly
+    if (contentType.includes('text/css')) {
+      const publicHost = `/preview/${id}`;
+      const body = (await response.text())
+        .replace(/url\((['"]?)\/_next\//g, `url($1${publicHost}/_next/`)
+        .replace(/url\((['"]?)\/(?!preview\/|data:|blob:|https?:)/g, `url($1${publicHost}/`);
+
+      return new NextResponse(body, {
+        status: response.status,
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=300',
+          'X-Robots-Tag': 'noindex',
+        },
+      });
+    }
+
+    // For non-HTML (JS, images, fonts, etc.), stream directly.
     const arrayBuffer = await response.arrayBuffer();
 
     return new NextResponse(arrayBuffer, {
+      status: response.status,
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=300',
         'X-Robots-Tag': 'noindex',
       },
     });
-  } catch (err) {
+  } catch {
     return new NextResponse('Proxy error', { status: 502 });
   }
 }

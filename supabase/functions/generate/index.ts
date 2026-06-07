@@ -75,6 +75,7 @@ async function getCachedProviderConfig(
 interface GenerateRequest {
   threadId: string;
   prompt: string;
+  generationDirective?: string;
   history?: Array<{ role: string; content: string }>;
   idempotencyKey?: string;
   /**
@@ -117,6 +118,7 @@ serve(async (req) => {
     const {
       threadId,
       prompt,
+      generationDirective,
       history = [],
       idempotencyKey,
       persistUserMessage = true,
@@ -184,7 +186,11 @@ serve(async (req) => {
     }
 
     // Provider routing: detect intent, prefer Groq for small edits
-    const promptLower = prompt.toLowerCase();
+    const effectivePrompt = generationDirective
+      ? `${prompt}\n\nDeBuggAI generation directive:\n${generationDirective}`
+      : prompt;
+
+    const promptLower = effectivePrompt.toLowerCase();
     const isSmallEdit = /change|fix|update|edit|modify|replace|remove|add (a|the) |rename|tweak|adjust/i.test(promptLower);
     if (isSmallEdit && groqApiKey) {
       useGroq = true;
@@ -251,12 +257,29 @@ serve(async (req) => {
 
 ## RESPONSE STRUCTURE
 A typical response flows through these stages naturally:
-1. **Plan** — "I'll start by checking the existing project structure." / "Let me look at the navbar to understand the layout before making changes."
-2. **Explore** — "Looking at components/hero.tsx, I see the layout uses hardcoded padding. Let me adapt it to use theme tokens instead."
-3. **Action** — State what you're changing and why, then show the code change in a code block
-4. **Result** — "The hero now uses responsive padding through CSS variables. On mobile it'll collapse to half the desktop spacing."
+1. **Plan** — Start with one concise status line: "First, I'll inspect the existing project structure."
+2. **Explore** — Use one concise status line when you identify the relevant file or pattern.
+3. **Action** — Use one concise status line before file blocks: "Now I'll update app/layout.tsx to mount the Navbar globally."
+4. **Result** — End with one concise completion line.
 
 You don't need to use every stage every time — let the response flow naturally based on what the task needs.
+
+## REFACTORING RULES
+- Treat follow-up prompts as edits to the existing generated project, not a brand-new app.
+- Before adding a component such as Navbar, infer the current app structure from existing files and update the smallest set of files.
+- Preserve existing hero, pricing, theme tokens, package versions, imports, and file names unless the user explicitly asks to replace them.
+- When introducing a client component, add "use client" only to that component, never to app/layout.tsx unless it is already a client file.
+- For layout-level UI, import and render the component in app/layout.tsx so it persists across pages.
+- For navigation links, use Next.js Link, accessible button labels, responsive keyboard-safe mobile menus, and no raw hex colors.
+- Always include every changed file as a complete replacement file block so the editor can apply the refactor deterministically.
+- If a likely runtime issue remains, mention it in the final status line instead of hiding it.
+
+## CHAT STATUS LINES
+- Use short status lines that begin with First, Next, Now, Then, Finally, Done, Warning, or Error.
+- Do not over-explain in status lines; the UI renders these as timeline items.
+- Example: "First, I'll inspect the current layout so the navbar lands in the right place."
+- Example: "Now I'll create components/navbar.tsx as a small client component for the mobile menu."
+- Example: "Done. The navbar is mounted globally and keeps the existing page styling intact."
 
 ## HARD RULES
 1. Use App Router only (app/ directory, NOT pages/)
@@ -354,7 +377,7 @@ export default function PricingPage() { ... }
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
       ...history,
-      { role: 'user', content: prompt },
+      { role: 'user', content: effectivePrompt },
     ];
 
     // 5. Call AI API with streaming
