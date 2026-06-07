@@ -5,7 +5,7 @@
  * Used by both the web builder and debugger.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { useGenerationStore } from '@/store/generation-store';
@@ -105,6 +105,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const { 
     appendAccumulated, 
@@ -150,7 +151,11 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
-      throw new Error(j.error || `Failed to create thread (HTTP ${res.status})`);
+      const msg = typeof j?.error === 'string' ? j.error
+        : typeof j?.error?.message === 'string' ? j.error.message
+        : typeof j?.message === 'string' ? j.message
+        : `Failed to create thread (HTTP ${res.status})`;
+      throw new Error(msg);
     }
 
     const j = await res.json();
@@ -169,6 +174,10 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       setError(null);
       resetAccumulated();
 
+      // Create a fresh AbortController for this request
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       try {
         const authHeaders = await getAuthHeaders();
         if (!authHeaders) {
@@ -185,6 +194,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             ...authHeaders,
           },
           body: JSON.stringify({ persistUserMessage: true, ...request, threadId, idempotencyKey }),
+          signal: controller.signal,
         });
 
         // Handle rate limiting with Retry-After
@@ -279,13 +289,20 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                   setProjectId(j.id);
                   // Keep the same thread (preserves chat history), but attach it to the new project.
                   try {
-                    await fetch(`/api/threads/${threadId}`, {
+                    const patchRes = await fetch(`/api/threads/${threadId}`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json', ...authHeaders },
                       body: JSON.stringify({ projectId: j.id }),
                     });
-                  } catch {
-                    // best-effort
+                    if (!patchRes.ok) {
+                      console.error('[use-generation] Failed to link thread to project', {
+                        threadId,
+                        projectId: j.id,
+                        status: patchRes.status,
+                      });
+                    }
+                  } catch (err) {
+                    console.error('[use-generation] Thread link PATCH failed', err);
                   }
                 }
               }
@@ -302,22 +319,27 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
         return serialized;
       } catch (err) {
+        // AbortError means the user cancelled — don't treat as an error
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return '';
+        }
         const errorObj =
           err instanceof Error ? err : new Error('Generation failed');
         setError(errorObj);
         onError?.(errorObj);
         throw errorObj;
       } finally {
+        abortRef.current = null;
         setIsLoading(false);
       }
     },
     [
-      appendAccumulated, 
-      resetAccumulated, 
-      setCurrentCode, 
-      addVersion, 
-      onChunk, 
-      onDone, 
+      appendAccumulated,
+      resetAccumulated,
+      setCurrentCode,
+      addVersion,
+      onChunk,
+      onDone,
       onError,
       currentProjectId,
       ensureThread,
@@ -530,12 +552,18 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError]
   );
 
+  const cancel = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, []);
+
   return {
     generate,
     generateFromTemplate,
     debug,
     isLoading,
     error,
+    cancel,
     ensureThreadId: ensureThread,
   };
 }

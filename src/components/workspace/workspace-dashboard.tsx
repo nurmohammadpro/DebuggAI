@@ -103,29 +103,33 @@ export function WorkspaceDashboard() {
     }
   }, [setThreadId, effectiveProjectId, urlThreadId]);
 
-  useEffect(() => {
-    if (effectiveProjectId) setProjectId(effectiveProjectId);
-  }, [effectiveProjectId, setProjectId]);
-
   // Track the project we last booted so we can reset on switch.
   const lastBootedProjectRef = useRef<string | null>(null);
 
-  // Load project code into generation store
+  // Load project code into generation store.
+  // Also ensures currentProjectId stays in sync with the URL param.
   useEffect(() => {
     if (!effectiveProjectId) return;
 
-    // When switching to a different project that has no saved code,
-    // reset generation state so old files / versions don't leak in.
+    // Always keep the project ID in the store so persistence and
+    // thread lookups have a project context after code loads.
+    setProjectId(effectiveProjectId);
+
     const switched = lastBootedProjectRef.current !== effectiveProjectId;
-    if (switched && !project?.code) {
+
+    // When switching to a different project that truly has no saved code
+    // (loaded, not loading), reset so old files / versions don't leak.
+    if (switched && project !== undefined && !project?.code) {
       resetGenerationStore();
+      // Re-set project ID after reset cleared it
+      setProjectId(effectiveProjectId);
     }
     lastBootedProjectRef.current = effectiveProjectId;
 
     if (project?.code) {
       loadFromProject(project.code, project.description || 'Loaded project');
     }
-  }, [effectiveProjectId, loadFromProject, project?.code, project?.description, resetGenerationStore]);
+  }, [effectiveProjectId, loadFromProject, project?.code, project?.description, resetGenerationStore, setProjectId]);
 
   // Fallback: restore files from thread messages when no saved code exists
   // Runs AFTER the thread is loaded (currentThreadId is set)

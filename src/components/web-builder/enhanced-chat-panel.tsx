@@ -1071,7 +1071,7 @@ export function EnhancedChatPanel({
   const autoSaveCode = useCallback(async () => {
     try {
       const state = useGenerationStore.getState();
-      const { currentProjectId, files } = state;
+      const { currentProjectId, currentThreadId, files } = state;
       if (!currentProjectId || !files || Object.keys(files.files).length === 0) return;
 
       // Serialize current files and save to generations table
@@ -1096,6 +1096,7 @@ export function EnhancedChatPanel({
           prompt: promptText,
           description: `Auto-saved ${new Date().toLocaleString()}`,
           stack: undefined,
+          threadId: currentThreadId || undefined,
         }),
       }).catch(() => {
         // Silent fail — manual save via button still works
@@ -1122,7 +1123,7 @@ export function EnhancedChatPanel({
     }));
   }, [updateStreamingAssistant]);
 
-  const { generate, ensureThreadId } = useGeneration({
+  const { generate, ensureThreadId, cancel } = useGeneration({
     onChunk: appendStreamingChunk,
     onDone: async () => {
       setIsLoading(false);
@@ -1251,8 +1252,23 @@ export function EnhancedChatPanel({
           body: JSON.stringify({ role: 'user', content: text, metadata: { source: 'chat-panel' } }),
         });
       }
+
+      // When existing project files are loaded, include them as context so the AI
+      // can make targeted edits instead of guessing the current code. This is
+      // essential for refactor/fix/polish to produce correct file blocks.
+      let fullPrompt = text;
+      if (hasExistingFiles && files) {
+        const serialized = serializeVirtualFiles(files);
+        const tokenEstimate = serialized.length / 4; // rough: ~4 chars per token
+        // Keep under ~6000 tokens to leave room for the response
+        const truncated = tokenEstimate > 6000
+          ? serialized.slice(0, 24000) + '\n// ... (truncated for length)'
+          : serialized;
+        fullPrompt = `${text}\n\n--- CURRENT PROJECT FILES ---\n${truncated}\n--- END PROJECT FILES ---\n\nApply the changes above to the existing project. Return complete file blocks for every changed file using the // File: path format.`;
+      }
+
       await generate({
-        prompt: text,
+        prompt: fullPrompt,
         persistUserMessage: false,
         generationDirective: buildGenerationDirective(builderMode, hasExistingFiles),
       });
@@ -1265,6 +1281,7 @@ export function EnhancedChatPanel({
         hasError: true,
         status: 'error',
       }));
+    } finally {
       setIsLoading(false);
       setStreaming(false);
       streamingMessageIdRef.current = null;
@@ -1664,17 +1681,34 @@ export function EnhancedChatPanel({
             rows={1}
             disabled={isLoading}
           />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="h-11 w-11 sm:h-9 sm:w-9 rounded-lg shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 active:scale-[0.96] disabled:opacity-40 transition-all inline-flex items-center justify-center touch-manipulation"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+          {isLoading ? (
+            <button
+              onClick={() => {
+                cancel();
+                updateStreamingAssistant((message) => ({
+                  ...message,
+                  content: message.content || 'Generation stopped.',
+                  status: 'done',
+                }));
+                setIsLoading(false);
+                setStreaming(false);
+                streamingMessageIdRef.current = null;
+              }}
+              type="button"
+              className="h-11 w-11 sm:h-9 sm:w-9 rounded-lg shrink-0 bg-rose-500 text-white hover:bg-rose-600 active:scale-[0.96] transition-all inline-flex items-center justify-center touch-manipulation animate-in fade-in"
+              title="Stop generation"
+            >
+              <div className="h-3.5 w-3.5 bg-white rounded-sm" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="h-11 w-11 sm:h-9 sm:w-9 rounded-lg shrink-0 bg-[var(--app-accent)] text-white hover:opacity-90 active:scale-[0.96] disabled:opacity-40 transition-all inline-flex items-center justify-center touch-manipulation"
+            >
               <Send className="h-4 w-4" />
-            )}
-          </button>
+            </button>
+          )}
         </div>
         <p className="hidden sm:block text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1">
           Press <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Enter</kbd> to send · <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Shift+Enter</kbd> for newline

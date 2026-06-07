@@ -87,6 +87,19 @@ export async function POST(
     }
   }
 
+  // ── Link thread to project (backup — in case client-side PATCH missed) ──
+  if (body.threadId) {
+    try {
+      await auth.supabase
+        .from('threads')
+        .update({ project_id: id, updated_at: new Date().toISOString() })
+        .eq('id', body.threadId)
+        .eq('user_id', auth.user!.id);
+    } catch {
+      // Non-critical — thread can still be linked via PATCH /api/threads/:id
+    }
+  }
+
   return NextResponse.json({ ok: true, version: nextVersion });
 }
 

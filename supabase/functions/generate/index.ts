@@ -185,13 +185,16 @@ serve(async (req) => {
       // best-effort: keep env fallback
     }
 
-    // Provider routing: detect intent, prefer Groq for small edits
+    // Provider routing: detect intent, prefer Groq for small edits.
+    // Only route to Groq for simple edits WITHOUT a generation directive.
+    // generationDirective signals structured modes (refactor/fix/polish) that
+    // need the more capable primary model to follow strict file-marker format.
     const effectivePrompt = generationDirective
       ? `${prompt}\n\nDeBuggAI generation directive:\n${generationDirective}`
       : prompt;
 
     const promptLower = effectivePrompt.toLowerCase();
-    const isSmallEdit = /change|fix|update|edit|modify|replace|remove|add (a|the) |rename|tweak|adjust/i.test(promptLower);
+    const isSmallEdit = !generationDirective && /change|fix|update|edit|modify|replace|remove|add (a|the) |rename|tweak|adjust/i.test(promptLower);
     if (isSmallEdit && groqApiKey) {
       useGroq = true;
     }

@@ -88,7 +88,13 @@ export async function proxy(request: NextRequest) {
     // Skip CSRF check for Stripe webhooks (external caller) and health endpoints.
     const skipCsrfPaths = ['/api/health', '/api/contact', '/api/newsletter'];
     const isSkipPath = skipCsrfPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
-    if (!isSkipPath && !validateCsrfToken(request)) {
+
+    // Requests with a Bearer token are inherently CSRF-safe: browsers block
+    // cross-origin senders from setting the Authorization header, so a
+    // successful Bearer header proves the request is same-origin.
+    const hasBearer = /^Bearer\s+/i.test(request.headers.get('authorization') || request.headers.get('Authorization') || '');
+
+    if (!isSkipPath && !hasBearer && !validateCsrfToken(request)) {
       return new NextResponse(JSON.stringify({ error: { code: 'CSRF_ERROR', message: 'CSRF token missing or invalid' } }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

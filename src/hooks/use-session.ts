@@ -1,12 +1,17 @@
 /**
  * Centralized Session Hook
  *
- * Reads from the module-level session cache populated by SessionBootstrapper.
- * Never calls getSession() directly — avoids lock contention from concurrent calls.
+ * useSession() reads from the module-level session cache populated by
+ * SessionBootstrapper's onAuthStateChange listener.
+ *
+ * getSession() always calls supabase.auth.getSession() to guarantee a
+ * fresh token — expired tokens are auto-refreshed via the refresh token
+ * stored in cookies by @supabase/ssr.
  */
 
 import { useEffect, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface SessionState {
   user: User | null;
@@ -55,18 +60,34 @@ export function useSession() {
 }
 
 /**
- * Returns the cached session state synchronously when available.
- * Components that need the Supabase Session object (for access_token) should
- * use getSession() which returns the session from cache — no network call.
+ * Returns a session with a guaranteed-fresh access token.
+ * Calls supabase.auth.getSession() which auto-refreshes expired tokens
+ * using the refresh token cookie set by @supabase/ssr.
  */
 export async function getSession(): Promise<SessionState & { session?: Session | null }> {
-  // Already cached from SessionBootstrapper's onAuthStateChange
+  // Always go through Supabase to guarantee a fresh token.
+  // supabase.auth.getSession() returns the cached session when valid,
+  // and automatically refreshes expired tokens via the refresh token
+  // stored in cookies by @supabase/ssr's createBrowserClient.
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn('[getSession] Supabase getSession error:', error);
+    }
+    if (data?.session) {
+      setCachedSession(data.session);
+      return { ...deriveState(), session: data.session };
+    }
+  } catch (e) {
+    console.warn('[getSession] Supabase getSession threw:', e);
+  }
+
+  // Fallback: return module cache if Supabase call didn't produce a session
   if (cachedSession || cachedSessionError) {
     return { ...deriveState(), session: cachedSession };
   }
 
-  // Fallback: wait for the bootstrapper to populate the cache.
-  // onAuthStateChange fires synchronously on subscribe, so this race is rare.
+  // Last resort: wait for the bootstrapper to populate the cache.
   return new Promise((resolve) => {
     const check = () => {
       if (cachedSession || cachedSessionError) {

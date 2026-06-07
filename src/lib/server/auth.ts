@@ -34,12 +34,25 @@ function getSupabaseAccessTokenFromCookie(req: NextRequest) {
 export async function requireUser(req: NextRequest) {
   const token = getBearerToken(req) || getSupabaseAccessTokenFromCookie(req);
   if (!token) {
+    console.warn('[auth] requireUser: no token found', {
+      url: req.nextUrl?.pathname,
+      method: req.method,
+      hasCsrfCookie: !!req.cookies.get('csrf_token')?.value,
+    });
     return { user: null, token: null, errorResponse: new Response('Unauthorized', { status: 401 }) };
   }
 
   const supabase = createSupabaseUserClient(token);
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
+    console.warn('[auth] requireUser: getUser failed', {
+      url: req.nextUrl?.pathname,
+      method: req.method,
+      errorMessage: error?.message || 'no user returned',
+      errorStatus: (error as { status?: number } | null)?.status,
+      tokenPrefix: token.slice(0, 20) + '...',
+      tokenLength: token.length,
+    });
     return { user: null, token: null, errorResponse: new Response('Unauthorized', { status: 401 }) };
   }
 

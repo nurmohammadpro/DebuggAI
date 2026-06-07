@@ -80,6 +80,25 @@ export function normalizePreviewFiles(files: Record<string, string>): Record<str
     packageJson.scripts.build ||= 'next build';
     packageJson.scripts.start = 'next start -H 0.0.0.0 -p 3000';
     addMissing(packageJson.dependencies, NEXT_DEPENDENCIES);
+
+    // Auto-bootstrap essential config files that refactor/fix responses often omit.
+    // The start script detects Next.js via next.config.* — without it the sandbox
+    // falls back to the generic package-scripts path and can fail to start.
+    const hasNextConfig = Object.keys(normalized).some((p) =>
+      /^next\.config\.(js|mjs|ts|mts)$/.test(p),
+    );
+    if (!hasNextConfig) {
+      normalized['next.config.js'] =
+        '/** @type {import("next").NextConfig} */\nconst nextConfig = {\n  reactStrictMode: true,\n};\n\nmodule.exports = nextConfig;\n';
+    }
+
+    const hasPostCssConfig = Object.keys(normalized).some((p) =>
+      /^postcss\.config\.(js|mjs|ts|mts|cjs)$/.test(p),
+    );
+    if (!hasPostCssConfig && usesTailwindV3(normalized)) {
+      normalized['postcss.config.mjs'] =
+        '/** @type {import("postcss-load-config").Config} */\nconst config = {\n  plugins: {\n    tailwindcss: {},\n    autoprefixer: {},\n  },\n};\n\nexport default config;\n';
+    }
   }
 
   const fullText = Object.entries(normalized)

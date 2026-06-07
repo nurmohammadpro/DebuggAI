@@ -22,6 +22,15 @@ services:
       SANDBOX_LIMIT_MEMORY: 1024m
       SANDBOX_MAX_FILES: "80"
       SANDBOX_MAX_TOTAL_BYTES: "2097152"
+      # Supabase — required for server-side auth and admin operations
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      # AI
+      AI_API_KEY: ${AI_API_KEY}
+      AI_BASE_URL: ${AI_BASE_URL}
+      AI_MODEL: ${AI_MODEL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/debuggai/projects:/var/lib/debuggai/projects

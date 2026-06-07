@@ -113,6 +113,19 @@ function getDockerHostIp(): string {
   return _dockerHostIp;
 }
 
+async function chmodRecursive(dir: string, mode: number) {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  await Promise.all(entries.map(async (entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await chmodRecursive(full, mode);
+    } else if (entry.isFile()) {
+      await fs.chmod(full, mode).catch(() => {});
+    }
+  }));
+  await fs.chmod(dir, mode).catch(() => {});
+}
+
 class SandboxManager {
   /** Exposed for preview proxy to reach sandbox containers from this container. */
   readonly dockerHostIp: string = getDockerHostIp();
@@ -200,8 +213,10 @@ class SandboxManager {
 
     // Sandbox containers run with --cap-drop ALL (no DAC_OVERRIDE),
     // so even root can't write to files owned by another UID.
-    // Make the project dir world-writable so npm install / dev servers work.
-    await fs.chmod(projectDir, 0o777);
+    // Make the project dir and all files world-writable so npm install,
+    // tsc, and dev servers (Next.js/Turbopack) can write tsconfig.json,
+    // lock files, and node_modules without EACCES.
+    await chmodRecursive(projectDir, 0o777);
 
     const record: SandboxRecord = {
       id,
@@ -415,8 +430,30 @@ run_and_watch() {
   fi
 }
 
+# Check for Next.js — either via config file or App Router directory structure.
+# The config file can be missing after AI refactors that only emit changed files;
+# detecting the app/ directory is a reliable fallback.
+is_nextjs() {
+  [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ] && return 0
+  [ -f "app/layout.tsx" ] && return 0
+  [ -f "app/layout.ts" ] && return 0
+  [ -f "app/layout.jsx" ] && return 0
+  [ -f "app/layout.js" ] && return 0
+  [ -f "app/page.tsx" ] && return 0
+  [ -f "app/page.ts" ] && return 0
+  [ -f "app/page.jsx" ] && return 0
+  [ -f "app/page.js" ] && return 0
+  [ -f "src/app/layout.tsx" ] && return 0
+  [ -f "src/app/layout.ts" ] && return 0
+  [ -f "src/app/page.tsx" ] && return 0
+  [ -f "src/app/page.ts" ] && return 0
+  # Also check the next package is installed (proves it's a Next.js project)
+  [ -d "node_modules/next" ] && return 0
+  return 1
+}
+
 # Auto-detect framework and start dev server
-if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
+if is_nextjs; then
   run_and_watch next sh -lc 'npx next dev -p 3000 -H 0.0.0.0'
 elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
   run_and_watch vite sh -lc 'npx vite --port 3000 --host 0.0.0.0'
@@ -430,7 +467,7 @@ elif [ -f "client/package.json" ]; then
   fi
 
   cd client
-  if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -f "next.config.ts" ]; then
+  if is_nextjs; then
     run_and_watch 'next(client)' sh -lc 'npx next dev -p 3000 -H 0.0.0.0'
   elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
     run_and_watch 'vite(client)' sh -lc 'npx vite --port 3000 --host 0.0.0.0'
@@ -438,8 +475,12 @@ elif [ -f "client/package.json" ]; then
     run_and_watch 'package-scripts(client)' sh -lc 'HOST=0.0.0.0 PORT=3000 npm start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null'
   fi
 elif [ -f "package.json" ]; then
-  # Try common dev scripts
-  run_and_watch package-scripts sh -lc 'HOST=0.0.0.0 PORT=3000 npx react-scripts start 2>/dev/null || npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null || npm start -- --port 3000 --host 0.0.0.0 2>/dev/null'
+  # Try common dev scripts, but avoid react-scripts for non-CRA projects.
+  if [ -f "public/index.html" ]; then
+    run_and_watch cra sh -lc 'HOST=0.0.0.0 PORT=3000 npx react-scripts start'
+  else
+    run_and_watch package-scripts sh -lc 'npm run dev -- --port 3000 --host 0.0.0.0 2>/dev/null || npm start -- --port 3000 --host 0.0.0.0 2>/dev/null'
+  fi
 else
   run_and_watch static sh -lc 'npx serve . -p 3000 -l 3000'
 fi
