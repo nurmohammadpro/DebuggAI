@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { useSessionStore } from '@/store/session-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
-import { useProject } from '@/hooks/queries/use-project';
+import { useProjectBoot } from '@/hooks/queries/use-project-boot';
 import { useGenerationStore } from '@/store/generation-store';
 import { getProjectKey } from '@/lib/project/project-key';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
@@ -44,7 +44,6 @@ export function WorkspaceDashboard() {
   const [workspaceSidebarOpen, setWorkspaceSidebarOpen] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [, setLoadingThread] = useState(false);
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
   const threadBootedRef = useRef<string | null>(null);
@@ -53,7 +52,21 @@ export function WorkspaceDashboard() {
   const urlProjectId = searchParams.get('project');
   const urlThreadId = searchParams.get('thread');
   const effectiveProjectId = urlProjectId;
-  const { data: project } = useProject(effectiveProjectId, !!effectiveProjectId);
+  const { data: boot } = useProjectBoot(effectiveProjectId, !!effectiveProjectId);
+
+  // Derive a GenerationRow-compatible object for the rest of the component.
+  const project = boot ? {
+    id: boot.project.id,
+    code: boot.latest?.code ?? '',
+    version: boot.latest?.version ?? 1,
+    name: boot.project.name,
+    description: boot.project.name,
+    stack: boot.project.stack,
+    prompt: boot.latest?.prompt ?? boot.project.description,
+    metadata: boot.latest?.metadata ?? null,
+    created_at: boot.latest?.created_at ?? boot.project.created_at,
+    updated_at: boot.project.updated_at,
+  } : undefined;
 
   const { remoteCursors } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
 
@@ -69,39 +82,26 @@ export function WorkspaceDashboard() {
     projectBootStartedAtRef.current = performance.now();
   }, [effectiveProjectId]);
 
+  // Thread comes from boot data (no extra request) or explicit URL param.
   useEffect(() => {
     if (urlThreadId) {
       setThreadId(urlThreadId);
-    } else if (effectiveProjectId && threadBootedRef.current !== effectiveProjectId) {
-      // No thread in URL — find the latest thread for this project
-      threadBootedRef.current = effectiveProjectId;
-      setLoadingThread(true);
-      (async () => {
-        try {
-          const { session } = await getSession();
-          const token = session?.access_token;
-          if (!token) return;
-          const res = await fetch(
-            `/api/threads?projectId=${encodeURIComponent(effectiveProjectId!)}&limit=1`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (!res.ok) return;
-          const j = await res.json();
-          const threads = (j?.threads || []) as Array<{ id: string }>;
-          if (threads.length > 0) {
-            setThreadId(threads[0]!.id);
-          } else {
-            // Fresh project — clear any stale thread from a previous project.
-            setThreadId(null);
-          }
-        } catch {
-          // Silently fail — chat will start fresh
-        } finally {
-          setLoadingThread(false);
-        }
-      })();
+      return;
     }
-  }, [setThreadId, effectiveProjectId, urlThreadId]);
+    if (!effectiveProjectId) return;
+    if (threadBootedRef.current === effectiveProjectId) return;
+    threadBootedRef.current = effectiveProjectId;
+
+    // Boot data includes the first thread — use it when available.
+    // When boot is still loading (undefined), wait — the effect re-fires
+    // when boot resolves.
+    if (boot === undefined) return; // still loading
+    if (boot?.firstThread?.id) {
+      setThreadId(boot.firstThread.id);
+    } else {
+      setThreadId(null);
+    }
+  }, [setThreadId, effectiveProjectId, urlThreadId, boot]);
 
   // Track the project we last booted so we can reset on switch.
   const lastBootedProjectRef = useRef<string | null>(null);

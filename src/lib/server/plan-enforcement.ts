@@ -30,13 +30,39 @@ const ACTION_COSTS: Record<string, number> = {
   sandbox_create: CREDIT_COSTS.WEB_BUILDER_SMALL,
 };
 
+// ── In-memory plan cache ────────────────────────────────────────────────
+const PLAN_CACHE_TTL_MS = 30_000;
+
+const planCache = new Map<string, { plan: PlanType; expiresAt: number }>();
+
+function getCachedPlan(userId: string): PlanType | null {
+  const entry = planCache.get(userId);
+  if (entry && Date.now() < entry.expiresAt) return entry.plan;
+  if (entry) planCache.delete(userId);
+  return null;
+}
+
+function setCachedPlan(userId: string, plan: PlanType): void {
+  planCache.set(userId, { plan, expiresAt: Date.now() + PLAN_CACHE_TTL_MS });
+}
+
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of planCache) {
+      if (now >= entry.expiresAt) planCache.delete(key);
+    }
+  }, 300_000).unref?.();
+}
+
 export async function getUserPlan(userId: string): Promise<PlanType> {
+  const cached = getCachedPlan(userId);
+  if (cached) return cached;
+
   let supabase: ReturnType<typeof createSupabaseAdmin> | null = null;
   try {
     supabase = createSupabaseAdmin();
   } catch (e) {
-    // Dev ergonomics: allow the app to run without service role key.
-    // In production you should always set SUPABASE_SERVICE_ROLE_KEY.
     console.warn('[plan-enforcement] SUPABASE_SERVICE_ROLE_KEY missing; defaulting plan to FREE');
     return 'FREE';
   }
@@ -47,10 +73,14 @@ export async function getUserPlan(userId: string): Promise<PlanType> {
     .eq('id', userId)
     .single();
 
-  if (error || !data?.plan_type) return 'FREE';
-  const pt = data.plan_type as string;
-  if (pt in PLANS) return pt as PlanType;
-  return 'FREE';
+  let plan: PlanType = 'FREE';
+  if (!error && data?.plan_type) {
+    const pt = data.plan_type as string;
+    if (pt in PLANS) plan = pt as PlanType;
+  }
+
+  setCachedPlan(userId, plan);
+  return plan;
 }
 
 export function checkFeatureAccess(plan: PlanType, feature: FeatureName): boolean {
@@ -155,22 +185,48 @@ export async function logUsage(
   }
 }
 
+async function checkAndLogRateLimitRpc(
+  userId: string,
+  action: RateLimitAction,
+  opts?: { req?: NextRequest; creditsUsed?: number; modelUsed?: string | null }
+): Promise<{ allowed: boolean; current: number; limit: number; plan: PlanType }> {
+  const supabase = createSupabaseAdmin();
+  const ip = getClientIp(opts?.req);
+  const { data, error } = await supabase.rpc('check_and_log_rate_limit', {
+    p_user_id: userId,
+    p_action_type: action,
+    p_ip_address: ip || null,
+    p_credits_used: typeof opts?.creditsUsed === 'number' ? opts.creditsUsed : 1,
+    p_model_used: opts?.modelUsed || null,
+  });
+
+  if (error || !data) {
+    console.warn('[plan-enforcement] RPC check_and_log_rate_limit failed, falling back:', error?.message);
+    await logUsage(userId, action, opts);
+    const result = await checkRateLimit(userId, action);
+    return { allowed: result.allowed, current: result.current, limit: result.limit, plan: 'FREE' };
+  }
+
+  const result = data as { allowed: boolean; current: number; limit: number; plan: string };
+  return {
+    allowed: result.allowed,
+    current: result.current,
+    limit: result.limit,
+    plan: (result.plan as string) in PLANS ? (result.plan as PlanType) : 'FREE',
+  };
+}
+
 export async function withRateLimit(
   userId: string,
   action: RateLimitAction
   ,
   opts?: { req?: NextRequest; creditsUsed?: number; modelUsed?: string | null }
 ): Promise<{ allowed: true } | { allowed: false; status: number; body: object }> {
-  // Log usage FIRST to minimise the TOCTOU race window between check and insert.
-  // Two concurrent requests will both log before counting, so neither slips through
-  // unseen. A count-after-insert is still not strictly atomic, but the window is
-  // far smaller than the original check-then-insert order.
-  await logUsage(userId, action, opts);
-
-  const result = await checkRateLimit(userId, action);
+  // Combined RPC replaces 4 sequential calls (logUsage + getUserPlan +
+  // throttle_config + COUNT) with a single round-trip.
+  const result = await checkAndLogRateLimitRpc(userId, action, opts);
 
   if (!result.allowed) {
-    // Best-effort audit event for ops visibility.
     logAuditEvent(userId, 'rate_limit.hit', {
       action,
       limit: result.limit,

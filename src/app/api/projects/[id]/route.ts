@@ -13,23 +13,27 @@ export async function GET(
 
   const { id } = await ctx.params;
 
-  // Return canonical project and its latest generation snapshot.
-  const { data: project, error: projError } = await auth.supabase
-    .from('projects')
-    .select('id, name, description, stack, status, created_at, updated_at')
-    .eq('id', id)
-    .single();
+  // Fetch project and latest generation in parallel — they don't depend on each other.
+  const [projResult, genResult] = await Promise.all([
+    auth.supabase
+      .from('projects')
+      .select('id, name, description, stack, status, created_at, updated_at')
+      .eq('id', id)
+      .single(),
+    auth.supabase
+      .from('generations')
+      .select('id, code, version, prompt, metadata, created_at')
+      .eq('project_id', id)
+      .order('version', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
+  const { data: project, error: projError } = projResult;
   if (projError) return NextResponse.json({ error: projError.message }, { status: 404 });
 
-  const { data: latestGen } = await auth.supabase
-    .from('generations')
-    .select('id, code, version, prompt, metadata, created_at')
-    .eq('project_id', id)
-    .order('version', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data: latestGen } = genResult;
 
   return NextResponse.json({ project, latest: latestGen || null });
 }
