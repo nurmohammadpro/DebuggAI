@@ -40,14 +40,14 @@ RUN apt-get update && \
     groupadd -f docker || true && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# App files
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/.next/standalone ./
+# App files — set ownership at copy time to avoid recursive chown on large output
+COPY --chown=node:node --from=builder /app/public ./public
+COPY --chown=node:node --from=builder /app/.next/static ./.next/static
+COPY --chown=node:node --from=builder /app/.next/standalone ./
 
 # Runtime dirs (bind mount in compose in production)
 ENV PROJECTS_DIR=/var/lib/debuggai/projects
-RUN mkdir -p /var/lib/debuggai/projects && chown -R node:node /var/lib/debuggai/projects /app
+RUN mkdir -p /var/lib/debuggai/projects && chown node:node /var/lib/debuggai/projects
 
 # Run as non-root user for security
 USER node
