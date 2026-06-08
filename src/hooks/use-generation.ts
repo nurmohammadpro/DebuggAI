@@ -243,81 +243,83 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         // Build/refresh virtual file snapshot from the full accumulated response.
         // extractVirtualFiles handles file markers (// File: path/to/file.tsx), code fences, and
         // the split-by-marker format the new generate prompt produces.
+        // If no code files are detected, treat as conversational response only (no file update).
         const baseFiles = useGenerationStore.getState().files || undefined;
         const virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
 
-        if (Object.keys(virtualFiles.files).length === 0) {
-          throw new Error('No code found in AI response');
-        }
+        if (Object.keys(virtualFiles.files).length > 0) {
+          const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
+          const serialized = serializeVirtualFilesWrapper(virtualFiles);
 
-        const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
-        const serialized = serializeVirtualFilesWrapper(virtualFiles);
+          useGenerationStore.setState({
+            files: virtualFiles,
+            activeFilePath: virtualFiles.entryPath,
+          });
 
-        useGenerationStore.setState({
-          files: virtualFiles,
-          activeFilePath: virtualFiles.entryPath,
-        });
+          setCurrentCode(entryContent);
+          addVersion(serialized, 'Generated');
 
-        setCurrentCode(entryContent);
-        addVersion(serialized, 'Generated');
-
-        // Persistence to Supabase
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            if (currentProjectId) {
-              await supabase
-                .from('generations')
-                .update({ code: serialized })
-                .eq('id', currentProjectId);
-            } else {
-              // Create new canonical project (+ initial generation) via API.
-              const res = await fetch('/api/projects', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...authHeaders },
-                body: JSON.stringify({
-                  code: serialized,
-                  prompt: request.prompt,
-                  description: request.prompt.slice(0, 50),
-                  stack: null,
-                  metadata: {},
-                }),
-              });
-              if (res.ok) {
-                const j = await res.json().catch(() => ({}));
-                if (j?.id) {
-                  setProjectId(j.id);
-                  // Keep the same thread (preserves chat history), but attach it to the new project.
-                  try {
-                    const patchRes = await fetch(`/api/threads/${threadId}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json', ...authHeaders },
-                      body: JSON.stringify({ projectId: j.id }),
-                    });
-                    if (!patchRes.ok) {
-                      console.error('[use-generation] Failed to link thread to project', {
-                        threadId,
-                        projectId: j.id,
-                        status: patchRes.status,
+          // Persistence to Supabase
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              if (currentProjectId) {
+                await supabase
+                  .from('generations')
+                  .update({ code: serialized })
+                  .eq('id', currentProjectId);
+              } else {
+                // Create new canonical project (+ initial generation) via API.
+                const res = await fetch('/api/projects', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', ...authHeaders },
+                  body: JSON.stringify({
+                    code: serialized,
+                    prompt: request.prompt,
+                    description: request.prompt.slice(0, 50),
+                    stack: null,
+                    metadata: {},
+                  }),
+                });
+                if (res.ok) {
+                  const j = await res.json().catch(() => ({}));
+                  if (j?.id) {
+                    setProjectId(j.id);
+                    // Keep the same thread (preserves chat history), but attach it to the new project.
+                    try {
+                      const patchRes = await fetch(`/api/threads/${threadId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', ...authHeaders },
+                        body: JSON.stringify({ projectId: j.id }),
                       });
+                      if (!patchRes.ok) {
+                        console.error('[use-generation] Failed to link thread to project', {
+                          threadId,
+                          projectId: j.id,
+                          status: patchRes.status,
+                        });
+                      }
+                    } catch (err) {
+                      console.error('[use-generation] Thread link PATCH failed', err);
                     }
-                  } catch (err) {
-                    console.error('[use-generation] Thread link PATCH failed', err);
                   }
                 }
               }
+              // Invalidate the projects query so the sidebar updates
+              await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
             }
-            // Invalidate the projects query so the sidebar updates
-            await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
+          } catch (saveError) {
+            console.error('Failed to persist generation:', saveError);
           }
-        } catch (saveError) {
-          console.error('Failed to persist generation:', saveError);
+
+          // Call onDone callback with serialized multi-file project
+          onDone?.(serialized);
+          return serialized;
         }
 
-        // Call onDone callback with serialized multi-file project
-        onDone?.(serialized);
-
-        return serialized;
+        // Chat-only response: no code files extracted. Call onDone with empty string.
+        onDone?.('');
+        return '';
       } catch (err) {
         // AbortError means the user cancelled — don't treat as an error
         if (err instanceof DOMException && err.name === 'AbortError') {

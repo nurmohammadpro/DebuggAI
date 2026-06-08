@@ -229,9 +229,9 @@ export function WorkspaceEditor({
             height="100%"
             chromeless
             className="flex-1 min-h-0"
-            sandboxUrl={shouldUseDockerSandbox ? sandbox.previewUrl : null}
-            sandboxError={shouldUseDockerSandbox ? sandbox.error : null}
-            onRefresh={shouldUseDockerSandbox ? recreateSandbox : undefined}
+            sandboxUrl={sandbox.previewUrl}
+            sandboxError={sandbox.error}
+            onRefresh={recreateSandbox}
           />
         ) : (
           <>

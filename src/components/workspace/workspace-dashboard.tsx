@@ -89,13 +89,13 @@ export function WorkspaceDashboard() {
       return;
     }
     if (!effectiveProjectId) return;
-    if (threadBootedRef.current === effectiveProjectId) return;
-    threadBootedRef.current = effectiveProjectId;
-
     // Boot data includes the first thread — use it when available.
     // When boot is still loading (undefined), wait — the effect re-fires
     // when boot resolves.
     if (boot === undefined) return; // still loading
+    if (threadBootedRef.current === effectiveProjectId) return;
+    threadBootedRef.current = effectiveProjectId;
+
     if (boot?.firstThread?.id) {
       setThreadId(boot.firstThread.id);
     } else {
@@ -123,6 +123,11 @@ export function WorkspaceDashboard() {
       resetGenerationStore();
       // Re-set project ID after reset cleared it
       setProjectId(effectiveProjectId);
+      // Re-apply URL thread ID if present — resetGenerationStore wipes it,
+      // which would prevent the chat panel from loading thread history.
+      if (urlThreadId) {
+        setThreadId(urlThreadId);
+      }
     }
     lastBootedProjectRef.current = effectiveProjectId;
 
