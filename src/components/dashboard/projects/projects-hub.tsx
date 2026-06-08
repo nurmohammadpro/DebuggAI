@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { Plus } from 'lucide-react';
 
 import { ProjectsFilters } from '@/components/dashboard/projects/projects-filters';
 import { ProjectCard } from '@/components/dashboard/projects/project-card';
@@ -108,11 +107,7 @@ export function ProjectsHub() {
             Projects, threads, and recent activity.
           </div>
         </div>
-        <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen}>
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
-          <span className="hidden sm:inline text-xs">New Project</span>
-          <span className="sm:hidden text-xs">Create</span>
-        </CreateProjectDialog>
+        <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
       </div>
 
       <div className="grid sm:grid-cols-3 gap-3">

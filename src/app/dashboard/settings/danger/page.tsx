@@ -37,9 +37,12 @@ export default function DangerPage() {
         .eq('id', session.user.id);
 
       // Sign out
-      await signOutCurrentUser();
-      toast.success('Account deleted');
-      router.push('/');
+      try {
+        await signOutCurrentUser();
+      } finally {
+        toast.success('Account deleted');
+        window.location.href = '/';
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete account');
     } finally {

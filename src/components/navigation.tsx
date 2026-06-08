@@ -58,9 +58,12 @@ export function Navigation() {
 
   const handleLogout = async () => {
     setMenuOpen(false);
-    await signOutCurrentUser();
-    // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
-    window.location.href = '/';
+    try {
+      await signOutCurrentUser();
+    } finally {
+      // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
+      window.location.href = '/';
+    }
   };
 
   const closeMenu = () => setMenuOpen(false);

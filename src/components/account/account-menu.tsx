@@ -51,9 +51,12 @@ export function AccountMenu({
   }, [user?.displayName, user?.email]);
 
   const handleLogout = async () => {
-    await signOutCurrentUser();
-    // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
-    window.location.href = '/';
+    try {
+      await signOutCurrentUser();
+    } finally {
+      // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
+      window.location.href = '/';
+    }
   };
 
   return (

@@ -22,6 +22,8 @@ interface SessionState {
 // Module-level session cache — set by SessionBootstrapper's onAuthStateChange
 let cachedSession: Session | null = null;
 let cachedSessionError: Error | null = null;
+let bootstrapperReady = false;
+const pendingResolvers: Array<() => void> = [];
 const listeners: Set<(state: SessionState) => void> = new Set();
 
 function deriveState(): SessionState {
@@ -42,6 +44,17 @@ export function setCachedSession(session: Session | null, error?: Error | null) 
   cachedSession = session;
   cachedSessionError = error ?? null;
   notifyListeners();
+}
+
+/**
+ * Called by SessionBootstrapper after its onAuthStateChange listener
+ * is registered. Allows getSession() to distinguish "not yet initialized"
+ * from "session is definitively null."
+ */
+export function setBootstrapperReady() {
+  bootstrapperReady = true;
+  const resolvers = pendingResolvers.splice(0);
+  resolvers.forEach((fn) => fn());
 }
 
 export function useSession() {
@@ -87,15 +100,28 @@ export async function getSession(): Promise<SessionState & { session?: Session |
     return { ...deriveState(), session: cachedSession };
   }
 
-  // Last resort: wait for the bootstrapper to populate the cache.
+  // If bootstrapper has initialized, cached value is definitive.
+  if (bootstrapperReady) {
+    return { ...deriveState(), session: cachedSession };
+  }
+
+  // Bootstraper hasn't initialized yet — wait for it, with a timeout.
   return new Promise((resolve) => {
-    const check = () => {
-      if (cachedSession || cachedSessionError) {
+    const start = Date.now();
+    pendingResolvers.push(() => resolve({ ...deriveState(), session: cachedSession }));
+
+    const poll = () => {
+      if (bootstrapperReady) {
         resolve({ ...deriveState(), session: cachedSession });
         return;
       }
-      setTimeout(check, 50);
+      if (Date.now() - start > 5000) {
+        console.warn('[getSession] timeout waiting for bootstrapper — returning null');
+        resolve({ ...deriveState(), session: null });
+        return;
+      }
+      setTimeout(poll, 50);
     };
-    check();
+    poll();
   });
 }

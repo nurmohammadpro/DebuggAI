@@ -9,7 +9,7 @@ import type {
 } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore, type PlanType } from '@/store/session-store';
-import { setCachedSession } from '@/hooks/use-session';
+import { setCachedSession, setBootstrapperReady } from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
 import { csrfHeader } from '@/lib/csrf-client';
 import {
@@ -180,6 +180,10 @@ export function SessionBootstrapper() {
       setCachedSession(session);
       await handleSession(session);
     });
+
+    // Signal that bootstrapper has initialized, so getSession() knows the
+    // cached value (including null) is definitive and stops polling.
+    setBootstrapperReady();
 
     return () => {
       active = false;

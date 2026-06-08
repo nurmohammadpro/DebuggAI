@@ -46,13 +46,9 @@ export async function signOutCurrentUser() {
     } catch {}
   }
 
-  // 3. Call Supabase signOut — this signals the server AND
-  //    fires onAuthStateChange with null session.
-  try {
-    await supabase.auth.signOut({ scope: 'global' });
-  } catch {
-    // Keep going — state is already cleared above.
-  }
+  // 3. Fire-and-forget signOut — clear server session without waiting,
+  //    so the user isn't blocked if Supabase is slow or unreachable.
+  supabase.auth.signOut({ scope: 'global' }).catch(() => {});
 
   // 4. Aggressively clear all cookies as final cleanup.
   clearSupabaseSessionCookies();

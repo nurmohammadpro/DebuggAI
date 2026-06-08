@@ -8,19 +8,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { useState } from 'react';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { useSessionStore } from '@/store/session-store';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
 import {
   FolderKanban,
   Bug,
   MessageSquare,
-  Plus,
   TrendingUp,
   Clock,
   CheckCircle,
@@ -36,18 +33,6 @@ export function EnhancedDashboardHome() {
   const router = useRouter();
   const { user } = useSessionStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
-  const [createOpen, setCreateOpen] = useState(false);
-
-  // Handle create=1 URL parameter
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get('create') !== '1') return;
-    const openTimer = setTimeout(() => setCreateOpen(true), 0);
-    url.searchParams.delete('create');
-    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
-    router.replace(next);
-    return () => clearTimeout(openTimer);
-  }, [router]);
 
   const { data: projects, isLoading: projectsLoading } = useMyProjects(10, true);
   const { data: threads } = useMyThreads(10, true);
@@ -124,21 +109,7 @@ export function EnhancedDashboardHome() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Link
-          href="/dashboard/home?create=1"
-          className="group min-h-32 bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] active:scale-[0.99] transition-all block touch-manipulation"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-lg bg-[var(--app-accent-soft)] flex items-center justify-center">
-              <Plus className="w-5 h-5 text-[var(--app-accent)]" />
-            </div>
-            <ChevronRight className="w-4 h-4 text-[var(--app-text-dim)] group-hover:text-[var(--app-accent)] transition-colors" />
-          </div>
-          <h3 className="text-sm font-medium text-[var(--app-text)] mb-1">New Project</h3>
-          <p className="text-xs text-[var(--app-text-muted)]">Create a new project from scratch</p>
-        </Link>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <Link
           href="/dashboard/debug"
           className="group min-h-32 bg-[var(--app-panel)] border border-[var(--app-border)] rounded-lg p-4 text-left hover:border-[var(--app-accent)] active:scale-[0.99] transition-all block touch-manipulation"
@@ -343,11 +314,6 @@ export function EnhancedDashboardHome() {
         </div>
       </div>
 
-      {/* Create Project Dialog */}
-      <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen}>
-        <Plus className="mr-1.5 h-3.5 w-3.5" />
-        <span className="hidden sm:inline text-xs">New Project</span>
-      </CreateProjectDialog>
     </div>
   );
 }
