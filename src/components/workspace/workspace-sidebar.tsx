@@ -418,7 +418,7 @@ export function WorkspaceSidebar({
           <button onClick={handleMobileClose} className="touch-target rounded-lg flex items-center justify-center text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-all duration-150 active:scale-95"><X className="w-5 h-5" /></button>
         </div>
         <div className="px-4 py-3 border-b border-[var(--app-border)] shrink-0">
-          <Link href="/dashboard?create=1" onClick={handleMobileClose}
+          <Link href="/dashboard/home?create=1" onClick={handleMobileClose}
             className="flex min-h-11 items-center gap-2.5 px-4 py-3 rounded-lg text-[13px] font-semibold bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 active:scale-95 shadow-sm hover:shadow-md touch-manipulation">
             <Plus className="h-4 w-4" /> New Project
           </Link>
@@ -513,7 +513,7 @@ export function WorkspaceSidebar({
       {/* Quick action + search */}
       {!collapsed && (
         <div className="shrink-0 border-b border-[var(--app-border)] px-3 py-3 space-y-2">
-          <Link href="/dashboard?create=1" className={cn(
+          <Link href="/dashboard/home?create=1" className={cn(
             'flex items-center rounded-lg bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 active:scale-95 shadow-sm hover:shadow-md',
             'gap-2.5 px-3 py-2.5 text-[12px] font-semibold w-full justify-start')}
             title="New Project">
