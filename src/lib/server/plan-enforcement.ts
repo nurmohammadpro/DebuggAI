@@ -190,7 +190,16 @@ async function checkAndLogRateLimitRpc(
   action: RateLimitAction,
   opts?: { req?: NextRequest; creditsUsed?: number; modelUsed?: string | null }
 ): Promise<{ allowed: boolean; current: number; limit: number; plan: PlanType }> {
-  const supabase = createSupabaseAdmin();
+  let supabase: ReturnType<typeof createSupabaseAdmin>;
+  try {
+    supabase = createSupabaseAdmin();
+  } catch {
+    console.warn('[plan-enforcement] SUPABASE_SERVICE_ROLE_KEY missing; falling back to sequential');
+    await logUsage(userId, action, opts);
+    const result = await checkRateLimit(userId, action);
+    return { allowed: result.allowed, current: result.current, limit: result.limit, plan: 'FREE' };
+  }
+
   const ip = getClientIp(opts?.req);
   const { data, error } = await supabase.rpc('check_and_log_rate_limit', {
     p_user_id: userId,
@@ -208,11 +217,12 @@ async function checkAndLogRateLimitRpc(
   }
 
   const result = data as { allowed: boolean; current: number; limit: number; plan: string };
+  const planUpper = (result.plan as string).toUpperCase() as PlanType;
   return {
     allowed: result.allowed,
     current: result.current,
     limit: result.limit,
-    plan: (result.plan as string) in PLANS ? (result.plan as PlanType) : 'FREE',
+    plan: planUpper in PLANS ? planUpper : 'FREE',
   };
 }
 

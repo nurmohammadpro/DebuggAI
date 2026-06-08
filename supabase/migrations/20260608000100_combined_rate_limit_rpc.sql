@@ -34,18 +34,18 @@ BEGIN
      p_credits_used,
      COALESCE(NULLIF(p_model_used, ''), NULL));
 
-  -- 2. Read plan_type from profiles
-  SELECT COALESCE(plan_type, 'FREE') INTO v_plan_type
+  -- 2. Read plan_type from profiles (enum stored lowercase: free, pro, etc.)
+  SELECT COALESCE(plan_type::text, 'free') INTO v_plan_type
   FROM public.profiles WHERE id = p_user_id;
 
   -- 3. Map plan_type → per-minute rate limit
   --    Must stay in sync with src/lib/constants.ts PLANS
   SELECT CASE
-    WHEN v_plan_type = 'FREE'       THEN 10
-    WHEN v_plan_type = 'PRO'        THEN 30
-    WHEN v_plan_type = 'TEAM'       THEN 60
-    WHEN v_plan_type = 'BUSINESS'   THEN 120
-    WHEN v_plan_type = 'ENTERPRISE' THEN -1
+    WHEN v_plan_type = 'free'       THEN 10
+    WHEN v_plan_type = 'pro'        THEN 30
+    WHEN v_plan_type = 'team'       THEN 60
+    WHEN v_plan_type = 'business'   THEN 120
+    WHEN v_plan_type = 'enterprise' THEN -1
     ELSE 10
   END INTO v_plan_rate_limit;
 
