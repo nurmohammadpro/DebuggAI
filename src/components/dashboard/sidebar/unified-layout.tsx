@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, Suspense, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { WorkspaceSidebar } from '@/components/workspace/workspace-sidebar';
 import { UnifiedHeader } from '@/components/dashboard/sidebar/unified-header';
@@ -33,17 +33,19 @@ export function UnifiedLayout({
 
       {/* Sidebar — inline flex with collapsible icon rail */}
       {showSidebar && (
-        <WorkspaceSidebar
-          isOpen={true}
-          variant="inline"
-          collapsed={sidebarCollapsed}
-          onToggleCollapsed={toggleSidebar}
-          recentProjects={recentProjects}
-          recentThreads={recentThreads}
-          onClose={() => {}}
-          mobileOpen={mobileMenuOpen}
-          onMobileClose={() => setMobileMenuOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <WorkspaceSidebar
+            isOpen={true}
+            variant="inline"
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={toggleSidebar}
+            recentProjects={recentProjects}
+            recentThreads={recentThreads}
+            onClose={() => {}}
+            mobileOpen={mobileMenuOpen}
+            onMobileClose={() => setMobileMenuOpen(false)}
+          />
+        </Suspense>
       )}
 
       {/* Main Content */}

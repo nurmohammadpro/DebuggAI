@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
@@ -34,7 +34,9 @@ export function WorkspaceDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading } = useSessionStore();
-  const { selectedProjectId, setSelectedProjectId, setProjectKey } = useWorkspaceStore();
+  const selectedProjectId = useWorkspaceStore(s => s.selectedProjectId);
+  const setSelectedProjectId = useWorkspaceStore(s => s.setSelectedProjectId);
+  const setProjectKey = useWorkspaceStore(s => s.setProjectKey);
   const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, currentThreadId, reset: resetGenerationStore } = useGenerationStore();
   const { openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
@@ -55,7 +57,8 @@ export function WorkspaceDashboard() {
   const { data: boot } = useProjectBoot(effectiveProjectId, !!effectiveProjectId);
 
   // Derive a GenerationRow-compatible object for the rest of the component.
-  const project = boot ? {
+  // Memoized to prevent infinite re-render loops from effect dependencies.
+  const project = useMemo(() => boot ? {
     id: boot.project.id,
     code: boot.latest?.code ?? '',
     version: boot.latest?.version ?? 1,
@@ -66,7 +69,7 @@ export function WorkspaceDashboard() {
     metadata: boot.latest?.metadata ?? null,
     created_at: boot.latest?.created_at ?? boot.project.created_at,
     updated_at: boot.project.updated_at,
-  } : undefined;
+  } : undefined, [boot]);
 
   const { remoteCursors } = useCursorTracking(effectiveProjectId || '', !!effectiveProjectId);
 

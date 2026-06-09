@@ -8,11 +8,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { useSessionStore } from '@/store/session-store';
+import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
 import { formatDistanceToNowStrict } from 'date-fns';
 import {
   FolderKanban,
@@ -33,6 +34,17 @@ export function EnhancedDashboardHome() {
   const router = useRouter();
   const { user } = useSessionStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [createOpen, setCreateOpen] = useState(false);
+
+  // Handle ?create=1 from sidebar "New Project" button
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('create') !== '1') return;
+    setCreateOpen(true);
+    url.searchParams.delete('create');
+    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
+    router.replace(next);
+  }, [router]);
 
   const { data: projects, isLoading: projectsLoading } = useMyProjects(10, true);
   const { data: threads } = useMyThreads(10, true);
@@ -62,6 +74,8 @@ export function EnhancedDashboardHome() {
 
   return (
     <div className="min-h-[100dvh] bg-[var(--app-bg)] p-4 pb-24 sm:p-6 lg:p-8">
+      <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">

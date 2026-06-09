@@ -199,7 +199,10 @@ export function WorkspaceSidebar({
   const primaryKeys = ['home', 'builder'];
   const secondaryKeys = navOrder.filter(k => !primaryKeys.includes(k));
 
-  const primaryItems = primaryKeys.map(k => ({ key: k, ...allNavItems[k as keyof typeof allNavItems] }));
+  // Only show Builder when a project is active
+  const visiblePrimaryKeys = primaryKeys.filter(k => k !== 'builder' || !!activeProjectId);
+
+  const primaryItems = visiblePrimaryKeys.map(k => ({ key: k, ...allNavItems[k as keyof typeof allNavItems] }));
   const secondaryItems = secondaryKeys.map(k => ({ key: k, ...allNavItems[k as keyof typeof allNavItems] }));
 
   // Filter by search
