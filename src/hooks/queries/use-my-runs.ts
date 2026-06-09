@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/hooks/use-session';
+import { useSessionStore } from '@/store/session-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type RunRow = {
@@ -24,13 +25,17 @@ export type UseMyRunsOptions = Pick<
 >;
 
 export function useMyRuns(limit = 20, enabled = true, options?: UseMyRunsOptions) {
+  const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
+
   return useQuery<RunRow[], Error, RunRow[]>({
     queryKey: [...queryKeys.myRuns, { limit }] as const,
-    enabled,
+    enabled: enabled && isAuthenticated,
     refetchInterval: options?.refetchInterval,
+    staleTime: 0,
+    gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<RunRow[]> => {
       const session = await getSession();
-      if (!session.user) return [];
+      if (!session.user) throw new Error('Not authenticated — retrying...');
 
       const { data, error } = await supabase
         .from('runs')

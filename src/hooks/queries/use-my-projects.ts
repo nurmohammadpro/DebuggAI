@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
+import { useSessionStore } from '@/store/session-store';
 import { getSession } from '@/hooks/use-session';
 
 export type GenerationRow = {
@@ -18,13 +19,26 @@ export type GenerationRow = {
 };
 
 export function useMyProjects(limit = 50, enabled = true) {
+  // Track auth state reactively — when the user goes from
+  // unauthenticated → authenticated, React Query automatically
+  // refetches because the enabled flag flips from false → true.
+  const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: [...queryKeys.myProjects, { limit }] as const,
-    enabled,
+    enabled: enabled && isAuthenticated,
+    // Keep cached data for 30s after auth state changes so the UI
+    // doesn't flash empty while the bootstrapper initializes.
+    staleTime: 0,
+    gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<GenerationRow[]> => {
       const { user, session } = await getSession();
       const token = session?.access_token;
-      if (!user || !token) return [];
+      if (!user || !token) {
+        // Throw instead of returning [] — React Query will retry.
+        // Returning [] would cache the empty array permanently.
+        throw new Error('Not authenticated — retrying...');
+      }
 
       const response = await fetch(`/api/projects?limit=${limit}&page=1`, {
         headers: { Authorization: `Bearer ${token}` },

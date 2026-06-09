@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/hooks/use-session';
+import { useSessionStore } from '@/store/session-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type ThreadRow = {
@@ -16,17 +17,23 @@ export type ThreadRow = {
 };
 
 export function useMyThreads(limit = 50, enabled = true, projectId?: string | null) {
+  const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: [...queryKeys.myThreads, { limit, projectId: projectId || null }] as const,
-    enabled,
+    enabled: enabled && isAuthenticated,
+    staleTime: 0,
+    gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<ThreadRow[]> => {
-      const session = await getSession();
-      if (!session.user) return [];
+      const { user } = await getSession();
+      if (!user?.id) {
+        throw new Error('Not authenticated — retrying...');
+      }
 
       let q = supabase
         .from('threads')
         .select('id,title,project_id,workspace_id,metadata,created_at,updated_at')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
 
       if (projectId) q = q.eq('project_id', projectId);
