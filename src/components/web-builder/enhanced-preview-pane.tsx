@@ -20,7 +20,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SandpackProvider, SandpackPreview, SandpackLayout } from '@codesandbox/sandpack-react';
+import { SandpackProvider, SandpackPreview } from '@codesandbox/sandpack-react';
 
 interface EnhancedPreviewPaneProps {
   height?: string;
@@ -396,20 +396,18 @@ function SandpackPreviewShell({
       customSetup={{ dependencies: deps }}
       options={{ recompileMode: 'delayed', recompileDelay: 300, initMode: 'immediate' }}
     >
-      {/* SandpackLayout uses height:100% which collapses with flex parents.
-          Use absolute positioning to force Sandpack to fill available space. */}
-      <div className="relative flex-1 min-h-0">
-        <div className="absolute inset-0">
-          <SandpackLayout>
-            <SandpackPreview
-              style={{ height: '100%', width: '100%', border: 'none' }}
-              showNavigator={false}
-              showOpenInCodeSandbox={false}
-              showRefreshButton={false}
-              onLoad={onLoad}
-            />
-          </SandpackLayout>
-        </div>
+      {/* Bypass SandpackLayout — it uses height:100% which collapses in
+          flex parents. Instead, use a flex-1 container that forces the
+          SandpackPreview to fill the available space via absolute positioning. */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
+        <SandpackPreview
+          className="!absolute !inset-0"
+          style={{ height: '100%', width: '100%', border: 'none', position: 'absolute', inset: 0 }}
+          showNavigator={false}
+          showOpenInCodeSandbox={false}
+          showRefreshButton={false}
+          onLoad={onLoad}
+        />
       </div>
     </SandpackProvider>
   );

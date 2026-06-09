@@ -49,6 +49,9 @@ const initialState = {
 export const useSessionStore = create<SessionState>()(
   persist(
     (set) => ({
+      // Never rehydrate auth state from localStorage — it causes
+      // React Query hooks to fire before Supabase auth initializes,
+      // caching empty arrays that never get replaced.
       ...initialState,
 
       setUser: (user) =>
