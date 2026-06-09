@@ -20,34 +20,43 @@ export async function createProjectFromGeneration({
   const token = providedToken ?? (await getSession()).session?.access_token ?? null;
   if (!token) throw new Error('Please sign in again');
 
-  const res = await fetch('/api/projects', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...csrfHeader(),
-    },
-    body: JSON.stringify({
-      description: name.trim(),
-      stack,
-      prompt,
-      code,
-      metadata: { project_key: projectKey, created_from: createdFrom },
-    }),
-  });
+  // Abort after 15s — prevents infinite spinner on network errors
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
-  const payload = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(payload?.error || 'Failed to create project');
+  try {
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...csrfHeader(),
+      },
+      body: JSON.stringify({
+        description: name.trim(),
+        stack,
+        prompt,
+        code,
+        metadata: { project_key: projectKey, created_from: createdFrom },
+      }),
+      signal: controller.signal,
+    });
+
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(payload?.error || `Server error (${res.status})`);
+    }
+
+    if (!payload?.id) throw new Error('Failed to create project');
+
+    return {
+      id: payload.id as string,
+      projectKey,
+      durationMs: typeof payload.durationMs === 'number' ? payload.durationMs : undefined,
+    };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (!payload?.id) throw new Error('Failed to create project');
-
-  return {
-    id: payload.id as string,
-    projectKey,
-    durationMs: typeof payload.durationMs === 'number' ? payload.durationMs : undefined,
-  };
 }
 
 function starterCode(name: string) {

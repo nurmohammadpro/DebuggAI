@@ -7,7 +7,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
@@ -19,6 +19,7 @@ import {
   FolderKanban,
   Bug,
   MessageSquare,
+  Plus,
   TrendingUp,
   Clock,
   CheckCircle,
@@ -32,19 +33,23 @@ import {
 
 export function EnhancedDashboardHome() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useSessionStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Handle ?create=1 from sidebar "New Project" button
+  // Handle ?create=1 from sidebar "New Project" button.
+  // Must depend on searchParams so the effect re-fires on
+  // client-side navigation to the same page with ?create=1.
+  const createParam = searchParams.get('create');
   useEffect(() => {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get('create') !== '1') return;
+    if (createParam !== '1') return;
     setCreateOpen(true);
+    const url = new URL(window.location.href);
     url.searchParams.delete('create');
     const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
     router.replace(next);
-  }, [router]);
+  }, [createParam, router]);
 
   const { data: projects, isLoading: projectsLoading } = useMyProjects(10, true);
   const { data: threads } = useMyThreads(10, true);
@@ -117,6 +122,14 @@ export function EnhancedDashboardHome() {
               }`}
             >
               90D
+            </button>
+            {/* Direct "New Project" button — no navigation needed */}
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="min-h-11 px-4 py-2 text-sm sm:text-xs font-medium rounded-lg bg-[var(--ds-green)] text-white hover:bg-[var(--ds-green-bright)] transition-colors touch-manipulation flex items-center gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              New Project
             </button>
           </div>
         </div>
