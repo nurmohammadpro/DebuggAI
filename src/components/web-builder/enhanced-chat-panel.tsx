@@ -1120,7 +1120,8 @@ export function EnhancedChatPanel({
     updateStreamingAssistant((message) => ({
       ...message,
       content: displayContent,
-      status: 'streaming',
+      status: 'streaming', // Transition thinking→streaming on first chunk
+      fileCount: undefined, // Will be updated on done
     }));
   }, [updateStreamingAssistant]);
 
