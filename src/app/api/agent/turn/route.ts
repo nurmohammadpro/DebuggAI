@@ -220,6 +220,91 @@ export async function POST(req: NextRequest) {
         return results.map(r => `**${r.title}**\n${r.url}\n${r.content?.slice(0, 500)}`).join('\n\n');
       } catch { return `Search failed for "${query}".`; }
     },
+    onReadNetworkRequests: projectId ? async (filter, statusCode) => {
+      try {
+        const sandboxBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const res = await fetch(`${sandboxBase}/api/sandbox/status?projectId=${projectId}`, {
+          headers: serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {},
+        });
+        if (!res.ok) return 'Sandbox not running. Network request inspection unavailable.';
+        const { sandboxId } = await res.json().catch(() => ({}));
+        if (!sandboxId) return 'No sandbox running.';
+
+        const logRes = await fetch(`${sandboxBase}/api/sandbox/${sandboxId}/logs?filter=error&lines=100`, {
+          headers: serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {},
+        });
+        if (!logRes.ok) return 'Could not read sandbox logs.';
+        const text = await logRes.text();
+        const lines = text.split('\n').filter(Boolean);
+
+        // Filter for HTTP error patterns
+        let httpErrors = lines.filter(l =>
+          l.includes('GET http') || l.includes('POST http') ||
+          l.includes('fetch failed') || l.includes('ECONNREFUSED') ||
+          l.includes('ENOTFOUND') || l.includes('CORS')
+        );
+        if (filter) {
+          httpErrors = httpErrors.filter(l => l.toLowerCase().includes(filter.toLowerCase()));
+        }
+        if (statusCode) {
+          httpErrors = httpErrors.filter(l => l.includes(` ${statusCode} `) || l.includes(` ${statusCode}\n`));
+        }
+        const recent = httpErrors.slice(-10);
+        if (!recent.length) return 'No HTTP request errors detected. The app appears to be making successful requests.';
+        return recent.join('\n');
+      } catch {
+        return 'Network request inspection not available.';
+      }
+    } : undefined,
+    onGenerateImage: async (prompt, path, style) => {
+      try {
+        const replicateToken = process.env.REPLICATE_API_TOKEN;
+        const togetherKey = process.env.TOGETHER_API_KEY;
+        const apiKey = replicateToken || togetherKey;
+        if (!apiKey) return 'Image generation not configured. Set REPLICATE_API_TOKEN or TOGETHER_API_KEY.';
+
+        if (togetherKey) {
+          // Together AI — FLUX model
+          const fullPrompt = style
+            ? `${prompt} — ${style} style, high quality, professional, clean design`
+            : `${prompt} — high quality, professional, clean design`;
+
+          const res = await fetch('https://api.together.xyz/v1/images/generations', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${togetherKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'black-forest-labs/FLUX.1-schnell',
+              prompt: fullPrompt,
+              width: 1024, height: 768, steps: 4,
+            }),
+            signal: AbortSignal.timeout(30_000),
+          });
+          if (!res.ok) throw new Error(`Together API: ${res.status}`);
+          const data = await res.json();
+          const imageUrl = data?.data?.[0]?.url;
+          if (!imageUrl) throw new Error('No image URL in response');
+
+          // Download and save to project_files
+          const imgRes = await fetch(imageUrl);
+          const buffer = Buffer.from(await imgRes.arrayBuffer());
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+          const admin = createClient(supabaseUrl, serviceKey);
+
+          // Store the image as base64 in project_files (small enough for icons)
+          const base64 = buffer.toString('base64');
+          if (projectId) {
+            await admin.from('project_files').upsert({
+              project_id: projectId, path, content: base64,
+              status: 'modified', updated_at: new Date().toISOString(),
+            }, { onConflict: 'project_id,path' });
+          }
+          return `Image generated and saved to ${path}. Size: ${Math.round(buffer.length / 1024)}KB.`;
+        }
+        return 'Image generation via Replicate not yet implemented. Set TOGETHER_API_KEY for FLUX.1-schnell.';
+      } catch (err) {
+        return `Image generation failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    },
   };
 
   // ── P10: Auto-inject file context ───────────────────────────────────────

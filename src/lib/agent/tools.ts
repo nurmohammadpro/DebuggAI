@@ -119,6 +119,37 @@ export const AGENT_TOOLS = [
       },
     },
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'read_network_requests',
+      description: 'Inspect failed HTTP requests from the running app. Use this to diagnose API errors, CORS issues, or missing endpoints. Returns recent network error details.',
+      parameters: {
+        type: 'object',
+        properties: {
+          filter: { type: 'string', description: 'Optional: filter by URL pattern (e.g. "/api/users")' },
+          statusCode: { type: 'number', description: 'Optional: show only requests with this status code' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'generate_image',
+      description: 'Generate an image asset (hero, logo, icon, illustration) using AI. Saves to the project assets directory.',
+      parameters: {
+        type: 'object',
+        properties: {
+          prompt: { type: 'string', description: 'Image description, e.g. "modern SaaS hero illustration with blue gradient, abstract geometric shapes"' },
+          path: { type: 'string', description: 'Where to save the image, e.g. "public/hero.png" or "public/logo.svg"' },
+          style: { type: 'string', description: 'Optional style hint: "minimal", "gradient", "illustration", "abstract", "dark"' },
+        },
+        required: ['prompt', 'path'],
+      },
+    },
+  },
 ];
 
 // ── Tool executor types ──────────────────────────────────────────────────
@@ -146,6 +177,10 @@ export interface ProjectContext {
   onReadDevLogs?: (filter?: string, lines?: number) => Promise<string>;
   /** Callback for web search */
   onWebSearch?: (query: string) => Promise<string>;
+  /** Callback to read network requests from the running app */
+  onReadNetworkRequests?: (filter?: string, statusCode?: number) => Promise<string>;
+  /** Callback to generate an image */
+  onGenerateImage?: (prompt: string, path: string, style?: string) => Promise<string>;
 }
 
 // ── Executors ────────────────────────────────────────────────────────────
@@ -292,11 +327,29 @@ async function executeByName(
     case 'web_search': {
       const query = String(args.query || '');
       if (!query) return 'Error: query is required';
-      if (ctx.onWebSearch) {
-        return await ctx.onWebSearch(query);
+      if (ctx.onWebSearch) return await ctx.onWebSearch(query);
+      return `Web search not configured. Check docs for "${query}": https://nextjs.org/docs, https://tailwindcss.com/docs, https://react.dev`;
+    }
+
+    case 'read_network_requests': {
+      const filter = typeof args.filter === 'string' ? args.filter : undefined;
+      const statusCode = typeof args.statusCode === 'number' ? args.statusCode : undefined;
+      if (ctx.onReadNetworkRequests) {
+        return await ctx.onReadNetworkRequests(filter, statusCode);
       }
-      // Fallback: return guidance instead of failing
-      return `Web search is not configured on this server. Here's what I know about "${query}": Please check the official documentation at the relevant package's website. For Next.js: https://nextjs.org/docs. For Tailwind: https://tailwindcss.com/docs. For React: https://react.dev.`;
+      return 'Network request inspection not available (sandbox not connected). Check the browser dev tools Network tab for HTTP errors.';
+    }
+
+    case 'generate_image': {
+      const prompt = String(args.prompt || '');
+      const path = String(args.path || '');
+      const style = typeof args.style === 'string' ? args.style : undefined;
+      if (!prompt) return 'Error: prompt is required';
+      if (!path) return 'Error: path is required';
+      if (ctx.onGenerateImage) {
+        return await ctx.onGenerateImage(prompt, path, style);
+      }
+      return 'Image generation is not configured. Set REPLICATE_API_TOKEN or TOGETHER_API_KEY to enable AI image generation.';
     }
 
     default:
