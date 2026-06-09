@@ -40,7 +40,7 @@ export function WorkspaceDashboard() {
   const { loadFromProject, bumpPreviewNonce, files, setThreadId, setProjectId, currentThreadId, reset: resetGenerationStore } = useGenerationStore();
   const { openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
-  const [rightView, setRightView] = useState<V0RightView>('code');
+  const [rightView, setRightView] = useState<V0RightView>('preview');
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [workspaceSidebarOpen, setWorkspaceSidebarOpen] = useState(false);

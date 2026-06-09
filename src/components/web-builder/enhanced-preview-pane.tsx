@@ -396,15 +396,21 @@ function SandpackPreviewShell({
       customSetup={{ dependencies: deps }}
       options={{ recompileMode: 'delayed', recompileDelay: 300, initMode: 'immediate' }}
     >
-      <SandpackLayout>
-        <SandpackPreview
-          style={{ height: '100%', width: '100%', border: 'none' }}
-          showNavigator={false}
-          showOpenInCodeSandbox={false}
-          showRefreshButton={false}
-          onLoad={onLoad}
-        />
-      </SandpackLayout>
+      {/* SandpackLayout uses height:100% which collapses with flex parents.
+          Use absolute positioning to force Sandpack to fill available space. */}
+      <div className="relative flex-1 min-h-0">
+        <div className="absolute inset-0">
+          <SandpackLayout>
+            <SandpackPreview
+              style={{ height: '100%', width: '100%', border: 'none' }}
+              showNavigator={false}
+              showOpenInCodeSandbox={false}
+              showRefreshButton={false}
+              onLoad={onLoad}
+            />
+          </SandpackLayout>
+        </div>
+      </div>
     </SandpackProvider>
   );
 }
