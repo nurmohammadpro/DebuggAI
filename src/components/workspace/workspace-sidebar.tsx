@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
 import {
   Home,
+  Menu,
   Pencil,
   Bug,
   ListChecks,
@@ -567,11 +568,12 @@ export function WorkspaceSidebar({
     </>
   );
 
-  // ── Inline variant: always rendered, collapsible ──
+  // ── Inline variant: always rendered, collapsible, visible on all screens ──
   if (variant === 'inline') {
     return (
       <>
         <ConfirmDialogComponent />
+        {/* Desktop sidebar — always visible on md+ */}
         <aside
           className={`hidden md:flex shrink-0 flex-col h-full bg-[var(--app-panel)] border-r border-[var(--app-border)] transition-all duration-200 ${
             collapsed ? 'w-16' : 'w-72'
@@ -579,6 +581,24 @@ export function WorkspaceSidebar({
         >
           {desktopContent}
         </aside>
+        {/* Mobile — bottom tab bar for quick access */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-14 bg-[var(--app-panel)] border-t border-[var(--app-border)] flex items-center justify-around px-2 safe-area-inset-bottom">
+          {primaryItems.slice(0, 4).map(item => (
+            <Link key={item.key} href={item.href}
+              className={cn(
+                'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors',
+                item.active ? 'text-[var(--ds-green)]' : 'text-[var(--app-text-muted)]'
+              )}>
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+          <button onClick={() => setInternalMobileOpen(true)} aria-label="More"
+            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium text-[var(--app-text-muted)]">
+            <Menu className="h-5 w-5" />
+            <span>More</span>
+          </button>
+        </div>
         {mobileDrawer}
       </>
     );
