@@ -39,22 +39,49 @@ export async function requireUser(req: NextRequest) {
       method: req.method,
       hasCsrfCookie: !!req.cookies.get('csrf_token')?.value,
     });
-    return { user: null, token: null, errorResponse: new Response('Unauthorized', { status: 401 }) };
+    return { user: null, token: null, errorResponse: new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    }) };
   }
 
+  // getUser() makes an HTTP call to Supabase's auth server.
+  // Without a timeout, a slow/unreachable Supabase hangs the
+  // entire request indefinitely — producing the "Creating..."
+  // spinner forever in the client. We race against a 10s timer.
   const supabase = createSupabaseUserClient(token);
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    console.warn('[auth] requireUser: getUser failed', {
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Auth timeout — Supabase unreachable')), 10_000)
+      ),
+    ]);
+    const { data, error } = result;
+    if (error || !data?.user) {
+      console.warn('[auth] requireUser: getUser failed', {
+        url: req.nextUrl?.pathname,
+        method: req.method,
+        errorMessage: error?.message || 'no user returned',
+        errorStatus: (error as { status?: number } | null)?.status,
+        tokenPrefix: token.slice(0, 20) + '...',
+        tokenLength: token.length,
+      });
+      return { user: null, token: null, errorResponse: new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }) };
+    }
+    return { user: data.user, token, supabase, errorResponse: null };
+  } catch (err) {
+    console.error('[auth] requireUser: Supabase unreachable', {
       url: req.nextUrl?.pathname,
       method: req.method,
-      errorMessage: error?.message || 'no user returned',
-      errorStatus: (error as { status?: number } | null)?.status,
-      tokenPrefix: token.slice(0, 20) + '...',
-      tokenLength: token.length,
+      error: err instanceof Error ? err.message : String(err),
     });
-    return { user: null, token: null, errorResponse: new Response('Unauthorized', { status: 401 }) };
+    return { user: null, token: null, errorResponse: new Response(JSON.stringify({ error: 'Auth service unavailable — please try again' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    }) };
   }
-
-  return { user: data.user, token, supabase, errorResponse: null };
 }

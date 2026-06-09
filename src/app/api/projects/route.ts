@@ -46,64 +46,77 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
-  const auth = await requireUser(req);
-  if (auth.errorResponse) return auth.errorResponse;
 
-  const rateLimit = await withRateLimit(auth.user!.id, 'web_builder', { req });
-  if (!rateLimit.allowed) {
-    return NextResponse.json(rateLimit.body, { status: rateLimit.status });
+  try {
+    const auth = await requireUser(req);
+    if (auth.errorResponse) return auth.errorResponse;
+
+    const rateLimit = await withRateLimit(auth.user!.id, 'web_builder', { req });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(rateLimit.body, { status: rateLimit.status });
+    }
+
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const description =
+      typeof body.description === 'string' ? body.description.trim() : null;
+    const stack = typeof body.stack === 'string' ? body.stack : null;
+    const prompt = typeof body.prompt === 'string' ? body.prompt : null;
+    const code = typeof body.code === 'string' ? body.code : '';
+    const metadata = body.metadata && typeof body.metadata === 'object' ? body.metadata : {};
+
+    const projectId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+
+    // Insert project + generation in parallel — no Docker sandbox needed.
+    // Project creation is purely a database operation. Sandboxes are booted
+    // lazily when the user first opens the preview tab.
+    const { error: projectError } = await auth.supabase
+      .from('projects')
+      .insert({
+        id: projectId,
+        user_id: auth.user!.id,
+        name: description || 'Untitled Project',
+        description: prompt || description,
+        stack,
+        status: 'active',
+      });
+
+    if (projectError) {
+      console.error('[api/projects] Failed to insert project:', projectError);
+      return NextResponse.json({ error: projectError.message }, { status: 500 });
+    }
+
+    const { error: genError } = await auth.supabase
+      .from('generations')
+      .insert({
+        id: projectId,
+        user_id: auth.user!.id,
+        project_id: projectId,
+        code,
+        description,
+        stack,
+        prompt,
+        metadata,
+        version: 1,
+      });
+
+    if (genError) {
+      console.error('[api/projects] Failed to insert generation:', genError);
+      await auth.supabase.from('projects').delete().eq('id', projectId);
+      return NextResponse.json({ error: genError.message }, { status: 500 });
+    }
+
+    const durationMs = Date.now() - startedAt;
+    console.info('[api/projects] Created project', { projectId, durationMs });
+    return NextResponse.json({ id: projectId, durationMs }, { status: 201 });
+  } catch (err) {
+    console.error('[api/projects] Unexpected error:', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Internal server error' },
+      { status: 500 },
+    );
   }
-
-  const body = await req.json().catch(() => null);
-  if (!body || typeof body !== 'object') {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const description =
-    typeof body.description === 'string' ? body.description.trim() : null;
-  const stack = typeof body.stack === 'string' ? body.stack : null;
-  const prompt = typeof body.prompt === 'string' ? body.prompt : null;
-  const code = typeof body.code === 'string' ? body.code : '';
-  const metadata = body.metadata && typeof body.metadata === 'object' ? body.metadata : {};
-
-  // To preserve existing `?project=<uuid>` behavior, we create a project whose id equals
-  // the first generation id. New versions will reference generations.project_id.
-  const projectId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-
-  const { error: projectError } = await auth.supabase
-    .from('projects')
-    .insert({
-      id: projectId,
-      user_id: auth.user!.id,
-      name: description || 'Untitled Project',
-      description: prompt || description,
-      stack,
-      status: 'active',
-    });
-
-  if (projectError) return NextResponse.json({ error: projectError.message }, { status: 500 });
-
-  const { error: genError } = await auth.supabase
-    .from('generations')
-    .insert({
-      id: projectId,
-      user_id: auth.user!.id,
-      project_id: projectId,
-      code,
-      description,
-      stack,
-      prompt,
-      metadata,
-      version: 1,
-    });
-
-  if (genError) {
-    // Best-effort compensation: avoid leaving orphaned canonical projects
-    // when generation creation fails after project row insertion.
-    await auth.supabase.from('projects').delete().eq('id', projectId);
-    return NextResponse.json({ error: genError.message }, { status: 500 });
-  }
-
-  const durationMs = Date.now() - startedAt;
-  return NextResponse.json({ id: projectId, durationMs }, { status: 201 });
 }
