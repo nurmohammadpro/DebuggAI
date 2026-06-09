@@ -950,6 +950,7 @@ export function EnhancedChatPanel({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [toolEvents, setToolEvents] = useState<ToolEvent[]>([]);
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
   const [builderMode, setBuilderMode] = useState<BuilderMode>('auto');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1123,7 +1124,7 @@ export function EnhancedChatPanel({
     }));
   }, [updateStreamingAssistant]);
 
-  const { generate, ensureThreadId, cancel } = useGeneration({
+  const { generate, agentTurn, ensureThreadId, cancel } = useGeneration({
     onChunk: appendStreamingChunk,
     onDone: async () => {
       setIsLoading(false);
@@ -1210,6 +1211,7 @@ export function EnhancedChatPanel({
     setSidebarCollapsed(true);
     resetCodeBlocks();
     setHasSentFirstMessage(true);
+    setToolEvents([]); // Reset tool events for new agent turn
 
     const text = input.trim();
     setInput('');
@@ -1267,11 +1269,22 @@ export function EnhancedChatPanel({
         fullPrompt = `${text}\n\n--- CURRENT PROJECT FILES ---\n${truncated}\n--- END PROJECT FILES ---\n\nApply the changes above to the existing project. Return complete file blocks for every changed file using the // File: path format.`;
       }
 
-      await generate({
-        prompt: fullPrompt,
-        persistUserMessage: false,
-        generationDirective: buildGenerationDirective(builderMode, hasExistingFiles),
-      });
+      // Try agent loop first (tool-calling, surgical edits).
+      // Falls back to single-shot generate if /api/agent/turn returns 404.
+      const toolEventsAccum: ToolEvent[] = [];
+      const agentResult = await agentTurn(
+        { prompt: fullPrompt, persistUserMessage: false, generationDirective: buildGenerationDirective(builderMode, hasExistingFiles) },
+        (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
+      );
+
+      if (agentResult === null) {
+        // Agent route not available — fall back to single-shot
+        await generate({
+          prompt: fullPrompt,
+          persistUserMessage: false,
+          generationDirective: buildGenerationDirective(builderMode, hasExistingFiles),
+        });
+      }
     } catch (error) {
       console.error('Generation error:', error);
       toast.error(error instanceof Error ? error.message : 'Generation failed');

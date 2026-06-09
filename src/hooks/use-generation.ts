@@ -554,6 +554,173 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError]
   );
 
+  /**
+   * Agent turn — tool-calling loop via /api/agent/turn SSE stream.
+   * Parses tool_call/tool_result/message events and accumulates files.
+   */
+  const agentTurn = useCallback(
+    async (request: GenerationRequest, onToolEvent?: (evt: ToolEvent) => void) => {
+      setIsLoading(true);
+      setError(null);
+      resetAccumulated();
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders) throw new Error('Unauthorized: please sign in again');
+
+        const threadId = await ensureThread();
+        const res = await fetch('/api/agent/turn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            projectId: currentProjectId,
+            prompt: request.prompt,
+            history: request.history || [],
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok && res.status !== 404) {
+          const err = await res.text().catch(() => '');
+          throw new Error(err || `Agent turn failed (${res.status})`);
+        }
+
+        // 404 = agent route not deployed → fallback to regular generate
+        if (res.status === 404) return null;
+
+        if (!res.body) throw new Error('No response body');
+
+        // Parse SSE: event: tool_call | tool_result | message | error | done
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let accumulated = '';
+        let eventName = 'message';
+        let dataLines: string[] = [];
+
+        const flushEvent = () => {
+          if (!dataLines.length) return;
+          const raw = dataLines.join('\n');
+          dataLines = [];
+          try {
+            const parsed = JSON.parse(raw);
+
+            if (eventName === 'tool_call') {
+              const evt: ToolEvent = { type: 'tool_call', id: parsed.id, name: parsed.name, args: parsed.args || {} };
+              onToolEvent?.(evt);
+            } else if (eventName === 'tool_result') {
+              const evt: ToolEvent = { type: 'tool_result', tool_call_id: parsed.tool_call_id, output: parsed.output, is_error: parsed.is_error };
+              onToolEvent?.(evt);
+            } else if (eventName === 'message') {
+              if (parsed.content) {
+                accumulated += parsed.content;
+                appendAccumulated(parsed.content);
+                onChunk?.(parsed.content);
+              }
+            } else if (eventName === 'error') {
+              throw new Error(parsed.message || 'Agent error');
+            }
+          } catch (err) {
+            if (err instanceof Error && err.message !== 'Agent error') {
+              // Parse error, skip
+            } else {
+              throw err;
+            }
+          }
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const rawLine of lines) {
+            const line = rawLine.replace(/\r$/, '');
+            if (!line) { flushEvent(); eventName = 'message'; continue; }
+            if (line.startsWith(': ping')) continue;
+            if (line.startsWith('event: ')) { eventName = line.slice(7).trim() || 'message'; continue; }
+            if (line.startsWith('data: ')) { dataLines.push(line.slice(6)); continue; }
+          }
+        }
+        flushEvent();
+
+        // Build virtual files from accumulated text
+        const baseFiles = useGenerationStore.getState().files || undefined;
+        const virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
+
+        if (Object.keys(virtualFiles.files).length === 0) {
+          throw new Error('No code found in agent response');
+        }
+
+        const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
+        const serialized = serializeVirtualFilesWrapper(virtualFiles);
+
+        useGenerationStore.setState({
+          files: virtualFiles,
+          activeFilePath: virtualFiles.entryPath,
+        });
+
+        setCurrentCode(entryContent);
+        addVersion(serialized, 'Generated via agent');
+
+        // Persist to Supabase
+        try {
+          if (currentProjectId) {
+            await supabase
+              .from('generations')
+              .update({ code: serialized })
+              .eq('id', currentProjectId);
+          } else {
+            const res = await fetch('/api/projects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({
+                code: serialized,
+                prompt: request.prompt,
+                description: request.prompt.slice(0, 50),
+                stack: null,
+                metadata: {},
+              }),
+            });
+            if (res.ok) {
+              const j = await res.json().catch(() => ({}));
+              if (j?.id) {
+                setProjectId(j.id);
+                try {
+                  await fetch(`/api/threads/${threadId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    body: JSON.stringify({ projectId: j.id }),
+                  });
+                } catch {}
+              }
+            }
+          }
+          await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
+        } catch (saveError) {
+          console.error('Failed to persist agent generation:', saveError);
+        }
+
+        onDone?.(serialized);
+        return serialized;
+      } catch (err) {
+        const errorObj = err instanceof Error ? err : new Error('Agent turn failed');
+        setError(errorObj);
+        onError?.(errorObj);
+        throw errorObj;
+      } finally {
+        setIsLoading(false);
+        abortRef.current = null;
+      }
+    },
+    [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError, currentProjectId, ensureThread, setProjectId, queryClient],
+  );
+
   const cancel = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -561,6 +728,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
   return {
     generate,
+    agentTurn,
     generateFromTemplate,
     debug,
     isLoading,
@@ -569,3 +737,5 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     ensureThreadId: ensureThread,
   };
 }
+
+type ToolEvent = { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> } | { type: 'tool_result'; tool_call_id: string; output: string; is_error?: boolean };
