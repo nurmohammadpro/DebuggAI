@@ -68,8 +68,8 @@ export function UnifiedLayout({
           }
         />
 
-        {/* Content */}
-        <div className="flex-1 min-h-0 overflow-auto">
+        {/* Content — scrollable, no visible scrollbar */}
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {children}
         </div>
       </main>

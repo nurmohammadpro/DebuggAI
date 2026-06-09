@@ -124,11 +124,14 @@ export async function proxy(request: NextRequest) {
       }
     );
 
-    const { data } = await supabase.auth.getUser();
+    // getSession() reads the auth cookie without an HTTP call —
+    // avoids redirect loops when Supabase is slow or the token
+    // refresh endpoint is temporarily unavailable.
+    const { data: sessionData } = await supabase.auth.getSession();
 
-    if (!data?.user) {
+    if (!sessionData?.session) {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
   }
