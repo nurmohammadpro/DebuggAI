@@ -9,8 +9,6 @@ const PUBLIC_PREFIXES = ['/api/', '/_next/', '/favicon.ico'];
 function buildContentSecurityPolicy(appOrigin: string): string {
   return [
     "default-src 'self'",
-    // Next.js + Monaco need eval/inline during the editor runtime.
-    // Monaco workers are created from blob: URLs and load worker scripts from jsDelivr.
     "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
     "script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
@@ -27,12 +25,17 @@ function buildContentSecurityPolicy(appOrigin: string): string {
       'https://cloudflareinsights.com',
       'https://*.cloudflareinsights.com',
       'https://cdn.jsdelivr.net',
+      'https://*.codesandbox.io',
+      'https://*.sandpack.codesandbox.io',
+      'https://prod-packager-packages.codesandbox.io',
+      'https://aiwi8rnkp5.execute-api.eu-west-1.amazonaws.com',
       'ws://localhost:*',
       'wss://*.supabase.co',
     ].join(' '),
     "worker-src 'self' blob:",
-    `frame-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
-    `child-src 'self' http://localhost:* ${appOrigin} blob:`.trim(),
+    // Sandpack runs in cross-origin iframes — must allow codesandbox.io origins
+    `frame-src 'self' http://localhost:* ${appOrigin} https://*.codesandbox.io https://*.sandpack.codesandbox.io blob:`.trim(),
+    `child-src 'self' http://localhost:* ${appOrigin} https://*.codesandbox.io https://*.sandpack.codesandbox.io blob:`.trim(),
     "frame-ancestors 'self'",
   ].join('; ');
 }
@@ -66,13 +69,12 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  // Content-Security-Policy
+  // Content-Security-Policy — enforcing mode only.
+  // (Removed Report-Only to avoid duplicate violation logs.)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const appOrigin = appUrl ? new URL(appUrl).origin : '';
   const contentSecurityPolicy = buildContentSecurityPolicy(appOrigin);
-
   response.headers.set('Content-Security-Policy', contentSecurityPolicy);
-  response.headers.set('Content-Security-Policy-Report-Only', contentSecurityPolicy);
 
   // Set CSRF token cookie on every response that doesn't already have one.
   // The client reads this cookie and sends it back as an X-CSRF-Token header on
