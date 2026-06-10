@@ -91,6 +91,11 @@ export function EnhancedPreviewPane({
     };
 
     // Detect npm packages from import statements
+    // Skip react, react-dom, @types/react, @types/react-dom — already provided by the Sandpack template.
+    // Using 'latest' or a different version creates a duplicate React instance,
+    // causing "ReactCurrentDispatcher" errors when the template-bundled react-dom
+    // can't find the correct React internals.
+    const TEMPLATE_PROVIDED = new Set(['react', 'react-dom', '@types/react', '@types/react-dom']);
     const detectDeps = (code: string) => {
       const re = /from\s+['"]([^'"]+)['"]/g;
       let m: RegExpExecArray | null;
@@ -98,7 +103,11 @@ export function EnhancedPreviewPane({
         const dep = m[1];
         if (!dep.startsWith('.') && !dep.startsWith('/')) {
           const pkg = dep.split('/')[0]!;
-          if (!deps[pkg]) deps[pkg] = 'latest';
+          // Normalize scoped packages (e.g. @types/react → @types/react)
+          const scoped = dep.startsWith('@') ? dep.split('/').slice(0, 2).join('/') : pkg;
+          if (!TEMPLATE_PROVIDED.has(scoped) && !deps[scoped]) {
+            deps[scoped] = 'latest';
+          }
         }
       }
     };
@@ -200,8 +209,8 @@ export function EnhancedPreviewPane({
       }
     }
 
-    if (!deps['react']) deps['react'] = '^18.3.1';
-    if (!deps['react-dom']) deps['react-dom'] = '^18.3.1';
+    // react and react-dom are already provided by the Sandpack template —
+    // do NOT add them as explicit deps (would cause version conflicts).
 
     const template: 'react' | 'react-ts' = isTs ? 'react-ts' : 'react';
     return { sandpackFiles: result, sandpackTemplate: template, dependencies: deps };
