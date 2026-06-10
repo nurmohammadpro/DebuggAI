@@ -132,9 +132,26 @@ export function EnhancedPreviewPane({
         put('/App.tsx', file.content);
       } else if (normalized === 'app/page.tsx' || normalized === 'app/page.jsx') {
         let code = file.content;
+        // Strip 'use client' — Sandpack is client-only
         code = code.replace(/^['"]use client['"];?\s*\n?/gm, '');
-        code = code.replace(/export default function (\w+)/, 'export default function App');
-        code = code.replace(/export default function page/gi, 'export default function App');
+        // Remove Next.js metadata exports
+        code = code.replace(/export\s+(?:const|let)\s+metadata[\s\S]*?;?\n/gm, '');
+        code = code.replace(/export\s+(?:const|let)\s+generateMetadata[\s\S]*?\};[\s\S]*?\};?\n/gm, '');
+        // Normalize all export patterns to ensure a renderable default export:
+        // Named function: export default function Page() → export default function App()
+        code = code.replace(/export\s+default\s+function\s+(?!App\b)(\w+)/g, 'export default function App');
+        // Class: export default class Page → export default class App
+        code = code.replace(/export\s+default\s+class\s+(?!App\b)(\w+)/g, 'export default class App');
+        // Variable: export default const Page = → const Page = ...
+        // then the existing `export default Page` line stays
+        code = code.replace(/export\s+default\s+(const|let)\s+(\w+)/g, (_, kw, name) => `${kw} ${name}`);
+        // If no default export exists, find the component name and add one
+        if (!/export\s+default\s/.test(code)) {
+          const fnMatch = code.match(/(?:export\s+)?function\s+(\w+)/);
+          const constMatch = code.match(/(?:export\s+)?const\s+(\w+)\s*=\s*(?:\(|React\.memo)/);
+          const compName = fnMatch?.[1] || constMatch?.[1] || 'Page';
+          code += `\nexport default ${compName};\n`;
+        }
         put('/App.tsx', code);
       } else if (normalized === 'src/index.tsx' || normalized === 'src/index.jsx') {
         put('/index.tsx', file.content);
