@@ -27,7 +27,7 @@ export function StackSelector({ children }: StackSelectorProps) {
   const [projectName, setProjectName] = useState('my-app');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { generate } = useGeneration({
+  const { generate, generateFromTemplate } = useGeneration({
     onDone: () => {
       setIsGenerating(false);
       setOpen(false);
@@ -53,18 +53,29 @@ export function StackSelector({ children }: StackSelectorProps) {
 
     setIsGenerating(true);
 
+    const stack = WEB_BUILDER_STACKS.find((s) => s.id === selectedStack);
+    const featuresList = selectedFeatures.map((f) => {
+      const feature = COMMON_FEATURES.find((cf) => cf.id === f);
+      return feature?.label || f;
+    });
+
     try {
-      // Next.js only: generate via the LLM path (streaming) so results match the user's prompt/features.
-      const featuresText =
-        selectedFeatures.length > 0
-          ? `\n\nInclude these features:\n- ${selectedFeatures.join('\n- ')}`
-          : '';
-      await generate({
-        prompt:
-          `Create a production-ready Next.js App Router project named "${projectName.trim()}".` +
-          `${featuresText}`,
-        persistUserMessage: true,
-      });
+      if (stack?.hasInstantTemplate) {
+        // Non-Next.js stacks — instant template, no LLM call
+        await generateFromTemplate(selectedStack, featuresList, projectName.trim());
+      } else {
+        // Next.js — full LLM generation
+        const featuresText =
+          selectedFeatures.length > 0
+            ? `\n\nInclude these features:\n- ${featuresList.join('\n- ')}`
+            : '';
+        await generate({
+          prompt:
+            `Create a production-ready Next.js App Router project named "${projectName.trim()}".` +
+            `${featuresText}`,
+          persistUserMessage: true,
+        });
+      }
     } catch (error) {
       console.error('Generation error:', error);
     }

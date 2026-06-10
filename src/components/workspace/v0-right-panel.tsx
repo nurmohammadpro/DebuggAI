@@ -47,6 +47,8 @@ export function V0RightPanel({
   onSave,
 }: V0RightPanelProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [previewEverActivated, setPreviewEverActivated] = useState(false);
+  const [codeEverActivated, setCodeEverActivated] = useState(false);
   const { bumpPreviewNonce, files } = useGenerationStore();
   const sandbox = useSandbox();
   const lastFileSnapshot = useRef<string>('');
@@ -56,8 +58,15 @@ export function V0RightPanel({
 
   useEffect(() => { sandboxRef.current = sandbox; }, [sandbox]);
 
-  // Docker sandbox — best-effort background only
+  // Track first activation of each view — defer heavy init until needed
   useEffect(() => {
+    if (activeView === 'preview' && !previewEverActivated) setPreviewEverActivated(true);
+    if (activeView === 'code' && !codeEverActivated) setCodeEverActivated(true);
+  }, [activeView, previewEverActivated, codeEverActivated]);
+
+  // Docker sandbox — best-effort background only, deferred until preview first activated
+  useEffect(() => {
+    if (!previewEverActivated) return;
     if (!files || Object.keys(files.files).length === 0) return;
     if (dockerUnavailableRef.current) return;
 
@@ -87,7 +96,7 @@ export function V0RightPanel({
         if (!id) dockerUnavailableRef.current = true;
       });
     }
-  }, [files]);
+  }, [files, previewEverActivated]);
 
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
@@ -170,24 +179,51 @@ export function V0RightPanel({
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {activeView === 'preview' ? (
-          <EnhancedPreviewPane
-            height="100%"
-            className="flex-1 min-h-0 border-0 rounded-none"
-            chromeless
-            sandboxUrl={sandbox.previewUrl}
-            sandboxError={sandbox.error}
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <WorkspaceEditor
-            editorView="code"
-            showToolbar={false}
-            showFileTree
-            onEditorViewChange={(view) => onViewChange(view as V0RightView)}
-          />
+      {/* Content — both panels mount once activated and stay in DOM.
+           visibility: hidden preserves iframe/editor state across tab switches. */}
+      <div className="flex-1 min-h-0 relative">
+        {!previewEverActivated && !codeEverActivated && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--app-bg)]">
+            <span className="text-[11px] text-[var(--app-text-dim)]">
+              Select a view to begin
+            </span>
+          </div>
+        )}
+        {previewEverActivated && (
+          <div
+            className="absolute inset-0 flex flex-col"
+            style={{
+              visibility: activeView === 'preview' ? 'visible' : 'hidden',
+              pointerEvents: activeView === 'preview' ? 'auto' : 'none',
+            }}
+            aria-hidden={activeView !== 'preview'}
+          >
+            <EnhancedPreviewPane
+              height="100%"
+              className="flex-1 min-h-0 border-0 rounded-none"
+              chromeless
+              sandboxUrl={sandbox.previewUrl}
+              sandboxError={sandbox.error}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        )}
+        {codeEverActivated && (
+          <div
+            className="absolute inset-0 flex flex-col"
+            style={{
+              visibility: activeView === 'code' ? 'visible' : 'hidden',
+              pointerEvents: activeView === 'code' ? 'auto' : 'none',
+            }}
+            aria-hidden={activeView !== 'code'}
+          >
+            <WorkspaceEditor
+              editorView="code"
+              showToolbar={false}
+              showFileTree
+              onEditorViewChange={(view) => onViewChange(view as V0RightView)}
+            />
+          </div>
         )}
       </div>
     </div>

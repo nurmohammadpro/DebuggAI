@@ -76,6 +76,15 @@ const TEMPLATES: PromptTemplate[] = [
     icon: 'FileText',
   },
 
+  {
+    id: 'agency-landing',
+    title: 'Agency Landing',
+    description: 'Digital agency portfolio with case studies and services showcase',
+    prompt: 'Build a digital agency landing page with: a full-screen hero with animated headline and background video placeholder, a services section with 4 service cards (Design, Development, Strategy, Marketing) each with an icon and hover effect, a case studies grid with project cards showing before/after, a client logos marquee, a team section with 4 profile cards, and a contact CTA section. Use a sophisticated dark color palette with bold accent colors.',
+    category: 'landing-pages',
+    tags: ['agency', 'portfolio', 'case-studies', 'team', 'marquee'],
+    icon: 'Globe',
+  },
   // Dashboards
   {
     id: 'analytics-dashboard',
@@ -94,6 +103,15 @@ const TEMPLATES: PromptTemplate[] = [
     category: 'dashboards',
     tags: ['sidebar', 'crud', 'table', 'search', 'paginate'],
     icon: 'Settings',
+  },
+  {
+    id: 'financial-dashboard',
+    title: 'Financial Dashboard',
+    description: 'Personal finance tracker with spending charts and budget overview',
+    prompt: 'Create a financial dashboard with: a net worth summary card at top, a monthly income vs expenses bar chart, a spending breakdown by category (pie or donut chart), a recent transactions list with search/filter by category, a savings goal progress bar, and a budget vs actual comparison table. Use green for income, red for expenses, clean financial typography.',
+    category: 'dashboards',
+    tags: ['finance', 'charts', 'transactions', 'budget', 'spending'],
+    icon: 'CreditCard',
   },
   {
     id: 'project-board',
@@ -125,6 +143,24 @@ const TEMPLATES: PromptTemplate[] = [
     icon: 'FileText',
   },
   {
+    id: 'blog-platform',
+    title: 'Blog Platform',
+    description: 'Full blog with articles, categories, authors, and newsletter',
+    prompt: 'Build a blog platform with: a hero section featuring the latest article, a responsive article grid with cards (image, category badge, title, excerpt, author avatar, date), category filter tabs, a sidebar with popular posts and newsletter signup, an individual article page with rich typography and share buttons, and a search page with results. Use editorial-inspired design with clean typography.',
+    category: 'apps',
+    tags: ['blog', 'articles', 'newsletter', 'search', 'editorial'],
+    icon: 'BookOpen',
+  },
+  {
+    id: 'social-feed',
+    title: 'Social Feed',
+    description: 'Social media feed with posts, likes, comments, and profiles',
+    prompt: 'Create a social feed app with: a post composer with text and image upload, a feed of posts with user avatars, like and comment counts, timestamps, expandable comment sections, a sidebar with trending topics/hashtags, user profile pages with bio and post history, and a notification bell with dropdown. Use a clean social-first design with card-based layout.',
+    category: 'apps',
+    tags: ['social', 'feed', 'posts', 'comments', 'profiles'],
+    icon: 'Heart',
+  },
+  {
     id: 'chat-app',
     title: 'Chat Application',
     description: 'Real-time chat interface with channels and DMs',
@@ -154,6 +190,24 @@ const TEMPLATES: PromptTemplate[] = [
     icon: 'Image',
   },
   {
+    id: 'marketplace',
+    title: 'Multi-Vendor Marketplace',
+    description: 'Marketplace with vendor stores, search, and reviews',
+    prompt: 'Build a marketplace homepage with: a hero search bar with category suggestions, featured vendor store cards with ratings and product count, trending products grid, category browse section with icon links, a deals/offers carousel with countdown timers, and a "become a seller" CTA banner. Use a vibrant marketplace design with clear product photography placeholders.',
+    category: 'ecommerce',
+    tags: ['marketplace', 'vendors', 'search', 'deals', 'categories'],
+    icon: 'Store',
+  },
+  {
+    id: 'restaurant-menu',
+    title: 'Restaurant Menu',
+    description: 'Online restaurant menu with categories, cart, and ordering',
+    prompt: 'Create a restaurant ordering page with: a cover photo hero with restaurant name and rating, a category navigation (Starters, Mains, Desserts, Drinks) that scrolls to section, menu item cards with photo, name, description, price, and add-to-order button, a floating cart button with item count badge, a cart sidebar with order summary and checkout button, and dietary labels (GF, V, DF) on items. Use a warm, appetizing color palette.',
+    category: 'ecommerce',
+    tags: ['restaurant', 'menu', 'food', 'cart', 'ordering'],
+    icon: 'Coffee',
+  },
+  {
     id: 'cart-checkout',
     title: 'Cart & Checkout',
     description: 'Shopping cart with multi-step checkout process',
@@ -172,6 +226,15 @@ const TEMPLATES: PromptTemplate[] = [
     category: 'auth',
     tags: ['login', 'register', 'oauth', 'reset', 'validation'],
     icon: 'UserCheck',
+  },
+  {
+    id: 'onboarding-flow',
+    title: 'User Onboarding',
+    description: 'Multi-step onboarding wizard with progress, tooltips, and welcome',
+    prompt: 'Build an onboarding flow with: a welcome screen with app value proposition and CTA, a 4-step setup wizard (Profile, Preferences, Notifications, Finish) with step indicator and back/next navigation, animated transitions between steps, input fields with inline validation and helpful tooltips, a progress percentage indicator, and a completion celebration screen with confetti animation. Use a friendly, guided design with ample whitespace.',
+    category: 'auth',
+    tags: ['onboarding', 'wizard', 'steps', 'tooltips', 'welcome'],
+    icon: 'Star',
   },
   {
     id: 'profile-settings',

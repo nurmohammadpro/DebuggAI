@@ -2,6 +2,7 @@
 
 import { useGenerationStore } from '@/store/generation-store';
 import { cn } from '@/lib/utils';
+import { getPinnedVersion } from '@/lib/sandpack/pinned-deps';
 import {
   AlertCircle,
   Container,
@@ -55,7 +56,7 @@ export function EnhancedPreviewPane({
   onRefresh,
   sandboxError = null,
 }: EnhancedPreviewPaneProps) {
-  const { lastError, setLastError, files, isGenerating } = useGenerationStore();
+  const { lastError, setLastError, files, isGenerating, currentProjectId } = useGenerationStore();
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [useDocker, setUseDocker] = useState(false);
@@ -106,7 +107,7 @@ export function EnhancedPreviewPane({
           // Normalize scoped packages (e.g. @types/react → @types/react)
           const scoped = dep.startsWith('@') ? dep.split('/').slice(0, 2).join('/') : pkg;
           if (!TEMPLATE_PROVIDED.has(scoped) && !deps[scoped]) {
-            deps[scoped] = 'latest';
+            deps[scoped] = getPinnedVersion(scoped);
           }
         }
       }
@@ -305,7 +306,7 @@ export function EnhancedPreviewPane({
           {sandboxError && showDocker ? (
             <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0">
-                <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} />
+                <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} projectId={currentProjectId} />
               </div>
               <div className="px-3 py-1.5 bg-[var(--app-danger-soft)] border-t border-[var(--app-danger)]/20 shrink-0">
                 <p className="text-[10px] text-[var(--app-danger)] flex items-center gap-1.5">
@@ -324,7 +325,7 @@ export function EnhancedPreviewPane({
           ) : showBuildingAnimation ? (
             <BuildingAnimation isGenerating={isGenerating} fileCount={hasFiles ? Object.keys(files?.files || {}).filter(p => files?.files?.[p]?.status !== 'deleted').length : 0} />
           ) : (
-            <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} />
+            <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} projectId={currentProjectId} />
           )}
         </div>
       </div>
@@ -434,11 +435,13 @@ function SandpackPreviewShell({
   template,
   deps,
   onLoad,
+  projectId,
 }: {
   files: Record<string, { code: string }> | undefined;
   template: 'react' | 'react-ts';
   deps: Record<string, string>;
   onLoad: () => void;
+  projectId?: string | null;
 }) {
   if (!files || Object.keys(files).length === 0) {
     return (
@@ -453,7 +456,7 @@ function SandpackPreviewShell({
 
   return (
     <SandpackProvider
-      key={JSON.stringify(Object.keys(files))}
+      key={projectId || 'new-project'}
       template={template}
       files={files}
       customSetup={{ dependencies: deps }}

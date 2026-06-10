@@ -54,6 +54,32 @@ export const WEB_BUILDER_STACKS = [
     name: 'Next.js (App Router)',
     description: 'Next.js App Router, TypeScript, Tailwind',
     icon: '▲',
+    sandpackTemplate: 'react-ts' as const,
+    hasInstantTemplate: false,
+  },
+  {
+    id: 'react-vite',
+    name: 'React + Vite (TypeScript)',
+    description: 'Vite, React 19, TypeScript, Tailwind — instant preview',
+    icon: '⚡',
+    sandpackTemplate: 'react-ts' as const,
+    hasInstantTemplate: true,
+  },
+  {
+    id: 'react-vite-js',
+    name: 'React + Vite (JavaScript)',
+    description: 'Vite, React 19, JavaScript, Tailwind — instant preview',
+    icon: '⚛️',
+    sandpackTemplate: 'react' as const,
+    hasInstantTemplate: true,
+  },
+  {
+    id: 'html-tailwind',
+    name: 'HTML + Tailwind',
+    description: 'Plain HTML/CSS with Tailwind CDN — fastest start',
+    icon: '🌐',
+    sandpackTemplate: 'static' as const,
+    hasInstantTemplate: true,
   },
 ] as const;
 
