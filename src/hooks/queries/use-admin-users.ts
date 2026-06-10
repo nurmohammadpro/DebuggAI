@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
+import { useSession } from '@/hooks/use-session';
 
 export type AdminUserRow = {
   id: string;
@@ -29,6 +30,8 @@ export function useAdminUsers(
   params: { page: number; limit: number; search?: string; plan?: string },
   enabled = true
 ) {
+  const { user: sessionUser } = useSession();
+
   const queryString = new URLSearchParams({
     page: String(params.page),
     limit: String(params.limit),
@@ -38,7 +41,7 @@ export function useAdminUsers(
 
   return useQuery({
     queryKey: queryKeys.adminUsers(queryString),
-    enabled,
+    enabled: enabled && !!sessionUser,
     queryFn: async (): Promise<AdminUsersResponse> => {
       const headers = await getAdminAuthHeaders();
       const res = await fetch(`/api/admin/users?${queryString}`, { headers });

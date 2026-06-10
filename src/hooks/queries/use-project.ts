@@ -2,13 +2,15 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
-import { getSession } from '@/hooks/use-session';
+import { getSession, useSession } from '@/hooks/use-session';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
 export function useProject(projectId: string | null, enabled = true) {
+  const { user: sessionUser } = useSession();
+
   return useQuery({
     queryKey: projectId ? queryKeys.project(projectId) : ['project', 'none'],
-    enabled: enabled && !!projectId,
+    enabled: enabled && !!projectId && !!sessionUser,
     queryFn: async (): Promise<GenerationRow | null> => {
       if (!projectId) return null;
       const { user, session } = await getSession();

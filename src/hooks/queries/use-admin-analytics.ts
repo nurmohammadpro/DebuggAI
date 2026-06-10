@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
+import { useSession } from '@/hooks/use-session';
 
 export type AdminAnalyticsData = {
   summary: {
@@ -28,9 +29,11 @@ export type AdminAnalyticsData = {
 };
 
 export function useAdminAnalytics(period: '7d' | '30d' | '90d', enabled = true) {
+  const { user: sessionUser } = useSession();
+
   return useQuery({
     queryKey: queryKeys.adminAnalytics(period),
-    enabled,
+    enabled: enabled && !!sessionUser,
     queryFn: async (): Promise<AdminAnalyticsData> => {
       const headers = await getAdminAuthHeaders();
       const res = await fetch(`/api/admin/analytics?period=${period}`, {

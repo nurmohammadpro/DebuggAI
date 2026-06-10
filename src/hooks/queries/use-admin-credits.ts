@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { getAdminAuthHeaders } from '@/hooks/queries/use-admin-auth';
+import { useSession } from '@/hooks/use-session';
 
 export type AdminCreditTx = {
   id: string;
@@ -31,6 +32,8 @@ export function useAdminCredits(
   params: { page: number; limit: number; type?: string | null },
   enabled = true
 ) {
+  const { user: sessionUser } = useSession();
+
   const queryString = new URLSearchParams({
     page: String(params.page),
     limit: String(params.limit),
@@ -39,7 +42,7 @@ export function useAdminCredits(
 
   return useQuery({
     queryKey: queryKeys.adminCredits(queryString),
-    enabled,
+    enabled: enabled && !!sessionUser,
     queryFn: async (): Promise<AdminCreditsResponse> => {
       const headers = await getAdminAuthHeaders();
       const res = await fetch(`/api/admin/credits?${queryString}`, { headers });

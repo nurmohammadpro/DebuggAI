@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/hooks/use-session';
+import { getSession, useSession } from '@/hooks/use-session';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type RunStepRow = {
@@ -44,9 +44,11 @@ export type ArtifactRow = {
 };
 
 export function useRunDetails(runId: string | undefined, enabled = true) {
+  const { user: sessionUser } = useSession();
+
   return useQuery({
     queryKey: [...queryKeys.runDetails(runId || 'missing')] as const,
-    enabled: enabled && !!runId,
+    enabled: enabled && !!runId && !!sessionUser,
     queryFn: async () => {
       const session = await getSession();
       if (!session.user) throw new Error('Not authenticated');

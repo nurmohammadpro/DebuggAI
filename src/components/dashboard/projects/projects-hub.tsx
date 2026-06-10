@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatDistanceToNowStrict } from 'date-fns';
 
@@ -17,13 +17,20 @@ import { RecentDebugSessions } from '@/components/dashboard/home/recent-debug-se
 import { RecentTransactions } from '@/components/dashboard/home/recent-transactions';
 import { RecentRuns } from '@/components/dashboard/home/recent-runs';
 import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
-import { FolderKanban, Bug, MessageSquare } from 'lucide-react';
+import { FolderKanban, Bug, MessageSquare, LayoutGrid, List, GripVertical } from 'lucide-react';
 
 export function ProjectsHub() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [stack, setStack] = useState('all');
   const [createOpen, setCreateOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Read view mode from localStorage after mount to avoid SSR hydration mismatch
+  useEffect(() => {
+    const saved = localStorage.getItem('debuggai.dashboard.viewMode') as 'grid' | 'list' | null;
+    if (saved === 'grid' || saved === 'list') setViewMode(saved);
+  }, []);
 
   const { data, isLoading, error, refetch } = useMyProjects(75, true);
   const { data: threads } = useMyThreads(50, true);
@@ -32,14 +39,19 @@ export function ProjectsHub() {
   const latestProject = (data || [])[0] || null;
   const latestThread = (threads || [])[0] || null;
 
+  const searchParams = useSearchParams();
+  const createHandledRef = useRef(false);
+
   useEffect(() => {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get('create') !== '1') return;
-    setCreateOpen(true);
-    url.searchParams.delete('create');
-    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
-    router.replace(next);
-  }, [router]);
+    if (searchParams.get('create') === '1' && !createHandledRef.current) {
+      createHandledRef.current = true;
+      setCreateOpen(true);
+      // Clean URL without triggering a full re-render
+      const url = new URL(window.location.href);
+      url.searchParams.delete('create');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
 
   const projects = useMemo(() => {
     const list = data || [];
@@ -107,7 +119,26 @@ export function ProjectsHub() {
             Projects, threads, and recent activity.
           </div>
         </div>
-        <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+        <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex items-center rounded-lg border border-[var(--app-border)] bg-[var(--app-panel)] p-0.5">
+            <button
+              onClick={() => { setViewMode('grid'); localStorage.setItem('debuggai.dashboard.viewMode', 'grid'); }}
+              className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[var(--app-accent)] text-white' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]'}`}
+              title="Grid view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => { setViewMode('list'); localStorage.setItem('debuggai.dashboard.viewMode', 'list'); }}
+              className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-[var(--app-accent)] text-white' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]'}`}
+              title="List view"
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+          <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-3">
@@ -224,17 +255,38 @@ export function ProjectsHub() {
                   })}
                 </div>
               </div>
-              <div className="overflow-hidden rounded-[8px] border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
-                {projects.map((p) => (
-                  <ProjectCard
-                    key={p.id}
-                    project={p}
-                    onDuplicate={onDuplicate}
-                    onDeleted={() => refetch()}
-                    onRenamed={() => refetch()}
-                  />
-                ))}
-              </div>
+              
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {projects.map((p) => (
+                    <ProjectCard
+                      key={p.id}
+                      project={p}
+                      viewMode="grid"
+                      onDuplicate={onDuplicate}
+                      onDeleted={() => refetch()}
+                      onRenamed={() => refetch()}
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      isDragging={false}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-[8px] border border-[var(--border-default)] divide-y divide-[var(--border-default)]">
+                  {projects.map((p) => (
+                    <ProjectCard
+                      key={p.id}
+                      project={p}
+                      viewMode="list"
+                      onDuplicate={onDuplicate}
+                      onDeleted={() => refetch()}
+                      onRenamed={() => refetch()}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

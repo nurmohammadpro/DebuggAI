@@ -305,8 +305,11 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                   }
                 }
               }
-              // Invalidate the projects query so the sidebar updates
-              await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
+              // Invalidate queries so the sidebar and dashboard update
+              await Promise.all([
+                queryClient.invalidateQueries({ queryKey: queryKeys.myProjects }),
+                queryClient.invalidateQueries({ queryKey: queryKeys.myThreads }),
+              ]);
             }
           } catch (saveError) {
             console.error('Failed to persist generation:', saveError);
@@ -439,7 +442,10 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 }
               }
           }
-          await queryClient.invalidateQueries({ queryKey: queryKeys.myProjects });
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: queryKeys.myProjects }),
+            queryClient.invalidateQueries({ queryKey: queryKeys.myThreads }),
+          ]);
         } catch (saveError) {
           console.error('Failed to persist template project:', saveError);
         }

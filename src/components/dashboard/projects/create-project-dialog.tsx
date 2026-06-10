@@ -1,6 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/queries/query-keys';
+import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Code2, Plus, Loader2 } from 'lucide-react';
@@ -26,6 +29,7 @@ export function CreateProjectDialog({
   const [name, setName] = useState('New Project');
   const [selectedStack, setSelectedStack] = useState<string>('nextjs');
   const [creating, setCreating] = useState(false);
+  const queryClient = useQueryClient();
 
   const stackMeta = useMemo(
     () => WEB_BUILDER_STACKS.find((s) => s.id === selectedStack) || null,
@@ -40,31 +44,70 @@ export function CreateProjectDialog({
 
     setCreating(true);
     try {
+      // getSession() internally waits up to 5s for the bootstrapper
       const { session } = await getSession();
-      if (!session?.user) {
+      if (!session?.access_token) {
         toast.error('Please sign in again');
         return;
       }
 
       const startedAt = performance.now();
-      const { id, durationMs } = await createProjectFromGeneration({
-        name: name.trim(),
-        stack: selectedStack,
-        prompt: `Create a Next.js App Router app: ${name.trim()}`,
-        createdFrom: 'dashboard-dialog',
-        token: session.access_token,
-      });
+      // Optimistically add to the cache so the sidebar/dashboard updates instantly
+      const optimisticId = `optimistic_${Date.now()}`;
+      try {
+        const now = new Date().toISOString();
+        const optimisticProject: GenerationRow = {
+          id: optimisticId,
+          code: undefined,
+          version: 1,
+          name: name.trim(),
+          description: name.trim(),
+          stack: selectedStack,
+          prompt: `Create a Next.js App Router app: ${name.trim()}`,
+          metadata: null,
+          created_at: now,
+          updated_at: now,
+        };
 
-      const clientDurationMs = Math.round(performance.now() - startedAt);
-      const serverDurationMs = typeof durationMs === 'number' ? Math.round(durationMs) : null;
-      toast.success(
-        serverDurationMs != null
-          ? `Project created in ${serverDurationMs}ms (server), ${clientDurationMs}ms total`
-          : `Project created in ${clientDurationMs}ms`
-      );
-      setOpen(false);
-      router.push(`/dashboard?project=${id}`);
+        // Update all queries matching the 'projects' prefix to handle different limits
+        queryClient.setQueriesData<GenerationRow[]>(
+          { queryKey: queryKeys.myProjects },
+          (prev) => [optimisticProject, ...(prev || [])]
+        );
+
+        const { id, durationMs } = await createProjectFromGeneration({
+          name: name.trim(),
+          stack: selectedStack,
+          prompt: `Create a Next.js App Router app: ${name.trim()}`,
+          createdFrom: 'dashboard-dialog',
+          token: session.access_token,
+        });
+
+        // Replace optimistic entry with real data
+        queryClient.setQueriesData<GenerationRow[]>(
+          { queryKey: queryKeys.myProjects },
+          (prev) => (prev || []).map((p) => p.id === optimisticId ? { ...p, id } : p)
+        );
+
+        const clientDurationMs = Math.round(performance.now() - startedAt);
+        const serverDurationMs = typeof durationMs === 'number' ? Math.round(durationMs) : null;
+        toast.success(
+          serverDurationMs != null
+            ? `Project created in ${serverDurationMs}ms (server), ${clientDurationMs}ms total`
+            : `Project created in ${clientDurationMs}ms`
+        );
+        setOpen(false);
+        router.push(`/dashboard?project=${id}`);
+      } catch (createErr) {
+        // Rollback optimistic entry on failure
+        queryClient.setQueriesData<GenerationRow[]>(
+          { queryKey: queryKeys.myProjects },
+          (prev) => (prev || []).filter((p) => p.id !== optimisticId)
+        );
+        throw createErr;
+      }
     } catch (e) {
+      console.error('[CreateProjectDialog] failed:', e);
       toast.error(e instanceof Error ? e.message : 'Failed to create project');
     } finally {
       setCreating(false);

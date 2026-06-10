@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 interface SessionState {
   user: User | null;
   isLoading: boolean;
+  isReady: boolean;
   error: Error | null;
 }
 
@@ -29,7 +30,8 @@ const listeners: Set<(state: SessionState) => void> = new Set();
 function deriveState(): SessionState {
   return {
     user: cachedSession?.user || null,
-    isLoading: false,
+    isLoading: !bootstrapperReady,
+    isReady: bootstrapperReady,
     error: cachedSessionError,
   };
 }
