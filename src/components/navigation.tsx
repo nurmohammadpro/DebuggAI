@@ -130,10 +130,13 @@ export function Navigation() {
 
           {/* Mobile Menu */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger className="md:hidden">
-              <Button variant="ghost" size="icon" aria-label="Toggle menu">
-                <Menu className="h-5 w-5" />
-              </Button>
+            <SheetTrigger
+              className="md:hidden"
+              render={
+                <Button variant="ghost" size="icon" aria-label="Toggle menu" />
+              }
+            >
+              <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="right" className="w-64 pt-12">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
