@@ -15,20 +15,49 @@ function getSupabaseAccessTokenFromCookie(req: NextRequest) {
   // Supabase SSR stores the session in a cookie named like:
   // sb-<project-ref>-auth-token
   // The value is a base64-encoded JSON object containing access_token, refresh_token, etc.
-  const cookies = req.cookies.getAll();
-  const authCookie = cookies.find((c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'));
-  if (!authCookie?.value) return null;
+  //
+  // Large sessions are chunked across multiple cookies:
+  //   sb-xxx-auth-token, sb-xxx-auth-token.0, sb-xxx-auth-token.1, ...
+  // We must reassemble chunks before decoding.
+  const allCookies = req.cookies.getAll();
 
-  let raw = authCookie.value;
-  if (raw.startsWith('base64-')) raw = raw.slice('base64-'.length);
+  // Find the base cookie key (the one ending with -auth-token, possibly with a chunk suffix)
+  const authCookies = allCookies.filter(
+    (c) => c.name.startsWith('sb-') && /-auth-token(?:\.\d+)?$/.test(c.name)
+  );
 
-  try {
-    const decoded = Buffer.from(raw, 'base64').toString('utf8');
-    const payload = JSON.parse(decoded) as { access_token?: string } | null;
-    return payload?.access_token || null;
-  } catch {
-    return null;
+  if (authCookies.length === 0) return null;
+
+  // Group by base key and reassemble chunks in order
+  const chunkGroups = new Map<string, Map<number, string>>();
+  for (const cookie of authCookies) {
+    const match = cookie.name.match(/^(sb-.+-auth-token)(?:\.(\d+))?$/);
+    if (!match) continue;
+    const baseKey = match[1]!;
+    const chunkIndex = match[2] ? parseInt(match[2], 10) : 0;
+    if (!chunkGroups.has(baseKey)) chunkGroups.set(baseKey, new Map());
+    chunkGroups.get(baseKey)!.set(chunkIndex, cookie.value);
   }
+
+  // Reassemble the first valid session
+  for (const [, chunks] of chunkGroups) {
+    const sorted = [...chunks.entries()].sort(([a], [b]) => a - b);
+    const raw = sorted.map(([, v]) => v).join('');
+
+    if (!raw) continue;
+    if (raw.startsWith('base64-')) {
+      const base64Part = raw.slice('base64-'.length);
+      try {
+        const decoded = Buffer.from(base64Part, 'base64').toString('utf8');
+        const payload = JSON.parse(decoded) as { access_token?: string } | null;
+        if (payload?.access_token) return payload.access_token;
+      } catch {
+        // try next group
+      }
+    }
+  }
+
+  return null;
 }
 
 export async function requireUser(req: NextRequest) {

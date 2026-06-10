@@ -110,6 +110,9 @@ export const useSessionStore = create<SessionState>()(
     }),
     {
       name: 'session-storage',
+      // Prevent rehydrating stale auth state from localStorage on page load.
+      // The SessionBootstrapper is the single source of truth for auth state.
+      skipHydration: true,
     }
   )
 );

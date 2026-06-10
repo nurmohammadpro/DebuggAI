@@ -54,7 +54,7 @@ export function WorkspaceDashboard() {
   const urlProjectId = searchParams.get('project');
   const urlThreadId = searchParams.get('thread');
   const effectiveProjectId = urlProjectId;
-  const { data: boot } = useProjectBoot(effectiveProjectId, !!effectiveProjectId);
+  const { data: boot, error: bootError, isLoading: bootLoading, refetch: refetchBoot } = useProjectBoot(effectiveProjectId, !!effectiveProjectId);
 
   // Derive a GenerationRow-compatible object for the rest of the component.
   // Memoized to prevent infinite re-render loops from effect dependencies.
@@ -229,10 +229,66 @@ export function WorkspaceDashboard() {
     );
   }
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) {
+    // Render nothing while the redirect effect fires.
+    // The effect above pushes /login when !isLoading && !isAuthenticated.
+    return (
+      <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
+        <div className="text-sm text-[var(--text-secondary)]">Redirecting to login...</div>
+      </div>
+    );
+  }
 
   if (!effectiveProjectId) {
-    return null;
+    return (
+      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center gap-3 bg-background">
+        <div className="text-sm font-medium text-[var(--text-primary)]">No project selected</div>
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="text-xs text-[var(--accent)] hover:underline"
+        >
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // Show project load error with retry
+  if (bootError && !boot) {
+    return (
+      <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center gap-3 bg-background">
+        <div className="text-sm font-medium text-[var(--text-primary)]">Failed to load project</div>
+        <div className="text-xs text-[var(--text-secondary)]">
+          {bootError instanceof Error ? bootError.message : 'Unknown error'}
+        </div>
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            onClick={() => refetchBoot()}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg bg-[var(--app-accent)] text-white hover:opacity-90 transition-opacity"
+          >
+            Retry
+          </button>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="text-xs text-[var(--text-secondary)] hover:underline"
+          >
+            Back to dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while boot data is being fetched
+  if (bootLoading && !boot) {
+    return (
+      <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
+        <div
+          className="animate-spin rounded-full h-8 w-8 border-b-2"
+          style={{ borderColor: 'var(--accent)' }}
+        />
+      </div>
+    );
   }
 
   const handleShare = () => setShareDialogOpen(true);
