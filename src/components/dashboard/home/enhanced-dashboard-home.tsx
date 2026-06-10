@@ -7,8 +7,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
@@ -32,24 +32,26 @@ import {
 } from 'lucide-react';
 
 export function EnhancedDashboardHome() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { user } = useSessionStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [createOpen, setCreateOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const createHandledRef = useRef(false);
 
   // Handle ?create=1 from sidebar "New Project" button.
   // Must depend on searchParams so the effect re-fires on
   // client-side navigation to the same page with ?create=1.
   const createParam = searchParams.get('create');
   useEffect(() => {
-    if (createParam !== '1') return;
-    setCreateOpen(true);
-    const url = new URL(window.location.href);
-    url.searchParams.delete('create');
-    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
-    router.replace(next);
-  }, [createParam, router]);
+    if (searchParams.get('create') === '1' && !createHandledRef.current) {
+      createHandledRef.current = true;
+      setCreateOpen(true);
+      // Clean URL without triggering a full re-render
+      const url = new URL(window.location.href);
+      url.searchParams.delete('create');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
 
   const { data: projects, isLoading: projectsLoading } = useMyProjects(10, true);
   const { data: threads } = useMyThreads(10, true);
