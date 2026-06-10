@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         await Promise.all([
           supabaseAdmin
             .from('credit_transactions')
-            .select('amount, source, created_at')
+            .select('amount, description, created_at')
             .gte('created_at', startIsoOrEpoch)
             .limit(20000),
           supabaseAdmin

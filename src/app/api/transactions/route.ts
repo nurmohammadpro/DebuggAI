@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   let query = auth.supabase
     .from('credit_transactions')
-    .select('id, amount, type, source, description, created_at', { count: 'exact' })
+    .select('id, amount, type, description, created_at', { count: 'exact' })
     .in('wallet_id', walletIds)
     .order('created_at', { ascending: false })
     .range((page - 1) * limit, page * limit - 1);

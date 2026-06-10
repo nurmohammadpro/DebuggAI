@@ -94,7 +94,7 @@ export async function deductCredits(
     wallet_id: walletId,
     amount: -check.required, // Negative for spent
     type: 'spent',
-    source: action,
+    metadata: { source: action },
     description: description || `Used ${action} feature`,
   });
 
@@ -135,7 +135,7 @@ export async function addCredits(
     wallet_id: walletId,
     amount,
     type: 'earned',
-    source,
+    metadata: { source },
     description,
   });
 
@@ -187,7 +187,7 @@ async function createWallet(userId: string): Promise<void> {
 export async function getTransactions(
   userId: string,
   limit = 50
-): Promise<Array<{ id: string; amount: number; type: string; source: string; description: string | null; created_at: string }>> {
+): Promise<Array<{ id: string; amount: number; type: string; description: string | null; created_at: string }>> {
   const { data: wallets } = await supabase
     .from('credit_wallets')
     .select('id')
@@ -199,10 +199,10 @@ export async function getTransactions(
 
   const { data } = await supabase
     .from('credit_transactions')
-    .select('id, amount, type, source, description, created_at')
+    .select('id, amount, type, description, created_at')
     .in('wallet_id', walletIds)
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  return (data as Array<{ id: string; amount: number; type: string; source: string; description: string | null; created_at: string }>) || [];
+  return (data as Array<{ id: string; amount: number; type: string; description: string | null; created_at: string }>) || [];
 }

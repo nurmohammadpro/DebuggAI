@@ -10,7 +10,6 @@ export type TransactionRow = {
   id: string;
   amount: number;
   type: 'earned' | 'spent' | 'refunded';
-  source: string;
   description: string | null;
   created_at: string;
 };
@@ -38,7 +37,7 @@ export function useMyTransactions(limit = 100, enabled = true) {
 
       const { data, error } = await supabase
         .from('credit_transactions')
-        .select('id, amount, type, source, description, created_at')
+        .select('id, amount, type, description, created_at')
         .eq('wallet_id', wallet.id)
         .order('created_at', { ascending: false })
         .limit(limit);
