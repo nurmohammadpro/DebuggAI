@@ -22,6 +22,7 @@ import {
   Eye,
   Crown,
 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface SettingsNavProps {
@@ -169,17 +170,21 @@ export function SettingsNav({ projectId }: SettingsNavProps) {
 
       {/* Pro Badge */}
       <div className="p-4 border-t">
-        <div className="flex items-center gap-2 p-3 rounded-[8px] bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-          <Crown className="w-4 h-4 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-foreground truncate">
-              Upgrade to Pro
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-foreground truncate">
+                  Upgrade to Pro
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Unlock all features
+                </div>
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Unlock all features
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

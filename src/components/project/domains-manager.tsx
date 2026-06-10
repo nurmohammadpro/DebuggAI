@@ -7,6 +7,11 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, CheckCircle, XCircle, Clock, Globe, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface Domain {
@@ -126,13 +131,10 @@ export function DomainsManager({ projectId }: DomainsManagerProps) {
             Add custom domains and configure SSL certificates
           </p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[8px] hover:bg-primary/90 transition-colors"
-        >
+        <Button onClick={() => setIsCreating(true)}>
           <Plus className="w-4 h-4" />
           Add Domain
-        </button>
+        </Button>
       </div>
 
       {/* Create Form */}
@@ -147,11 +149,13 @@ export function DomainsManager({ projectId }: DomainsManagerProps) {
       {/* Domains List */}
       <div className="space-y-4">
         {domains.length === 0 ? (
-          <div className="p-8 text-center border rounded-[8px] text-muted-foreground">
-            <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No custom domains configured</p>
-            <p className="text-sm mt-2">Add a custom domain to give your project a professional URL</p>
-          </div>
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No custom domains configured</p>
+              <p className="text-sm mt-2">Add a custom domain to give your project a professional URL</p>
+            </CardContent>
+          </Card>
         ) : (
           domains.map((domain) => (
             <DomainCard
@@ -200,85 +204,83 @@ interface DomainCardProps {
 }
 
 function DomainCard({ domain, onSetPrimary, onDelete, onVerify, isVerifying }: DomainCardProps) {
-  const status = domain.verified_at ? 'verified' : 'pending';
-
   return (
-    <div className="p-4 border rounded-[8px] bg-card">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h4 className="font-medium font-mono">{domain.domain}</h4>
-            {domain.primary_domain && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                Primary
-              </span>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h4 className="font-medium font-mono">{domain.domain}</h4>
+              {domain.primary_domain && (
+                <Badge variant="green">Primary</Badge>
+              )}
+              <DomainStatus status={domain.verified_at ? 'verified' : 'pending'} />
+            </div>
+
+            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-4 h-4" />
+                <span>SSL: {domain.ssl_enabled ? 'Enabled' : 'Disabled'}</span>
+              </div>
+              {domain.ssl_expires_at && (
+                <span>Expires: {new Date(domain.ssl_expires_at).toLocaleDateString()}</span>
+              )}
+            </div>
+
+            {!domain.verified_at && (
+              <div className="mt-3 p-3 rounded-[8px] bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-yellow-900 dark:text-yellow-100">
+                  <strong>Pending verification</strong> - Add the DNS records below to verify ownership
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onVerify}
+                  disabled={isVerifying}
+                  className="mt-2"
+                >
+                  {isVerifying ? 'Verifying...' : 'Verify Domain'}
+                </Button>
+              </div>
             )}
-            <DomainStatus status={status} />
           </div>
 
-          <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-4 h-4" />
-              <span>SSL: {domain.ssl_enabled ? 'Enabled' : 'Disabled'}</span>
-            </div>
-            {domain.ssl_expires_at && (
-              <span>Expires: {new Date(domain.ssl_expires_at).toLocaleDateString()}</span>
+          <div className="flex items-center gap-2">
+            {!domain.primary_domain && (
+              <Button variant="outline" size="sm" onClick={onSetPrimary}>
+                Set Primary
+              </Button>
             )}
-          </div>
-
-          {!domain.verified_at && (
-            <div className="mt-3 p-3 rounded-[8px] bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800">
-              <p className="text-sm text-yellow-900 dark:text-yellow-100">
-                <strong>Pending verification</strong> - Add the DNS records below to verify ownership
-              </p>
-              <button
-                onClick={onVerify}
-                disabled={isVerifying}
-                className="mt-2 px-3 py-1 text-sm rounded-[8px] bg-yellow-100 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-900/30 disabled:opacity-50 transition-colors"
-              >
-                {isVerifying ? 'Verifying...' : 'Verify Domain'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!domain.primary_domain && (
-            <button
-              onClick={onSetPrimary}
-              className="px-3 py-1.5 text-sm rounded-[8px] border hover:bg-accent transition-colors"
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              title="Delete domain"
             >
-              Set Primary
-            </button>
-          )}
-          <button
-            onClick={onDelete}
-            className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-[8px] transition-colors"
-            title="Delete domain"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+              <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
 function DomainStatus({ status }: { status: 'verified' | 'pending' }) {
   if (status === 'verified') {
     return (
-      <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+      <Badge variant="green">
         <CheckCircle className="w-3 h-3" />
         Verified
-      </span>
+      </Badge>
     );
   }
 
   return (
-    <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400">
+    <Badge variant="amber">
       <Clock className="w-3 h-3" />
       Pending
-    </span>
+    </Badge>
   );
 }
 
@@ -297,13 +299,11 @@ function DomainForm({ onSubmit, onCancel, existingDomains }: DomainFormProps) {
     e.preventDefault();
     setError('');
 
-    // Basic validation
     if (!domain) {
       setError('Domain is required');
       return;
     }
 
-    // Check for duplicate
     if (existingDomains.some(d => d.domain === domain)) {
       setError('This domain is already added');
       return;
@@ -313,48 +313,45 @@ function DomainForm({ onSubmit, onCancel, existingDomains }: DomainFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border rounded-[8px] bg-accent/30 space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Domain</label>
-        <input
-          type="text"
-          value={domain}
-          onChange={(e) => setDomain(e.target.value)}
-          placeholder="your-domain.com"
-          className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono"
-          required
-        />
-        {error && <p className="text-sm text-destructive">{error}</p>}
-      </div>
+    <Card>
+      <CardContent className="p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="domain-input">Domain</Label>
+            <Input
+              id="domain-input"
+              type="text"
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              placeholder="your-domain.com"
+              required
+            />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="is-primary"
-          checked={isPrimary}
-          onChange={(e) => setIsPrimary(e.target.checked)}
-          className="w-4 h-4 rounded-[8px] border-gray-300 text-primary focus:ring-primary"
-        />
-        <label htmlFor="is-primary" className="text-sm">
-          Set as primary domain
-        </label>
-      </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is-primary"
+              checked={isPrimary}
+              onChange={(e) => setIsPrimary(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <Label htmlFor="is-primary" className="cursor-pointer">
+              Set as primary domain
+            </Label>
+          </div>
 
-      <div className="flex items-center gap-2 justify-end">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm rounded-[8px] border hover:bg-accent transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 text-sm rounded-[8px] bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          Add Domain
-        </button>
-      </div>
-    </form>
+          <div className="flex items-center gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Add Domain
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

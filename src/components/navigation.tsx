@@ -1,9 +1,3 @@
-/**
- * Navigation Component - DeBuggAI Design System v1.0
- *
- * Professional · Minimal · Developer-focused · Dark-first
- */
-
 'use client';
 
 import Link from 'next/link';
@@ -16,10 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 import { Menu, Zap } from 'lucide-react';
 import { BrandLockup } from '@/components/logo';
 import { useSessionStore } from '@/store/session-store';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationCenter } from '@/components/dashboard/notification-center';
 import { signOutCurrentUser } from '@/lib/client-auth';
@@ -28,45 +24,15 @@ export function Navigation() {
   const router = useRouter();
   const { user, isAuthenticated } = useSessionStore();
   const credits = user?.credits;
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-
-    if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [menuOpen]);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false);
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
-    setMenuOpen(false);
     try {
       await signOutCurrentUser();
     } finally {
-      // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
       window.location.href = '/';
     }
   };
-
-  const closeMenu = () => setMenuOpen(false);
 
   return (
     <nav className="navbar w-full">
@@ -104,11 +70,13 @@ export function Navigation() {
               {/* User Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    className="w-9 h-9 p-0 rounded-[6px] flex items-center justify-center text-[12px] font-semibold cursor-pointer border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text)] outline-none hover:bg-[var(--app-panel-2)] transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-[6px]"
                   >
                     {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel className="font-normal">
@@ -154,91 +122,37 @@ export function Navigation() {
             </>
           ) : (
             <Link href="/login">
-              <button className="inline-flex items-center rounded-[6px] px-4 py-1.5 text-[13px] font-medium bg-[var(--app-accent)] text-[#071006] hover:opacity-90 transition-opacity">
+              <Button>
                 Sign In
-              </button>
+              </Button>
             </Link>
           )}
 
-          {/* Mobile Menu Button */}
-          <div className="relative md:hidden" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="nav-link p-2"
-              aria-label="Toggle menu"
-              aria-expanded={menuOpen}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            {/* Mobile Menu Dropdown */}
-            {menuOpen && (
-              <div
-                className="absolute right-0 top-full mt-2 w-56 animate-slide-down z-50"
-                style={{
-                  background: 'var(--app-panel)',
-                  border: '1px solid var(--app-border-strong)',
-                  borderRadius: '6px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-                }}
-              >
-                <Link
-                  href="/features"
-                  className="mobile-menu-item"
-                  onClick={closeMenu}
-                >
-                  Features
-                </Link>
-                <Link
-                  href="/demo"
-                  className="mobile-menu-item"
-                  onClick={closeMenu}
-                >
-                  Live Demo
-                </Link>
-                <Link
-                  href="/languages"
-                  className="mobile-menu-item"
-                  onClick={closeMenu}
-                >
-                  Languages
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="mobile-menu-item"
-                  onClick={closeMenu}
-                >
-                  Pricing
-                </Link>
-                <Link
-                  href="/faq"
-                  className="mobile-menu-item"
-                  onClick={closeMenu}
-                >
-                  FAQ
-                </Link>
+          {/* Mobile Menu */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger className="md:hidden">
+              <Button variant="ghost" size="icon" aria-label="Toggle menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64 pt-12">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <div className="flex flex-col gap-1">
+                <Link href="/features" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Features</Link>
+                <Link href="/demo" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Live Demo</Link>
+                <Link href="/languages" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Languages</Link>
+                <Link href="/pricing" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Pricing</Link>
+                <Link href="/faq" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>FAQ</Link>
                 {!isAuthenticated && (
                   <>
-                    <div className="border-t border-[var(--app-border-strong)] my-2"></div>
-                    <Link
-                      href="/login"
-                      className="mobile-menu-item"
-                      onClick={closeMenu}
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className="mobile-menu-item"
-                      onClick={closeMenu}
-                    >
-                      Sign Up
-                    </Link>
+                    <div className="border-t border-[var(--app-border-strong)] my-2" />
+                    <Link href="/login" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Sign In</Link>
+                    <Link href="/signup" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Sign Up</Link>
                   </>
                 )}
               </div>
-            )}
-          </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>

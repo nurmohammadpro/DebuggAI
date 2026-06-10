@@ -143,23 +143,43 @@ export function EnhancedPreviewPane({
         let code = file.content;
         // Strip 'use client' — Sandpack is client-only
         code = code.replace(/^['"]use client['"];?\s*\n?/gm, '');
-        // Remove Next.js metadata exports
-        code = code.replace(/export\s+(?:const|let)\s+metadata[\s\S]*?;?\n/gm, '');
-        code = code.replace(/export\s+(?:const|let)\s+generateMetadata[\s\S]*?\};[\s\S]*?\};?\n/gm, '');
-        // Normalize all export patterns to ensure a renderable default export:
-        // Named function: export default function Page() → export default function App()
-        code = code.replace(/export\s+default\s+function\s+(?!App\b)(\w+)/g, 'export default function App');
-        // Class: export default class Page → export default class App
-        code = code.replace(/export\s+default\s+class\s+(?!App\b)(\w+)/g, 'export default class App');
-        // Variable: export default const Page = → const Page = ...
-        // then the existing `export default Page` line stays
-        code = code.replace(/export\s+default\s+(const|let)\s+(\w+)/g, (_, kw, name) => `${kw} ${name}`);
-        // If no default export exists, find the component name and add one
+        // Remove Next.js metadata exports (multiline object/function bodies)
+        code = code.replace(/export\s+(?:const|let|var)\s+metadata\s*[=:][\s\S]*?;\s*\n/gm, '');
+        code = code.replace(/export\s+(?:const|let|var)\s+generateMetadata[\s\S]*?\n}\s*\n/gm, '');
+        // Remove `export { default } from '...'` re-export patterns
+        code = code.replace(/export\s*\{\s*default\s*\}\s*from\s*['"][^'"]+['"]\s*;?\s*\n?/g, '');
+        code = code.replace(/export\s*\{\s*(\w+)\s+as\s+default\s*\}\s*from\s*['"][^'"]+['"]\s*;?\s*\n?/g, '');
+
+        // Normalize to ensure a renderable `export default App` for Sandpack.
+        // Operates in two phases to avoid side-effect / overwrite bugs:
+        //   1. Identify the component name and rename everything atomically.
+        //   2. Fallback: if no default export exists, add one.
+
+        // Phase 1 — find the exported name and rename all references to App.
+        const exportedMatch = code.match(/export\s+default\s+(?:function|class)\s+(\w+)/);
+        const bareExportMatch = code.match(/export\s+default\s+(\w+)\s*;?\s*\n?/);
+        const exportedName = exportedMatch?.[1] || bareExportMatch?.[1] || null;
+
+        if (exportedName && exportedName !== 'App') {
+          // Rename the component declaration (function / const / let / var)
+          code = code.replace(new RegExp(`\\bfunction\\s+${exportedName}\\b`, 'g'), 'function App');
+          code = code.replace(new RegExp(`\\bconst\\s+${exportedName}\\b`, 'g'), 'const App');
+          code = code.replace(new RegExp(`\\blet\\s+${exportedName}\\b`, 'g'), 'let App');
+          code = code.replace(new RegExp(`\\bvar\\s+${exportedName}\\b`, 'g'), 'var App');
+          // Rename the export itself
+          code = code.replace(new RegExp(`export\\s+default\\s+${exportedName}\\b`, 'g'), 'export default App');
+        }
+
+        // Phase 2 — if still no default export, add one.
         if (!/export\s+default\s/.test(code)) {
           const fnMatch = code.match(/(?:export\s+)?function\s+(\w+)/);
           const constMatch = code.match(/(?:export\s+)?const\s+(\w+)\s*=\s*(?:\(|React\.memo)/);
-          const compName = fnMatch?.[1] || constMatch?.[1] || 'Page';
-          code += `\nexport default ${compName};\n`;
+          const compName = fnMatch?.[1] || constMatch?.[1] || null;
+          if (compName && compName !== 'App') {
+            code = code.replace(new RegExp(`\\bfunction\\s+${compName}\\b`, 'g'), 'function App');
+            code = code.replace(new RegExp(`\\bconst\\s+${compName}\\b`, 'g'), 'const App');
+          }
+          code += `\nexport default App;\n`;
         }
         put('/App.tsx', code);
       } else if (normalized === 'src/index.tsx' || normalized === 'src/index.jsx') {

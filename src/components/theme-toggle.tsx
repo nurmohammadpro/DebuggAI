@@ -1,6 +1,7 @@
 'use client';
 
 import { Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/theme-provider';
 
 export function ThemeToggle({ className }: { className?: string }) {
@@ -8,11 +9,13 @@ export function ThemeToggle({ className }: { className?: string }) {
   const isDark = resolvedTheme === 'dark';
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon"
       onClick={() => mounted && setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className={`inline-flex items-center justify-center h-9 w-9 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-surface)] text-[var(--app-text-muted)] hover:bg-[var(--app-panel-2)] hover:text-[var(--app-text)] transition-colors ${className ?? ''}`}
+      className={className}
     >
       {!mounted ? (
         <Moon className="h-4 w-4 opacity-70" />
@@ -21,6 +24,6 @@ export function ThemeToggle({ className }: { className?: string }) {
       ) : (
         <Moon className="h-4 w-4" />
       )}
-    </button>
+    </Button>
   );
 }

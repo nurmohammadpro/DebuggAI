@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Copy, ExternalLink, Trash2, GripVertical } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { Button } from '@/components/ui/button';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 import { RenameProjectDialog } from '@/components/dashboard/projects/rename-project-dialog';
 import { DeleteProjectDialog } from '@/components/dashboard/projects/delete-project-dialog';
@@ -157,34 +158,40 @@ export function ProjectCard({
         {/* Hover actions overlay */}
         <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
-            <Link 
+            <Link
               href={`/dashboard?project=${project.id}`}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-gray-900 text-xs font-semibold hover:bg-gray-100 transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Open
             </Link>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={(e) => { e.preventDefault(); onDuplicate(project); }}
-              className="p-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors"
+              className="bg-white/20 text-white hover:bg-white/30"
               title="Duplicate"
             >
               <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={(e) => { e.preventDefault(); setRenameOpen(true); }}
-              className="p-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors"
+              className="bg-white/20 text-white hover:bg-white/30"
               title="Rename"
             >
               <span className="text-[10px] font-bold">Aa</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={(e) => { e.preventDefault(); setDeleteOpen(true); }}
-              className="p-2 rounded-lg bg-white/20 text-white hover:bg-red-500/80 transition-colors"
+              className="bg-white/20 text-white hover:bg-red-500/80"
               title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
         
@@ -251,28 +258,31 @@ export function ProjectCard({
 
           {/* Actions */}
           <div className="grid grid-cols-4 gap-1 sm:flex sm:items-center sm:gap-1 shrink-0">
-            <button
-              className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors touch-manipulation"
+            <Button
+              variant="ghost"
+              size="icon"
               title="Duplicate"
               onClick={() => onDuplicate(project)}
             >
               <Copy className="w-3.5 h-3.5" />
-            </button>
-            <button
-              className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors touch-manipulation"
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               title="Rename"
               onClick={() => setRenameOpen(true)}
             >
               <span className="text-[10px] font-semibold">Aa</span>
-            </button>
-            <button
-              className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-red-200 text-gray-400 hover:text-red-800 transition-colors touch-manipulation"
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               title="Delete"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="w-3.5 h-3.5" />
-            </button>
-            <Link href={`/dashboard?project=${project.id}`} className="min-h-11 sm:min-h-0 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded hover:bg-gray-200 text-gray-400 hover:text-gray-800 transition-colors touch-manipulation" aria-label={`Open ${title}`}>
+            </Button>
+            <Link href={`/dashboard?project=${project.id}`} className="inline-flex items-center justify-center size-10 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors touch-manipulation" aria-label={`Open ${title}`}>
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>

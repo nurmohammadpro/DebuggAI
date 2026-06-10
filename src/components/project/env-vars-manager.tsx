@@ -7,6 +7,11 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Eye, EyeOff, Search, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface EnvVar {
@@ -115,24 +120,21 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
             Manage runtime configuration and secrets
           </p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-[8px] hover:bg-primary/90 transition-colors"
-        >
+        <Button onClick={() => setIsCreating(true)}>
           <Plus className="w-4 h-4" />
           Add Variable
-        </button>
+        </Button>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+        <Input
           type="text"
           placeholder="Search variables..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          className="pl-10"
         />
       </div>
 
@@ -145,82 +147,85 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
       )}
 
       {/* Environment Variables List */}
-      <div className="border rounded-[8px] divide-y">
-        {filteredVars.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            No environment variables found. Add your first variable to get started.
-          </div>
-        ) : (
-          filteredVars.map((envVar) => (
-            <div
-              key={envVar.id}
-              className={cn(
-                "p-4 hover:bg-accent/50 transition-colors",
-                editingVar?.id === envVar.id && "bg-accent"
-              )}
-            >
-              {editingVar?.id === envVar.id ? (
-                <EnvVarForm
-                  envVar={editingVar}
-                  onSubmit={(data) => handleUpdate(envVar.id, data)}
-                  onCancel={() => setEditingVar(null)}
-                />
-              ) : (
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <code className="text-sm font-medium font-mono">
-                        {envVar.key}
-                      </code>
-                      {envVar.is_secret && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400">
-                          Secret
-                        </span>
+      <Card>
+        <CardContent className="p-0 divide-y">
+          {filteredVars.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              No environment variables found. Add your first variable to get started.
+            </div>
+          ) : (
+            filteredVars.map((envVar) => (
+              <div
+                key={envVar.id}
+                className={cn(
+                  "p-4 hover:bg-accent/50 transition-colors",
+                  editingVar?.id === envVar.id && "bg-accent"
+                )}
+              >
+                {editingVar?.id === envVar.id ? (
+                  <EnvVarForm
+                    envVar={editingVar}
+                    onSubmit={(data) => handleUpdate(envVar.id, data)}
+                    onCancel={() => setEditingVar(null)}
+                  />
+                ) : (
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm font-medium font-mono">
+                          {envVar.key}
+                        </code>
+                        {envVar.is_secret && (
+                          <Badge variant="amber">Secret</Badge>
+                        )}
+                      </div>
+                      {envVar.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {envVar.description}
+                        </p>
                       )}
                     </div>
-                    {envVar.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {envVar.description}
-                      </p>
-                    )}
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowSecrets(prev => ({
-                        ...prev,
-                        [envVar.id]: !prev[envVar.id]
-                      }))}
-                      className="p-2 hover:bg-accent rounded-[8px] transition-colors"
-                      title={showSecrets[envVar.id] ? 'Hide value' : 'Show value'}
-                    >
-                      {showSecrets[envVar.id] ? (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setEditingVar(envVar)}
-                      className="p-2 hover:bg-accent rounded-[8px] transition-colors"
-                      title="Edit variable"
-                    >
-                      <Edit2 className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(envVar.id)}
-                      className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-[8px] transition-colors"
-                      title="Delete variable"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowSecrets(prev => ({
+                          ...prev,
+                          [envVar.id]: !prev[envVar.id]
+                        }))}
+                        title={showSecrets[envVar.id] ? 'Hide value' : 'Show value'}
+                      >
+                        {showSecrets[envVar.id] ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingVar(envVar)}
+                        title="Edit variable"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(envVar.id)}
+                        title="Delete variable"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+                )}
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       {/* Info Box */}
       <div className="p-4 rounded-[8px] bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
@@ -251,71 +256,68 @@ function EnvVarForm({ envVar, onSubmit, onCancel }: EnvVarFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-[8px] bg-accent/30">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Key</label>
-          <input
-            type="text"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder="VARIABLE_NAME"
-            className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Value</label>
-          <input
-            type={isSecret ? 'password' : 'text'}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="variable-value"
-            className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-            required
-          />
-        </div>
-      </div>
+    <Card>
+      <CardContent className="p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="env-key">Key</Label>
+              <Input
+                id="env-key"
+                type="text"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="VARIABLE_NAME"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="env-value">Value</Label>
+              <Input
+                id="env-value"
+                type={isSecret ? 'password' : 'text'}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="variable-value"
+                required
+              />
+            </div>
+          </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Description (optional)</label>
-        <input
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="What this variable is used for"
-          className="w-full px-3 py-2 border rounded-[8px] bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="env-description">Description (optional)</Label>
+            <Input
+              id="env-description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What this variable is used for"
+            />
+          </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="is-secret"
-          checked={isSecret}
-          onChange={(e) => setIsSecret(e.target.checked)}
-          className="w-4 h-4 rounded-[8px] border-gray-300 text-primary focus:ring-primary"
-        />
-        <label htmlFor="is-secret" className="text-sm">
-          This is a secret (will be masked in the UI)
-        </label>
-      </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is-secret"
+              checked={isSecret}
+              onChange={(e) => setIsSecret(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <Label htmlFor="is-secret" className="cursor-pointer">
+              This is a secret (will be masked in the UI)
+            </Label>
+          </div>
 
-      <div className="flex items-center gap-2 justify-end">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm rounded-[8px] border hover:bg-accent transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 text-sm rounded-[8px] bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          {envVar ? 'Update' : 'Create'} Variable
-        </button>
-      </div>
-    </form>
+          <div className="flex items-center gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {envVar ? 'Update' : 'Create'} Variable
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

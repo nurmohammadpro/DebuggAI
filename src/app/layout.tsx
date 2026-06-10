@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeInitScript } from "@/components/theme-init-script";
 import { SupabaseLockHandler } from "@/components/supabase-lock-handler";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,7 +29,7 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="dark">
           <QueryProvider>
             <SupabaseLockHandler />
-            {children}
+            <TooltipProvider>{children}</TooltipProvider>
             <Toaster />
           </QueryProvider>
         </ThemeProvider>
