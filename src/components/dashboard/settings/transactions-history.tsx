@@ -25,7 +25,7 @@ export function TransactionsHistory() {
     return list.filter((t) => {
       const matchesSearch =
         !q ||
-        t.source.toLowerCase().includes(q) ||
+        (t.description || '').toLowerCase().includes(q) ||
         (t.description || '').toLowerCase().includes(q);
       const matchesType = typeFilter === 'all' || t.type === typeFilter;
       return matchesSearch && matchesType;
@@ -40,7 +40,7 @@ export function TransactionsHistory() {
           new Date(t.created_at).toISOString(),
           t.type,
           t.amount,
-          t.source,
+          t.description || '',
           t.description || '',
         ].join(',')
       ),
@@ -188,7 +188,7 @@ export function TransactionsHistory() {
                         >
                           {transaction.type}
                         </Badge>
-                        <span className="text-sm font-medium">{transaction.source}</span>
+                        <span className="text-sm font-medium">{transaction.description || 'Transaction'}</span>
                       </div>
                       {transaction.description && (
                         <p className="text-sm text-muted-foreground">{transaction.description}</p>

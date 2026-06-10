@@ -59,7 +59,7 @@ export function RecentTransactions() {
                   </span>
                 </div>
                 <div className="text-xs mt-1 text-[var(--app-text-muted)] flex items-center justify-between gap-2">
-                  <span className="truncate">{t.source}</span>
+                  <span className="truncate">{t.description || 'Transaction'}</span>
                   <span className="shrink-0 tabular-nums text-[var(--app-text)]">
                     {t.amount > 0 ? '+' : ''}
                     {t.amount}
