@@ -161,13 +161,27 @@ export function EnhancedPreviewPane({
         const exportedName = exportedMatch?.[1] || bareExportMatch?.[1] || null;
 
         if (exportedName && exportedName !== 'App') {
-          // Rename the component declaration (function / const / let / var)
-          code = code.replace(new RegExp(`\\bfunction\\s+${exportedName}\\b`, 'g'), 'function App');
-          code = code.replace(new RegExp(`\\bconst\\s+${exportedName}\\b`, 'g'), 'const App');
-          code = code.replace(new RegExp(`\\blet\\s+${exportedName}\\b`, 'g'), 'let App');
-          code = code.replace(new RegExp(`\\bvar\\s+${exportedName}\\b`, 'g'), 'var App');
-          // Rename the export itself
-          code = code.replace(new RegExp(`export\\s+default\\s+${exportedName}\\b`, 'g'), 'export default App');
+          // Is the name locally declared (function/const/let/var) or imported?
+          const localDeclRe = new RegExp(`\\b(?:function|const|let|var)\\s+${exportedName}\\b`);
+          const hadLocalDecl = localDeclRe.test(code);
+
+          if (hadLocalDecl) {
+            // Rename the local declaration + export
+            code = code.replace(new RegExp(`\\bfunction\\s+${exportedName}\\b`, 'g'), 'function App');
+            code = code.replace(new RegExp(`\\bconst\\s+${exportedName}\\b`, 'g'), 'const App');
+            code = code.replace(new RegExp(`\\blet\\s+${exportedName}\\b`, 'g'), 'let App');
+            code = code.replace(new RegExp(`\\bvar\\s+${exportedName}\\b`, 'g'), 'var App');
+            code = code.replace(
+              new RegExp(`export\\s+default\\s+${exportedName}\\b`, 'g'),
+              'export default App',
+            );
+          } else {
+            // Name comes from an import — alias it so Sandpack finds `App`
+            code = code.replace(
+              new RegExp(`export\\s+default\\s+${exportedName}\\b`, 'g'),
+              `const App = ${exportedName};\nexport default App`,
+            );
+          }
         }
 
         // Phase 2 — if still no default export, add one.
