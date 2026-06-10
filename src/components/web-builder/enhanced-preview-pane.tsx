@@ -192,6 +192,9 @@ export function EnhancedPreviewPane({
           if (compName && compName !== 'App') {
             code = code.replace(new RegExp(`\\bfunction\\s+${compName}\\b`, 'g'), 'function App');
             code = code.replace(new RegExp(`\\bconst\\s+${compName}\\b`, 'g'), 'const App');
+          } else if (!compName) {
+            // Only imports remain (e.g. re-export was stripped) — append placeholder
+            code = code.trimEnd() + '\n\nconst App = () => <div>Preview</div>;';
           }
           code += `\nexport default App;\n`;
         }
