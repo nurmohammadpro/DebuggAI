@@ -1271,15 +1271,23 @@ export function EnhancedChatPanel({
       }
 
       // Try agent loop first (tool-calling, surgical edits).
-      // Falls back to single-shot generate if /api/agent/turn returns 404.
+      // ANY failure — 404, 500, network error, parse error — falls back to
+      // single-shot generate. The user should never lose code generation
+      // just because the agent route isn't deployed yet.
+      let agentResult: string | null = null;
       const toolEventsAccum: ToolEvent[] = [];
-      const agentResult = await agentTurn(
-        { prompt: fullPrompt, persistUserMessage: false, generationDirective: buildGenerationDirective(builderMode, hasExistingFiles) },
-        (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
-      );
+      try {
+        agentResult = await agentTurn(
+          { prompt: fullPrompt, persistUserMessage: false, generationDirective: buildGenerationDirective(builderMode, hasExistingFiles) },
+          (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
+        );
+      } catch {
+        // Agent loop failed (not deployed, Supabase down, etc.) → fall through
+        agentResult = null;
+      }
 
       if (agentResult === null) {
-        // Agent route not available — fall back to single-shot
+        // Agent route not available — fall back to single-shot generate
         await generate({
           prompt: fullPrompt,
           persistUserMessage: false,

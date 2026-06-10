@@ -589,15 +589,15 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           signal: controller.signal,
         });
 
-        if (!res.ok && res.status !== 404) {
-          const err = await res.text().catch(() => '');
-          throw new Error(err || `Agent turn failed (${res.status})`);
+        // ANY non-2xx from /api/agent/turn → fall back to single-shot generate.
+        // The agent route may not be deployed yet (404), may be crashing (500),
+        // or Supabase may be slow (502). In all cases, the old generate still works.
+        if (!res.ok) {
+          // Don't throw — silently fall back so the chat doesn't show an error
+          return null;
         }
 
-        // 404 = agent route not deployed → fallback to regular generate
-        if (res.status === 404) return null;
-
-        if (!res.body) throw new Error('No response body');
+        if (!res.body) return null; // No SSE stream → fall back
 
         // Parse SSE: event: tool_call | tool_result | message | error | done
         const reader = res.body.getReader();
