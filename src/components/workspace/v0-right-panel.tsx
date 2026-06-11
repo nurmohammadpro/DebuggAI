@@ -13,7 +13,7 @@ import {
   Share2,
   Zap,
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { BrowserPreview } from '@/components/preview/browser-preview';
 import { useGenerationStore } from '@/store/generation-store';
@@ -45,8 +45,6 @@ export function V0RightPanel({
   onSave,
 }: V0RightPanelProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [previewEverActivated, setPreviewEverActivated] = useState(false);
-  const [codeEverActivated, setCodeEverActivated] = useState(false);
   const { bumpPreviewNonce, files } = useGenerationStore();
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
@@ -117,48 +115,37 @@ export function V0RightPanel({
         )}
       </div>
 
-      {/* Content — both panels mount once activated and stay in DOM.
-           visibility: hidden preserves iframe/editor state across tab switches. */}
+      {/* Content — both panels stay mounted so switching views is instant and
+           the editor/iframe state is preserved. */}
       <div className="flex-1 min-h-0 relative">
-        {!previewEverActivated && !codeEverActivated && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--app-bg)]">
-            <span className="text-[11px] text-[var(--app-text-dim)]">
-              Select a view to begin
-            </span>
-          </div>
-        )}
-        {previewEverActivated && (
-          <div
-            className="absolute inset-0 flex flex-col"
-            style={{
-              visibility: activeView === 'preview' ? 'visible' : 'hidden',
-              pointerEvents: activeView === 'preview' ? 'auto' : 'none',
-            }}
-            aria-hidden={activeView !== 'preview'}
-          >
-            <BrowserPreview
-              className="flex-1 min-h-0 border-0 rounded-none"
-              chromeless
-            />
-          </div>
-        )}
-        {codeEverActivated && (
-          <div
-            className="absolute inset-0 flex flex-col"
-            style={{
-              visibility: activeView === 'code' ? 'visible' : 'hidden',
-              pointerEvents: activeView === 'code' ? 'auto' : 'none',
-            }}
-            aria-hidden={activeView !== 'code'}
-          >
-            <WorkspaceEditor
-              editorView="code"
-              showToolbar={false}
-              showFileTree
-              onEditorViewChange={(view) => onViewChange(view as V0RightView)}
-            />
-          </div>
-        )}
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            visibility: activeView === 'preview' ? 'visible' : 'hidden',
+            pointerEvents: activeView === 'preview' ? 'auto' : 'none',
+          }}
+          aria-hidden={activeView !== 'preview'}
+        >
+          <BrowserPreview
+            className="flex-1 min-h-0 border-0 rounded-none"
+            chromeless
+          />
+        </div>
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            visibility: activeView === 'code' ? 'visible' : 'hidden',
+            pointerEvents: activeView === 'code' ? 'auto' : 'none',
+          }}
+          aria-hidden={activeView !== 'code'}
+        >
+          <WorkspaceEditor
+            editorView="code"
+            showToolbar={false}
+            showFileTree
+            onEditorViewChange={(view) => onViewChange(view as V0RightView)}
+          />
+        </div>
       </div>
     </div>
   );
