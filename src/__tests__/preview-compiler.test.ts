@@ -14,8 +14,10 @@ describe('preview compiler', () => {
         '}',
       ].join('\n'),
       'components/hero.tsx': [
+        "import { Sparkles } from 'lucide-react';",
+        '',
         'export function Hero({ title }: { title: string }) {',
-        '  return <main className="min-h-screen bg-neutral-950 text-white">{title}</main>;',
+        '  return <main className="min-h-screen bg-neutral-950 text-white"><Sparkles />{title}</main>;',
         '}',
       ].join('\n'),
       'app/globals.css': 'body { margin: 0; }',

@@ -280,6 +280,34 @@ function isCssModule(filePath: string) {
   return filePath.endsWith('.module.css') || filePath.endsWith('.module.scss') || filePath.endsWith('.module.sass');
 }
 
+function collectNamedImports(files: Record<string, string>, moduleName: string) {
+  const names = new Set<string>();
+  const importRe = new RegExp(`import\\s*\\{([\\s\\S]*?)\\}\\s*from\\s*['"]${escapeRegex(moduleName)}['"]`, 'g');
+
+  for (const content of Object.values(files)) {
+    let match: RegExpExecArray | null;
+    while ((match = importRe.exec(content)) !== null) {
+      for (const part of (match[1] || '').split(',')) {
+        const imported = part.trim().split(/\s+as\s+/i)[0]?.trim();
+        if (imported && /^[A-Za-z_$][\w$]*$/.test(imported)) {
+          names.add(imported);
+        }
+      }
+    }
+  }
+
+  return names;
+}
+
+function addLucideIconExports(shim: string, iconNames: Set<string>) {
+  const extra = [...iconNames]
+    .filter((name) => !shim.includes(`export const ${name} `))
+    .map((name) => `export const ${name} = makeIcon('${name}');`)
+    .join('\n');
+
+  return extra ? `${shim}\n${extra}\n` : shim;
+}
+
 /**
  * Bundle project files into a single JS string + CSS string for in-browser preview.
  */
@@ -398,6 +426,7 @@ export async function bundlePreview(
     const esbuild = await import('esbuild');
 
     const plugins: Array<{ name: string; setup: (build: any) => void }> = [];
+    const lucideIconImports = collectNamedImports(files, 'lucide-react');
 
     // Mock Next.js modules
     plugins.push({
@@ -448,7 +477,9 @@ export async function bundlePreview(
           namespace: 'ui-shim',
         }));
         build.onLoad({ filter: /.*/, namespace: 'ui-shim' }, (args: { path: string }) => ({
-          contents: UI_PACKAGE_SHIMS[args.path] || 'export default {}',
+          contents: args.path === 'lucide-react'
+            ? addLucideIconExports(UI_PACKAGE_SHIMS[args.path] || '', lucideIconImports)
+            : UI_PACKAGE_SHIMS[args.path] || 'export default {}',
           loader: 'jsx',
         }));
       },
