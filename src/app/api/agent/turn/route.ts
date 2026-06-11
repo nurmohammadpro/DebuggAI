@@ -135,7 +135,7 @@ async function loadThreadHistory(
 // ── POST ─────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   // Per-IP rate limit — catches anonymous abuse before auth
-  const ipCheck = checkIPRateLimit(req);
+  const ipCheck = await checkIPRateLimit(req);
   if (!ipCheck.allowed) {
     return NextResponse.json(
       { error: 'Too many requests from this IP' },

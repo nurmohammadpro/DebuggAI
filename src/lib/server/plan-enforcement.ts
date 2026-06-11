@@ -62,7 +62,7 @@ export async function getUserPlan(userId: string): Promise<PlanType> {
   let supabase: ReturnType<typeof createSupabaseAdmin> | null = null;
   try {
     supabase = createSupabaseAdmin();
-  } catch (e) {
+  } catch {
     console.warn('[plan-enforcement] SUPABASE_SERVICE_ROLE_KEY missing; defaulting plan to FREE');
     return 'FREE';
   }
@@ -124,7 +124,7 @@ export async function checkRateLimit(userId: string, action: RateLimitAction): P
 
   const windowStart = new Date(Date.now() - 60_000).toISOString();
 
-  const { count, error } = await supabase
+  const { count } = await supabase
     .from('analytics_usage_logs')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
@@ -135,6 +135,10 @@ export async function checkRateLimit(userId: string, action: RateLimitAction): P
   return { allowed: current < effectiveLimit, current, limit: effectiveLimit };
 }
 
+/**
+ * Extract the client IP from a NextRequest.
+ * Checks x-forwarded-for, x-real-ip, and the runtime ip property.
+ */
 function getClientIp(req?: NextRequest): string | null {
   if (!req) return null;
   const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('X-Forwarded-For');
@@ -142,6 +146,8 @@ function getClientIp(req?: NextRequest): string | null {
     const first = forwarded.split(',')[0]?.trim();
     return first || null;
   }
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim() || null;
   // NextRequest may expose ip in some runtimes, but it's not guaranteed.
   // @ts-expect-error - runtime dependent
   return (req.ip as string | undefined) || null;
@@ -269,55 +275,55 @@ export function getActionCost(action: string): number {
 }
 
 // ── Per-IP rate limiting ────────────────────────────────────────────────
-// Simple in-process bucket (restarts clear it — acceptable for abuse
-// prevention; upgrade to Redis/PG for production).
+// DB-backed via analytics_usage_logs.ip_address so limits survive restarts
+// and are consistent across all instances.
 
-const IP_BUCKETS = new Map<string, { count: number; resetAt: number }>();
 const IP_WINDOW_MS = 60_000;   // 1 minute window
 const IP_MAX_REQUESTS = 30;    // 30 req/min per IP (generous — catches scripted abuse)
 
-function getClientIP(req?: NextRequest): string | null {
-  if (!req) return null;
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0]!.trim();
-  return req.headers.get('x-real-ip') || null;
-}
-
 /**
- * Check per-IP rate limit bucket. Separate from per-user limits —
- * this catches unauthenticated or anonymous abuse patterns.
+ * Check per-IP rate limit against the database. Separate from per-user
+ * limits — this catches unauthenticated or anonymous abuse patterns.
+ *
+ * Queries analytics_usage_logs for recent requests from the given IP.
+ * Falls open (allows through) when the DB is unavailable.
  */
-export function checkIPRateLimit(
+export async function checkIPRateLimit(
   req?: NextRequest,
-): { allowed: boolean; retryAfter?: number } {
-  const ip = getClientIP(req);
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const ip = getClientIp(req);
   if (!ip) return { allowed: true }; // Can't identify — allow through
 
-  const now = Date.now();
-  let bucket = IP_BUCKETS.get(ip);
-
-  if (!bucket || now > bucket.resetAt) {
-    bucket = { count: 1, resetAt: now + IP_WINDOW_MS };
-    IP_BUCKETS.set(ip, bucket);
+  let supabase: ReturnType<typeof createSupabaseAdmin>;
+  try {
+    supabase = createSupabaseAdmin();
+  } catch {
+    // No service key — can't query DB, allow through
     return { allowed: true };
   }
 
-  bucket.count++;
+  const windowStart = new Date(Date.now() - IP_WINDOW_MS).toISOString();
 
-  if (bucket.count > IP_MAX_REQUESTS) {
-    const retryAfter = Math.ceil((bucket.resetAt - now) / 1000);
-    return { allowed: false, retryAfter };
-  }
+  try {
+    const { count, error } = await supabase
+      .from('analytics_usage_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('ip_address', ip)
+      .gte('created_at', windowStart);
 
-  return { allowed: true };
-}
-
-// Periodic cleanup of stale IP buckets (every 5 minutes)
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [ip, bucket] of IP_BUCKETS) {
-      if (now > bucket.resetAt) IP_BUCKETS.delete(ip);
+    if (error) {
+      console.warn('[plan-enforcement] IP rate-limit query failed:', error.message);
+      return { allowed: true }; // Fail open
     }
-  }, 300_000).unref?.();
+
+    const current = count ?? 0;
+    if (current >= IP_MAX_REQUESTS) {
+      return { allowed: false, retryAfter: 60 };
+    }
+
+    return { allowed: true };
+  } catch (err) {
+    console.warn('[plan-enforcement] IP rate-limit check error:', err);
+    return { allowed: true }; // Fail open on any exception
+  }
 }
