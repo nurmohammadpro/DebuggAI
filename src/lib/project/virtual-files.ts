@@ -13,6 +13,13 @@ export type VirtualProjectFiles = {
 const DEFAULT_ENTRY = 'app/page.tsx';
 
 export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): VirtualProjectFiles {
+  if (!raw.trim()) {
+    return {
+      entryPath: DEFAULT_ENTRY,
+      files: base ? { ...base.files } : {},
+    };
+  }
+
   const files = new Map<string, VirtualFile>();
 
   const pushFile = (path: string, content: string, language?: string) => {

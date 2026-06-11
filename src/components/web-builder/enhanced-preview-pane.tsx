@@ -20,7 +20,7 @@ import {
   FileCode,
   Wand2,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SandpackProvider, SandpackPreview } from '@codesandbox/sandpack-react';
 
 interface EnhancedPreviewPaneProps {
@@ -61,7 +61,6 @@ export function EnhancedPreviewPane({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [useDocker, setUseDocker] = useState(false);
   const [sandpackLoaded, setSandpackLoaded] = useState(false);
-  const wasGeneratingRef = useRef(false);
 
   const currentDevice = DEVICE_CONFIG[deviceMode];
   const previewViewportClassName =
@@ -85,6 +84,7 @@ export function EnhancedPreviewPane({
     const result: Record<string, { code: string }> = {};
     const deps: Record<string, string> = {};
     const cssParts: string[] = [];
+    let hasTailwindUtilityClasses = false;
 
     const put = (path: string, code: string) => {
       const key = path.startsWith('/') ? path : '/' + path;
@@ -118,6 +118,7 @@ export function EnhancedPreviewPane({
       if (file.status === 'deleted') continue;
       const normalized = path.startsWith('/') ? path.slice(1) : path;
       detectDeps(file.content);
+      hasTailwindUtilityClasses ||= /\b(?:flex|grid|block|inline|hidden|min-h|w|h|max-w|p|px|py|m|mx|my|gap|space-y|rounded|border|bg|text|font|leading|tracking|opacity|scale|transition|hover|focus|sm|md|lg):?-/.test(file.content);
       const ext = normalized.split('.').pop()?.toLowerCase();
       if (ext === 'css' || ext === 'scss' || ext === 'sass') {
         cssParts.push(`/* === ${normalized} === */\n${file.content}`);
@@ -127,6 +128,23 @@ export function EnhancedPreviewPane({
     // Write consolidated CSS bundle
     if (cssParts.length > 0) {
       put('/styles.css', cssParts.join('\n\n'));
+    }
+
+    if (hasTailwindUtilityClasses && !Object.keys(files.files).some((path) => path.endsWith('index.html'))) {
+      put('/public/index.html', [
+        '<!DOCTYPE html>',
+        '<html lang="en">',
+        '  <head>',
+        '    <meta charset="UTF-8" />',
+        '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+        '    <script src="https://cdn.tailwindcss.com"></script>',
+        '    <title>Preview</title>',
+        '  </head>',
+        '  <body>',
+        '    <div id="root"></div>',
+        '  </body>',
+        '</html>',
+      ].join('\n'));
     }
 
     // PASS 2 — map component files to Sandpack paths
@@ -257,21 +275,19 @@ export function EnhancedPreviewPane({
   const hasFiles = files && Object.keys(files.files).filter(p => files.files[p]?.status !== 'deleted').length > 0;
   const dockerReady = !!sandboxUrl && !sandboxError;
   const showDocker = useDocker && dockerReady;
+  const sandpackKey = useMemo(() => {
+    if (!sandpackFiles) return currentProjectId || 'new-project';
+    return `${currentProjectId || 'new-project'}:${Object.entries(sandpackFiles)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([path, file]) => `${path}:${file.code.length}:${file.code.slice(0, 80)}`)
+      .join('|')}`;
+  }, [currentProjectId, sandpackFiles]);
 
-  // Track generation completion to auto-render preview
-  const [showTransition, setShowTransition] = useState(false);
   useEffect(() => {
-    if (!isGenerating && wasGeneratingRef.current && hasFiles) {
-      setShowTransition(true);
-      const timer = setTimeout(() => {
-        setShowTransition(false);
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-    wasGeneratingRef.current = isGenerating;
-  }, [isGenerating, hasFiles]);
+    setSandpackLoaded(false);
+  }, [sandpackKey]);
 
-  const showBuildingAnimation = isGenerating || (!hasFiles && !isGenerating) || showTransition;
+  const showBuildingAnimation = isGenerating || !hasFiles;
 
   return (
     <div
@@ -306,7 +322,7 @@ export function EnhancedPreviewPane({
           {sandboxError && showDocker ? (
             <div className="flex-1 min-h-0 flex flex-col">
               <div className="flex-1 min-h-0">
-                <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} projectId={currentProjectId} />
+                <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} previewKey={sandpackKey} />
               </div>
               <div className="px-3 py-1.5 bg-[var(--app-danger-soft)] border-t border-[var(--app-danger)]/20 shrink-0">
                 <p className="text-[10px] text-[var(--app-danger)] flex items-center gap-1.5">
@@ -325,7 +341,7 @@ export function EnhancedPreviewPane({
           ) : showBuildingAnimation ? (
             <BuildingAnimation isGenerating={isGenerating} fileCount={hasFiles ? Object.keys(files?.files || {}).filter(p => files?.files?.[p]?.status !== 'deleted').length : 0} />
           ) : (
-            <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} projectId={currentProjectId} />
+            <SandpackPreviewShell files={sandpackFiles} template={sandpackTemplate} deps={dependencies} onLoad={() => setSandpackLoaded(true)} previewKey={sandpackKey} />
           )}
         </div>
       </div>
@@ -435,13 +451,13 @@ function SandpackPreviewShell({
   template,
   deps,
   onLoad,
-  projectId,
+  previewKey,
 }: {
   files: Record<string, { code: string }> | undefined;
   template: 'react' | 'react-ts';
   deps: Record<string, string>;
   onLoad: () => void;
-  projectId?: string | null;
+  previewKey: string;
 }) {
   if (!files || Object.keys(files).length === 0) {
     return (
@@ -456,7 +472,7 @@ function SandpackPreviewShell({
 
   return (
     <SandpackProvider
-      key={projectId || 'new-project'}
+      key={previewKey}
       template={template}
       files={files}
       customSetup={{ dependencies: deps }}

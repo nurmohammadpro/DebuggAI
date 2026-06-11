@@ -73,6 +73,12 @@ function templateToVirtualFiles(flatFiles: Record<string, string>): VirtualProje
 function serializeVirtualFilesWrapper(project: VirtualProjectFiles): string {
   return serializeVirtualFiles(project);
 }
+
+function hasSubstantiveFiles(project: VirtualProjectFiles): boolean {
+  return Object.values(project.files).some(
+    (file) => file.status !== 'deleted' && file.content.trim().length > 0,
+  );
+}
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 
 import { supabase } from '@/lib/supabase';
@@ -247,7 +253,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         const baseFiles = useGenerationStore.getState().files || undefined;
         const virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
 
-        if (Object.keys(virtualFiles.files).length > 0) {
+        if (hasSubstantiveFiles(virtualFiles)) {
           const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
           const serialized = serializeVirtualFilesWrapper(virtualFiles);
 
@@ -264,10 +270,22 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
               if (currentProjectId) {
-                await supabase
-                  .from('generations')
-                  .update({ code: serialized })
-                  .eq('id', currentProjectId);
+                const flatFiles = Object.fromEntries(
+                  Object.entries(virtualFiles.files)
+                    .filter(([, file]) => file.status !== 'deleted')
+                    .map(([path, file]) => [path, file.content]),
+                );
+                await fetch(`/api/projects/${currentProjectId}/save-code`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', ...authHeaders },
+                  body: JSON.stringify({
+                    code: serialized,
+                    files: flatFiles,
+                    prompt: request.prompt,
+                    description: 'Generated',
+                    threadId,
+                  }),
+                });
               } else {
                 // Create new canonical project (+ initial generation) via API.
                 const res = await fetch('/api/projects', {
@@ -585,6 +603,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             projectId: currentProjectId,
             prompt: request.prompt,
             history: request.history || [],
+            generationDirective: request.generationDirective,
           }),
           signal: controller.signal,
         });
@@ -604,6 +623,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         const decoder = new TextDecoder();
         let buffer = '';
         let accumulated = '';
+        let streamedFiles: Record<string, string> | null = null;
         let eventName = 'message';
         let dataLines: string[] = [];
 
@@ -613,6 +633,10 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           dataLines = [];
           try {
             const parsed = JSON.parse(raw);
+
+            if (eventName === 'error') {
+              throw new Error(parsed.message || 'Agent error');
+            }
 
             if (eventName === 'tool_call') {
               const evt: ToolEvent = { type: 'tool_call', id: parsed.id, name: parsed.name, args: parsed.args || {} };
@@ -626,11 +650,16 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 appendAccumulated(parsed.content);
                 onChunk?.(parsed.content);
               }
-            } else if (eventName === 'error') {
-              throw new Error(parsed.message || 'Agent error');
+            } else if (eventName === 'files') {
+              if (parsed.files && typeof parsed.files === 'object') {
+                streamedFiles = parsed.files as Record<string, string>;
+              }
             }
           } catch (err) {
-            if (err instanceof Error && err.message !== 'Agent error') {
+            if (eventName === 'error') {
+              throw err;
+            }
+            if (err instanceof Error) {
               // Parse error, skip
             } else {
               throw err;
@@ -655,16 +684,14 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         }
         flushEvent();
 
-        // Build virtual files. Two paths:
-        // 1. From accumulated text (message events had code blocks)
-        // 2. Reload from project_files API (agent wrote files via tools,
-        //    accumulated only has plain text, no code fences)
         const baseFiles = useGenerationStore.getState().files || undefined;
-        let virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
+        let virtualFiles = streamedFiles
+          ? templateToVirtualFiles(streamedFiles)
+          : extractVirtualFiles(accumulated, baseFiles || undefined);
 
-        if (Object.keys(virtualFiles.files).length === 0 && currentProjectId) {
-          // Agent used tools but didn't emit code blocks in messages.
-          // Load the latest project_files from Supabase instead.
+        if (!hasSubstantiveFiles(virtualFiles) && currentProjectId) {
+          // Agent may have used write_file tools without putting code in the
+          // assistant message. Reload persisted project_files as a fallback.
           try {
             const { user } = await supabase.auth.getUser();
             if (user) {
@@ -675,7 +702,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 .neq('status', 'deleted');
 
               if (fileRows && fileRows.length > 0) {
-                const entryPath = fileRows.find((r: { path: string }) => r.path === 'app/page.tsx')
+                const entryPath = fileRows.find((row: { path: string }) => row.path === 'app/page.tsx')
                   ? 'app/page.tsx'
                   : fileRows[0]!.path;
                 const files: Record<string, VirtualFile> = {};
@@ -684,21 +711,18 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                     path: row.path,
                     content: row.content || '',
                     language: row.language,
-                    status: 'unchanged' as const,
+                    status: 'unchanged',
                   };
                 }
                 virtualFiles = { entryPath, files };
               }
             }
           } catch {
-            // Fall back to whatever we have
+            // Fall back to whatever we parsed from the stream.
           }
         }
 
-        // If still no files after both paths, don't error —
-        // return null so the generate() fallback runs.
-        if (Object.keys(virtualFiles.files).length === 0) {
-          // Don't throw — let the caller fall back to single-shot
+        if (!hasSubstantiveFiles(virtualFiles)) {
           return null;
         }
 
@@ -716,10 +740,22 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         // Persist to Supabase
         try {
           if (currentProjectId) {
-            await supabase
-              .from('generations')
-              .update({ code: serialized })
-              .eq('id', currentProjectId);
+            const flatFiles = Object.fromEntries(
+              Object.entries(virtualFiles.files)
+                .filter(([, file]) => file.status !== 'deleted')
+                .map(([path, file]) => [path, file.content]),
+            );
+            await fetch(`/api/projects/${currentProjectId}/save-code`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({
+                code: serialized,
+                files: flatFiles,
+                prompt: request.prompt,
+                description: 'Generated via agent',
+                threadId,
+              }),
+            });
           } else {
             const res = await fetch('/api/projects', {
               method: 'POST',

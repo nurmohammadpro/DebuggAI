@@ -55,6 +55,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuAction,
+  SidebarRail,
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
@@ -225,7 +226,7 @@ export function AppSidebar() {
     }
   }, [confirm, queryClient, searchParams, activeProjectId, clearThread, router]);
 
-  if (user?.isAdmin == undefined) return null; // Wait for session hydration
+  if (!user) return null; // Wait for session hydration
 
   return (
     <>
@@ -389,6 +390,8 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+
+        <SidebarRail />
 
         {/* ── Footer: Credits + Theme + Account ── */}
         <SidebarFooter className="gap-1">

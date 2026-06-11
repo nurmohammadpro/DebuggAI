@@ -19,7 +19,7 @@ export interface RoutedModel {
 
 export interface ProviderConfigs {
   groq: { apiKey: string; baseUrl: string } | null;
-  deepseek: { apiKey: string; baseUrl: string } | null;
+  deepseek: { apiKey: string; baseUrl: string; model?: string | null } | null;
 }
 
 const DEEPSEEK_MODELS = {
@@ -31,6 +31,13 @@ const GROQ_MODELS = {
   fast: 'llama-3.3-70b-versatile',
   large: 'llama-3.1-8b-instant',
 } as const;
+
+function configuredDeepseekModel(
+  configs: ProviderConfigs,
+  fallback: string,
+) {
+  return configs.deepseek?.model?.trim() || fallback;
+}
 
 export function pickModel(intent: ModelIntent, configs: ProviderConfigs): RoutedModel | null {
   // Helper to build Groq config
@@ -49,7 +56,7 @@ export function pickModel(intent: ModelIntent, configs: ProviderConfigs): Routed
     if (!configs.deepseek) return null;
     return {
       provider: 'deepseek',
-      model,
+      model: configuredDeepseekModel(configs, model),
       baseUrl: configs.deepseek.baseUrl,
       apiKey: configs.deepseek.apiKey,
       maxTokens: tokens,

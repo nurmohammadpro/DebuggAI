@@ -65,6 +65,7 @@ export async function POST(
   }
 
   // ── Save to project_files table (per-file persistence) ──────────────────
+  const projectFileErrors: string[] = [];
   if (body.files) {
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -72,7 +73,7 @@ export async function POST(
       if (serviceKey) {
         const admin = createClient(supabaseUrl, serviceKey);
         for (const [path, content] of Object.entries(body.files)) {
-          await admin.from('project_files').upsert({
+          const { error: fileError } = await admin.from('project_files').upsert({
             project_id: id,
             path,
             content,
@@ -80,10 +81,13 @@ export async function POST(
             status: 'modified',
             updated_at: new Date().toISOString(),
           }, { onConflict: 'project_id,path' });
+          if (fileError) projectFileErrors.push(`${path}: ${fileError.message}`);
         }
+      } else {
+        projectFileErrors.push('SUPABASE_SERVICE_ROLE_KEY is missing');
       }
-    } catch {
-      // Best-effort — generations table is the primary persistence
+    } catch (error) {
+      projectFileErrors.push(error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -100,7 +104,11 @@ export async function POST(
     }
   }
 
-  return NextResponse.json({ ok: true, version: nextVersion });
+  return NextResponse.json({
+    ok: true,
+    version: nextVersion,
+    projectFileErrors,
+  });
 }
 
 function serializeFiles(files: Record<string, string>): string {

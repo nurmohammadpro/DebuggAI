@@ -13,11 +13,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClientDashboardShell>
+    <>
       <SessionBootstrapper />
-      <DashboardErrorBoundary>
-        {children}
-      </DashboardErrorBoundary>
-    </ClientDashboardShell>
+      <ClientDashboardShell>
+        <DashboardErrorBoundary>
+          {children}
+        </DashboardErrorBoundary>
+      </ClientDashboardShell>
+    </>
   );
 }

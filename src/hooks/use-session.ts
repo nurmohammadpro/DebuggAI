@@ -57,6 +57,7 @@ export function setBootstrapperReady() {
   bootstrapperReady = true;
   const resolvers = pendingResolvers.splice(0);
   resolvers.forEach((fn) => fn());
+  notifyListeners();
 }
 
 export function useSession() {

@@ -4,6 +4,25 @@ import { extractVirtualFiles } from '@/lib/project/virtual-files';
 import { sanitizeChatContent } from '@/lib/utils/code-extraction';
 
 describe('preview generation hardening', () => {
+  it('does not invent an empty app/page.tsx for blank responses', () => {
+    const project = extractVirtualFiles('   \n  ');
+
+    expect(project.entryPath).toBe('app/page.tsx');
+    expect(project.files).toEqual({});
+  });
+
+  it('extracts a single marked file with its original path', () => {
+    const project = extractVirtualFiles(`// File: app/page.tsx
+\`\`\`tsx
+export default function Page() {
+  return <main>Ready</main>;
+}
+\`\`\``);
+
+    expect(project.entryPath).toBe('app/page.tsx');
+    expect(project.files['app/page.tsx']?.content).toContain('Ready');
+  });
+
   it('removes filename comments from package.json code blocks', () => {
     const project = extractVirtualFiles(`// File: package.json
 \`\`\`json

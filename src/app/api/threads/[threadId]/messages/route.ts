@@ -46,6 +46,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ threadId: 
     tokensIn?: number;
     tokensOut?: number;
     metadata?: Record<string, unknown>;
+    projectId?: string | null;
   };
 
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
@@ -59,22 +60,52 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ threadId: 
     return NextResponse.json({ error: `content too large (max ${MAX_MESSAGE_CHARS} chars)` }, { status: 413 });
   }
 
-  const { data, error } = await auth.supabase
+  const { data: thread } = await auth.supabase
+    .from('threads')
+    .select('id, project_id')
+    .eq('id', threadId)
+    .eq('user_id', auth.user!.id)
+    .maybeSingle();
+
+  if (!thread) return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
+
+  const projectId =
+    typeof body.projectId === 'string'
+      ? body.projectId
+      : thread.project_id || null;
+
+  const metadata = {
+    ...(body.metadata || {}),
+    ...(projectId ? { project_id: projectId } : {}),
+  };
+
+  const insertPayload = {
+    thread_id: threadId,
+    project_id: projectId,
+    user_id: auth.user!.id,
+    role: body.role,
+    content,
+    model: body.model || null,
+    tokens_in: typeof body.tokensIn === 'number' ? body.tokensIn : null,
+    tokens_out: typeof body.tokensOut === 'number' ? body.tokensOut : null,
+    metadata,
+  };
+
+  const insertMessage = (payload: Record<string, unknown>) => auth.supabase
     .from('thread_messages')
-    .insert({
-      thread_id: threadId,
-      user_id: auth.user!.id,
-      role: body.role,
-      content,
-      model: body.model || null,
-      tokens_in: typeof body.tokensIn === 'number' ? body.tokensIn : null,
-      tokens_out: typeof body.tokensOut === 'number' ? body.tokensOut : null,
-      metadata: body.metadata || {},
-    })
+    .insert(payload)
     .select('id, thread_id, role, content, model, tokens_in, tokens_out, metadata, created_at')
     .single();
+
+  let { data, error } = await insertMessage(insertPayload);
+  if (error && /project_id/i.test(error.message)) {
+    const { project_id, ...fallbackPayload } = insertPayload;
+    void project_id;
+    const retry = await insertMessage(fallbackPayload);
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ message: data }, { status: 201 });
 }
-

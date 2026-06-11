@@ -43,9 +43,9 @@ export function UnifiedHeader({
     <header className="min-h-16 sm:min-h-14 flex items-center justify-between px-3 sm:px-4 bg-[var(--app-panel)] border-b border-[var(--app-border)] shrink-0">
       {/* Left: Mobile Menu Button + Title + Tool Tabs */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        {/* Mobile Menu Button */}
+        {/* Sidebar Toggle */}
         {mobileMenuButton && (
-          <div className="md:hidden">
+          <div>
             {mobileMenuButton}
           </div>
         )}

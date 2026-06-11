@@ -16,7 +16,8 @@ import { checkIPRateLimit } from '@/lib/server/plan-enforcement';
 import { AGENT_TOOLS, executeToolCall, type ToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
 import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { extractVirtualFiles } from '@/lib/project/virtual-files';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,72 @@ function ssePing(): string {
   return ': ping\n\n';
 }
 
+function hasSubstantiveFiles(files: Record<string, string>): boolean {
+  return Object.values(files).some((content) => content.trim().length > 0);
+}
+
+function mergeGenerationSnapshot(
+  target: Record<string, string>,
+  code: string | null | undefined,
+) {
+  if (!code?.trim()) return;
+  const parsed = extractVirtualFiles(code);
+  for (const file of Object.values(parsed.files)) {
+    if (file.content.trim()) target[file.path] = sanitizeFileContent(file.content);
+  }
+}
+
+async function loadThreadHistory(
+  admin: SupabaseClient,
+  projectId: string,
+): Promise<Array<{ role: string; content: string }>> {
+  const normalize = (rows: unknown) => {
+    if (!Array.isArray(rows)) return [];
+    return rows
+      .reverse()
+      .map((m) => {
+        const row = m as { role?: unknown; content?: unknown };
+        return {
+          role: String(row.role || 'user'),
+          content: String(row.content || ''),
+        };
+      })
+      .filter((m) => m.content.trim().length > 0);
+  };
+
+  const direct = await admin
+    .from('thread_messages')
+    .select('role, content')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+    .limit(CONVERSATION_LIMIT);
+
+  if (!direct.error) return normalize(direct.data);
+  if (!/project_id/i.test(direct.error.message)) return [];
+
+  const { data: threads } = await admin
+    .from('threads')
+    .select('id')
+    .eq('project_id', projectId)
+    .limit(20);
+
+  const threadIds = (threads || [])
+    .map((thread: { id?: unknown }) => String(thread.id || ''))
+    .filter(Boolean);
+
+  if (threadIds.length === 0) return [];
+
+  const fallback = await admin
+    .from('thread_messages')
+    .select('role, content')
+    .in('thread_id', threadIds)
+    .order('created_at', { ascending: false })
+    .limit(CONVERSATION_LIMIT);
+
+  if (fallback.error) return [];
+  return normalize(fallback.data);
+}
+
 // ── POST ─────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   // Per-IP rate limit — catches anonymous abuse before auth
@@ -83,13 +150,14 @@ export async function POST(req: NextRequest) {
     projectId?: string;
     prompt?: string;
     history?: Array<{ role: string; content: string }>;
+    generationDirective?: string;
   } | null;
 
   if (!body?.prompt) {
     return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
   }
 
-  const { projectId, prompt } = body;
+  const { projectId, prompt, generationDirective } = body;
   const intent = detectIntent(prompt);
 
   // ── Load provider configs ──────────────────────────────────────────────
@@ -97,7 +165,13 @@ export async function POST(req: NextRequest) {
   const groqKey = process.env.GROQ_API_KEY;
   if (groqKey) configs.groq = { apiKey: groqKey, baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1' };
   const dsKey = process.env.AI_API_KEY;
-  if (dsKey) configs.deepseek = { apiKey: dsKey, baseUrl: process.env.AI_BASE_URL || 'https://api.deepseek.com/v1' };
+  if (dsKey) {
+    configs.deepseek = {
+      apiKey: dsKey,
+      baseUrl: (process.env.AI_BASE_URL || 'https://api.deepseek.com/v1').trim(),
+      model: process.env.AI_MODEL?.trim() || null,
+    };
+  }
 
   const primary = pickModel(intent, configs);
   if (!primary) {
@@ -137,6 +211,21 @@ export async function POST(req: NextRequest) {
         projectMemory = memoryRow.content;
       }
     } catch { /* no project_files table yet */ }
+
+    if (!hasSubstantiveFiles(projectFiles)) {
+      try {
+        const admin = createClient(supabaseUrl, serviceKey);
+        const { data: generationRow } = await admin
+          .from('generations')
+          .select('code')
+          .eq('project_id', projectId)
+          .not('code', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        mergeGenerationSnapshot(projectFiles, generationRow?.code);
+      } catch { /* generations may be unavailable */ }
+    }
   }
 
   // ── P12: Load conversation history with token budget ────────────────────
@@ -144,21 +233,7 @@ export async function POST(req: NextRequest) {
   if (projectId) {
     try {
       const admin = createClient(supabaseUrl, serviceKey || process.env.SUPABASE_ANON_KEY!);
-      const { data: msgs } = await admin
-        .from('thread_messages')
-        .select('role, content')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
-        .limit(CONVERSATION_LIMIT);
-
-      if (msgs) {
-        rawHistory.push(
-          ...msgs.reverse().map((m: { role: string; content: string }) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        );
-      }
+      rawHistory.push(...await loadThreadHistory(admin, projectId));
     } catch { /* no thread_messages access */ }
   }
 
@@ -364,6 +439,10 @@ export async function POST(req: NextRequest) {
 
 ## BOOTSTRAP (empty project)
 Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs
+When the project is empty, you MUST create files using write_file. Do not answer conversationally without writing code.
+Create a real multi-file project: app/page.tsx should stay thin and compose imported UI; place reusable UI in components/, stateful feature logic in hooks/, pure helpers/constants/data in lib/, and shared interfaces in types/.
+For a new UI app, create at least one meaningful component file and one hook/lib/type file in addition to the required app files. Avoid putting the full application in app/page.tsx unless explicitly asked for a single-file demo.
+${generationDirective ? `\n## User Generation Directive\n${generationDirective}\n` : ''}
 
 Current files: ${Object.keys(ctx.files).length > 0 ? Object.keys(ctx.files).join(', ') : '(empty)'}${memoryBlock}${skillContext}${fileContext}`,
           },
@@ -474,6 +553,13 @@ Current files: ${Object.keys(ctx.files).length > 0 ? Object.keys(ctx.files).join
             messages.push({ role: 'assistant', content });
           }
           break;
+        }
+
+        const changedFiles = Object.fromEntries(
+          Object.entries(ctx.files).filter(([, content]) => content.trim().length > 0),
+        );
+        if (Object.keys(changedFiles).length > 0) {
+          enqueue(sseEvent('files', { files: changedFiles }));
         }
 
         enqueue('event: done\ndata: {}\n\n');

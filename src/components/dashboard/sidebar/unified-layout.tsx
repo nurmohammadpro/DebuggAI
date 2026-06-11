@@ -35,7 +35,7 @@ export function UnifiedLayout({
           title={title}
           subtitle={subtitle}
           actions={headerActions}
-          mobileMenuButton={<SidebarTrigger className="md:hidden touch-target" />}
+          mobileMenuButton={<SidebarTrigger className="touch-target" />}
           showHelp
           showAccountMenu
         />

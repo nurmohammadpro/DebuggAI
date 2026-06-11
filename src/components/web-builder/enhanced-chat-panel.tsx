@@ -142,8 +142,23 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
     ? 'Existing project files are already loaded. Treat this as an iterative edit unless the user explicitly asks for a rebuild.'
     : 'No existing files are loaded. Bootstrap a complete, production-ready project.';
 
+  const architecture = hasExistingFiles
+    ? [
+        'Maintain a clean multi-file architecture. When adding meaningful UI or behavior, extract it into focused files instead of growing app/page.tsx.',
+        'Recommended folders: components/ for reusable UI, hooks/ for stateful logic, lib/ for pure helpers/data/constants, types/ for shared TypeScript types, and app/ for routes/layouts only.',
+        'Keep app/page.tsx thin: compose imported sections/components there; do not put a full application in one page file unless the user explicitly asks for a single-file demo.',
+      ]
+    : [
+        'Generate a multi-file Next.js App Router project, not a single giant page file.',
+        'Required architecture: app/page.tsx should be a thin route that imports composed UI; app/layout.tsx owns document shell; app/globals.css owns theme/base styles.',
+        'Place reusable UI in components/, stateful feature logic in hooks/, pure helpers/constants/sample data in lib/, and shared interfaces in types/.',
+        'For small apps, still create at least 5 meaningful source files: app/page.tsx, app/layout.tsx, app/globals.css, one component file, and one hook/lib/type file.',
+        'Use complete file blocks with // File: path markers for every file. Do not collapse everything into app/page.tsx.',
+      ];
+
   const shared = [
     projectContext,
+    ...architecture,
     'Preserve working structure, imports, route names, package versions, and design tokens unless changing them is required.',
     'Return complete file blocks for every changed file so the editor can apply the update deterministically.',
     'Use short status lines before meaningful phases: First, Next, Now, Finally, Done, Warning, or Error.',
@@ -1138,7 +1153,9 @@ export function EnhancedChatPanel({
 
       // Count files that were generated
       const generatedFileCount = currentFiles
-        ? Object.keys(currentFiles.files).length
+        ? Object.values(currentFiles.files).filter(
+            (file) => file.status !== 'deleted' && file.content.trim().length > 0,
+          ).length
         : parsedCodeBlocks.length;
 
       if (parsedCodeBlocks.length > 0) {
@@ -1151,6 +1168,7 @@ export function EnhancedChatPanel({
           ? 'I prepared the project files. You can review them in the editor pane.'
           : 'Done.'
       );
+      const threadIdForPersistence = useGenerationStore.getState().currentThreadId;
 
       if (streamingId) {
         updateStreamingAssistant((message) => ({
@@ -1176,6 +1194,32 @@ export function EnhancedChatPanel({
       resetAccumulated();
       // Auto-save generated code to generations table for project persistence
       await autoSaveCode();
+      if (threadIdForPersistence) {
+        try {
+          const session = await getSession();
+          const token = session.session?.access_token;
+          if (token) {
+            await fetch(`/api/threads/${threadIdForPersistence}/messages`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                ...csrfHeader(),
+              },
+              body: JSON.stringify({
+                role: 'assistant',
+                content: fullText || finalContent,
+                metadata: {
+                  source: 'chat-panel',
+                  fileCount: generatedFileCount,
+                },
+              }),
+            });
+          }
+        } catch {
+          // Chat history persistence is best-effort; project code is already saved.
+        }
+      }
       streamingMessageIdRef.current = null;
     },
     onError: (error) => {

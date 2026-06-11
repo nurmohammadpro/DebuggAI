@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
+import { type VirtualFile } from '@/lib/project/virtual-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export async function GET(
 
   const { id } = await ctx.params;
 
-  const [projResult, genResult, threadResult] = await Promise.all([
+  const [projResult, genResult, threadResult, filesResult] = await Promise.all([
     auth.supabase
       .from('projects')
       .select('id, name, description, stack, status, created_at, updated_at')
@@ -34,6 +35,11 @@ export async function GET(
       .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    auth.supabase
+      .from('project_files')
+      .select('path, content, language, status')
+      .eq('project_id', id)
+      .order('path', { ascending: true }),
   ]);
 
   const { data: project, error: projError } = projResult;
@@ -46,10 +52,77 @@ export async function GET(
 
   const { data: latestGen } = genResult;
   const { data: firstThread } = threadResult;
+  const fileTreeCode = serializeProjectFiles(filesResult.data || []);
+  const latest = latestGen
+    ? {
+        ...latestGen,
+        code: fileTreeCode || (latestGen.code?.trim() ? latestGen.code : ''),
+      }
+    : fileTreeCode
+      ? {
+          id: `${id}:project-files`,
+          code: fileTreeCode,
+          version: 1,
+          prompt: project.description,
+          metadata: null,
+          created_at: project.updated_at || project.created_at,
+        }
+      : null;
 
   return NextResponse.json({
     project,
-    latest: latestGen || null,
+    latest,
     firstThread: firstThread || null,
   });
+}
+
+type ProjectFileRow = {
+  path?: string | null;
+  content?: string | null;
+  language?: string | null;
+  status?: VirtualFile['status'] | null;
+};
+
+function serializeProjectFiles(rows: ProjectFileRow[]) {
+  const files: Record<string, VirtualFile> = {};
+
+  for (const row of rows) {
+    if (!row.path || row.status === 'deleted') continue;
+    files[row.path] = {
+      path: row.path,
+      content: row.content || '',
+      language: row.language || undefined,
+      status: row.status || 'unchanged',
+    };
+  }
+
+  const paths = Object.keys(files);
+  if (paths.length === 0) return null;
+
+  return paths
+    .sort()
+    .map((path) => {
+      const file = files[path]!;
+      return [
+        `// File: ${path}`,
+        '```' + (file.language || languageFromPath(path) || ''),
+        file.content.replace(/\s+$/, ''),
+        '```',
+        '',
+      ].join('\n');
+    })
+    .join('\n');
+}
+
+function languageFromPath(path: string) {
+  const lower = path.toLowerCase();
+  if (lower.endsWith('.tsx')) return 'typescript';
+  if (lower.endsWith('.ts')) return 'typescript';
+  if (lower.endsWith('.jsx')) return 'javascript';
+  if (lower.endsWith('.js')) return 'javascript';
+  if (lower.endsWith('.css')) return 'css';
+  if (lower.endsWith('.html')) return 'html';
+  if (lower.endsWith('.json')) return 'json';
+  if (lower.endsWith('.md')) return 'markdown';
+  return '';
 }

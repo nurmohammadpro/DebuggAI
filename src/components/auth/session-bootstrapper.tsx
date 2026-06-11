@@ -20,13 +20,14 @@ import {
 const AUTO_APPLY_KEY = 'debuggai.internal-test-coupon.applied';
 
 export function SessionBootstrapper() {
-  const { setUser, updateUser, setCredits, logout } = useSessionStore();
+  const { setUser, updateUser, setCredits, setIsLoading, logout } = useSessionStore();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   // Use refs to avoid infinite loops with changing function dependencies
   const logoutRef = useRef(logout);
   const setUserRef = useRef(setUser);
   const setCreditsRef = useRef(setCredits);
+  const setIsLoadingRef = useRef(setIsLoading);
   const updateUserRef = useRef(updateUser);
 
   // Update refs when functions change
@@ -34,6 +35,7 @@ export function SessionBootstrapper() {
     logoutRef.current = logout;
     setUserRef.current = setUser;
     setCreditsRef.current = setCredits;
+    setIsLoadingRef.current = setIsLoading;
     updateUserRef.current = updateUser;
   });
 
@@ -141,6 +143,7 @@ export function SessionBootstrapper() {
   useEffect(() => {
     let active = true;
     let hydrating = false;
+    let initialSessionLoaded = false;
 
     const handleSession = async (session: Session | null) => {
       if (!active) return;
@@ -172,18 +175,38 @@ export function SessionBootstrapper() {
       }
     };
 
-    // onAuthStateChange fires synchronously with the current session on subscribe,
-    // so we don't need a separate getSession() call that would race with it.
+    setIsLoadingRef.current(true);
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+    } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       setCachedSession(session);
-      await handleSession(session);
+
+      if (session || initialSessionLoaded || event === 'SIGNED_OUT') {
+        await handleSession(session);
+      }
     });
 
-    // Signal that bootstrapper has initialized, so getSession() knows the
-    // cached value (including null) is definitive and stops polling.
-    setBootstrapperReady();
+    void (async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (!active) return;
+
+        setCachedSession(
+          data?.session ?? null,
+          error ? new Error(error.message) : null,
+        );
+        await handleSession(data?.session ?? null);
+      } catch (error) {
+        if (!active) return;
+        setCachedSession(null, error instanceof Error ? error : new Error('Failed to load session'));
+        await handleSession(null);
+      } finally {
+        if (!active) return;
+        initialSessionLoaded = true;
+        setBootstrapperReady();
+      }
+    })();
 
     return () => {
       active = false;

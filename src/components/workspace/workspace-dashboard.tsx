@@ -149,7 +149,12 @@ export function WorkspaceDashboard() {
     if (project?.code) return; // Already loaded from saved code
 
     const generationStore = useGenerationStore.getState();
-    if (generationStore.files && Object.keys(generationStore.files.files).length > 1) return; // Already has files
+    if (
+      generationStore.files &&
+      Object.values(generationStore.files.files).some(
+        (file) => file.status !== 'deleted' && file.content.trim().length > 0,
+      )
+    ) return; // Already has files
 
     (async () => {
       try {
@@ -250,8 +255,7 @@ export function WorkspaceDashboard() {
   // Fresh project → chat-only. After AI generates files,
   // show the full layout with PREVIEW as default (v0.dev style).
   const hasGeneratedFiles = !!(files?.files &&
-    Object.keys(files.files).length > 1 &&
-    Object.values(files.files).some(f => f.status !== 'deleted'));
+    Object.values(files.files).some(f => f.status !== 'deleted' && f.content.trim().length > 0));
   const showOnlyChat = !hasGeneratedFiles;
 
   useEffect(() => {
@@ -293,7 +297,7 @@ export function WorkspaceDashboard() {
       <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center gap-3 bg-background">
         <div className="text-sm font-medium text-[var(--text-primary)]">No project selected</div>
         <button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/dashboard/home')}
           className="text-xs text-[var(--accent)] hover:underline"
         >
           Back to dashboard
@@ -318,7 +322,7 @@ export function WorkspaceDashboard() {
             Retry
           </button>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/dashboard/home')}
             className="text-xs text-[var(--text-secondary)] hover:underline"
           >
             Back to dashboard
