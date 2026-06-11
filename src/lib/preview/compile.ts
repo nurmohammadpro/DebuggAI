@@ -136,6 +136,145 @@ const NEXT_MOCKS: Record<string, string> = {
   `,
 };
 
+// Common UI packages shimmed as virtual modules for preview compilation.
+// These resolve to lightweight inline implementations so esbuild never
+// tries to find them in node_modules of the temp compile dir.
+const UI_PACKAGE_SHIMS: Record<string, string> = {
+  'lucide-react': `
+    import React from 'react';
+    const makeIcon = (name) => {
+      const Icon = ({ size = 24, color = 'currentColor', strokeWidth = 2, className, style, ...props }) =>
+        React.createElement('svg', {
+          xmlns: 'http://www.w3.org/2000/svg',
+          width: size, height: size, viewBox: '0 0 24 24',
+          fill: 'none', stroke: color, strokeWidth,
+          strokeLinecap: 'round', strokeLinejoin: 'round',
+          className, style, ...props,
+        });
+      Icon.displayName = name;
+      return Icon;
+    };
+    // Proxy — any named import returns a generic SVG icon stub
+    export default new Proxy({}, { get: (_, name) => makeIcon(String(name)) });
+    ${[
+      'Activity','AlertCircle','AlertTriangle','Archive','ArrowDown','ArrowLeft',
+      'ArrowRight','ArrowUp','Award','Badge','Bell','Book','BookOpen','Box',
+      'Briefcase','Bug','Building','Calendar','Check','CheckCircle','CheckSquare',
+      'ChevronDown','ChevronLeft','ChevronRight','ChevronUp','Circle','Clock',
+      'Cloud','Code','Code2','Coins','Command','Copy','CreditCard','Database',
+      'Download','Edit','Edit2','Edit3','ExternalLink','Eye','EyeOff','File',
+      'FileCode','FileText','Filter','Flag','Folder','FolderOpen','Globe',
+      'Grid','Hash','Heart','HelpCircle','Home','Image','Info','Key','Layout',
+      'Link','List','Loader','Loader2','Lock','LogIn','LogOut','Mail','Map',
+      'MapPin','Menu','MessageCircle','MessageSquare','Minus','Monitor','Moon',
+      'MoreHorizontal','MoreVertical','Move','Music','Package','Paperclip',
+      'Pause','Play','Plus','PlusCircle','Power','Printer','RefreshCw','Search',
+      'Send','Settings','Share','Shield','ShieldCheck','ShoppingCart','Sidebar',
+      'Slash','Sliders','Smartphone','Star','Sun','Table','Tag','Terminal',
+      'Trash','Trash2','TrendingUp','TrendingDown','Type','Upload','User',
+      'UserCheck','UserPlus','Users','Video','Wifi','X','XCircle','Zap',
+      'ZapOff','ZoomIn','ZoomOut',
+    ].map(n => `export const ${n} = makeIcon('${n}');`).join('\n')}
+  `,
+  'class-variance-authority': `
+    export function cva(base, config) {
+      return function(props) {
+        if (!config || !props) return base || '';
+        const { variants = {}, defaultVariants = {} } = config;
+        const classes = [base];
+        for (const [key, variantMap] of Object.entries(variants)) {
+          const val = props[key] ?? defaultVariants[key];
+          if (val !== undefined && variantMap[val]) classes.push(variantMap[val]);
+        }
+        return classes.filter(Boolean).join(' ');
+      };
+    }
+    export const cx = (...args) => args.filter(Boolean).join(' ');
+  `,
+  'clsx': `
+    export default function clsx(...args) {
+      return args.flat(Infinity).filter(x => x && typeof x === 'string').join(' ');
+    }
+    export { clsx };
+  `,
+  'tailwind-merge': `
+    export function twMerge(...classes) { return classes.filter(Boolean).join(' '); }
+    export function cn(...classes) { return classes.filter(Boolean).join(' '); }
+    export default twMerge;
+  `,
+  '@radix-ui/react-slot': `
+    import React from 'react';
+    export const Slot = React.forwardRef(({ children, ...props }, ref) => {
+      if (React.isValidElement(children)) {
+        return React.cloneElement(children, { ...props, ref });
+      }
+      return React.createElement('span', { ...props, ref }, children);
+    });
+    export const Slottable = ({ children }) => children;
+    export default Slot;
+  `,
+  '@radix-ui/react-alert-dialog': `
+    import React from 'react';
+    const noop = () => {};
+    export const Root = ({ children }) => children;
+    export const Trigger = ({ children, asChild, ...p }) => React.createElement(asChild ? React.Fragment : 'button', asChild ? {} : p, children);
+    export const Portal = ({ children }) => children;
+    export const Overlay = (p) => React.createElement('div', p);
+    export const Content = (p) => React.createElement('div', p);
+    export const Title = (p) => React.createElement('h2', p);
+    export const Description = (p) => React.createElement('p', p);
+    export const Action = ({ children, ...p }) => React.createElement('button', p, children);
+    export const Cancel = ({ children, ...p }) => React.createElement('button', p, children);
+  `,
+  'framer-motion': `
+    import React from 'react';
+    const motion = new Proxy({}, {
+      get: (_, tag) => React.forwardRef(({ children, animate, initial, exit, transition, whileHover, whileTap, variants, ...props }, ref) =>
+        React.createElement(tag, { ...props, ref }, children)
+      )
+    });
+    export { motion };
+    export const AnimatePresence = ({ children }) => children;
+    export const useAnimation = () => ({ start: () => {}, stop: () => {} });
+    export const useMotionValue = (v) => ({ get: () => v, set: () => {} });
+    export const useTransform = (v, fn) => ({ get: () => fn ? fn(v.get()) : v.get() });
+    export default motion;
+  `,
+  'sonner': `
+    import React from 'react';
+    export const Toaster = () => null;
+    export const toast = Object.assign(
+      (msg) => console.log('[toast]', msg),
+      { success: (m) => console.log('[toast.success]', m), error: (m) => console.error('[toast.error]', m), loading: (m) => console.log('[toast.loading]', m) }
+    );
+    export default toast;
+  `,
+  'next-themes': `
+    import React from 'react';
+    export const ThemeProvider = ({ children }) => children;
+    export const useTheme = () => ({ theme: 'dark', setTheme: () => {}, resolvedTheme: 'dark', themes: ['light','dark'] });
+  `,
+  'recharts': `
+    import React from 'react';
+    const stub = (name) => (props) => React.createElement('div', { 'data-chart': name, style: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: '#1e293b', borderRadius: '8px', color: '#94a3b8', fontSize: '14px' } }, name + ' Chart');
+    export const LineChart = stub('LineChart');
+    export const BarChart = stub('BarChart');
+    export const PieChart = stub('PieChart');
+    export const AreaChart = stub('AreaChart');
+    export const Line = () => null;
+    export const Bar = () => null;
+    export const Pie = () => null;
+    export const Area = () => null;
+    export const XAxis = () => null;
+    export const YAxis = () => null;
+    export const CartesianGrid = () => null;
+    export const Tooltip = () => null;
+    export const Legend = () => null;
+    export const ResponsiveContainer = ({ children }) => children;
+    export const Cell = () => null;
+  `,
+};
+
 // CSS module files get converted to plain CSS
 function isCssModule(filePath: string) {
   return filePath.endsWith('.module.css') || filePath.endsWith('.module.scss') || filePath.endsWith('.module.sass');
@@ -298,6 +437,23 @@ export async function bundlePreview(
       },
     });
 
+    // Shim common UI packages so esbuild never tries node_modules resolution
+    plugins.push({
+      name: 'ui-package-shims',
+      setup(build: any) {
+        const shimmed = Object.keys(UI_PACKAGE_SHIMS);
+        const filter = new RegExp(`^(${shimmed.map(escapeRegex).join('|')})$`);
+        build.onResolve({ filter }, (args: { path: string }) => ({
+          path: args.path,
+          namespace: 'ui-shim',
+        }));
+        build.onLoad({ filter: /.*/, namespace: 'ui-shim' }, (args: { path: string }) => ({
+          contents: UI_PACKAGE_SHIMS[args.path] || 'export default {}',
+          loader: 'jsx',
+        }));
+      },
+    });
+
     // Keep React package resolution virtual. Serverless builds may not include
     // React's nested CJS files, and Sandpack/CodeSandbox package fetches are
     // blocked in production. The iframe loads React globals before this bundle.
@@ -313,6 +469,24 @@ export async function bundlePreview(
         );
         build.onLoad({ filter: /.*/, namespace: 'react-global' }, (args: { path: string }) => ({
           contents: REACT_GLOBAL_MODULES[args.path] || '',
+          loader: 'js',
+        }));
+      },
+    });
+
+    // Catch-all: any package still unresolved gets an empty stub.
+    // Prevents "Could not resolve" hard failures for packages the AI imports
+    // but that aren't shimmed above.
+    plugins.push({
+      name: 'unresolved-fallback',
+      setup(build: any) {
+        build.onResolve({ filter: /^[^./]/ }, (args: { path: string; resolveDir: string }) => {
+          // Only intercept bare imports (packages), not relative paths
+          if (args.resolveDir === '' || args.path.startsWith('.')) return;
+          return { path: args.path, namespace: 'empty-stub' };
+        });
+        build.onLoad({ filter: /.*/, namespace: 'empty-stub' }, (args: { path: string }) => ({
+          contents: `// auto-stub: ${args.path}\nexport default {};\n`,
           loader: 'js',
         }));
       },
