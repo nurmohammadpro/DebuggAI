@@ -9,6 +9,8 @@ import { useWorkspaceStore } from '@/store/workspace-store';
 import { useProjectBoot } from '@/hooks/queries/use-project-boot';
 import { useGenerationStore } from '@/store/generation-store';
 import { getProjectKey } from '@/lib/project/project-key';
+import { serializeVirtualFiles } from '@/lib/project/virtual-files';
+import type { VirtualFile, VirtualProjectFiles } from '@/lib/project/virtual-files';
 import { WorkspaceSplitter } from '@/components/workspace/workspace-splitter';
 import { WorkspaceMobileTabs } from '@/components/workspace/workspace-mobile-tabs';
 import { EnhancedChatPanel } from '@/components/web-builder/enhanced-chat-panel';
@@ -25,6 +27,7 @@ const DeployModal = dynamic(() => import('@/components/workspace/deploy-modal').
   loading: () => null,
 });
 import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
+import { supabase } from '@/lib/supabase';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { getSession } from '@/hooks/use-session';
 import { BrandLockup } from '@/components/logo';
@@ -177,6 +180,52 @@ export function WorkspaceDashboard() {
       }
     })();
   }, [currentThreadId, effectiveProjectId, project?.code, project?.description, loadFromProject]);
+
+  // Final fallback: restore files from project_files table when
+  // neither saved generations nor thread messages have code.
+  // Agent tool calls write files to project_files but the generations.code
+  // field may be empty, and the agent response text may not contain code fences.
+  useEffect(() => {
+    if (!effectiveProjectId) return;
+    if (project?.code) return; // Already loaded
+
+    const genStore = useGenerationStore.getState();
+    if (genStore.files && Object.keys(genStore.files.files).length > 1) return; // Already has files
+
+    (async () => {
+      try {
+        const { data: fileRows } = await supabase
+          .from('project_files')
+          .select('path, content, language')
+          .eq('project_id', effectiveProjectId)
+          .neq('status', 'deleted');
+
+        if (!fileRows || fileRows.length === 0) return;
+
+        const entryPath = fileRows.find((r: { path: string }) => r.path === 'app/page.tsx')
+          ? 'app/page.tsx'
+          : fileRows[0]!.path;
+        const files: Record<string, VirtualFile> = {};
+        for (const row of fileRows) {
+          files[row.path] = {
+            path: row.path,
+            content: row.content || '',
+            language: row.language,
+            status: 'unchanged' as const,
+          };
+        }
+        const virtualFiles: VirtualProjectFiles = { entryPath, files };
+
+        // Serialize and load into store
+        const serialized = serializeVirtualFiles(virtualFiles);
+        if (serialized) {
+          loadFromProject(serialized, project?.description || 'Restored from project files');
+        }
+      } catch {
+        // Silently fail — no files to restore
+      }
+    })();
+  }, [effectiveProjectId, project?.code, project?.description, loadFromProject]);
 
   useEffect(() => {
     if (
