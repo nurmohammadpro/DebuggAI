@@ -40,6 +40,50 @@ const DEVICE_CONFIG: Record<DeviceMode, { width: string; label: string }> = {
   mobile: { width: '375px', label: 'Mobile' },
 };
 
+function isJavaScriptLikeFile(path: string) {
+  return /\.(tsx|ts|jsx|js|mjs|cjs)$/.test(path);
+}
+
+function relativeImportPath(fromFile: string, aliasTarget: string) {
+  const fromParts = fromFile
+    .replace(/^\/+/, '')
+    .split('/')
+    .slice(0, -1);
+  const targetParts = aliasTarget
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter(Boolean);
+
+  let shared = 0;
+  while (
+    shared < fromParts.length &&
+    shared < targetParts.length &&
+    fromParts[shared] === targetParts[shared]
+  ) {
+    shared++;
+  }
+
+  const up = Array.from({ length: fromParts.length - shared }, () => '..');
+  const down = targetParts.slice(shared);
+  const relative = [...up, ...down].join('/') || '.';
+  return relative.startsWith('.') ? relative : `./${relative}`;
+}
+
+function rewriteAppAliasImports(code: string, sandpackPath: string) {
+  const rewrite = (target: string) => relativeImportPath(sandpackPath, target);
+
+  return code
+    .replace(/(from\s*['"])@\/([^'"]+)(['"])/g, (_match, prefix: string, target: string, suffix: string) =>
+      `${prefix}${rewrite(target)}${suffix}`,
+    )
+    .replace(/(import\s*\(\s*['"])@\/([^'"]+)(['"]\s*\))/g, (_match, prefix: string, target: string, suffix: string) =>
+      `${prefix}${rewrite(target)}${suffix}`,
+    )
+    .replace(/(require\(\s*['"])@\/([^'"]+)(['"]\s*\))/g, (_match, prefix: string, target: string, suffix: string) =>
+      `${prefix}${rewrite(target)}${suffix}`,
+    );
+}
+
 /**
  * v0.dev-style instant preview pane
  *
@@ -88,7 +132,9 @@ export function EnhancedPreviewPane({
 
     const put = (path: string, code: string) => {
       const key = path.startsWith('/') ? path : '/' + path;
-      result[key] = { code };
+      result[key] = {
+        code: isJavaScriptLikeFile(key) ? rewriteAppAliasImports(code, key) : code,
+      };
     };
 
     // Detect npm packages from import statements
@@ -102,6 +148,7 @@ export function EnhancedPreviewPane({
       let m: RegExpExecArray | null;
       while ((m = re.exec(code)) !== null) {
         const dep = m[1];
+        if (dep.startsWith('@/')) continue;
         if (!dep.startsWith('.') && !dep.startsWith('/')) {
           const pkg = dep.split('/')[0]!;
           // Normalize scoped packages (e.g. @types/react → @types/react)
