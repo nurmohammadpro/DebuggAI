@@ -50,6 +50,7 @@ const nextConfig: NextConfig = {
 
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-alert-dialog'],
+    serverComponentsExternalPackages: ['esbuild'],
   },
 };
 
