@@ -7,8 +7,8 @@
  * - Uses esbuild (server-side) for fast TSX→JS compilation
  * - Strips Next.js-specific imports (next/navigation, next/link, next/image)
  * - Extracts CSS module files and converts to plain CSS
- * - Bundles React into the preview payload so production preview does not
- *   depend on CodeSandbox package fetches or React CDN scripts.
+ * - Uses tiny React virtual modules backed by browser globals, avoiding
+ *   CodeSandbox package fetches and serverless node_modules tracing issues.
  */
 
 import path from 'path';
@@ -18,12 +18,68 @@ import fsp from 'fs/promises';
 import crypto from 'crypto';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
-const REACT_RESOLVE_PATHS: Record<string, string> = {
-  react: path.join(process.cwd(), 'node_modules/react/index.js'),
-  'react-dom': path.join(process.cwd(), 'node_modules/react-dom/index.js'),
-  'react-dom/client': path.join(process.cwd(), 'node_modules/react-dom/client.js'),
-  'react/jsx-runtime': path.join(process.cwd(), 'node_modules/react/jsx-runtime.js'),
-  'react/jsx-dev-runtime': path.join(process.cwd(), 'node_modules/react/jsx-dev-runtime.js'),
+const REACT_GLOBAL_MODULES: Record<string, string> = {
+  react: `
+    const React = window.React;
+    export default React;
+    export const Children = React.Children;
+    export const Component = React.Component;
+    export const Fragment = React.Fragment;
+    export const Profiler = React.Profiler;
+    export const PureComponent = React.PureComponent;
+    export const StrictMode = React.StrictMode;
+    export const Suspense = React.Suspense;
+    export const cloneElement = React.cloneElement;
+    export const createContext = React.createContext;
+    export const createElement = React.createElement;
+    export const createRef = React.createRef;
+    export const forwardRef = React.forwardRef;
+    export const isValidElement = React.isValidElement;
+    export const lazy = React.lazy;
+    export const memo = React.memo;
+    export const startTransition = React.startTransition;
+    export const useCallback = React.useCallback;
+    export const useContext = React.useContext;
+    export const useDebugValue = React.useDebugValue;
+    export const useDeferredValue = React.useDeferredValue;
+    export const useEffect = React.useEffect;
+    export const useId = React.useId;
+    export const useImperativeHandle = React.useImperativeHandle;
+    export const useInsertionEffect = React.useInsertionEffect;
+    export const useLayoutEffect = React.useLayoutEffect;
+    export const useMemo = React.useMemo;
+    export const useReducer = React.useReducer;
+    export const useRef = React.useRef;
+    export const useState = React.useState;
+    export const useSyncExternalStore = React.useSyncExternalStore;
+    export const useTransition = React.useTransition;
+  `,
+  'react-dom': `
+    const ReactDOM = window.ReactDOM;
+    export default ReactDOM;
+    export const createPortal = ReactDOM.createPortal;
+    export const flushSync = ReactDOM.flushSync;
+  `,
+  'react-dom/client': `
+    const ReactDOM = window.ReactDOM;
+    export const createRoot = ReactDOM.createRoot;
+    export const hydrateRoot = ReactDOM.hydrateRoot;
+  `,
+  'react/jsx-runtime': `
+    const React = window.React;
+    export const Fragment = React.Fragment;
+    export function jsx(type, props, key) {
+      return React.createElement(type, key === undefined ? props : { ...props, key });
+    }
+    export const jsxs = jsx;
+  `,
+  'react/jsx-dev-runtime': `
+    const React = window.React;
+    export const Fragment = React.Fragment;
+    export function jsxDEV(type, props, key) {
+      return React.createElement(type, key === undefined ? props : { ...props, key });
+    }
+  `,
 };
 
 // Next.js modules that get mock replacements in preview mode
@@ -242,17 +298,23 @@ export async function bundlePreview(
       },
     });
 
-    // Temp preview projects live outside the app directory, so bare package
-    // imports such as react/react-dom must resolve from this app's node_modules.
+    // Keep React package resolution virtual. Serverless builds may not include
+    // React's nested CJS files, and Sandpack/CodeSandbox package fetches are
+    // blocked in production. The iframe loads React globals before this bundle.
     plugins.push({
-      name: 'app-package-resolver',
+      name: 'react-global-shims',
       setup(build: any) {
         build.onResolve(
           { filter: /^(react|react-dom(?:\/client)?|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path: string }) => ({
-            path: REACT_RESOLVE_PATHS[args.path] || path.join(process.cwd(), 'node_modules', args.path),
+            path: args.path,
+            namespace: 'react-global',
           }),
         );
+        build.onLoad({ filter: /.*/, namespace: 'react-global' }, (args: { path: string }) => ({
+          contents: REACT_GLOBAL_MODULES[args.path] || '',
+          loader: 'js',
+        }));
       },
     });
 
@@ -306,6 +368,9 @@ export async function bundlePreview(
  * Build a complete HTML document from compiled JS + CSS for iframe rendering.
  */
 export function buildPreviewHtml(js: string, css: string): string {
+  const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js';
+  const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -321,6 +386,8 @@ export function buildPreviewHtml(js: string, css: string): string {
 </head>
 <body>
   <div id="root"></div>
+  <script src="${reactCdn}"></script>
+  <script src="${reactDomCdn}"></script>
   <script>
     // ── Error & console trap ────────────────────────────────────────────
     (function() {
