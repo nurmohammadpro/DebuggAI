@@ -655,12 +655,51 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         }
         flushEvent();
 
-        // Build virtual files from accumulated text
+        // Build virtual files. Two paths:
+        // 1. From accumulated text (message events had code blocks)
+        // 2. Reload from project_files API (agent wrote files via tools,
+        //    accumulated only has plain text, no code fences)
         const baseFiles = useGenerationStore.getState().files || undefined;
-        const virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
+        let virtualFiles = extractVirtualFiles(accumulated, baseFiles || undefined);
 
+        if (Object.keys(virtualFiles.files).length === 0 && currentProjectId) {
+          // Agent used tools but didn't emit code blocks in messages.
+          // Load the latest project_files from Supabase instead.
+          try {
+            const { user } = await supabase.auth.getUser();
+            if (user) {
+              const { data: fileRows } = await supabase
+                .from('project_files')
+                .select('path, content, language')
+                .eq('project_id', currentProjectId)
+                .neq('status', 'deleted');
+
+              if (fileRows && fileRows.length > 0) {
+                const entryPath = fileRows.find((r: { path: string }) => r.path === 'app/page.tsx')
+                  ? 'app/page.tsx'
+                  : fileRows[0]!.path;
+                const files: Record<string, VirtualFile> = {};
+                for (const row of fileRows) {
+                  files[row.path] = {
+                    path: row.path,
+                    content: row.content || '',
+                    language: row.language,
+                    status: 'unchanged' as const,
+                  };
+                }
+                virtualFiles = { entryPath, files };
+              }
+            }
+          } catch {
+            // Fall back to whatever we have
+          }
+        }
+
+        // If still no files after both paths, don't error —
+        // return null so the generate() fallback runs.
         if (Object.keys(virtualFiles.files).length === 0) {
-          throw new Error('No code found in agent response');
+          // Don't throw — let the caller fall back to single-shot
+          return null;
         }
 
         const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
