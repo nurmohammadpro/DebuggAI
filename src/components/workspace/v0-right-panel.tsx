@@ -13,13 +13,11 @@ import {
   Share2,
   Zap,
 } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
-import { EnhancedPreviewPane } from '@/components/web-builder/enhanced-preview-pane';
+import { BrowserPreview } from '@/components/preview/browser-preview';
 import { useGenerationStore } from '@/store/generation-store';
-import { useSandbox } from '@/hooks/use-sandbox';
 import { cn } from '@/lib/utils';
-import { serializeVirtualFiles } from '@/lib/project/virtual-files';
 
 export type V0RightView = 'preview' | 'code';
 
@@ -50,69 +48,9 @@ export function V0RightPanel({
   const [previewEverActivated, setPreviewEverActivated] = useState(false);
   const [codeEverActivated, setCodeEverActivated] = useState(false);
   const { bumpPreviewNonce, files } = useGenerationStore();
-  const sandbox = useSandbox();
-  const lastFileSnapshot = useRef<string>('');
-  const hasBootedRef = useRef(false);
-  const sandboxRef = useRef(sandbox);
-  const dockerUnavailableRef = useRef(false);
-
-  useEffect(() => { sandboxRef.current = sandbox; }, [sandbox]);
-
-  // Track first activation of each view — defer heavy init until needed
-  useEffect(() => {
-    if (activeView === 'preview' && !previewEverActivated) setPreviewEverActivated(true);
-    if (activeView === 'code' && !codeEverActivated) setCodeEverActivated(true);
-  }, [activeView, previewEverActivated, codeEverActivated]);
-
-  // Docker sandbox — best-effort background only, deferred until preview first activated
-  useEffect(() => {
-    if (!previewEverActivated) return;
-    if (!files || Object.keys(files.files).length === 0) return;
-    if (dockerUnavailableRef.current) return;
-
-    const snapshot = serializeVirtualFiles(files);
-    if (snapshot === lastFileSnapshot.current && hasBootedRef.current) return;
-    lastFileSnapshot.current = snapshot;
-    hasBootedRef.current = true;
-
-    const flatFiles: Record<string, string> = {};
-    for (const [path, file] of Object.entries(files.files)) {
-      if (file.status === 'deleted') continue;
-      flatFiles[path] = file.content;
-    }
-
-    const totalChars = Object.values(flatFiles).reduce((sum, c) => sum + c.length, 0);
-    if (totalChars < 20) return;
-
-    const sb = sandboxRef.current;
-    if (sb.status === 'running' || sb.status === 'installing') {
-      sb.stopSandbox().then(() => {
-        sandboxRef.current.createSandbox(flatFiles).then(id => {
-          if (!id) dockerUnavailableRef.current = true;
-        });
-      }).catch(() => { dockerUnavailableRef.current = true; });
-    } else if (sb.status === 'idle' || sb.status === 'stopped' || sb.status === 'error') {
-      sb.createSandbox(flatFiles).then(id => {
-        if (!id) dockerUnavailableRef.current = true;
-      });
-    }
-  }, [files, previewEverActivated]);
-
   const handleRefresh = useCallback(() => {
     bumpPreviewNonce();
-    if (dockerUnavailableRef.current) return;
-    if (sandbox.status === 'stopped' || sandbox.status === 'error') {
-      if (!files || Object.keys(files.files).length === 0) return;
-      const flatFiles: Record<string, string> = {};
-      for (const [path, file] of Object.entries(files.files)) {
-        if (file.status === 'deleted') continue;
-        flatFiles[path] = file.content;
-      }
-      sandbox.createSandbox(flatFiles).then(id => {
-        if (!id) dockerUnavailableRef.current = true;
-      });
-    }
-  }, [bumpPreviewNonce, sandbox, files]);
+  }, [bumpPreviewNonce]);
 
   const hasFiles = files && Object.keys(files.files).filter(p => files.files[p]?.status !== 'deleted').length > 0;
 
@@ -198,13 +136,9 @@ export function V0RightPanel({
             }}
             aria-hidden={activeView !== 'preview'}
           >
-            <EnhancedPreviewPane
-              height="100%"
+            <BrowserPreview
               className="flex-1 min-h-0 border-0 rounded-none"
               chromeless
-              sandboxUrl={sandbox.previewUrl}
-              sandboxError={sandbox.error}
-              onRefresh={handleRefresh}
             />
           </div>
         )}

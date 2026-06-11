@@ -7,7 +7,8 @@
  * - Uses esbuild (server-side) for fast TSX→JS compilation
  * - Strips Next.js-specific imports (next/navigation, next/link, next/image)
  * - Extracts CSS module files and converts to plain CSS
- * - Externalizes React (loaded from CDN in the iframe)
+ * - Bundles React into the preview payload so production preview does not
+ *   depend on CodeSandbox package fetches or React CDN scripts.
  */
 
 import path from 'path';
@@ -15,8 +16,10 @@ import os from 'os';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
+import { createRequire } from 'node:module';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
+const nodeRequire = createRequire(import.meta.url);
 
 // Next.js modules that get mock replacements in preview mode
 const NEXT_MOCKS: Record<string, string> = {
@@ -170,6 +173,27 @@ export async function bundlePreview(
       }
     }
 
+    const entryImportPath = `./${path.relative(workDir, resolvedEntry).replace(/\\/g, '/')}`;
+    const previewEntryPath = path.join(workDir, '__debuggai_preview_entry.tsx');
+    await fsp.writeFile(
+      previewEntryPath,
+      [
+        "import React from 'react';",
+        "import { createRoot } from 'react-dom/client';",
+        `import Page from ${JSON.stringify(entryImportPath)};`,
+        '',
+        "const rootElement = document.getElementById('root');",
+        "if (!rootElement) throw new Error('Preview root element not found');",
+        'createRoot(rootElement).render(',
+        '  <React.StrictMode>',
+        '    <Page />',
+        '  </React.StrictMode>,',
+        ');',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+
     // Dynamic import esbuild (native binary, avoid Turbopack bundling)
     const esbuild = await import('esbuild');
 
@@ -213,17 +237,30 @@ export async function bundlePreview(
       },
     });
 
+    // Temp preview projects live outside the app directory, so bare package
+    // imports such as react/react-dom must resolve from this app's node_modules.
+    plugins.push({
+      name: 'app-package-resolver',
+      setup(build: any) {
+        build.onResolve(
+          { filter: /^(react|react-dom(?:\/client)?|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
+          (args: { path: string }) => ({
+            path: nodeRequire.resolve(args.path, { paths: [process.cwd()] }),
+          }),
+        );
+      },
+    });
+
     const result = await esbuild.build({
-      entryPoints: [resolvedEntry],
+      entryPoints: [previewEntryPath],
       bundle: true,
       write: false,
-      format: 'esm',
+      format: 'iife',
       platform: 'browser',
       target: 'es2020',
       jsx: 'automatic',
       jsxImportSource: 'react',
       plugins,
-      external: ['react', 'react-dom'],
       loader: {
         '.tsx': 'tsx',
         '.ts': 'ts',
@@ -263,35 +300,13 @@ export async function bundlePreview(
 /**
  * Build a complete HTML document from compiled JS + CSS for iframe rendering.
  */
-export function buildPreviewHtml(js: string, css: string, entryComponent?: string): string {
-  const tailwindCdn = 'https://cdn.jsdelivr.net/npm/tailwindcss@3.4.17/out/tailwind.min.css';
-  const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js';
-  const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js';
-
-  const renderCall = entryComponent
-    ? `const root = ReactDOM.createRoot(document.getElementById('root'));
-       root.render(React.createElement(${entryComponent}));`
-    : `const root = ReactDOM.createRoot(document.getElementById('root'));
-       const exports = {};
-       const module2 = { exports };
-       ${js}
-       const candidates = [module2.exports?.default, window.__debuggai_component];
-       const Component = candidates.find(c => typeof c === 'function' || typeof c === 'object');
-       if (Component) {
-         if (typeof Component === 'function') root.render(React.createElement(Component));
-         else root.render(Component);
-       } else {
-         root.render(React.createElement('div', { style: { padding: '20px', color: '#999' } },
-           'Preview: Component not found — check the console for errors'
-         ));
-       }`;
-
+export function buildPreviewHtml(js: string, css: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="${tailwindCdn}" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
@@ -301,8 +316,6 @@ export function buildPreviewHtml(js: string, css: string, entryComponent?: strin
 </head>
 <body>
   <div id="root"></div>
-  <script src="${reactCdn}"></script>
-  <script src="${reactDomCdn}"></script>
   <script>
     // ── Error & console trap ────────────────────────────────────────────
     (function() {
@@ -356,7 +369,7 @@ export function buildPreviewHtml(js: string, css: string, entryComponent?: strin
     // ── End error trap ──────────────────────────────────────────────────
 
     try {
-      ${renderCall}
+      ${js}
     } catch(e) {
       console.error('Preview render error:', e);
       window.onerror && window.onerror(e.message, '', 0, 0, e);

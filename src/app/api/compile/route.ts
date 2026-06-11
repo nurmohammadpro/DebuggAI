@@ -42,26 +42,12 @@ export async function POST(req: NextRequest) {
     }, { status: 422 });
   }
 
-  const entryPath = entryPoint || 'app/page.tsx';
-  const pageFile = files[entryPath];
-  let entryComponent: string | undefined;
-
-  if (pageFile) {
-    const defaultMatch = pageFile.match(/export\s+default\s+function\s+(\w+)/);
-    if (defaultMatch) entryComponent = defaultMatch[1];
-    if (!entryComponent) {
-      const arrowMatch = pageFile.match(/export\s+default\s+(\w+)\s*=\s*(?:\(|function)/);
-      if (arrowMatch) entryComponent = arrowMatch[1];
-    }
-  }
-
-  const html = buildPreviewHtml(js, css, entryComponent);
+  const html = buildPreviewHtml(js, css);
 
   return NextResponse.json({
     html,
     errors,
-    hasComponent: !!entryComponent,
-    entryComponent,
+    hasComponent: !!js,
     durationMs: Math.round(performance.now() - startTime),
   });
 }
