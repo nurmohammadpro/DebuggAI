@@ -16,10 +16,15 @@ import os from 'os';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
-import { createRequire } from 'node:module';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
-const nodeRequire = createRequire(import.meta.url);
+const REACT_RESOLVE_PATHS: Record<string, string> = {
+  react: path.join(process.cwd(), 'node_modules/react/index.js'),
+  'react-dom': path.join(process.cwd(), 'node_modules/react-dom/index.js'),
+  'react-dom/client': path.join(process.cwd(), 'node_modules/react-dom/client.js'),
+  'react/jsx-runtime': path.join(process.cwd(), 'node_modules/react/jsx-runtime.js'),
+  'react/jsx-dev-runtime': path.join(process.cwd(), 'node_modules/react/jsx-dev-runtime.js'),
+};
 
 // Next.js modules that get mock replacements in preview mode
 const NEXT_MOCKS: Record<string, string> = {
@@ -245,7 +250,7 @@ export async function bundlePreview(
         build.onResolve(
           { filter: /^(react|react-dom(?:\/client)?|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path: string }) => ({
-            path: nodeRequire.resolve(args.path, { paths: [process.cwd()] }),
+            path: REACT_RESOLVE_PATHS[args.path] || path.join(process.cwd(), 'node_modules', args.path),
           }),
         );
       },
