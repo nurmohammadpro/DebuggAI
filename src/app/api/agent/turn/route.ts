@@ -24,8 +24,72 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const MAX_TOOL_TURNS = 25;
-const MAX_HISTORY_TOKENS = 3000; // keep agent requests under free-tier Groq/DeepSeek limits
+const MAX_HISTORY_TOKENS = 1200; // keep agent requests under free-tier Groq/DeepSeek limits
 const CONVERSATION_LIMIT = 30;     // Max messages to load
+
+const COMPACT_AGENT_TOOLS = [
+  {
+    type: 'function' as const,
+    function: {
+      name: 'list_dir',
+      description: 'List project files.',
+      parameters: {
+        type: 'object',
+        properties: { path: { type: 'string' } },
+        required: ['path'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'view_file',
+      description: 'Read a project file.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string' },
+          startLine: { type: 'number' },
+          endLine: { type: 'number' },
+        },
+        required: ['path'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'write_file',
+      description: 'Create or replace a file.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string' },
+          content: { type: 'string' },
+        },
+        required: ['path', 'content'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'line_replace',
+      description: 'Replace exact text in a file.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string' },
+          old_text: { type: 'string' },
+          new_text: { type: 'string' },
+          first_line: { type: 'number' },
+          last_line: { type: 'number' },
+        },
+        required: ['path', 'old_text', 'new_text', 'first_line', 'last_line'],
+      },
+    },
+  },
+];
 
 // ── P13: Prompt injection sanitization ───────────────────────────────────
 // Strip potential injection payloads from file content before feeding to LLM.
@@ -93,6 +157,61 @@ function detectAgentIntent(prompt: string, generationDirective?: string) {
   if (directive.includes('mode: resolve')) return 'debug' as const;
   if (directive.includes('mode: ux polish') || directive.includes('mode: restructure')) return 'generate' as const;
   return detectIntent(prompt);
+}
+
+function buildAgentSystemPrompt({
+  provider,
+  generationDirective,
+  currentFiles,
+  memoryBlock,
+  skillContext,
+  fileContext,
+}: {
+  provider: 'groq' | 'deepseek';
+  generationDirective?: string;
+  currentFiles: string[];
+  memoryBlock: string;
+  skillContext: string;
+  fileContext: string;
+}) {
+  const fileList = currentFiles.length > 0 ? currentFiles.join(', ') : '(empty)';
+  if (provider === 'groq') {
+    return [
+      'You are DeBuggAI, an expert Next.js engineer. Use tools to make small, exact file edits.',
+      'Rules: view_file before editing existing files; prefer line_replace; write_file for new files; return concise status.',
+      'Design: improve app/globals.css theme variables and card classes using semantic Tailwind. Avoid raw hex in JSX.',
+      generationDirective ? `Directive:\n${generationDirective}` : '',
+      `Current files: ${fileList}`,
+      fileContext,
+    ].filter(Boolean).join('\n\n');
+  }
+
+  return `You are DeBuggAI, an expert Next.js engineer. Use tools to explore, read, and edit files surgically.
+
+## WORKFLOW
+1. **Explore** → use list_dir
+2. **Read** → use view_file before editing
+3. **Edit** → line_replace (preferred) or write_file (new files)
+4. **Verify** → read_dev_logs after changes
+5. **Research** → web_search for up-to-date docs
+
+## DESIGN RULES
+- Edit globals.css CSS variables for theme colors (--primary, --foreground, etc.)
+- NEVER use raw hex (#xxx) in JSX — use Tailwind semantic classes
+- Use @/ import alias for local imports
+- Keep edits SMALL — one logical change per turn
+- Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
+- If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
+- If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
+
+## BOOTSTRAP (empty project)
+Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs
+When the project is empty, you MUST create files using write_file. Do not answer conversationally without writing code.
+Create a real multi-file project: app/page.tsx should stay thin and compose imported UI; place reusable UI in components/, stateful feature logic in hooks/, pure helpers/constants/data in lib/, and shared interfaces in types/.
+For a new UI app, create at least one meaningful component file and one hook/lib/type file in addition to the required app files. Avoid putting the full application in app/page.tsx unless explicitly asked for a single-file demo.
+${generationDirective ? `\n## User Generation Directive\n${generationDirective}\n` : ''}
+
+Current files: ${fileList}${memoryBlock}${skillContext}${fileContext}`;
 }
 
 async function loadThreadHistory(
@@ -185,13 +304,23 @@ export async function POST(req: NextRequest) {
       model: process.env.GROQ_MODEL?.trim() || null,
     };
   }
+
+  const explicitDeepseekKey = process.env.DEEPSEEK_API_KEY;
+  if (explicitDeepseekKey) {
+    configs.deepseek = {
+      apiKey: explicitDeepseekKey,
+      baseUrl: (process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1').trim(),
+      model: process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-chat',
+    };
+  }
+
   const dsKey = process.env.AI_API_KEY;
   if (dsKey) {
     const baseUrl = (process.env.AI_BASE_URL || 'https://api.deepseek.com/v1').trim();
     const model = process.env.AI_MODEL?.trim() || null;
     if (/groq\.com/i.test(baseUrl)) {
       configs.groq = { apiKey: dsKey, baseUrl, model };
-    } else {
+    } else if (!configs.deepseek) {
       configs.deepseek = { apiKey: dsKey, baseUrl, model };
     }
   }
@@ -433,41 +562,23 @@ export async function POST(req: NextRequest) {
       const heartbeat = setInterval(() => { if (!cancelled) enqueue(ssePing()); }, 15_000);
 
       try {
-        const skillContext = getRelevantSkills(prompt, 2, 600);
+        const skillContext = primary.provider === 'groq' ? '' : getRelevantSkills(prompt, 2, 600);
 
         const memoryBlock = projectMemory
-          ? `\n\n## Project Memory\n\`\`\`\n${projectMemory.slice(0, 2000)}\n\`\`\`\n(Keep project_memory.md updated with key decisions, stack, tokens, and patterns)`
+          ? `\n\n## Project Memory\n\`\`\`\n${projectMemory.slice(0, primary.provider === 'groq' ? 500 : 2000)}\n\`\`\`\n(Keep project_memory.md updated with key decisions, stack, tokens, and patterns)`
           : '';
 
         const messages: Array<{ role: string; content: string }> = [
           {
             role: 'system',
-            content: `You are DeBuggAI, an expert Next.js engineer. Use tools to explore, read, and edit files surgically.
-
-## WORKFLOW
-1. **Explore** → use list_dir
-2. **Read** → use view_file before editing
-3. **Edit** → line_replace (preferred) or write_file (new files)
-4. **Verify** → read_dev_logs after changes
-5. **Research** → web_search for up-to-date docs
-
-## DESIGN RULES
-- Edit globals.css CSS variables for theme colors (--primary, --foreground, etc.)
-- NEVER use raw hex (#xxx) in JSX — use Tailwind semantic classes
-- Use @/ import alias for local imports
-- Keep edits SMALL — one logical change per turn
-- Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
-- If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
-- If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
-
-## BOOTSTRAP (empty project)
-Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs
-When the project is empty, you MUST create files using write_file. Do not answer conversationally without writing code.
-Create a real multi-file project: app/page.tsx should stay thin and compose imported UI; place reusable UI in components/, stateful feature logic in hooks/, pure helpers/constants/data in lib/, and shared interfaces in types/.
-For a new UI app, create at least one meaningful component file and one hook/lib/type file in addition to the required app files. Avoid putting the full application in app/page.tsx unless explicitly asked for a single-file demo.
-${generationDirective ? `\n## User Generation Directive\n${generationDirective}\n` : ''}
-
-Current files: ${Object.keys(ctx.files).length > 0 ? Object.keys(ctx.files).join(', ') : '(empty)'}${memoryBlock}${skillContext}${fileContext}`,
+            content: buildAgentSystemPrompt({
+              provider: primary.provider,
+              generationDirective,
+              currentFiles: Object.keys(ctx.files),
+              memoryBlock,
+              skillContext,
+              fileContext,
+            }),
           },
           ...history.map(h => ({ role: h.role, content: h.content })),
           { role: 'user', content: prompt },
@@ -483,7 +594,9 @@ Current files: ${Object.keys(ctx.files).length > 0 ? Object.keys(ctx.files).join
             method: 'POST',
             headers: { 'Authorization': `Bearer ${primary.apiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: primary.model, messages, tools: AGENT_TOOLS,
+              model: primary.model,
+              messages,
+              tools: primary.provider === 'groq' ? COMPACT_AGENT_TOOLS : AGENT_TOOLS,
               tool_choice: 'auto', stream: false,
               max_tokens: primary.maxTokens, temperature: 0.3,
             }),

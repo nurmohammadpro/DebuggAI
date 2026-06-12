@@ -46,4 +46,34 @@ describe('AI router', () => {
 
     expect(pickModel('code_edit', configs)?.model).toBe('llama-3.3-70b-versatile');
   });
+
+  it('prefers DeepSeek for code edits when both providers are configured', () => {
+    const configs: ProviderConfigs = {
+      groq: {
+        apiKey: 'groq-key',
+        baseUrl: 'https://api.groq.com/openai/v1',
+      },
+      deepseek: {
+        apiKey: 'deepseek-key',
+        baseUrl: 'https://api.deepseek.com/v1',
+      },
+    };
+
+    const routed = pickModel('code_edit', configs);
+
+    expect(routed?.provider).toBe('deepseek');
+    expect(routed?.model).toBe('deepseek-chat');
+  });
+
+  it('keeps Groq fallback output small enough for low TPM tiers', () => {
+    const configs: ProviderConfigs = {
+      groq: {
+        apiKey: 'groq-key',
+        baseUrl: 'https://api.groq.com/openai/v1',
+      },
+      deepseek: null,
+    };
+
+    expect(pickModel('generate', configs)?.maxTokens).toBeLessThanOrEqual(3072);
+  });
 });
