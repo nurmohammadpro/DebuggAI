@@ -40,4 +40,30 @@ describe('preview compiler', () => {
     expect(html).toContain('Preview works');
     expect(html).not.toContain('cdn.tailwindcss.com');
   });
+
+  it('uses preview shims when generated shadcn ui files miss named exports', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import { PricingSection } from '@/components/pricing-section';",
+        'export default function Home() {',
+        '  return <PricingSection />;',
+        '}',
+      ].join('\n'),
+      'components/pricing-section.tsx': [
+        "import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';",
+        '',
+        'export function PricingSection() {',
+        '  return <Card><CardHeader><CardTitle>Pro</CardTitle><CardDescription>Best plan</CardDescription></CardHeader><CardContent>$29</CardContent><CardFooter>Start</CardFooter></Card>;',
+        '}',
+      ].join('\n'),
+      'components/ui/card.tsx': [
+        "export default function BrokenCard({ children }: { children: React.ReactNode }) {",
+        '  return <div>{children}</div>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Best plan');
+  });
 });

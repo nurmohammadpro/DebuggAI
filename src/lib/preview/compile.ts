@@ -1072,6 +1072,9 @@ export async function bundlePreview(
       setup(build: any) {
         const extensions = ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'];
         build.onResolve({ filter: /^@\// }, (args: { path: string }) => {
+          if (args.path.startsWith('@/components/ui/')) {
+            return { path: args.path, namespace: 'ui-component-shim' };
+          }
           const base = path.resolve(workDir, args.path.slice(2));
           if (fs.existsSync(base)) return { path: base };
           for (const ext of extensions) {
@@ -1081,9 +1084,6 @@ export async function bundlePreview(
           for (const ext of extensions) {
             const idx = path.join(base, 'index' + ext);
             if (fs.existsSync(idx)) return { path: idx };
-          }
-          if (args.path.startsWith('@/components/ui/')) {
-            return { path: args.path, namespace: 'ui-component-shim' };
           }
           return { path: base };
         });
