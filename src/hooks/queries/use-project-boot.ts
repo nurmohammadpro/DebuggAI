@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getSession, useSession } from '@/hooks/use-session';
+import { getSession } from '@/hooks/use-session';
 
 interface ProjectBoot {
   project: {
@@ -28,17 +28,19 @@ interface ProjectBoot {
 }
 
 export function useProjectBoot(projectId: string | null, enabled = true) {
-  const { user: sessionUser } = useSession();
-
   return useQuery({
     queryKey: projectId ? ['project-boot', projectId] : ['project-boot', 'none'],
-    enabled: enabled && !!projectId && !!sessionUser,
+    enabled: enabled && !!projectId,
     staleTime: 10_000,
+    gcTime: 5 * 60 * 1000,
+    placeholderData: (previousBoot) => previousBoot,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     queryFn: async (): Promise<ProjectBoot | null> => {
       if (!projectId) return null;
       const { session } = await getSession();
       const token = session?.access_token;
-      if (!token) return null;
+      if (!token) throw new Error('Not authenticated — retrying...');
       const res = await fetch(`/api/projects/${projectId}/boot`, {
         headers: { Authorization: `Bearer ${token}` },
       });

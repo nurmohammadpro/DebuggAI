@@ -226,8 +226,6 @@ export function AppSidebar() {
     }
   }, [confirm, queryClient, searchParams, activeProjectId, clearThread, router]);
 
-  if (!user) return null; // Wait for session hydration
-
   return (
     <>
       <ConfirmDialogComponent />

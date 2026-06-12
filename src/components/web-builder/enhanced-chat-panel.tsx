@@ -114,25 +114,25 @@ const BUILDER_MODES: Array<{
   {
     id: 'auto',
     label: 'Auto',
-    description: 'Infer the best workflow',
+    description: 'Plan, edit, and verify the right workflow',
     icon: Wand,
   },
   {
     id: 'refactor',
     label: 'Refactor',
-    description: 'Edit existing files first',
+    description: 'Improve architecture without changing behavior',
     icon: Hammer,
   },
   {
     id: 'fix',
     label: 'Fix',
-    description: 'Prioritize errors and build checks',
+    description: 'Repair build/runtime issues first',
     icon: AlertTriangle,
   },
   {
     id: 'polish',
     label: 'Polish',
-    description: 'Improve UX without rewriting',
+    description: 'Upgrade visual quality and UX details',
     icon: Eye,
   },
 ];
@@ -159,16 +159,20 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
   const shared = [
     projectContext,
     ...architecture,
+    'Operate like a senior product engineer: inspect the current project, choose the smallest high-leverage edits, and preserve user intent.',
     'Preserve working structure, imports, route names, package versions, and design tokens unless changing them is required.',
-    'Return complete file blocks for every changed file so the editor can apply the update deterministically.',
-    'Use short status lines before meaningful phases: First, Next, Now, Finally, Done, Warning, or Error.',
+    'Return complete file blocks for every changed file so the editor can apply the update deterministically. Never return partial snippets.',
+    'Keep responses concise but useful: say what changed, why it matters, and which files were touched.',
+    'Use short status lines before meaningful phases: First, Inspecting, Editing, Verifying, Done, Warning, or Error.',
   ];
 
   if (builderMode === 'refactor') {
     return [
       'Mode: restructure existing app.',
       ...shared,
-      'Make minimal targeted improvements. Prefer moving or extracting components over replacing whole pages.',
+      'Goal: improve maintainability, naming, composition, and file boundaries without changing the visible product behavior.',
+      'Prefer extracting duplicated UI/data/helpers into components/, hooks/, lib/, or types/ over replacing whole pages.',
+      'Preserve public props and routes unless the user explicitly asks for API changes.',
       'If adding layout UI such as nav, mount it in the right layout file and keep client state isolated to client components.',
     ].join('\n');
   }
@@ -177,7 +181,9 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
     return [
       'Mode: resolve runtime or build errors.',
       ...shared,
-      'Prioritize root cause, TypeScript correctness, missing dependencies, invalid imports, hydration issues, and asset paths.',
+      'Goal: make the app build and render reliably before improving anything else.',
+      'Prioritize root cause, TypeScript correctness, missing dependencies, invalid imports, hydration issues, invalid client/server boundaries, and asset paths.',
+      'If an import is broken, either add the missing file/export or replace the import with a local implementation. Do not leave dangling shadcn/ui imports.',
       'Do not add visual polish until the app can build and render.',
     ].join('\n');
   }
@@ -186,8 +192,10 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
     return [
       'Mode: UX polish.',
       ...shared,
-      'Improve hierarchy, spacing, states, responsiveness, accessibility, and production details without changing product intent.',
-      'Avoid decorative gradients, glass effects, nested cards, and raw hex colors in JSX.',
+      'Goal: make the current UI feel finished, legible, responsive, and intentional without changing product intent or rewriting the app.',
+      'Improve background/text contrast, card surfaces, spacing rhythm, section hierarchy, button states, empty/loading states, mobile layout, keyboard focus, and accessible labels.',
+      'Prefer app/globals.css design tokens and reusable component class improvements over one-off inline styles.',
+      'Avoid decorative gradients, glass effects, nested cards, raw hex colors in JSX, and generic AI-looking bloat.',
     ].join('\n');
   }
 
@@ -195,6 +203,7 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
     'Mode: auto.',
     ...shared,
     'Infer whether the user wants a new build, a restructure, error resolution, or a UX polish pass from the prompt and current files.',
+    'If the user reports a failure, choose Fix. If they ask for visual quality, choose Polish. If they ask for structure/cleanup, choose Refactor. If the project is empty, choose Bootstrap.',
   ].join('\n');
 }
 
@@ -1415,6 +1424,8 @@ export function EnhancedChatPanel({
           'Create a dashboard with stats cards and charts',
           'Build a todo app with drag-and-drop reordering',
         ];
+  const activeBuilderMode = BUILDER_MODES.find((option) => option.id === builderMode) || BUILDER_MODES[0]!;
+  const ActiveBuilderModeIcon = activeBuilderMode.icon;
 
   return (
     <div
@@ -1709,29 +1720,37 @@ export function EnhancedChatPanel({
       {/* Input Area */}
       <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shrink-0 border-t border-[var(--app-border)] bg-[var(--app-panel)]">
         {mode === 'build' && (
-          <div className="mb-2 flex items-center gap-1 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
-            {BUILDER_MODES.map((option) => {
-              const Icon = option.icon;
-              const active = builderMode === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setBuilderMode(option.id)}
-                  disabled={isLoading}
-                  title={option.description}
-                  className={cn(
-                    'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[6px] border px-2.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                    active
-                      ? 'border-[var(--app-accent)]/30 bg-[var(--app-accent)]/10 text-[var(--app-accent)]'
-                      : 'border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]',
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {option.label}
-                </button>
-              );
-            })}
+          <div className="mb-2 space-y-2">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+              {BUILDER_MODES.map((option) => {
+                const Icon = option.icon;
+                const active = builderMode === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setBuilderMode(option.id)}
+                    disabled={isLoading}
+                    title={option.description}
+                    aria-pressed={active}
+                    className={cn(
+                      'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[6px] border px-2.5 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                      active
+                        ? 'border-[var(--app-accent)]/30 bg-[var(--app-accent)]/10 text-[var(--app-accent)] shadow-[0_0_0_1px_rgba(0,200,83,0.08)]'
+                        : 'border-[var(--app-border)] bg-[var(--app-panel-2)] text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]',
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-1.5 rounded-[6px] border border-[var(--app-border)] bg-[var(--app-bg)] px-2.5 py-1.5 text-[10px] text-[var(--app-text-muted)]">
+              <ActiveBuilderModeIcon className="h-3 w-3 shrink-0 text-[var(--app-accent)]" />
+              <span className="font-medium text-[var(--app-text)]">{activeBuilderMode.label}</span>
+              <span className="truncate">{activeBuilderMode.description}</span>
+            </div>
           </div>
         )}
         <div className="flex items-end gap-2 rounded-xl border border-[var(--app-border)] focus-within:border-[var(--app-accent)]/50 focus-within:shadow-[0_0_0_2px_rgba(0,200,83,0.08)] transition-all bg-[var(--app-bg)] p-2.5">

@@ -266,9 +266,20 @@ export function WorkspaceDashboard() {
   }, [showOnlyChat, hasGeneratedFiles]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
+    if (isLoading || isAuthenticated) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const { session } = await getSession();
+      if (!cancelled && !session?.access_token) {
+        router.push('/login');
+      }
+    }, 1200);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
@@ -283,11 +294,9 @@ export function WorkspaceDashboard() {
   }
 
   if (!isAuthenticated) {
-    // Render nothing while the redirect effect fires.
-    // The effect above pushes /login when !isLoading && !isAuthenticated.
     return (
       <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
-        <div className="text-sm text-[var(--text-secondary)]">Redirecting to login...</div>
+        <div className="text-sm text-[var(--text-secondary)]">Restoring your session...</div>
       </div>
     );
   }

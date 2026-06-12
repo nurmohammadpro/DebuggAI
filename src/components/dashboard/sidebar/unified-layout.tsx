@@ -37,7 +37,7 @@ export function UnifiedLayout({
           actions={headerActions}
           mobileMenuButton={<SidebarTrigger className="touch-target" />}
           showHelp
-          showAccountMenu
+          showAccountMenu={false}
         />
 
         <div className="flex-1 min-h-0 overflow-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
