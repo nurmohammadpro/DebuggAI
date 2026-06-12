@@ -31,6 +31,7 @@ export function useMyProjects(limit = 50, enabled = true) {
     // doesn't flash empty while the bootstrapper initializes.
     staleTime: 0,
     gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
+    placeholderData: (previousProjects) => previousProjects,
     queryFn: async (): Promise<GenerationRow[]> => {
       const { user, session } = await getSession();
       const token = session?.access_token;

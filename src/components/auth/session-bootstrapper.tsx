@@ -9,7 +9,11 @@ import type {
 } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore, type PlanType } from '@/store/session-store';
-import { setCachedSession, setBootstrapperReady } from '@/hooks/use-session';
+import {
+  getCachedSessionSnapshot,
+  setCachedSession,
+  setBootstrapperReady,
+} from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
 import { csrfHeader } from '@/lib/csrf-client';
 import {
@@ -18,6 +22,10 @@ import {
 } from '@/lib/coupons/internal-test-coupon';
 
 const AUTO_APPLY_KEY = 'debuggai.internal-test-coupon.applied';
+
+export function shouldClearClientSession(event: AuthChangeEvent | 'INITIAL' | 'ERROR') {
+  return event === 'SIGNED_OUT';
+}
 
 export function SessionBootstrapper() {
   const { setUser, updateUser, setCredits, setIsLoading, logout } = useSessionStore();
@@ -145,7 +153,10 @@ export function SessionBootstrapper() {
     let hydrating = false;
     let initialSessionLoaded = false;
 
-    const handleSession = async (session: Session | null) => {
+    const handleSession = async (
+      session: Session | null,
+      options: { clearClientSession?: boolean } = {},
+    ) => {
       if (!active) return;
 
       if (session?.user) {
@@ -169,9 +180,11 @@ export function SessionBootstrapper() {
         } finally {
           hydrating = false;
         }
-      } else {
+      } else if (options.clearClientSession) {
         await unsubscribeCredits();
         logoutRef.current();
+      } else {
+        setIsLoadingRef.current(false);
       }
     };
 
@@ -180,10 +193,16 @@ export function SessionBootstrapper() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      setCachedSession(session);
+      const clearClientSession = shouldClearClientSession(event);
+      const cachedSession = getCachedSessionSnapshot();
+      const sessionToHydrate = session ?? (clearClientSession ? null : cachedSession);
 
-      if (session || initialSessionLoaded || event === 'SIGNED_OUT') {
-        await handleSession(session);
+      if (session || clearClientSession) {
+        setCachedSession(session);
+      }
+
+      if (sessionToHydrate || initialSessionLoaded || clearClientSession) {
+        await handleSession(sessionToHydrate, { clearClientSession });
       }
     });
 
@@ -192,15 +211,24 @@ export function SessionBootstrapper() {
         const { data, error } = await supabase.auth.getSession();
         if (!active) return;
 
-        setCachedSession(
-          data?.session ?? null,
-          error ? new Error(error.message) : null,
-        );
-        await handleSession(data?.session ?? null);
+        const cachedSession = getCachedSessionSnapshot();
+        const sessionToHydrate = data?.session ?? cachedSession;
+
+        if (data?.session || !cachedSession) {
+          setCachedSession(
+            data?.session ?? null,
+            error ? new Error(error.message) : null,
+          );
+        }
+
+        await handleSession(sessionToHydrate ?? null);
       } catch (error) {
         if (!active) return;
-        setCachedSession(null, error instanceof Error ? error : new Error('Failed to load session'));
-        await handleSession(null);
+        const cachedSession = getCachedSessionSnapshot();
+        if (!cachedSession) {
+          setCachedSession(null, error instanceof Error ? error : new Error('Failed to load session'));
+        }
+        await handleSession(cachedSession);
       } finally {
         if (!active) return;
         initialSessionLoaded = true;

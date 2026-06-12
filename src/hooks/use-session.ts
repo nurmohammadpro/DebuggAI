@@ -48,6 +48,10 @@ export function setCachedSession(session: Session | null, error?: Error | null) 
   notifyListeners();
 }
 
+export function getCachedSessionSnapshot() {
+  return cachedSession;
+}
+
 /**
  * Called by SessionBootstrapper after its onAuthStateChange listener
  * is registered. Allows getSession() to distinguish "not yet initialized"
