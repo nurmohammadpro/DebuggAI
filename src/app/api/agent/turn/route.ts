@@ -167,7 +167,7 @@ function buildAgentSystemPrompt({
   skillContext,
   fileContext,
 }: {
-  provider: 'groq' | 'deepseek';
+  provider: 'groq' | 'deepseek' | 'zai';
   generationDirective?: string;
   currentFiles: string[];
   memoryBlock: string;
@@ -295,7 +295,16 @@ export async function POST(req: NextRequest) {
   const intent = detectAgentIntent(prompt, generationDirective);
 
   // ── Load provider configs ──────────────────────────────────────────────
-  const configs: ProviderConfigs = { groq: null, deepseek: null };
+  const configs: ProviderConfigs = { zai: null, groq: null, deepseek: null };
+  const zaiKey = process.env.ZAI_API_KEY;
+  if (zaiKey) {
+    configs.zai = {
+      apiKey: zaiKey,
+      baseUrl: (process.env.ZAI_BASE_URL || 'https://api.z.ai/api/coding/paas/v4').trim(),
+      model: process.env.ZAI_MODEL?.trim() || 'GLM-4.6',
+    };
+  }
+
   const groqKey = process.env.GROQ_API_KEY;
   if (groqKey) {
     configs.groq = {
@@ -318,7 +327,9 @@ export async function POST(req: NextRequest) {
   if (dsKey) {
     const baseUrl = (process.env.AI_BASE_URL || 'https://api.deepseek.com/v1').trim();
     const model = process.env.AI_MODEL?.trim() || null;
-    if (/groq\.com/i.test(baseUrl)) {
+    if (/api\.z\.ai/i.test(baseUrl)) {
+      configs.zai = { apiKey: dsKey, baseUrl, model: model || 'GLM-4.6' };
+    } else if (/groq\.com/i.test(baseUrl)) {
       configs.groq = { apiKey: dsKey, baseUrl, model };
     } else if (!configs.deepseek) {
       configs.deepseek = { apiKey: dsKey, baseUrl, model };

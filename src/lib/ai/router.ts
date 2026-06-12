@@ -9,7 +9,7 @@
 export type ModelIntent = 'code_edit' | 'planning' | 'generate' | 'debug';
 
 export interface RoutedModel {
-  provider: 'groq' | 'deepseek';
+  provider: 'groq' | 'deepseek' | 'zai';
   model: string;
   baseUrl: string;
   apiKey: string;
@@ -17,6 +17,7 @@ export interface RoutedModel {
 }
 
 export interface ProviderConfigs {
+  zai: { apiKey: string; baseUrl: string; model?: string | null } | null;
   groq: { apiKey: string; baseUrl: string; model?: string | null } | null;
   deepseek: { apiKey: string; baseUrl: string; model?: string | null } | null;
 }
@@ -32,6 +33,8 @@ const GROQ_MODELS = {
 } as const;
 
 const DISALLOWED_GROQ_MODELS = [/^openai\/gpt-oss/i, /^gpt-/i];
+const ZAI_DEFAULT_MODEL = 'GLM-4.6';
+const ZAI_DEFAULT_BASE_URL = 'https://api.z.ai/api/coding/paas/v4';
 
 function configuredDeepseekModel(
   configs: ProviderConfigs,
@@ -49,7 +52,22 @@ export function safeGroqModel(model: string | null | undefined) {
   return configured;
 }
 
+function configuredZaiModel(configs: ProviderConfigs) {
+  return configs.zai?.model?.trim() || ZAI_DEFAULT_MODEL;
+}
+
 export function pickModel(intent: ModelIntent, configs: ProviderConfigs): RoutedModel | null {
+  const zai = (tokens: number): RoutedModel | null => {
+    if (!configs.zai) return null;
+    return {
+      provider: 'zai',
+      model: configuredZaiModel(configs),
+      baseUrl: configs.zai.baseUrl || ZAI_DEFAULT_BASE_URL,
+      apiKey: configs.zai.apiKey,
+      maxTokens: tokens,
+    };
+  };
+
   // Helper to build Groq config
   const groq = (model: string, tokens: number): RoutedModel | null => {
     if (!configs.groq) return null;
@@ -76,22 +94,22 @@ export function pickModel(intent: ModelIntent, configs: ProviderConfigs): Routed
   switch (intent) {
     // Builder edits need reliable file output; prefer DeepSeek.
     case 'code_edit':
-      return deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
+      return zai(8192) ?? deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
 
     // Planning needs reasoning → DeepSeek, fall back to Groq
     case 'planning':
-      return deepseek(DEEPSEEK_MODELS.reasoner, 16384) ?? groq(GROQ_MODELS.fast, 3072);
+      return zai(16384) ?? deepseek(DEEPSEEK_MODELS.reasoner, 16384) ?? groq(GROQ_MODELS.fast, 3072);
 
     // Full generation → DeepSeek preferred, Groq fallback
     case 'generate':
-      return deepseek(DEEPSEEK_MODELS.chat, 16384) ?? groq(GROQ_MODELS.fast, 3072);
+      return zai(16384) ?? deepseek(DEEPSEEK_MODELS.chat, 16384) ?? groq(GROQ_MODELS.fast, 3072);
 
     // Debugging → DeepSeek (good at analysis)
     case 'debug':
-      return deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
+      return zai(8192) ?? deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
 
     default:
-      return deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
+      return zai(8192) ?? deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
   }
 }
 

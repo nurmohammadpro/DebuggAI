@@ -4,6 +4,7 @@ import { pickModel, safeGroqModel, type ProviderConfigs } from '@/lib/ai/router'
 describe('AI router', () => {
   it('uses the configured model for custom OpenAI-compatible providers', () => {
     const configs: ProviderConfigs = {
+      zai: null,
       groq: null,
       deepseek: {
         apiKey: 'test-key',
@@ -20,6 +21,7 @@ describe('AI router', () => {
 
   it('falls back to DeepSeek defaults when no configured model exists', () => {
     const configs: ProviderConfigs = {
+      zai: null,
       groq: null,
       deepseek: {
         apiKey: 'test-key',
@@ -36,6 +38,7 @@ describe('AI router', () => {
     expect(safeGroqModel('gpt-4o')).toBe('llama-3.3-70b-versatile');
 
     const configs: ProviderConfigs = {
+      zai: null,
       groq: {
         apiKey: 'test-key',
         baseUrl: 'https://api.groq.com/openai/v1',
@@ -49,6 +52,7 @@ describe('AI router', () => {
 
   it('prefers DeepSeek for code edits when both providers are configured', () => {
     const configs: ProviderConfigs = {
+      zai: null,
       groq: {
         apiKey: 'groq-key',
         baseUrl: 'https://api.groq.com/openai/v1',
@@ -67,6 +71,7 @@ describe('AI router', () => {
 
   it('keeps Groq fallback output small enough for low TPM tiers', () => {
     const configs: ProviderConfigs = {
+      zai: null,
       groq: {
         apiKey: 'groq-key',
         baseUrl: 'https://api.groq.com/openai/v1',
@@ -75,5 +80,29 @@ describe('AI router', () => {
     };
 
     expect(pickModel('generate', configs)?.maxTokens).toBeLessThanOrEqual(3072);
+  });
+
+  it('uses Z.ai GLM before Groq and DeepSeek when configured', () => {
+    const configs: ProviderConfigs = {
+      zai: {
+        apiKey: 'zai-key',
+        baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+        model: 'GLM-4.6',
+      },
+      groq: {
+        apiKey: 'groq-key',
+        baseUrl: 'https://api.groq.com/openai/v1',
+      },
+      deepseek: {
+        apiKey: 'deepseek-key',
+        baseUrl: 'https://api.deepseek.com/v1',
+      },
+    };
+
+    const routed = pickModel('code_edit', configs);
+
+    expect(routed?.provider).toBe('zai');
+    expect(routed?.model).toBe('GLM-4.6');
+    expect(routed?.baseUrl).toBe('https://api.z.ai/api/coding/paas/v4');
   });
 });

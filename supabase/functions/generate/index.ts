@@ -15,6 +15,8 @@ const corsHeaders = {
 };
 
 const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+const DEFAULT_ZAI_MODEL = 'GLM-4.6';
+const DEFAULT_ZAI_BASE_URL = 'https://api.z.ai/api/coding/paas/v4';
 
 function safeGroqModel(model: string | null | undefined): string {
   const configured = String(model || '').trim();
@@ -157,6 +159,14 @@ serve(async (req) => {
     let aiApiKey = (Deno.env.get('AI_API_KEY') || '').trim();
     let aiBaseUrl = (Deno.env.get('AI_BASE_URL') || 'https://api.deepseek.com/v1').trim();
     let aiModel = (Deno.env.get('AI_MODEL') || 'deepseek-chat').trim();
+    const zaiApiKey = (Deno.env.get('ZAI_API_KEY') || '').trim();
+    const zaiBaseUrl = (Deno.env.get('ZAI_BASE_URL') || DEFAULT_ZAI_BASE_URL).trim();
+    const zaiModel = (Deno.env.get('ZAI_MODEL') || DEFAULT_ZAI_MODEL).trim();
+    if (zaiApiKey) {
+      aiApiKey = zaiApiKey;
+      aiBaseUrl = zaiBaseUrl;
+      aiModel = zaiModel;
+    }
 
     // Groq provider (fast, cheap — used as fallback or for small edits)
     let groqApiKey = (Deno.env.get('GROQ_API_KEY') || '').trim();
@@ -194,6 +204,12 @@ serve(async (req) => {
       }
     } catch {
       // best-effort: keep env fallback
+    }
+
+    if (zaiApiKey) {
+      aiApiKey = zaiApiKey;
+      aiBaseUrl = zaiBaseUrl;
+      aiModel = zaiModel;
     }
 
     // Provider routing: detect intent, prefer Groq for small edits.
