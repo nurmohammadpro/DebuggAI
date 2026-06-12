@@ -12,6 +12,8 @@ interface BrowserPreviewProps {
   chromeless?: boolean;
 }
 
+const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
+
 /**
  * In-browser preview that compiles generated TSX/JSX on the server
  * and renders in a sandboxed iframe with error trapping.
@@ -28,6 +30,12 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previousSnapshot = useRef<string>('');
   const abortRef = useRef<AbortController | null>(null);
+  const htmlRef = useRef<string | null>(null);
+  const compileRunRef = useRef(0);
+
+  useEffect(() => {
+    htmlRef.current = html;
+  }, [html]);
 
   // Listen for postMessage from iframe (error trap)
   const handleMessage = useCallback(
@@ -76,8 +84,11 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   // Compile and render whenever files or nonce changes
   const compile = useCallback(async () => {
     if (!files || Object.keys(files.files).length === 0) {
+      compileRunRef.current += 1;
+      abortRef.current?.abort();
       setHtml(null);
       setStatus('idle');
+      setCompileErrors([]);
       return;
     }
 
@@ -89,15 +100,26 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
     }
 
     const totalChars = Object.values(flatFiles).reduce((sum, c) => sum + c.length, 0);
-    if (totalChars < 20) return;
+    if (totalChars < 20) {
+      compileRunRef.current += 1;
+      abortRef.current?.abort();
+      setHtml(null);
+      setStatus('idle');
+      setCompileErrors([]);
+      return;
+    }
 
     // Snapshot check to avoid re-compiling identical code
-    const snapshot = JSON.stringify(flatFiles);
-    if (snapshot === previousSnapshot.current && html) {
-      // Only refresh if explicitly asked via nonce bump
-      if (previewNonce === 0) return;
+    const snapshot = JSON.stringify({ entryPath: files.entryPath, files: flatFiles });
+    if (snapshot === previousSnapshot.current && htmlRef.current) {
+      setStatus('ready');
+      setCompileErrors([]);
+      return;
     }
     previousSnapshot.current = snapshot;
+
+    const runId = compileRunRef.current + 1;
+    compileRunRef.current = runId;
 
     setStatus('compiling');
     clearError();
@@ -107,6 +129,12 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
+    let timedOut = false;
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, PREVIEW_COMPILE_TIMEOUT_MS);
+    const isCurrentRun = () => compileRunRef.current === runId && abortRef.current === controller;
 
     try {
       const res = await fetch('/api/compile', {
@@ -124,12 +152,14 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Compilation failed' }));
+        if (!isCurrentRun()) return;
         setCompileErrors(err.errors || [err.error || 'Unknown error']);
         setStatus('error');
         return;
       }
 
       const data = await res.json();
+      if (!isCurrentRun()) return;
 
       if (data.html) {
         setHtml(data.html);
@@ -141,11 +171,24 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         setStatus('error');
       }
     } catch (err: unknown) {
-      if ((err as Error)?.name === 'AbortError') return;
+      if (!isCurrentRun()) return;
+      if ((err as Error)?.name === 'AbortError' && !timedOut) return;
+      if (timedOut) {
+        setCompileErrors([
+          `Preview compile timed out after ${PREVIEW_COMPILE_TIMEOUT_MS / 1000}s. Try Refresh, or fix the generated code if it is still invalid.`,
+        ]);
+        setStatus('error');
+        return;
+      }
       setCompileErrors([err instanceof Error ? err.message : 'Compilation failed']);
       setStatus('error');
+    } finally {
+      window.clearTimeout(timeoutId);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
     }
-  }, [files, previewNonce, clearError, html]);
+  }, [files, clearError]);
 
   useEffect(() => {
     compile();
@@ -160,6 +203,7 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      compileRunRef.current += 1;
       abortRef.current?.abort();
     };
   }, []);
