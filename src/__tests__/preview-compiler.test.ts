@@ -15,9 +15,10 @@ describe('preview compiler', () => {
       ].join('\n'),
       'components/hero.tsx': [
         "import { Sparkles } from 'lucide-react';",
+        "import { Badge } from '@/components/ui/badge';",
         '',
         'export function Hero({ title }: { title: string }) {',
-        '  return <main className="min-h-screen bg-neutral-950 text-white"><Sparkles />{title}</main>;',
+        '  return <main className="min-h-screen bg-neutral-950 text-white px-6 py-12"><Badge className="bg-emerald-500/10 text-emerald-300 rounded-full px-3 py-1">New</Badge><Sparkles />{title}</main>;',
         '}',
       ].join('\n'),
       'app/globals.css': 'body { margin: 0; }',
@@ -27,9 +28,13 @@ describe('preview compiler', () => {
     expect(js).toContain('Preview works');
     expect(js).not.toContain("from \"react\"");
     expect(css).toContain('body { margin: 0; }');
+    expect(css).toContain('.min-h-screen{min-height:100vh;}');
+    expect(css).toContain('.bg-neutral-950{background-color:#0a0a0a;}');
+    expect(css).toContain('.text-white{color:#fff;}');
 
     const html = buildPreviewHtml(js, css);
     expect(html).toContain('<div id="root"></div>');
     expect(html).toContain('Preview works');
+    expect(html).not.toContain('cdn.tailwindcss.com');
   });
 });
