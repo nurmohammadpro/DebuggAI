@@ -18,7 +18,7 @@ export interface RoutedModel {
 }
 
 export interface ProviderConfigs {
-  groq: { apiKey: string; baseUrl: string } | null;
+  groq: { apiKey: string; baseUrl: string; model?: string | null } | null;
   deepseek: { apiKey: string; baseUrl: string; model?: string | null } | null;
 }
 
@@ -32,11 +32,22 @@ const GROQ_MODELS = {
   large: 'llama-3.1-8b-instant',
 } as const;
 
+const DISALLOWED_GROQ_MODELS = [/^openai\/gpt-oss/i, /^gpt-/i];
+
 function configuredDeepseekModel(
   configs: ProviderConfigs,
   fallback: string,
 ) {
   return configs.deepseek?.model?.trim() || fallback;
+}
+
+export function safeGroqModel(model: string | null | undefined) {
+  const configured = model?.trim();
+  if (!configured) return GROQ_MODELS.fast;
+  if (DISALLOWED_GROQ_MODELS.some((pattern) => pattern.test(configured))) {
+    return GROQ_MODELS.fast;
+  }
+  return configured;
 }
 
 export function pickModel(intent: ModelIntent, configs: ProviderConfigs): RoutedModel | null {
@@ -45,7 +56,7 @@ export function pickModel(intent: ModelIntent, configs: ProviderConfigs): Routed
     if (!configs.groq) return null;
     return {
       provider: 'groq',
-      model,
+      model: safeGroqModel(configs.groq.model || model),
       baseUrl: configs.groq.baseUrl,
       apiKey: configs.groq.apiKey,
       maxTokens: tokens,

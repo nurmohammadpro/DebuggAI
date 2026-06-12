@@ -1307,12 +1307,15 @@ export function EnhancedChatPanel({
       if (hasExistingFiles && files) {
         const serialized = serializeVirtualFiles(files);
         const tokenEstimate = serialized.length / 4; // rough: ~4 chars per token
-        // Keep under ~6000 tokens to leave room for the response
-        const truncated = tokenEstimate > 6000
-          ? serialized.slice(0, 24000) + '\n// ... (truncated for length)'
+        // Fallback generation is an emergency path; keep context compact so
+        // Groq/DeepSeek free-tier limits do not reject polish/refactor prompts.
+        const truncated = tokenEstimate > 2500
+          ? serialized.slice(0, 10000) + '\n// ... (truncated for length)'
           : serialized;
         fullPrompt = `${text}\n\n--- CURRENT PROJECT FILES ---\n${truncated}\n--- END PROJECT FILES ---\n\nApply the changes above to the existing project. Return complete file blocks for every changed file using the // File: path format.`;
       }
+
+      const generationDirective = buildGenerationDirective(builderMode, hasExistingFiles);
 
       // Try agent loop first (tool-calling, surgical edits).
       // ANY failure — 404, 500, network error, parse error — falls back to
@@ -1322,7 +1325,7 @@ export function EnhancedChatPanel({
       const toolEventsAccum: ToolEvent[] = [];
       try {
         agentResult = await agentTurn(
-          { prompt: fullPrompt, persistUserMessage: false, generationDirective: buildGenerationDirective(builderMode, hasExistingFiles) },
+          { prompt: text, persistUserMessage: false, generationDirective },
           (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
         );
       } catch {
@@ -1335,7 +1338,7 @@ export function EnhancedChatPanel({
         await generate({
           prompt: fullPrompt,
           persistUserMessage: false,
-          generationDirective: buildGenerationDirective(builderMode, hasExistingFiles),
+          generationDirective,
         });
       }
     } catch (error) {

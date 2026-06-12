@@ -111,6 +111,28 @@ const COLOR_PALETTE: Record<string, Record<string, string>> = {
   rose: { 50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af', 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337', 950: '#4c0519' },
 };
 
+const SEMANTIC_COLORS: Record<string, string> = {
+  background: 'hsl(var(--background))',
+  foreground: 'hsl(var(--foreground))',
+  card: 'hsl(var(--card))',
+  'card-foreground': 'hsl(var(--card-foreground))',
+  popover: 'hsl(var(--popover, var(--card)))',
+  'popover-foreground': 'hsl(var(--popover-foreground, var(--card-foreground)))',
+  primary: 'hsl(var(--primary))',
+  'primary-foreground': 'hsl(var(--primary-foreground))',
+  secondary: 'hsl(var(--secondary))',
+  'secondary-foreground': 'hsl(var(--secondary-foreground))',
+  muted: 'hsl(var(--muted))',
+  'muted-foreground': 'hsl(var(--muted-foreground))',
+  accent: 'hsl(var(--accent))',
+  'accent-foreground': 'hsl(var(--accent-foreground))',
+  destructive: 'hsl(var(--destructive))',
+  'destructive-foreground': 'hsl(var(--destructive-foreground))',
+  border: 'hsl(var(--border))',
+  input: 'hsl(var(--input))',
+  ring: 'hsl(var(--ring))',
+};
+
 const REACT_GLOBAL_MODULES: Record<string, string> = {
   react: `
     const React = window.React;
@@ -541,7 +563,7 @@ function collectClassCandidates(files: Record<string, string>) {
   };
 
   const classAttrRe = /\b(?:className|class)\s*=\s*(?:"([^"]*)"|'([^']*)'|`([^`]*)`|\{`([^`]*)`\})/g;
-  const stringRe = /['"`]([^'"`]*?(?:bg-|text-|border-|rounded|shadow|flex|grid|gap-|p[trblxy]?)-[^'"`]*)['"`]/g;
+  const stringRe = /['"`]([^'"`]*(?:bg-|text-|border-|rounded|shadow|flex|grid|gap-|items-|justify-|min-h-|max-w-|mx-|my-|px-|py-|p[trblxy]?)-[^'"`]*)['"`]/g;
 
   for (const content of Object.values(files)) {
     let match: RegExpExecArray | null;
@@ -578,8 +600,9 @@ function buildUtilityRule(originalClass: string) {
   if (!declarations) return null;
 
   const responsive = parts.find((part) => RESPONSIVE_VARIANTS[part]);
+  const darkPrefix = parts.includes('dark') ? '.dark ' : '';
   const stateSuffix = parts.map((part) => STATE_VARIANTS[part]).filter(Boolean).join('');
-  const selector = `.${escapeCssClass(originalClass)}${stateSuffix}`;
+  const selector = `${darkPrefix}.${escapeCssClass(originalClass)}${stateSuffix}`;
   const scopedDeclarations = important ? declarations.replace(/;/g, ' !important;') : declarations;
   const body = scopedDeclarations.startsWith('>')
     ? `${selector}${scopedDeclarations}`
@@ -852,6 +875,7 @@ function resolveColor(rawColor: string) {
   if (rawColor === 'current') return 'currentColor';
   if (rawColor === 'black') return '#000';
   if (rawColor === 'white') return '#fff';
+  if (SEMANTIC_COLORS[rawColor]) return SEMANTIC_COLORS[rawColor];
   if (rawColor.startsWith('[') && rawColor.endsWith(']')) return rawColor.slice(1, -1).replace(/_/g, ' ');
 
   const [base, opacity] = rawColor.split('/');
@@ -1181,7 +1205,7 @@ export function buildPreviewHtml(js: string, css: string): string {
   const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js';
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const MAX_TOOL_TURNS = 25;
-const MAX_HISTORY_TOKENS = 12000; // ~12K tokens for history (leaves ~4K for response)
+const MAX_HISTORY_TOKENS = 3000; // keep agent requests under free-tier Groq/DeepSeek limits
 const CONVERSATION_LIMIT = 30;     // Max messages to load
 
 // ── P13: Prompt injection sanitization ───────────────────────────────────
@@ -79,6 +79,20 @@ function mergeGenerationSnapshot(
   for (const file of Object.values(parsed.files)) {
     if (file.content.trim()) target[file.path] = sanitizeFileContent(file.content);
   }
+}
+
+function stripClientFileContext(prompt: string) {
+  return prompt
+    .replace(/\n--- CURRENT PROJECT FILES ---[\s\S]*?\n--- END PROJECT FILES ---\s*/g, '\n')
+    .replace(/\nApply the changes above to the existing project\. Return complete file blocks[\s\S]*$/g, '')
+    .trim();
+}
+
+function detectAgentIntent(prompt: string, generationDirective?: string) {
+  const directive = generationDirective?.toLowerCase() || '';
+  if (directive.includes('mode: resolve')) return 'debug' as const;
+  if (directive.includes('mode: ux polish') || directive.includes('mode: restructure')) return 'generate' as const;
+  return detectIntent(prompt);
 }
 
 async function loadThreadHistory(
@@ -157,20 +171,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
   }
 
-  const { projectId, prompt, generationDirective } = body;
-  const intent = detectIntent(prompt);
+  const { projectId, generationDirective } = body;
+  const prompt = stripClientFileContext(body.prompt);
+  const intent = detectAgentIntent(prompt, generationDirective);
 
   // ── Load provider configs ──────────────────────────────────────────────
   const configs: ProviderConfigs = { groq: null, deepseek: null };
   const groqKey = process.env.GROQ_API_KEY;
-  if (groqKey) configs.groq = { apiKey: groqKey, baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1' };
+  if (groqKey) {
+    configs.groq = {
+      apiKey: groqKey,
+      baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
+      model: process.env.GROQ_MODEL?.trim() || null,
+    };
+  }
   const dsKey = process.env.AI_API_KEY;
   if (dsKey) {
-    configs.deepseek = {
-      apiKey: dsKey,
-      baseUrl: (process.env.AI_BASE_URL || 'https://api.deepseek.com/v1').trim(),
-      model: process.env.AI_MODEL?.trim() || null,
-    };
+    const baseUrl = (process.env.AI_BASE_URL || 'https://api.deepseek.com/v1').trim();
+    const model = process.env.AI_MODEL?.trim() || null;
+    if (/groq\.com/i.test(baseUrl)) {
+      configs.groq = { apiKey: dsKey, baseUrl, model };
+    } else {
+      configs.deepseek = { apiKey: dsKey, baseUrl, model };
+    }
   }
 
   const primary = pickModel(intent, configs);

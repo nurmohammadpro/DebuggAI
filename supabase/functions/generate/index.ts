@@ -14,6 +14,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+
+function safeGroqModel(model: string | null | undefined): string {
+  const configured = String(model || '').trim();
+  if (!configured) return DEFAULT_GROQ_MODEL;
+  if (/^openai\/gpt-oss/i.test(configured) || /^gpt-/i.test(configured)) {
+    return DEFAULT_GROQ_MODEL;
+  }
+  return configured;
+}
+
 function extractPlainChatText(full: string) {
   // The system prompt requires:
   // 1) plain-text explanation
@@ -150,7 +161,7 @@ serve(async (req) => {
     // Groq provider (fast, cheap — used as fallback or for small edits)
     let groqApiKey = (Deno.env.get('GROQ_API_KEY') || '').trim();
     let groqBaseUrl = (Deno.env.get('GROQ_BASE_URL') || 'https://api.groq.com/openai/v1').trim();
-    let groqModel = (Deno.env.get('GROQ_MODEL') || 'llama-3.3-70b-versatile').trim();
+    let groqModel = (Deno.env.get('GROQ_MODEL') || DEFAULT_GROQ_MODEL).trim();
     let useGroq = false; // Default: DeepSeek
 
     try {
@@ -446,8 +457,10 @@ export default function PricingPage() { ... }
     }
 
     // Route to correct provider based on intent detection
+    const primaryIsGroq = /groq\.com/i.test(aiBaseUrl);
     const providerBaseUrl = useGroq ? groqBaseUrl : aiBaseUrl;
     const providerApiKey = useGroq ? groqApiKey : aiApiKey;
+    const providerModel = useGroq || primaryIsGroq ? safeGroqModel(useGroq ? groqModel : aiModel) : aiModel;
 
     const aiResponse = await fetch(`${providerBaseUrl}/chat/completions`, {
       method: 'POST',
@@ -456,7 +469,7 @@ export default function PricingPage() { ... }
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: aiModel,
+        model: providerModel,
         messages: aiMessages,
         stream: true,
         temperature: 0.7,
