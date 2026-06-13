@@ -50,8 +50,9 @@ const nextConfig: NextConfig = {
 
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-alert-dialog'],
-    serverComponentsExternalPackages: ['esbuild'],
   },
+
+  serverExternalPackages: ['esbuild'],
 };
 
 export default withSentryConfig(nextConfig, {
