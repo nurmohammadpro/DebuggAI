@@ -13,7 +13,7 @@ import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
 import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/clerk-safe';
 import { useSessionStore } from '@/store/session-store';
 import { formatDistanceToNowStrict } from 'date-fns';
 import {

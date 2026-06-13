@@ -18,7 +18,7 @@ import { useSessionStore } from '@/store/session-store';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationCenter } from '@/components/dashboard/notification-center';
-import { useClerk, useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@/hooks/clerk-safe';
 
 export function Navigation() {
   const router = useRouter();

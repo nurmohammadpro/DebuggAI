@@ -1,29 +1,25 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
-  const { pathname } = req.nextUrl;
+export default async function middleware(req: NextRequest) {
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  if (!clerkKey || clerkKey.length < 20) return NextResponse.next();
 
-  // Public paths — no auth required
-  const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/verify-email', '/auth/callback'];
-  const PUBLIC_PREFIXES = ['/api/', '/_next/', '/favicon.ico', '/pricing', '/features', '/demo', '/', '/debuggai-dark.svg', '/DebuggAI-Dark.svg'];
-
-  const isPublic = PUBLIC_PATHS.includes(pathname) ||
-    PUBLIC_PREFIXES.some(p => pathname.startsWith(p));
-
-  if (!userId && !isPublic && pathname.startsWith('/dashboard')) {
-    const loginUrl = new URL('/sign-in', req.url);
-    loginUrl.searchParams.set('redirect_url', req.url);
-    return NextResponse.redirect(loginUrl);
+  try {
+    const { clerkMiddleware } = await import('@clerk/nextjs/server');
+    // @ts-expect-error - dynamic import, handler signature varies by Clerk version
+    const handler = (clerkMiddleware as any)(async (auth: any, _req: any) => {
+      const { userId } = await auth();
+      const { pathname } = req.nextUrl;
+      if (!userId && pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/signin', req.url));
+      }
+      return NextResponse.next();
+    });
+    return handler(req);
+  } catch {
+    return NextResponse.next();
   }
-
-  if (userId && pathname.startsWith('/sign-in')) {
-    return NextResponse.redirect(new URL('/dashboard/home', req.url));
-  }
-
-  return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

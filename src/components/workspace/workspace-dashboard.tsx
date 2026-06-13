@@ -29,7 +29,7 @@ import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/c
 import { supabase } from '@/lib/supabase';
 import { getClerkToken } from '@/lib/clerk-token';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/clerk-safe';
 import { BrandLockup } from '@/components/logo';
 import { Menu } from 'lucide-react';
 

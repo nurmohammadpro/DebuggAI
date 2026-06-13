@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useUser, useAuth } from '@/hooks/clerk-safe';
 import { useSessionStore } from '@/store/session-store';
 import { setClerkToken } from '@/lib/clerk-token';
 
@@ -37,12 +37,12 @@ export function ClerkSessionSync() {
       store.setLoaded(true);
 
       // Populate the global token cache so data hooks can use it
-      getToken().then((token) => setClerkToken(token));
+      getToken().then((token: string | null) => setClerkToken(token));
 
       // Fetch or hydrate user profile (credits, plan) from Supabase
       if (!syncedRef.current) {
         syncedRef.current = true;
-        getToken().then(async (token) => {
+        getToken().then(async (token: string | null) => {
           if (!token) return;
           try {
             const res = await fetch('/api/me', {

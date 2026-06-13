@@ -15,7 +15,7 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
-import { useClerk, useUser } from '@clerk/nextjs';
+import { useClerk, useUser } from '@/hooks/clerk-safe';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   DropdownMenu,

@@ -40,7 +40,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { getSession } from '@/hooks/use-session';
 import { csrfHeader } from '@/lib/csrf-client';
 import { useGenerationStore } from '@/store/generation-store';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/clerk-safe';
 import { useConfirmDialog } from '@/components/admin/confirm-dialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMediaQuery } from '@/hooks/use-media-query';

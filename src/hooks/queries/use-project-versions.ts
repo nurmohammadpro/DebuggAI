@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/clerk-safe';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 

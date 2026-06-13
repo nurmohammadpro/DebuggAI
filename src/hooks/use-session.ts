@@ -5,7 +5,7 @@
  * This file provides the same interface backed by Clerk's getToken().
  */
 
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useUser, useAuth } from '@/hooks/clerk-safe';
 
 // Re-export Clerk hooks for components that want them directly
 export { useUser, useAuth };
@@ -38,7 +38,7 @@ export async function getSession() {
   // use the `clerkGetToken` helper or pass tokens explicitly.
   if (typeof window !== 'undefined') {
     // On the client, getToken() is only available within Clerk hooks.
-    // Callers should import { useAuth } from '@clerk/nextjs' instead.
+    // Callers should import { useAuth } from '@/hooks/clerk-safe' instead.
     try {
       const clerk = (window as any).__clerk_token;
       return {
