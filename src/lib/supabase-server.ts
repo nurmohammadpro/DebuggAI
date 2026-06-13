@@ -16,8 +16,18 @@ export const createClient = async () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // Server Components cannot set cookies after render starts.
+            // Proxy handles refresh persistence for normal navigation.
+          }
         },
       },
     }

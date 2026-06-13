@@ -41,39 +41,6 @@ function createBrowserSupabaseClient() {
 
   return createBrowserClient(supabaseUrl!, supabaseAnonKey!, {
     cookieEncoding: 'base64url',
-    cookies: {
-      get(name) {
-        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]*)`));
-        return match?.[1] ? decodeURIComponent(match[1]) : undefined;
-      },
-      set(name, value, options) {
-        const encoded = encodeURIComponent(value);
-        const parts = [`${name}=${encoded}`];
-        if (options?.path) parts.push(`Path=${options.path}`);
-        else parts.push('Path=/');
-        if (options?.sameSite) {
-          const sameSite = typeof options.sameSite === 'string'
-            ? options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1)
-            : 'Strict';
-          parts.push(`SameSite=${sameSite}`);
-        } else {
-          parts.push('SameSite=Lax');
-        }
-        if (options?.maxAge !== undefined) parts.push(`Max-Age=${options.maxAge}`);
-        if (options?.domain) parts.push(`Domain=${options.domain}`);
-        if (options?.secure || globalThis.location?.protocol === 'https:') parts.push('Secure');
-        document.cookie = parts.join('; ');
-      },
-      remove(name, options) {
-        const parts = [`${name}=`];
-        parts.push('Path=/');
-        parts.push('SameSite=Lax');
-        parts.push('Max-Age=0');
-        if (options?.domain) parts.push(`Domain=${options.domain}`);
-        document.cookie = parts.join('; ');
-      },
-    },
   });
 }
 

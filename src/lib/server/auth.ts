@@ -11,6 +11,27 @@ export function getBearerToken(req: NextRequest) {
   return match?.[1] || null;
 }
 
+export function decodeSupabaseCookiePayload(raw: string) {
+  const encoded = raw.startsWith('base64-') ? raw.slice('base64-'.length) : raw;
+  const candidates = raw.startsWith('base64-')
+    ? [
+        () => Buffer.from(encoded, 'base64url').toString('utf8'),
+        () => Buffer.from(encoded, 'base64').toString('utf8'),
+      ]
+    : [() => encoded];
+
+  for (const decode of candidates) {
+    try {
+      const payload = JSON.parse(decode()) as { access_token?: string } | null;
+      if (payload?.access_token) return payload.access_token;
+    } catch {
+      // try next decoder
+    }
+  }
+
+  return null;
+}
+
 function getSupabaseAccessTokenFromCookie(req: NextRequest) {
   // Supabase SSR stores the session in a cookie named like:
   // sb-<project-ref>-auth-token
@@ -45,16 +66,8 @@ function getSupabaseAccessTokenFromCookie(req: NextRequest) {
     const raw = sorted.map(([, v]) => v).join('');
 
     if (!raw) continue;
-    if (raw.startsWith('base64-')) {
-      const base64Part = raw.slice('base64-'.length);
-      try {
-        const decoded = Buffer.from(base64Part, 'base64').toString('utf8');
-        const payload = JSON.parse(decoded) as { access_token?: string } | null;
-        if (payload?.access_token) return payload.access_token;
-      } catch {
-        // try next group
-      }
-    }
+    const accessToken = decodeSupabaseCookiePayload(raw);
+    if (accessToken) return accessToken;
   }
 
   return null;
