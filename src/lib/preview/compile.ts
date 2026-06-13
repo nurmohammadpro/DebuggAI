@@ -206,11 +206,21 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
         );
       };
     }
-    export function jsx(type, props, key) {
+    function createPreviewElement(type, props, key) {
       type = normalizePreviewComponentType(type);
-      return React.createElement(type, key === undefined ? props : { ...props, key });
+      const finalProps = key === undefined ? (props || {}) : { ...(props || {}), key };
+      if (Array.isArray(finalProps.children)) {
+        const { children, ...rest } = finalProps;
+        return React.createElement(type, rest, ...children);
+      }
+      return React.createElement(type, finalProps);
     }
-    export const jsxs = jsx;
+    export function jsx(type, props, key) {
+      return createPreviewElement(type, props, key);
+    }
+    export function jsxs(type, props, key) {
+      return createPreviewElement(type, props, key);
+    }
   `,
   'react/jsx-dev-runtime': `
     const React = window.React;
@@ -238,9 +248,17 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
         );
       };
     }
-    export function jsxDEV(type, props, key) {
+    function createPreviewElement(type, props, key) {
       type = normalizePreviewComponentType(type);
-      return React.createElement(type, key === undefined ? props : { ...props, key });
+      const finalProps = key === undefined ? (props || {}) : { ...(props || {}), key };
+      if (Array.isArray(finalProps.children)) {
+        const { children, ...rest } = finalProps;
+        return React.createElement(type, rest, ...children);
+      }
+      return React.createElement(type, finalProps);
+    }
+    export function jsxDEV(type, props, key) {
+      return createPreviewElement(type, props, key);
     }
   `,
 };

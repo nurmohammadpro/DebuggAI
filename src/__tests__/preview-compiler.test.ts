@@ -150,4 +150,20 @@ describe('preview compiler', () => {
     expect(js).toContain('normalizePreviewComponentType');
     expect(js).toContain('Unsupported preview component');
   });
+
+  it('spreads static JSX children to avoid false missing-key warnings', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        'export default function Home() {',
+        '  return <main><div><h1>Title</h1><p>Body</p></div></main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('createPreviewElement');
+    expect(js).toContain('...children');
+    expect(js).toContain('Title');
+    expect(js).toContain('Body');
+  });
 });
