@@ -216,7 +216,7 @@ Current files: ${fileList}${memoryBlock}${skillContext}${fileContext}`;
 
 async function loadThreadHistory(
   admin: SupabaseClient,
-  projectId: string,
+  params: { projectId?: string; threadId?: string },
 ): Promise<Array<{ role: string; content: string }>> {
   const normalize = (rows: unknown) => {
     if (!Array.isArray(rows)) return [];
@@ -232,10 +232,24 @@ async function loadThreadHistory(
       .filter((m) => m.content.trim().length > 0);
   };
 
+  if (params.threadId) {
+    const byThread = await admin
+      .from('thread_messages')
+      .select('role, content')
+      .eq('thread_id', params.threadId)
+      .order('created_at', { ascending: false })
+      .limit(CONVERSATION_LIMIT);
+
+    if (!byThread.error) return normalize(byThread.data);
+    if (!/thread_id/i.test(byThread.error.message)) return [];
+  }
+
+  if (!params.projectId) return [];
+
   const direct = await admin
     .from('thread_messages')
     .select('role, content')
-    .eq('project_id', projectId)
+    .eq('project_id', params.projectId)
     .order('created_at', { ascending: false })
     .limit(CONVERSATION_LIMIT);
 
@@ -245,7 +259,7 @@ async function loadThreadHistory(
   const { data: threads } = await admin
     .from('threads')
     .select('id')
-    .eq('project_id', projectId)
+    .eq('project_id', params.projectId)
     .limit(20);
 
   const threadIds = (threads || [])
@@ -281,6 +295,7 @@ export async function POST(req: NextRequest) {
 
   const body = (await req.json().catch(() => null)) as {
     projectId?: string;
+    threadId?: string;
     prompt?: string;
     history?: Array<{ role: string; content: string }>;
     generationDirective?: string;
@@ -290,7 +305,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
   }
 
-  const { projectId, generationDirective } = body;
+  const { projectId, threadId, generationDirective } = body;
   const prompt = stripClientFileContext(body.prompt);
   const intent = detectAgentIntent(prompt, generationDirective);
 
@@ -396,7 +411,12 @@ export async function POST(req: NextRequest) {
   if (projectId) {
     try {
       const admin = createClient(supabaseUrl, serviceKey || process.env.SUPABASE_ANON_KEY!);
-      rawHistory.push(...await loadThreadHistory(admin, projectId));
+      rawHistory.push(...await loadThreadHistory(admin, { projectId, threadId }));
+    } catch { /* no thread_messages access */ }
+  } else if (threadId) {
+    try {
+      const admin = createClient(supabaseUrl, serviceKey || process.env.SUPABASE_ANON_KEY!);
+      rawHistory.push(...await loadThreadHistory(admin, { threadId }));
     } catch { /* no thread_messages access */ }
   }
 

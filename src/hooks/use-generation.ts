@@ -142,24 +142,28 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     return headers;
   };
 
-  // Track in-flight thread creation to prevent race conditions when
-  // ensureThread is called concurrently before the first resolves.
-  let threadPromise: Promise<string> | null = null;
+  // Track in-flight thread creation across renders. A plain local variable is
+  // recreated every render, which can create duplicate threads if the user
+  // quickly sends/refactors while React re-renders the panel.
+  const threadPromiseRef = useRef<Promise<string> | null>(null);
 
   const ensureThread = useCallback(async (): Promise<string> => {
-    if (currentThreadId) return currentThreadId;
-    if (threadPromise) return threadPromise;
+    const latestState = useGenerationStore.getState();
+    const existingThreadId = latestState.currentThreadId || currentThreadId;
+    if (existingThreadId) return existingThreadId;
+    if (threadPromiseRef.current) return threadPromiseRef.current;
 
-    threadPromise = (async () => {
+    threadPromiseRef.current = (async () => {
       const authHeaders = await getAuthHeaders();
       if (!authHeaders) throw new Error('Unauthorized: please sign in again');
+      const projectId = useGenerationStore.getState().currentProjectId || currentProjectId;
 
       const res = await fetch('/api/threads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           title: null,
-          projectId: currentProjectId,
+          projectId,
           workspaceId: null,
           metadata: { source: 'use-generation' },
         }),
@@ -182,9 +186,9 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     })();
 
     try {
-      return await threadPromise;
+      return await threadPromiseRef.current;
     } finally {
-      threadPromise = null;
+      threadPromiseRef.current = null;
     }
   }, [currentProjectId, currentThreadId, setThreadId]);
 
@@ -197,13 +201,14 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       try {
         const authHeaders = await getAuthHeaders();
         if (!authHeaders) return;
+        const projectId = useGenerationStore.getState().currentProjectId;
         await fetch(`/api/threads/${threadId}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
             role: 'assistant',
             content,
-            projectId: currentProjectId,
+            projectId,
             metadata: { type: 'generation', ...(metadata || {}) },
           }),
         });
@@ -211,7 +216,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         // Best-effort — generation already succeeded, don't fail over message persistence
       }
     },
-    [currentProjectId],
+    [],
   );
 
   /**
@@ -299,6 +304,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         if (hasSubstantiveFiles(virtualFiles)) {
           const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
           const serialized = serializeVirtualFilesWrapper(virtualFiles);
+          let projectIdForPersistence = useGenerationStore.getState().currentProjectId || currentProjectId;
 
           useGenerationStore.setState({
             files: virtualFiles,
@@ -312,13 +318,13 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-              if (currentProjectId) {
+              if (projectIdForPersistence) {
                 const flatFiles = Object.fromEntries(
                   Object.entries(virtualFiles.files)
                     .filter(([, file]) => file.status !== 'deleted')
                     .map(([path, file]) => [path, file.content]),
                 );
-                await fetch(`/api/projects/${currentProjectId}/save-code`, {
+                await fetch(`/api/projects/${projectIdForPersistence}/save-code`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', ...authHeaders },
                   body: JSON.stringify({
@@ -345,6 +351,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 if (res.ok) {
                   const j = await res.json().catch(() => ({}));
                   if (j?.id) {
+                    projectIdForPersistence = j.id;
                     setProjectId(j.id);
                     // Keep the same thread (preserves chat history), but attach it to the new project.
                     try {
@@ -650,11 +657,13 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         if (!authHeaders) throw new Error('Unauthorized: please sign in again');
 
         const threadId = await ensureThread();
+        const projectIdForTurn = useGenerationStore.getState().currentProjectId || currentProjectId;
         const res = await fetch('/api/agent/turn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
-            projectId: currentProjectId,
+            projectId: projectIdForTurn,
+            threadId,
             prompt: request.prompt,
             history: request.history || [],
             generationDirective: request.generationDirective,
@@ -752,7 +761,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           ? templateToVirtualFiles(streamedFiles)
           : extractVirtualFiles(accumulated, baseFiles || undefined);
 
-        if (!hasSubstantiveFiles(virtualFiles) && currentProjectId) {
+        if (!hasSubstantiveFiles(virtualFiles) && projectIdForTurn) {
           // Agent may have used write_file tools without putting code in the
           // assistant message. Reload persisted project_files as a fallback.
           try {
@@ -761,7 +770,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
               const { data: fileRows } = await supabase
                 .from('project_files')
                 .select('path, content, language')
-                .eq('project_id', currentProjectId)
+                .eq('project_id', projectIdForTurn)
                 .neq('status', 'deleted');
 
               if (fileRows && fileRows.length > 0) {
@@ -791,6 +800,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
         const entryContent = virtualFiles.files[virtualFiles.entryPath]?.content || '';
         const serialized = serializeVirtualFilesWrapper(virtualFiles);
+        let projectIdForPersistence = useGenerationStore.getState().currentProjectId || projectIdForTurn;
 
         useGenerationStore.setState({
           files: virtualFiles,
@@ -802,13 +812,13 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
         // Persist to Supabase
         try {
-          if (currentProjectId) {
+          if (projectIdForPersistence) {
             const flatFiles = Object.fromEntries(
               Object.entries(virtualFiles.files)
                 .filter(([, file]) => file.status !== 'deleted')
                 .map(([path, file]) => [path, file.content]),
             );
-            await fetch(`/api/projects/${currentProjectId}/save-code`, {
+            await fetch(`/api/projects/${projectIdForPersistence}/save-code`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', ...authHeaders },
               body: JSON.stringify({
@@ -834,6 +844,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             if (res.ok) {
               const j = await res.json().catch(() => ({}));
               if (j?.id) {
+                projectIdForPersistence = j.id;
                 setProjectId(j.id);
                 try {
                   await fetch(`/api/threads/${threadId}`, {
