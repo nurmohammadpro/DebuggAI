@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
-import { getSession } from '@/hooks/use-session';
+import { getClerkToken } from '@/lib/clerk-token';
 
 export type DebugSessionRow = {
   id: string;
@@ -26,13 +26,13 @@ export function useMyDebugSessions(limit = 25, enabled = true) {
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     queryFn: async (): Promise<DebugSessionRow[]> => {
-      const session = await getSession();
-      if (!session.user) throw new Error('Not authenticated — retrying...');
+      const token = getClerkToken();
+      if (!token) throw new Error('Not authenticated — retrying...');
 
       const { data, error } = await supabase
         .from('debug_sessions')
         .select('id,language,code,error_message,fix,explanation,tags,created_at')
-        .eq('user_id', session.user.id)
+        .eq('user_id', token)
         .order('created_at', { ascending: false })
         .limit(limit);
 

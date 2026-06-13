@@ -40,6 +40,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { getSession } from '@/hooks/use-session';
 import { csrfHeader } from '@/lib/csrf-client';
 import { useGenerationStore } from '@/store/generation-store';
+import { useUser } from '@clerk/nextjs';
 import { useConfirmDialog } from '@/components/admin/confirm-dialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -81,7 +82,8 @@ export function WorkspaceSidebar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useSessionStore();
+  const clerkUser = useUser();
+  const credits = useSessionStore(s => s.profile?.credits);
   const { resolvedTheme, setTheme } = useTheme();
   const { setThreadId, clearThread } = useGenerationStore();
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
@@ -225,7 +227,6 @@ export function WorkspaceSidebar({
     [activeProjectId, projects]
   );
 
-  const credits = user?.credits;
 
   // ── Thread actions ──
   const handleRenameThread = useCallback(async (thread: ThreadRow) => {
@@ -558,8 +559,8 @@ export function WorkspaceSidebar({
         {collapsed ? (
           <Link href="/dashboard/settings"
             className="w-9 h-9 rounded-[6px] bg-[var(--ds-green)] flex items-center justify-center text-[11px] font-bold text-white hover:bg-[var(--ds-green-bright)] transition-all duration-150 shadow-sm mx-auto"
-            title={user?.email || 'User settings'}>
-            {user?.email?.[0].toUpperCase() || 'U'}
+            title={clerkUser.user?.primaryEmailAddress?.emailAddress || '' || 'User settings'}>
+            {clerkUser.user?.primaryEmailAddress?.emailAddress || ''?.[0].toUpperCase() || 'U'}
           </Link>
         ) : (
           <div className="px-3 py-2"><WorkspaceAccountMenu /></div>

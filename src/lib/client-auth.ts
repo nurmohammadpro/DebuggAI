@@ -29,7 +29,7 @@ export async function signOutCurrentUser() {
   // 1. Clear all client state first — prevents onAuthStateChange
   //    from re-firing with stale session during the redirect.
   useSessionStore.getState().logout();
-  setCachedSession(null);
+  setCachedSession();
 
   // 2. Clear Supabase's own localStorage entries explicitly.
   //    The Supabase JS client stores the session in localStorage

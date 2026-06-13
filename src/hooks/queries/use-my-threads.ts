@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getSession, useSession } from '@/hooks/use-session';
+import { useUser } from '@clerk/nextjs';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type ThreadRow = {
@@ -16,21 +16,18 @@ export type ThreadRow = {
 };
 
 export function useMyThreads(limit = 50, enabled = true, projectId?: string | null) {
-  const { user, isReady } = useSession();
+  const { user, isLoaded } = useUser();
 
   return useQuery({
     queryKey: [...queryKeys.myThreads, { limit, projectId: projectId || null }] as const,
-    enabled: enabled && isReady && !!user,
+    enabled: enabled && isLoaded && !!user,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
     placeholderData: projectId ? undefined : (previousThreads) => previousThreads,
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     queryFn: async (): Promise<ThreadRow[]> => {
-      const { user } = await getSession();
-      if (!user?.id) {
-        throw new Error('Not authenticated — retrying...');
-      }
+      if (!user?.id) throw new Error('Not authenticated');
 
       let q = supabase
         .from('threads')

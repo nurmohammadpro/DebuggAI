@@ -15,7 +15,7 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
-import { signOutCurrentUser } from '@/lib/client-auth';
+import { useClerk, useUser } from '@clerk/nextjs';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   DropdownMenu,
@@ -35,7 +35,11 @@ export function AccountMenu({
   className?: string;
 }) {
   const router = useRouter();
-  const { user } = useSessionStore();
+  const { user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+  const displayName = clerkUser?.fullName || clerkUser?.firstName || 'Developer';
+  const email = clerkUser?.primaryEmailAddress?.emailAddress;
+  const credits = useSessionStore(s => s.profile?.credits);
 
   const openPublicPage = (path: string) => {
     if (typeof window === 'undefined') return;
@@ -44,15 +48,15 @@ export function AccountMenu({
 
   const initial = useMemo(() => {
     return (
-      user?.displayName?.charAt(0)?.toUpperCase() ||
-      user?.email?.charAt(0)?.toUpperCase() ||
+      displayName?.charAt(0)?.toUpperCase() ||
+      email?.charAt(0)?.toUpperCase() ||
       'U'
     );
-  }, [user?.displayName, user?.email]);
+  }, [displayName, email]);
 
   const handleLogout = async () => {
     try {
-      await signOutCurrentUser();
+      await signOut();
     } finally {
       // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
       window.location.href = '/';
@@ -82,10 +86,10 @@ export function AccountMenu({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium leading-none truncate text-[var(--app-text)]">
-                {user?.displayName || 'Developer'}
+                {displayName}
               </p>
               <p className="text-xs leading-none text-[var(--app-text-muted)] truncate mt-1">
-                {user?.email}
+                {email}
               </p>
             </div>
           </div>

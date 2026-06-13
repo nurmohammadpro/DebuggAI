@@ -27,16 +27,17 @@ const DeployModal = dynamic(() => import('@/components/workspace/deploy-modal').
 });
 import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
 import { supabase } from '@/lib/supabase';
+import { getClerkToken } from '@/lib/clerk-token';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
-import { getSession, useSession } from '@/hooks/use-session';
+import { useUser } from '@clerk/nextjs';
 import { BrandLockup } from '@/components/logo';
 import { Menu } from 'lucide-react';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user: sessionUser, isLoading: sessionLoading, isReady: sessionReady } = useSession();
-  const isAuthenticated = !!sessionUser;
+  const { isLoaded: tokenReady, isSignedIn, user: clerkUser } = useUser();
+  const isAuthenticated = isSignedIn ?? false;
   const selectedProjectId = useWorkspaceStore(s => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore(s => s.setSelectedProjectId);
   const setProjectKey = useWorkspaceStore(s => s.setProjectKey);
@@ -163,8 +164,7 @@ export function WorkspaceDashboard() {
 
     (async () => {
       try {
-        const { session } = await getSession();
-        const token = session?.access_token;
+        const token = getClerkToken();
         if (!token) return;
         const res = await fetch(`/api/threads/${currentThreadId}/messages?limit=100`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -271,12 +271,12 @@ export function WorkspaceDashboard() {
   }, [showOnlyChat, hasGeneratedFiles]);
 
   useEffect(() => {
-    if (!sessionReady || sessionLoading || isAuthenticated) return;
+    if (!tokenReady || !tokenReady || isAuthenticated) return;
 
     let cancelled = false;
     const timer = window.setTimeout(async () => {
-      const { session } = await getSession();
-      if (!cancelled && !session?.access_token) {
+      const token = getClerkToken();
+      if (!cancelled && !token) {
         const loginUrl = new URL('/login', window.location.origin);
         loginUrl.searchParams.set('redirect', `${window.location.pathname}${window.location.search}`);
         router.replace(loginUrl.pathname + loginUrl.search);
@@ -287,9 +287,9 @@ export function WorkspaceDashboard() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [isAuthenticated, router, sessionLoading, sessionReady]);
+  }, [isAuthenticated, router, !tokenReady, tokenReady]);
 
-  if (!sessionReady || sessionLoading) {
+  if (!tokenReady || !tokenReady) {
     return (
       <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
         <div
@@ -303,7 +303,7 @@ export function WorkspaceDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
-        <div className="text-sm text-[var(--text-secondary)]">Restoring your session...</div>
+        <div className="text-sm text-[var(--text-secondary)]">Restoring your token...</div>
       </div>
     );
   }

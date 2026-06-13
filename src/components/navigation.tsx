@@ -18,17 +18,19 @@ import { useSessionStore } from '@/store/session-store';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationCenter } from '@/components/dashboard/notification-center';
-import { signOutCurrentUser } from '@/lib/client-auth';
+import { useClerk, useUser } from '@clerk/nextjs';
 
 export function Navigation() {
   const router = useRouter();
-  const { user, isAuthenticated } = useSessionStore();
-  const credits = user?.credits;
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
+  const profile = useSessionStore((s) => s.profile);
+  const credits = profile?.credits;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await signOutCurrentUser();
+      await signOut();
     } finally {
       window.location.href = '/';
     }
@@ -37,7 +39,7 @@ export function Navigation() {
   return (
     <nav className="navbar w-full">
       <div className="container mx-auto px-4 flex items-center">
-        <Link href={isAuthenticated ? "/dashboard" : "/"} className="nav-logo">
+        <Link href={isSignedIn ? "/dashboard" : "/"} className="nav-logo">
           <BrandLockup
             logoClassName="h-6 w-6"
             textClassName="text-[15px] font-semibold"
@@ -55,7 +57,7 @@ export function Navigation() {
 
         {/* Right Side Actions */}
         <div className="ml-auto flex items-center gap-2">
-          {isAuthenticated ? (
+          {isSignedIn ? (
             <>
               {/* Credits Badge */}
               <div className="nav-credit">
@@ -75,14 +77,14 @@ export function Navigation() {
                     size="icon"
                     className="rounded-[6px]"
                   >
-                    {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                    {user?.fullName || user?.firstName || 'Developer'?.charAt(0)?.toUpperCase() || user?.primaryEmailAddress?.emailAddress || ''?.charAt(0)?.toUpperCase() || 'U'}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                      <p className="text-[11px] leading-none text-[var(--app-text-muted)]">{user?.email}</p>
+                      <p className="text-sm font-medium leading-none">{user?.fullName || user?.firstName || 'Developer'}</p>
+                      <p className="text-[11px] leading-none text-[var(--app-text-muted)]">{user?.primaryEmailAddress?.emailAddress || ''}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -105,7 +107,7 @@ export function Navigation() {
                   <DropdownMenuItem onClick={() => router.push('/dashboard/settings/transactions')} className="cursor-pointer">
                     Transactions
                   </DropdownMenuItem>
-                  {user?.isAdmin && (
+                  {(profile?.isAdmin ?? false) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => router.push('/dashboard/admin')} className="cursor-pointer">
@@ -146,7 +148,7 @@ export function Navigation() {
                 <Link href="/languages" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Languages</Link>
                 <Link href="/pricing" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Pricing</Link>
                 <Link href="/faq" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>FAQ</Link>
-                {!isAuthenticated && (
+                {!isSignedIn && (
                   <>
                     <div className="border-t border-[var(--app-border-strong)] my-2" />
                     <Link href="/login" className="mobile-menu-item" onClick={() => setMobileOpen(false)}>Sign In</Link>
