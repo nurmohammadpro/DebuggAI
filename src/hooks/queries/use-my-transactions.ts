@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession } from '@/hooks/use-session';
 import { useSessionStore } from '@/store/session-store';
 
 export type TransactionRow = {
@@ -23,13 +23,13 @@ export function useMyTransactions(limit = 100, enabled = true) {
     staleTime: 0,
     gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<TransactionRow[]> => {
-      const token = getClerkToken();
-      if (!token) throw new Error('Not authenticated — retrying...');
+      const session = await getSession();
+      if (!session.user) throw new Error('Not authenticated — retrying...');
 
       const { data: wallet, error: walletError } = await supabase
         .from('credit_wallets')
         .select('id')
-        .eq('user_id', token)
+        .eq('user_id', session.user.id)
         .single();
 
       if (walletError) throw walletError;

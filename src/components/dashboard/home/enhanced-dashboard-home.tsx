@@ -12,9 +12,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useMyProjects } from '@/hooks/queries/use-my-projects';
 import { useMyThreads } from '@/hooks/queries/use-my-threads';
 import { useMyDebugSessions } from '@/hooks/queries/use-my-debug-sessions';
-import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
-import { useUser } from '@/hooks/clerk-safe';
 import { useSessionStore } from '@/store/session-store';
+import { CreateProjectDialog } from '@/components/dashboard/projects/create-project-dialog';
 import { formatDistanceToNowStrict } from 'date-fns';
 import {
   FolderKanban,
@@ -33,8 +32,7 @@ import {
 } from 'lucide-react';
 
 export function EnhancedDashboardHome() {
-  const { user: clerkUser } = useUser();
-  const displayName = clerkUser?.fullName || clerkUser?.firstName || 'Developer';
+  const { user } = useSessionStore();
   const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [createOpen, setCreateOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -55,7 +53,6 @@ export function EnhancedDashboardHome() {
     }
   }, [searchParams]);
 
-  const profile = useSessionStore(s => s.profile);
   const { data: projects, isLoading: projectsLoading } = useMyProjects(10, true);
   const { data: threads } = useMyThreads(10, true);
   const { data: debugSessions } = useMyDebugSessions(20, true);
@@ -91,7 +88,7 @@ export function EnhancedDashboardHome() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
           <div>
             <h1 className="text-2xl font-semibold text-[var(--app-text)]">
-              Welcome back, {displayName || 'Developer'}
+              Welcome back, {user?.displayName?.split(' ')[0] || 'Developer'}
             </h1>
             <p className="text-sm text-[var(--app-text-muted)] mt-1">
               Here&apos;s what&apos;s happening with your projects today
@@ -214,8 +211,8 @@ export function EnhancedDashboardHome() {
         <StatCard
           icon={Zap}
           label="Credits Remaining"
-          value={profile?.credits === -1 ? '∞' : profile?.credits?.toString() || '0'}
-          change={profile?.credits === -1 ? 'Unlimited' : 'Stable'}
+          value={user?.credits === -1 ? '∞' : user?.credits?.toString() || '0'}
+          change={user?.credits === -1 ? 'Unlimited' : 'Stable'}
           trend="neutral"
           color="success"
         />

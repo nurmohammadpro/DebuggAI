@@ -2,7 +2,7 @@
 
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession } from '@/hooks/use-session';
 import { useSessionStore } from '@/store/session-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
@@ -34,13 +34,13 @@ export function useMyRuns(limit = 20, enabled = true, options?: UseMyRunsOptions
     staleTime: 0,
     gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<RunRow[]> => {
-      const token = getClerkToken();
-      if (!token) throw new Error('Not authenticated — retrying...');
+      const session = await getSession();
+      if (!session.user) throw new Error('Not authenticated — retrying...');
 
       const { data, error } = await supabase
         .from('runs')
         .select('id,thread_id,user_id,status,objective,error,created_at,started_at,ended_at,updated_at')
-        .eq('user_id', token)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
         .limit(limit);
 

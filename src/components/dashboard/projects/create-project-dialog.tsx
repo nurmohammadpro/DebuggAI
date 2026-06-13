@@ -10,8 +10,7 @@ import { Code2, Plus, Loader2 } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { WEB_BUILDER_STACKS } from '@/lib/constants';
-import { useUser } from '@/hooks/clerk-safe';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession } from '@/hooks/use-session';
 import { createProjectFromGeneration } from '@/lib/projects/create-project';
 
 export function CreateProjectDialog({
@@ -45,9 +44,9 @@ export function CreateProjectDialog({
 
     setCreating(true);
     try {
-      // getClerkToken() internally waits up to 5s for the bootstrapper
-      const token = getClerkToken();
-      if (!token) {
+      // getSession() internally waits up to 5s for the bootstrapper
+      const { session } = await getSession();
+      if (!session?.access_token) {
         toast.error('Please sign in again');
         return;
       }
@@ -81,7 +80,7 @@ export function CreateProjectDialog({
           stack: selectedStack,
           prompt: `Create a Next.js App Router app: ${name.trim()}`,
           createdFrom: 'dashboard-dialog',
-          token: null as any,
+          token: session.access_token,
         });
 
         // Replace optimistic entry with real data

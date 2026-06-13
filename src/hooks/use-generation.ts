@@ -86,7 +86,7 @@ export function shouldFallbackFromAgentStatus(status: number): boolean {
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 
 import { supabase } from '@/lib/supabase';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession } from '@/hooks/use-session';
 
 interface UseGenerationOptions {
   onChunk?: (chunk: string) => void;
@@ -130,12 +130,15 @@ export function useGeneration(options: UseGenerationOptions = {}) {
   } = useGenerationStore();
 
   const getAuthHeaders = async () => {
-    const { getClerkToken: getToken } = await import('@/lib/clerk-token');
-    const token = getToken();
-    if (!token) return null;
+    const { session } = await getSession();
+    if (!session?.access_token) return null;
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${session.access_token}`,
     };
+    if (typeof document !== 'undefined') {
+      const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+      if (m?.[1]) headers['x-csrf-token'] = m[1];
+    }
     return headers;
   };
 

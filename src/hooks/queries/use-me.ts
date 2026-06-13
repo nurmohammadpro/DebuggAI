@@ -3,8 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { supabase } from '@/lib/supabase';
-import { useUser } from '@/hooks/clerk-safe';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession, useSession } from '@/hooks/use-session';
 
 export interface MeProfile {
   id: string;
@@ -16,32 +15,27 @@ export interface MeProfile {
 }
 
 export function useMeProfile(enabled = true) {
-  const { user: sessionUser } = useUser();
+  const { user: sessionUser } = useSession();
 
   return useQuery({
     queryKey: queryKeys.me,
     enabled: enabled && !!sessionUser,
     queryFn: async (): Promise<MeProfile | null> => {
-      const token = getClerkToken();
-      if (!token) return null;
+      const session = await getSession();
+      if (!session.user) return null;
 
       const { data, error } = await supabase
         .from('profiles')
         .select('id,email,full_name,avatar_url,plan_type,is_admin')
-        .eq('id', sessionUser!.id)
+        .eq('id', session.user.id)
         .single();
 
-      if (error) return null;
-      const effectivePlan = (data as any)?.is_admin ? 'enterprise' : ((data as any)?.plan_type || 'free');
-      const profile = {
-        id: (data as any)?.id,
-        email: (data as any)?.email,
-        full_name: (data as any)?.full_name,
-        avatar_url: (data as any)?.avatar_url,
+      if (error) throw error;
+      const effectivePlan = (data as any).is_admin ? 'enterprise' : ((data as any).plan_type || 'free');
+      return {
+        ...data,
         plan: effectivePlan,
-        is_admin: (data as any)?.is_admin ?? false,
-      };
-      return profile as MeProfile;
+      } as MeProfile;
     },
   });
 }
