@@ -6,6 +6,14 @@ import { toast } from 'sonner';
 
 import { supabase } from '@/lib/supabase';
 
+function getSafeRedirectPath(searchParams: URLSearchParams) {
+  const redirect = searchParams.get('redirect');
+  if (redirect?.startsWith('/dashboard')) {
+    return redirect;
+  }
+  return '/dashboard/home';
+}
+
 export function AuthCallbackClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,7 +38,8 @@ export function AuthCallbackClient() {
         }
       }
 
-      router.replace('/dashboard');
+      router.replace(getSafeRedirectPath(searchParams));
+      router.refresh();
     };
 
     run();
@@ -42,4 +51,3 @@ export function AuthCallbackClient() {
     </div>
   );
 }
-

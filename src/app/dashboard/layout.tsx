@@ -6,12 +6,23 @@
 import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
 import { ClientDashboardShell } from '@/components/dashboard/client-dashboard-shell';
 import { DashboardErrorBoundary } from '@/components/dashboard/dashboard-error-boundary';
+import { createClient } from '@/lib/supabase-server';
+import { redirect } from 'next/navigation';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login?redirect=/dashboard');
+  }
+
   return (
     <>
       <SessionBootstrapper />

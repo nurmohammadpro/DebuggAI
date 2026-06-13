@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
-import { useSessionStore } from '@/store/session-store';
 import { useWorkspaceStore } from '@/store/workspace-store';
 import { useProjectBoot } from '@/hooks/queries/use-project-boot';
 import { useGenerationStore } from '@/store/generation-store';
@@ -29,14 +28,15 @@ const DeployModal = dynamic(() => import('@/components/workspace/deploy-modal').
 import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
 import { supabase } from '@/lib/supabase';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
-import { getSession } from '@/hooks/use-session';
+import { getSession, useSession } from '@/hooks/use-session';
 import { BrandLockup } from '@/components/logo';
 import { Menu } from 'lucide-react';
 
 export function WorkspaceDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated, isLoading } = useSessionStore();
+  const { user: sessionUser, isLoading: sessionLoading, isReady: sessionReady } = useSession();
+  const isAuthenticated = !!sessionUser;
   const selectedProjectId = useWorkspaceStore(s => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore(s => s.setSelectedProjectId);
   const setProjectKey = useWorkspaceStore(s => s.setProjectKey);
@@ -271,13 +271,15 @@ export function WorkspaceDashboard() {
   }, [showOnlyChat, hasGeneratedFiles]);
 
   useEffect(() => {
-    if (isLoading || isAuthenticated) return;
+    if (!sessionReady || sessionLoading || isAuthenticated) return;
 
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       const { session } = await getSession();
       if (!cancelled && !session?.access_token) {
-        router.push('/login');
+        const loginUrl = new URL('/login', window.location.origin);
+        loginUrl.searchParams.set('redirect', `${window.location.pathname}${window.location.search}`);
+        router.replace(loginUrl.pathname + loginUrl.search);
       }
     }, 1200);
 
@@ -285,9 +287,9 @@ export function WorkspaceDashboard() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, router, sessionLoading, sessionReady]);
 
-  if (isLoading) {
+  if (!sessionReady || sessionLoading) {
     return (
       <div className="min-h-[100dvh] w-full flex items-center justify-center bg-background">
         <div

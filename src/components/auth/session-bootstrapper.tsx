@@ -9,11 +9,7 @@ import type {
 } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore, type PlanType } from '@/store/session-store';
-import {
-  getCachedSessionSnapshot,
-  setCachedSession,
-  setBootstrapperReady,
-} from '@/hooks/use-session';
+import { setCachedSession, setBootstrapperReady } from '@/hooks/use-session';
 import { isClientEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist-client';
 import { csrfHeader } from '@/lib/csrf-client';
 import {
@@ -209,19 +205,16 @@ export function SessionBootstrapper() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      const cachedSession = getCachedSessionSnapshot();
-      const clearClientSession =
-        shouldClearClientSession(event) ||
-        (event === 'INITIAL_SESSION' && shouldClearMissingSession(!!session, !!cachedSession));
-      const sessionToHydrate = session ?? (clearClientSession ? null : cachedSession);
-
-      if (session || clearClientSession || event === 'INITIAL_SESSION') {
-        setCachedSession(session);
+      if (event === 'INITIAL_SESSION') {
+        return;
       }
 
-      if (sessionToHydrate || initialSessionLoaded || clearClientSession) {
-        await handleSession(sessionToHydrate, { clearClientSession });
-      }
+      const clearClientSession = shouldClearClientSession(event);
+      setCachedSession(session);
+
+      await handleSession(session, {
+        clearClientSession: clearClientSession || (initialSessionLoaded && !session),
+      });
     });
 
     void (async () => {
@@ -229,8 +222,6 @@ export function SessionBootstrapper() {
         const { data, error } = await supabase.auth.getSession();
         if (!active) return;
 
-        const cachedSession = getCachedSessionSnapshot();
-        const clearClientSession = shouldClearMissingSession(!!data?.session, !!cachedSession);
         const sessionToHydrate = data?.session ?? null;
 
         setCachedSession(
@@ -238,14 +229,11 @@ export function SessionBootstrapper() {
           error ? new Error(error.message) : null,
         );
 
-        await handleSession(sessionToHydrate, { clearClientSession });
+        await handleSession(sessionToHydrate, { clearClientSession: false });
       } catch (error) {
         if (!active) return;
-        const cachedSession = getCachedSessionSnapshot();
-        if (!cachedSession) {
-          setCachedSession(null, error instanceof Error ? error : new Error('Failed to load session'));
-        }
-        await handleSession(cachedSession);
+        setCachedSession(null, error instanceof Error ? error : new Error('Failed to load session'));
+        await handleSession(null);
       } finally {
         if (!active) return;
         initialSessionLoaded = true;

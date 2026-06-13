@@ -10,6 +10,19 @@ import { Label } from '@/components/ui/label';
 
 import { supabase } from '@/lib/supabase';
 
+function getSafeRedirectPath() {
+  if (typeof window === 'undefined') return '/dashboard/home';
+
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+
+  if (redirect?.startsWith('/dashboard')) {
+    return redirect;
+  }
+
+  return '/dashboard/home';
+}
+
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +59,8 @@ export function LoginForm() {
       setIsLoading(false);
     }
 
-    router.push('/dashboard');
+    router.replace(getSafeRedirectPath());
+    router.refresh();
   };
 
   const onResendConfirmation = async () => {
@@ -76,10 +90,13 @@ export function LoginForm() {
 
   const signInWithOAuth = async (provider: 'github' | 'google') => {
     try {
+      const callbackUrl = new URL('/auth/callback', window.location.origin);
+      callbackUrl.searchParams.set('redirect', getSafeRedirectPath());
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl.toString(),
         },
       });
       if (error) toast.error(error.message);
