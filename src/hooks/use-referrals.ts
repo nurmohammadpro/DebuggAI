@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 export interface Referral {
   id: string;
@@ -55,7 +55,7 @@ export function useReferrals(options: UseReferralsOptions = {}) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({ userId: user?.id }),
       });
@@ -86,7 +86,7 @@ export function useReferrals(options: UseReferralsOptions = {}) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({ referralCode, userId: user?.id }),
       });

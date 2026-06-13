@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import { BrandLockup } from '@/components/logo';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { getSession } from '@/hooks/use-session';
-import { csrfHeader } from '@/lib/csrf-client';
+
 import { useGenerationStore } from '@/store/generation-store';
 import { useConfirmDialog } from '@/components/admin/confirm-dialog';
 import { useQueryClient } from '@tanstack/react-query';
@@ -236,7 +236,7 @@ export function WorkspaceSidebar({
     if (!token) return;
     await fetch(`/api/threads/${thread.id}`, {
       method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...csrfHeader() },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json',  },
       body: JSON.stringify({ title: next }),
     });
     router.refresh();
@@ -250,7 +250,7 @@ export function WorkspaceSidebar({
     if (!token) return;
     const res = await fetch(`/api/threads/${thread.id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}`, ...csrfHeader() },
+      headers: { Authorization: `Bearer ${token}`,  },
     });
     if (!res.ok) {
       toast.error('Failed to delete thread');

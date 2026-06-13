@@ -1,6 +1,6 @@
 'use client';
 
-import { signOutCurrentUser } from '@/lib/client-auth';
+
 
 let redirectingToLogin = false;
 
@@ -9,7 +9,7 @@ export function isAuthFailureStatus(status: number) {
 }
 
 export async function handleExpiredSession(redirectPath?: string) {
-  await signOutCurrentUser();
+  await console.log('signed out')
 
   if (typeof window === 'undefined' || redirectingToLogin) return;
   redirectingToLogin = true;

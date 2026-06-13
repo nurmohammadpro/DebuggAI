@@ -46,7 +46,7 @@ import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks, sanitizeChatContent } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
 import { BRAND_NAME, Logo } from '@/components/logo';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1114,7 +1114,7 @@ export function EnhancedChatPanel({
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({
           code: serializedCode,
@@ -1213,7 +1213,7 @@ export function EnhancedChatPanel({
               headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
-                ...csrfHeader(),
+                
               },
               body: JSON.stringify({
                 role: 'assistant',
@@ -1303,7 +1303,7 @@ export function EnhancedChatPanel({
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
-            ...csrfHeader(),
+            
           },
           body: JSON.stringify({ role: 'user', content: text, metadata: { source: 'chat-panel' } }),
         });

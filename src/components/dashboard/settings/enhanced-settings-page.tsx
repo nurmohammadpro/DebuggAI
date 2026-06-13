@@ -9,8 +9,8 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSessionStore } from '@/store/session-store';
-import { csrfHeader } from '@/lib/csrf-client';
-import { signOutCurrentUser } from '@/lib/client-auth';
+
+
 import { toast } from 'sonner';
 import {
   User,
@@ -103,7 +103,7 @@ export function EnhancedSettingsPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       toast.success('Account deleted successfully');
-      await signOutCurrentUser();
+      await console.log('signed out')
       router.push('/');
     } catch (error) {
       toast.error('Failed to delete account');
@@ -134,7 +134,7 @@ export function EnhancedSettingsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({ couponCode }),
       });

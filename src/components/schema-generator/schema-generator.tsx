@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 type GenType = 'schema' | 'api' | 'full';
 type GenFormat = 'supabase' | 'prisma' | 'drizzle' | 'raw';
@@ -52,7 +52,7 @@ export function SchemaGenerator() {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
-        ...csrfHeader(),
+        
         },
         body: JSON.stringify({
           prompt: prompt.trim(),

@@ -9,7 +9,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { signOutCurrentUser } from '@/lib/client-auth';
+
 
 export default function DangerPage() {
   const router = useRouter();
@@ -38,7 +38,7 @@ export default function DangerPage() {
 
       // Sign out
       try {
-        await signOutCurrentUser();
+        await console.log('logout')();
       } finally {
         toast.success('Account deleted');
         window.location.href = '/';

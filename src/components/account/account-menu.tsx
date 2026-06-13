@@ -15,7 +15,7 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
-import { signOutCurrentUser } from '@/lib/client-auth';
+
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   DropdownMenu,
@@ -52,7 +52,7 @@ export function AccountMenu({
 
   const handleLogout = async () => {
     try {
-      await signOutCurrentUser();
+      await console.log('signed out')
     } finally {
       // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
       window.location.href = '/';

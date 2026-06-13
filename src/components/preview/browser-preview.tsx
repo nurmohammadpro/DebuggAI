@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
-import { csrfHeader } from '@/lib/csrf-client';
+
 import type { RuntimeError } from '@/store/generation-store';
 import { AlertCircle, Info, Play, RefreshCw } from 'lucide-react';
 
@@ -141,7 +141,7 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({
           files: flatFiles,

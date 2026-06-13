@@ -3,10 +3,10 @@
  * Provides navigation sidebar for client dashboard
  */
 
-import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
+
 import { ClientDashboardShell } from '@/components/dashboard/client-dashboard-shell';
 import { DashboardErrorBoundary } from '@/components/dashboard/dashboard-error-boundary';
-import { createClient } from '@/lib/supabase-server';
+
 import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
@@ -25,7 +25,7 @@ export default async function DashboardLayout({
 
   return (
     <>
-      <SessionBootstrapper />
+      
       <ClientDashboardShell>
         <DashboardErrorBoundary>
           {children}

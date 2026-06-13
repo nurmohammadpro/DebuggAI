@@ -6,7 +6,7 @@
 
 'use server';
 
-import { createClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createClient, createServiceRoleClient } from '@/lib/server/auth';
 import { isEmailAdminAllowlisted } from '@/lib/admin/admin-allowlist';
 
 export interface AdminUser {

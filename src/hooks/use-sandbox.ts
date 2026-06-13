@@ -9,7 +9,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getSession } from '@/hooks/use-session';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 export interface SandboxState {
   id: string | null;
@@ -238,7 +238,7 @@ export function useSandbox(options: UseSandboxOptions = {}) {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
-            ...csrfHeader(),
+            
           },
           body: JSON.stringify({ files }),
         });
@@ -298,7 +298,7 @@ export function useSandbox(options: UseSandboxOptions = {}) {
       const token = session?.access_token;
       await fetch(`/api/sandbox/${state.id}/stop`, {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}`, ...csrfHeader() } : { ...csrfHeader() },
+        headers: token ? { Authorization: `Bearer ${token}`,  } : {  },
       });
     } catch {}
     logsAbortRef.current?.abort();

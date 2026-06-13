@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 interface Notification {
   id: string;
@@ -66,7 +66,7 @@ export function NotificationCenter() {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({ readAll: true }),
       });

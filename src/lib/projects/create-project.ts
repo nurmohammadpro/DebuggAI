@@ -1,5 +1,5 @@
 import { getSession } from '@/hooks/use-session';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 export async function createProjectFromGeneration({
   name,
@@ -30,7 +30,7 @@ export async function createProjectFromGeneration({
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
-        ...csrfHeader(),
+        
       },
       body: JSON.stringify({
         description: name.trim(),

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { Navigation } from '@/components/navigation';
-import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
+
 
 /* ──────────────────────────────────────────────
    stagger helpers
@@ -604,7 +604,7 @@ function LanguagesBar() {
 export default function LandingPage() {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground selection:bg-[rgba(0,200,83,0.25)]">
-      <SessionBootstrapper />
+      
       <Navigation />
       <main className="flex-1">
         <Hero />

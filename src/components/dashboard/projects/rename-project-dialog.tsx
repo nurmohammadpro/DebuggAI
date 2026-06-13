@@ -1,4 +1,5 @@
 'use client';
+import { getClerkToken } from '@/lib/clerk-token';
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getSession } from '@/hooks/use-session';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 export function RenameProjectDialog({
   open,
@@ -39,7 +40,7 @@ export function RenameProjectDialog({
     setSaving(true);
     try {
       const { session } = await getSession();
-      const token = session?.access_token;
+      const token = getClerkToken();
       if (!token) throw new Error('Please sign in again');
 
       const response = await fetch(`/api/projects/${projectId}`, {
@@ -47,7 +48,7 @@ export function RenameProjectDialog({
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-        ...csrfHeader(),
+        
         },
         body: JSON.stringify({ description: name.trim() }),
       });

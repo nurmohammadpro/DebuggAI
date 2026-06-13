@@ -5,7 +5,7 @@
  */
 
 import { redirect } from 'next/navigation';
-import { createAdminClient } from '@/lib/supabase-server';
+import { createAdminClient } from '@/lib/server/auth';
 import { headers } from 'next/headers';
 
 export async function POST(request: Request) {

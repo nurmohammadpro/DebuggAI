@@ -12,7 +12,7 @@ import {
 import { ReactSelect } from '@/components/ui/react-select';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 type DeployProvider = 'vercel' | 'netlify';
 type DeployStatus = 'idle' | 'preparing' | 'building' | 'deploying' | 'success' | 'failed';
@@ -175,7 +175,7 @@ export function DeployModal({
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({
           projectId,
@@ -217,7 +217,7 @@ export function DeployModal({
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({
           deploymentId,

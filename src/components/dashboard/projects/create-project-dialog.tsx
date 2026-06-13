@@ -45,8 +45,8 @@ export function CreateProjectDialog({
     setCreating(true);
     try {
       // getSession() internally waits up to 5s for the bootstrapper
-      const { session } = await getSession();
-      if (!session?.access_token) {
+      const token = getClerkToken();
+      if (!token) {
         toast.error('Please sign in again');
         return;
       }
@@ -80,7 +80,7 @@ export function CreateProjectDialog({
           stack: selectedStack,
           prompt: `Create a Next.js App Router app: ${name.trim()}`,
           createdFrom: 'dashboard-dialog',
-          token: session.access_token,
+          token: token,
         });
 
         // Replace optimistic entry with real data

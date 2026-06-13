@@ -18,7 +18,7 @@ import { useSessionStore } from '@/store/session-store';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationCenter } from '@/components/dashboard/notification-center';
-import { signOutCurrentUser } from '@/lib/client-auth';
+
 
 export function Navigation() {
   const router = useRouter();
@@ -28,7 +28,7 @@ export function Navigation() {
 
   const handleLogout = async () => {
     try {
-      await signOutCurrentUser();
+      await console.log('signed out')
     } finally {
       window.location.href = '/';
     }

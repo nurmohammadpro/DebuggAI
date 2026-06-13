@@ -14,7 +14,7 @@ import { Check, Zap, Star, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSessionStore } from '@/store/session-store';
 import { useRouter } from 'next/navigation';
-import { csrfHeader } from '@/lib/csrf-client';
+
 
 interface Plan {
   id: 'free' | 'pro' | 'team' | 'business' | 'enterprise';
@@ -166,7 +166,7 @@ export default function PricingPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...csrfHeader(),
+          
         },
         body: JSON.stringify({
           priceId: plan.priceId,
