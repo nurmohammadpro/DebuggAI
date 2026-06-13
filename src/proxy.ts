@@ -7,10 +7,31 @@ const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/verify-email', '
 const PUBLIC_PREFIXES = ['/api/', '/_next/', '/favicon.ico'];
 
 function buildContentSecurityPolicy(appOrigin: string): string {
+  const previewFrameSources = [
+    "'self'",
+    'http://localhost:*',
+    appOrigin,
+    'https://*.codesandbox.io',
+    'https://*.sandpack.codesandbox.io',
+    'blob:',
+  ].filter(Boolean).join(' ');
+
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
-    "script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
+    [
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      'https://cdn.jsdelivr.net',
+      'https://static.cloudflareinsights.com',
+      'https://browser.sentry-cdn.com',
+      'blob:',
+    ].join(' '),
+    [
+      "script-src-elem 'self' 'unsafe-eval' 'unsafe-inline'",
+      'https://cdn.jsdelivr.net',
+      'https://static.cloudflareinsights.com',
+      'https://browser.sentry-cdn.com',
+      'blob:',
+    ].join(' '),
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
     "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
     "img-src 'self' data: blob: https:",
@@ -19,11 +40,15 @@ function buildContentSecurityPolicy(appOrigin: string): string {
       "connect-src 'self'",
       'https://*.supabase.co',
       'https://api.deepseek.com',
+      'https://api.groq.com',
+      'https://api.z.ai',
       'https://api.openai.com',
       'https://api.anthropic.com',
       'https://static.cloudflareinsights.com',
       'https://cloudflareinsights.com',
       'https://*.cloudflareinsights.com',
+      'https://*.ingest.sentry.io',
+      'https://*.sentry.io',
       'https://cdn.jsdelivr.net',
       'https://*.codesandbox.io',
       'https://*.sandpack.codesandbox.io',
@@ -32,10 +57,10 @@ function buildContentSecurityPolicy(appOrigin: string): string {
       'ws://localhost:*',
       'wss://*.supabase.co',
     ].join(' '),
-    "worker-src 'self' blob:",
+    "worker-src 'self' blob: https://cdn.jsdelivr.net",
     // Sandpack runs in cross-origin iframes — must allow codesandbox.io origins
-    `frame-src 'self' http://localhost:* ${appOrigin} https://*.codesandbox.io https://*.sandpack.codesandbox.io blob:`.trim(),
-    `child-src 'self' http://localhost:* ${appOrigin} https://*.codesandbox.io https://*.sandpack.codesandbox.io blob:`.trim(),
+    `frame-src ${previewFrameSources}`,
+    `child-src ${previewFrameSources}`,
     "frame-ancestors 'self'",
   ].join('; ');
 }
