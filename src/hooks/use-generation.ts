@@ -79,6 +79,10 @@ function hasSubstantiveFiles(project: VirtualProjectFiles): boolean {
     (file) => file.status !== 'deleted' && file.content.trim().length > 0,
   );
 }
+
+export function shouldFallbackFromAgentStatus(status: number): boolean {
+  return status === 404 || status === 405 || status === 501;
+}
 import { parseSSEResponseWithCallback } from '@/lib/sse-parser';
 
 import { supabase } from '@/lib/supabase';
@@ -608,12 +612,21 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           signal: controller.signal,
         });
 
-        // ANY non-2xx from /api/agent/turn → fall back to single-shot generate.
-        // The agent route may not be deployed yet (404), may be crashing (500),
-        // or Supabase may be slow (502). In all cases, the old generate still works.
         if (!res.ok) {
-          // Don't throw — silently fall back so the chat doesn't show an error
-          return null;
+          if (shouldFallbackFromAgentStatus(res.status)) {
+            return null;
+          }
+          const raw = await res.text().catch(() => '');
+          let message = `Agent request failed (HTTP ${res.status})`;
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw) as { error?: string; message?: string; details?: string };
+              message = parsed.error || parsed.message || parsed.details || message;
+            } catch {
+              message = raw.slice(0, 1000);
+            }
+          }
+          throw new Error(message);
         }
 
         if (!res.body) return null; // No SSE stream → fall back

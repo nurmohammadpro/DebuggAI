@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getSession } from '@/hooks/use-session';
+import { getSession, useSession } from '@/hooks/use-session';
 
 interface ProjectBoot {
   project: {
@@ -28,12 +28,13 @@ interface ProjectBoot {
 }
 
 export function useProjectBoot(projectId: string | null, enabled = true) {
+  const { user, isReady } = useSession();
+
   return useQuery({
     queryKey: projectId ? ['project-boot', projectId] : ['project-boot', 'none'],
-    enabled: enabled && !!projectId,
+    enabled: enabled && isReady && !!user && !!projectId,
     staleTime: 10_000,
     gcTime: 5 * 60 * 1000,
-    placeholderData: (previousBoot) => previousBoot,
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     queryFn: async (): Promise<ProjectBoot | null> => {

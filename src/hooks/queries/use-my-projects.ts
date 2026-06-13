@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
-import { getSession } from '@/hooks/use-session';
+import { getSession, useSession } from '@/hooks/use-session';
 
 export type GenerationRow = {
   id: string;
@@ -18,9 +18,11 @@ export type GenerationRow = {
 };
 
 export function useMyProjects(limit = 50, enabled = true) {
+  const { user, isReady } = useSession();
+
   return useQuery({
     queryKey: [...queryKeys.myProjects, { limit }] as const,
-    enabled,
+    enabled: enabled && isReady && !!user,
     // Keep cached data for 30s after auth state changes so the UI
     // doesn't flash empty while the bootstrapper initializes.
     staleTime: 0,

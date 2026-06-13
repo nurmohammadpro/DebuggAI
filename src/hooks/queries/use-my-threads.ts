@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/hooks/use-session';
+import { getSession, useSession } from '@/hooks/use-session';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type ThreadRow = {
@@ -16,12 +16,14 @@ export type ThreadRow = {
 };
 
 export function useMyThreads(limit = 50, enabled = true, projectId?: string | null) {
+  const { user, isReady } = useSession();
+
   return useQuery({
     queryKey: [...queryKeys.myThreads, { limit, projectId: projectId || null }] as const,
-    enabled,
+    enabled: enabled && isReady && !!user,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
-    placeholderData: (previousThreads) => previousThreads,
+    placeholderData: projectId ? undefined : (previousThreads) => previousThreads,
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     queryFn: async (): Promise<ThreadRow[]> => {

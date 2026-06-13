@@ -1327,23 +1327,18 @@ export function EnhancedChatPanel({
       const generationDirective = buildGenerationDirective(builderMode, hasExistingFiles);
 
       // Try agent loop first (tool-calling, surgical edits).
-      // ANY failure — 404, 500, network error, parse error — falls back to
-      // single-shot generate. The user should never lose code generation
-      // just because the agent route isn't deployed yet.
+      // Only unavailable agent routes fall back to the legacy generator.
+      // Real provider/runtime errors must surface; otherwise polish/fix can
+      // silently regress from the configured Z.ai model to the old Groq path.
       let agentResult: string | null = null;
       const toolEventsAccum: ToolEvent[] = [];
-      try {
-        agentResult = await agentTurn(
-          { prompt: text, persistUserMessage: false, generationDirective },
-          (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
-        );
-      } catch {
-        // Agent loop failed (not deployed, Supabase down, etc.) → fall through
-        agentResult = null;
-      }
+      agentResult = await agentTurn(
+        { prompt: text, persistUserMessage: false, generationDirective },
+        (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
+      );
 
       if (agentResult === null) {
-        // Agent route not available — fall back to single-shot generate
+        // Agent route not available — fall back to single-shot generate.
         await generate({
           prompt: fullPrompt,
           persistUserMessage: false,
