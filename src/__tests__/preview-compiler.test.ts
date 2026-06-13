@@ -66,4 +66,25 @@ describe('preview compiler', () => {
     expect(errors).toEqual([]);
     expect(js).toContain('Best plan');
   });
+
+  it('bundles generated drag handles that import GripVertical from lucide-react', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import { TodoItem } from '@/components/todo-item';",
+        'export default function Home() {',
+        '  return <TodoItem />;',
+        '}',
+      ].join('\n'),
+      'components/todo-item.tsx': [
+        "import { GripVertical } from 'lucide-react';",
+        '',
+        'export function TodoItem() {',
+        '  return <div className="flex items-center gap-2"><GripVertical className="h-4 w-4" />Drag me</div>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Drag me');
+  });
 });

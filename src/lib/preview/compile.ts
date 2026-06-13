@@ -279,7 +279,7 @@ const UI_PACKAGE_SHIMS: Record<string, string> = {
       'Cloud','Code','Code2','Coins','Command','Copy','CreditCard','Database',
       'Download','Edit','Edit2','Edit3','ExternalLink','Eye','EyeOff','File',
       'FileCode','FileText','Filter','Flag','Folder','FolderOpen','Globe',
-      'Grid','Hash','Heart','HelpCircle','Home','Image','Info','Key','Layout',
+      'Grid','Grip','GripHorizontal','GripVertical','Hash','Heart','HelpCircle','Home','Image','Info','Key','Layout',
       'Link','List','Loader','Loader2','Lock','LogIn','LogOut','Mail','Map',
       'MapPin','Menu','MessageCircle','MessageSquare','Minus','Monitor','Moon',
       'MoreHorizontal','MoreVertical','Move','Music','Package','Paperclip',
