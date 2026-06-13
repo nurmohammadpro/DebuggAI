@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { getSession, useSession } from '@/hooks/use-session';
+import { handleExpiredSession, isAuthFailureStatus } from '@/lib/auth-expiry';
 
 export type GenerationRow = {
   id: string;
@@ -43,6 +44,10 @@ export function useMyProjects(limit = 50, enabled = true) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const payload = await response.json().catch(() => ({}));
+      if (isAuthFailureStatus(response.status)) {
+        await handleExpiredSession('/dashboard/home');
+        throw new Error('Session expired — signing out...');
+      }
       if (!response.ok) {
         throw new Error(payload?.error || 'Failed to load projects');
       }

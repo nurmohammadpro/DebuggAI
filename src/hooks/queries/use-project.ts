@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { getSession, useSession } from '@/hooks/use-session';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
+import { handleExpiredSession, isAuthFailureStatus } from '@/lib/auth-expiry';
 
 export function useProject(projectId: string | null, enabled = true) {
   const { user: sessionUser } = useSession();
@@ -21,6 +22,10 @@ export function useProject(projectId: string | null, enabled = true) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const payload = await response.json().catch(() => ({}));
+      if (isAuthFailureStatus(response.status)) {
+        await handleExpiredSession(`/dashboard?project=${projectId}`);
+        throw new Error('Session expired — signing out...');
+      }
       if (!response.ok) {
         throw new Error(payload?.error || 'Failed to load project');
       }

@@ -98,11 +98,16 @@ export async function getSession(): Promise<SessionState & { session?: Session |
       setCachedSession(data.session);
       return { ...deriveState(), session: data.session };
     }
+    if (!error) {
+      setCachedSession(null);
+      return { ...deriveState(), session: null };
+    }
   } catch (e) {
     console.warn('[getSession] Supabase getSession threw:', e);
   }
 
-  // Fallback: return module cache if Supabase call didn't produce a session
+  // Fallback only for Supabase errors/throws. A successful null session above
+  // is authoritative and clears the cache.
   if (cachedSession || cachedSessionError) {
     return { ...deriveState(), session: cachedSession };
   }

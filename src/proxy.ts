@@ -138,22 +138,22 @@ export async function proxy(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
+          getAll() {
+            return request.cookies.getAll();
           },
-          set() {
-            // proxy only reads — cookies are set by the browser client
-          },
-          remove(name: string) {
-            response.cookies.set(name, '', { maxAge: 0, path: '/' });
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value);
+              response.cookies.set(name, value, options);
+            });
           },
         },
       }
     );
 
-    // getSession() reads the auth cookie without an HTTP call —
-    // avoids redirect loops when Supabase is slow or the token
-    // refresh endpoint is temporarily unavailable.
+    // getSession() reads and may refresh auth cookies. The setAll handler above
+    // must persist those refreshed cookies or users can appear logged in with
+    // stale tokens and empty dashboard data after inactivity.
     const { data: sessionData } = await supabase.auth.getSession();
 
     if (!sessionData?.session) {

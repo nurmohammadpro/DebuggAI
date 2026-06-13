@@ -27,6 +27,21 @@ export function shouldClearClientSession(event: AuthChangeEvent | 'INITIAL' | 'E
   return event === 'SIGNED_OUT';
 }
 
+export function shouldClearMissingSession(hasSupabaseSession: boolean, hasCachedSession: boolean) {
+  return !hasSupabaseSession && hasCachedSession;
+}
+
+function redirectToLoginIfDashboard() {
+  if (typeof window === 'undefined') return;
+  const { pathname, search } = window.location;
+  if (!pathname.startsWith('/dashboard')) return;
+
+  const redirect = `${pathname}${search}`;
+  const loginUrl = new URL('/login', window.location.origin);
+  loginUrl.searchParams.set('redirect', redirect);
+  window.location.replace(loginUrl.toString());
+}
+
 export function SessionBootstrapper() {
   const { setUser, updateUser, setCredits, setIsLoading, logout } = useSessionStore();
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -183,6 +198,7 @@ export function SessionBootstrapper() {
       } else if (options.clearClientSession) {
         await unsubscribeCredits();
         logoutRef.current();
+        redirectToLoginIfDashboard();
       } else {
         setIsLoadingRef.current(false);
       }
@@ -193,11 +209,13 @@ export function SessionBootstrapper() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      const clearClientSession = shouldClearClientSession(event);
       const cachedSession = getCachedSessionSnapshot();
+      const clearClientSession =
+        shouldClearClientSession(event) ||
+        (event === 'INITIAL_SESSION' && shouldClearMissingSession(!!session, !!cachedSession));
       const sessionToHydrate = session ?? (clearClientSession ? null : cachedSession);
 
-      if (session || clearClientSession) {
+      if (session || clearClientSession || event === 'INITIAL_SESSION') {
         setCachedSession(session);
       }
 
@@ -212,16 +230,15 @@ export function SessionBootstrapper() {
         if (!active) return;
 
         const cachedSession = getCachedSessionSnapshot();
-        const sessionToHydrate = data?.session ?? cachedSession;
+        const clearClientSession = shouldClearMissingSession(!!data?.session, !!cachedSession);
+        const sessionToHydrate = data?.session ?? null;
 
-        if (data?.session || !cachedSession) {
-          setCachedSession(
-            data?.session ?? null,
-            error ? new Error(error.message) : null,
-          );
-        }
+        setCachedSession(
+          data?.session ?? null,
+          error ? new Error(error.message) : null,
+        );
 
-        await handleSession(sessionToHydrate ?? null);
+        await handleSession(sessionToHydrate, { clearClientSession });
       } catch (error) {
         if (!active) return;
         const cachedSession = getCachedSessionSnapshot();

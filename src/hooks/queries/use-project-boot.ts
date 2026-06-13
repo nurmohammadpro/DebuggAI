@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getSession, useSession } from '@/hooks/use-session';
+import { handleExpiredSession, isAuthFailureStatus } from '@/lib/auth-expiry';
 
 interface ProjectBoot {
   project: {
@@ -45,6 +46,10 @@ export function useProjectBoot(projectId: string | null, enabled = true) {
       const res = await fetch(`/api/projects/${projectId}/boot`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (isAuthFailureStatus(res.status)) {
+        await handleExpiredSession(`/dashboard?project=${projectId}`);
+        throw new Error('Session expired — signing out...');
+      }
       if (!res.ok) throw new Error('Failed to load project');
       return res.json();
     },
