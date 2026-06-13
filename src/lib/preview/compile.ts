@@ -183,7 +183,31 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
   'react/jsx-runtime': `
     const React = window.React;
     export const Fragment = React.Fragment;
+    function normalizePreviewComponentType(type) {
+      if (!type || typeof type !== 'object') return type;
+      if (type.$$typeof) return type;
+      if (typeof type.default === 'function' || (type.default && type.default.$$typeof)) {
+        return type.default;
+      }
+      return function UnsupportedPreviewComponent({ children }) {
+        return React.createElement(
+          'div',
+          {
+            style: {
+              padding: '0.75rem',
+              border: '1px solid #f97316',
+              borderRadius: '0.5rem',
+              color: '#9a3412',
+              background: '#fff7ed',
+              fontSize: '0.875rem',
+            },
+          },
+          children || 'Unsupported preview component'
+        );
+      };
+    }
     export function jsx(type, props, key) {
+      type = normalizePreviewComponentType(type);
       return React.createElement(type, key === undefined ? props : { ...props, key });
     }
     export const jsxs = jsx;
@@ -191,7 +215,31 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
   'react/jsx-dev-runtime': `
     const React = window.React;
     export const Fragment = React.Fragment;
+    function normalizePreviewComponentType(type) {
+      if (!type || typeof type !== 'object') return type;
+      if (type.$$typeof) return type;
+      if (typeof type.default === 'function' || (type.default && type.default.$$typeof)) {
+        return type.default;
+      }
+      return function UnsupportedPreviewComponent({ children }) {
+        return React.createElement(
+          'div',
+          {
+            style: {
+              padding: '0.75rem',
+              border: '1px solid #f97316',
+              borderRadius: '0.5rem',
+              color: '#9a3412',
+              background: '#fff7ed',
+              fontSize: '0.875rem',
+            },
+          },
+          children || 'Unsupported preview component'
+        );
+      };
+    }
     export function jsxDEV(type, props, key) {
+      type = normalizePreviewComponentType(type);
       return React.createElement(type, key === undefined ? props : { ...props, key });
     }
   `,
@@ -393,6 +441,89 @@ const UI_PACKAGE_SHIMS: Record<string, string> = {
     export const ResponsiveContainer = ({ children }) => children;
     export const Cell = () => null;
   `,
+  '@dnd-kit/core': `
+    import React from 'react';
+    export function DndContext({ children }) { return React.createElement(React.Fragment, null, children); }
+    export function DragOverlay({ children }) { return React.createElement(React.Fragment, null, children); }
+    export function closestCenter() { return null; }
+    export function closestCorners() { return null; }
+    export function rectIntersection() { return null; }
+    export function pointerWithin() { return null; }
+    export function KeyboardSensor() {}
+    export function PointerSensor() {}
+    export function MouseSensor() {}
+    export function TouchSensor() {}
+    export function useSensor(sensor, options) { return { sensor, options }; }
+    export function useSensors(...sensors) { return sensors; }
+    export function useDraggable() {
+      return {
+        attributes: {},
+        listeners: {},
+        setNodeRef: () => {},
+        transform: null,
+        isDragging: false,
+      };
+    }
+    export function useDroppable() {
+      return {
+        active: null,
+        isOver: false,
+        over: null,
+        rect: null,
+        setNodeRef: () => {},
+      };
+    }
+  `,
+  '@dnd-kit/sortable': `
+    import React from 'react';
+    export function SortableContext({ children }) { return React.createElement(React.Fragment, null, children); }
+    export function useSortable() {
+      return {
+        active: null,
+        activeIndex: -1,
+        attributes: {},
+        data: {},
+        index: -1,
+        isDragging: false,
+        isOver: false,
+        listeners: {},
+        newIndex: -1,
+        over: null,
+        overIndex: -1,
+        rect: null,
+        setActivatorNodeRef: () => {},
+        setNodeRef: () => {},
+        transform: null,
+        transition: undefined,
+      };
+    }
+    export function arrayMove(items, oldIndex, newIndex) {
+      const copy = Array.isArray(items) ? [...items] : [];
+      if (oldIndex < 0 || newIndex < 0 || oldIndex >= copy.length || newIndex >= copy.length) return copy;
+      const [item] = copy.splice(oldIndex, 1);
+      copy.splice(newIndex, 0, item);
+      return copy;
+    }
+    export function sortableKeyboardCoordinates() { return undefined; }
+    export const horizontalListSortingStrategy = {};
+    export const rectSortingStrategy = {};
+    export const rectSwappingStrategy = {};
+    export const verticalListSortingStrategy = {};
+  `,
+  '@dnd-kit/utilities': `
+    export const CSS = {
+      Transform: {
+        toString(transform) {
+          if (!transform) return undefined;
+          const x = Number(transform.x || 0);
+          const y = Number(transform.y || 0);
+          const scaleX = transform.scaleX == null ? 1 : Number(transform.scaleX);
+          const scaleY = transform.scaleY == null ? 1 : Number(transform.scaleY);
+          return 'translate3d(' + x + 'px, ' + y + 'px, 0) scaleX(' + scaleX + ') scaleY(' + scaleY + ')';
+        },
+      },
+    };
+  `,
 };
 
 // CSS module files get converted to plain CSS
@@ -459,7 +590,24 @@ function makeUnknownPackageShim(moduleName: string, namedExports: Set<string> | 
   return `
     // auto-stub: ${moduleName}
     const stub = new Proxy(function StubComponent() { return null; }, {
-      get: () => stub,
+      get: (_target, prop) => {
+        if (
+          prop === '$$typeof' ||
+          prop === 'prototype' ||
+          prop === 'displayName' ||
+          prop === 'propTypes' ||
+          prop === 'defaultProps' ||
+          prop === 'contextTypes' ||
+          prop === 'childContextTypes' ||
+          prop === 'getDerivedStateFromProps' ||
+          prop === 'getDerivedStateFromError' ||
+          prop === 'getSnapshotBeforeUpdate' ||
+          String(prop).startsWith('component') ||
+          String(prop).startsWith('UNSAFE_component') ||
+          prop === Symbol.toStringTag
+        ) return undefined;
+        return stub;
+      },
       apply: () => null,
     });
     export default stub;
@@ -1206,8 +1354,8 @@ export async function bundlePreview(
  * Build a complete HTML document from compiled JS + CSS for iframe rendering.
  */
 export function buildPreviewHtml(js: string, css: string): string {
-  const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js';
-  const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js';
+  const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js';
+  const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js';
 
   return `<!DOCTYPE html>
 <html lang="en" class="dark">

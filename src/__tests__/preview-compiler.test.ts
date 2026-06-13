@@ -90,6 +90,33 @@ describe('preview compiler', () => {
     expect(js).toContain('Drag me');
   });
 
+  it('renders dnd-kit generated todo apps as visual-only previews', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';",
+        "import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';",
+        "import { CSS } from '@dnd-kit/utilities';",
+        "import { GripVertical } from 'lucide-react';",
+        '',
+        'function TodoItem({ id }: { id: string }) {',
+        '  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });',
+        '  return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}><button {...attributes} {...listeners}><GripVertical /></button>Drag me</div>;',
+        '}',
+        '',
+        'export default function Home() {',
+        '  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));',
+        '  return <DndContext sensors={sensors} collisionDetection={closestCenter}><SortableContext items={[\"one\"]} strategy={verticalListSortingStrategy}><TodoItem id="one" /></SortableContext></DndContext>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Drag me');
+    expect(js).toContain('function DndContext');
+    expect(js).toContain('function SortableContext');
+    expect(js).toContain('function useSortable');
+  });
+
   it('keeps package default shims renderable as React components', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
@@ -105,5 +132,22 @@ describe('preview compiler', () => {
     expect(errors).toEqual([]);
     expect(js).toContain('Named motion');
     expect(js).toContain('Default motion');
+  });
+
+  it('guards namespace object jsx elements from crashing the iframe', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import * as UnknownWidget from 'unknown-widget';",
+        '',
+        'export default function Home() {',
+        '  return <main><UnknownWidget>Still renders</UnknownWidget></main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Still renders');
+    expect(js).toContain('normalizePreviewComponentType');
+    expect(js).toContain('Unsupported preview component');
   });
 });
