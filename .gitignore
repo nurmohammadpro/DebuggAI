@@ -46,3 +46,7 @@ next-env.d.ts
 .projects
 .agents
 .tmp
+
+# local/generated artifacts
+*.zip
+/repolish/
