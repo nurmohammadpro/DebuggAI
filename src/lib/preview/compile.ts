@@ -269,8 +269,9 @@ const UI_PACKAGE_SHIMS: Record<string, string> = {
       Icon.displayName = name;
       return Icon;
     };
-    // Proxy — any named import returns a generic SVG icon stub
-    export default new Proxy({}, { get: (_, name) => makeIcon(String(name)) });
+    // Function proxy: valid as <Icons /> and also supports <Icons.Search />.
+    const DefaultIcon = makeIcon('Icon');
+    export default new Proxy(DefaultIcon, { get: (_, name) => makeIcon(String(name)) });
     ${[
       'Activity','AlertCircle','AlertTriangle','Archive','ArrowDown','ArrowLeft',
       'ArrowRight','ArrowUp','Award','Badge','Bell','Book','BookOpen','Box',
@@ -343,7 +344,11 @@ const UI_PACKAGE_SHIMS: Record<string, string> = {
   `,
   'framer-motion': `
     import React from 'react';
-    const motion = new Proxy({}, {
+    const createMotionComponent = (tag) => React.forwardRef(({ children, animate, initial, exit, transition, whileHover, whileTap, variants, ...props }, ref) =>
+      React.createElement(tag, { ...props, ref }, children)
+    );
+    const MotionRoot = createMotionComponent('div');
+    const motion = new Proxy(MotionRoot, {
       get: (_, tag) => React.forwardRef(({ children, animate, initial, exit, transition, whileHover, whileTap, variants, ...props }, ref) =>
         React.createElement(tag, { ...props, ref }, children)
       )

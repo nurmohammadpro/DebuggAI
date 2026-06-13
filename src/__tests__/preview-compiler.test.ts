@@ -89,4 +89,21 @@ describe('preview compiler', () => {
     expect(errors).toEqual([]);
     expect(js).toContain('Drag me');
   });
+
+  it('keeps package default shims renderable as React components', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import Icons from 'lucide-react';",
+        "import motionDefault, { motion } from 'framer-motion';",
+        '',
+        'export default function Home() {',
+        '  return <main><Icons className="h-4 w-4" /><Icons.Search /><motion.div>Named motion</motion.div><motionDefault>Default motion</motionDefault></main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Named motion');
+    expect(js).toContain('Default motion');
+  });
 });
