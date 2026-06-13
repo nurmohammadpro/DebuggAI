@@ -37,6 +37,8 @@ describe('preview compiler', () => {
     const html = buildPreviewHtml(js, css);
     expect(html).toContain('<html lang="en" class="dark">');
     expect(html).toContain('<div id="root"></div>');
+    expect(html).toContain("installStorage('localStorage');");
+    expect(html).toContain("installStorage('sessionStorage');");
     expect(html).toContain('Preview works');
     expect(html).not.toContain('cdn.tailwindcss.com');
   });

@@ -1221,6 +1221,53 @@ export function buildPreviewHtml(js: string, css: string): string {
   <script src="${reactCdn}"></script>
   <script src="${reactDomCdn}"></script>
   <script>
+    // ── Sandboxed storage shim ──────────────────────────────────────────
+    // srcDoc previews intentionally do not use allow-same-origin, so direct
+    // access to localStorage/sessionStorage throws a SecurityError. Generated
+    // apps commonly use storage for todos, themes, and drafts; provide a safe
+    // in-memory Storage-compatible shim instead of weakening the iframe sandbox.
+    (function() {
+      function createMemoryStorage() {
+        var store = Object.create(null);
+        return {
+          get length() { return Object.keys(store).length; },
+          key: function(index) {
+            var keys = Object.keys(store);
+            return keys[index] || null;
+          },
+          getItem: function(key) {
+            key = String(key);
+            return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null;
+          },
+          setItem: function(key, value) {
+            store[String(key)] = String(value);
+          },
+          removeItem: function(key) {
+            delete store[String(key)];
+          },
+          clear: function() {
+            store = Object.create(null);
+          },
+        };
+      }
+
+      function installStorage(name) {
+        try {
+          void window[name];
+        } catch (e) {
+          try {
+            Object.defineProperty(window, name, {
+              value: createMemoryStorage(),
+              configurable: true,
+            });
+          } catch (defineError) {}
+        }
+      }
+
+      installStorage('localStorage');
+      installStorage('sessionStorage');
+    })();
+
     // ── Error & console trap ────────────────────────────────────────────
     (function() {
       const originalConsole = {};
