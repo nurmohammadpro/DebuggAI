@@ -110,9 +110,24 @@ export const useSessionStore = create<SessionState>()(
     }),
     {
       name: 'session-storage',
-      // Prevent rehydrating stale auth state from localStorage on page load.
-      // The SessionBootstrapper is the single source of truth for auth state.
-      skipHydration: true,
+      // Only persist user profile fields (displayName, email, avatar) for
+      // the dashboard greeting. NEVER persist isAuthenticated or isLoading —
+      // those must come from the SessionBootstrapper's onAuthStateChange
+      // which validates the Supabase cookie on every page load.
+      partialize: (state) => ({
+        user: state.user ? {
+          id: state.user.id,
+          email: state.user.email,
+          displayName: state.user.displayName,
+          avatarUrl: state.user.avatarUrl,
+          plan: state.user.plan,
+          credits: state.user.credits,
+          isAdmin: state.user.isAdmin,
+        } : null,
+      }),
+      // Rehydrate user profile on mount (shows "Welcome back, Nur" instantly)
+      // but DATA HOOKS stay disabled until SessionBootstrapper calls setUser()
+      // which sets isAuthenticated: true → hooks enable → fetch real data.
     }
   )
 );
