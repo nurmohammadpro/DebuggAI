@@ -102,7 +102,7 @@ export function SessionBootstrapper() {
             .select('balance')
             .eq('user_id', userId)
             .maybeSingle(),
-          supabase.from('profiles').select('is_admin, plan_type').eq('id', userId).maybeSingle(),
+          supabase.from('profiles').select('full_name, avatar_url, is_admin, plan_type').eq('id', userId).maybeSingle(),
         ]);
 
       if (!walletError && wallet?.balance !== undefined) {
@@ -115,8 +115,16 @@ export function SessionBootstrapper() {
       const dbAdmin = !profileError ? profile?.is_admin ?? false : false;
       const dbPlan = !profileError ? (profile?.plan_type ?? 'free') : 'free';
       const effectivePlan: PlanType = allowlistedAdmin || dbAdmin ? 'enterprise' : (dbPlan as PlanType);
-      updateUserRef.current({ isAdmin: allowlistedAdmin || dbAdmin });
-      updateUserRef.current({ plan: effectivePlan });
+
+      // Update user profile with DB-sourced display name and avatar
+      const displayName = profile?.full_name || email || 'Developer';
+      const avatarUrl = profile?.avatar_url || undefined;
+      updateUserRef.current({
+        isAdmin: allowlistedAdmin || dbAdmin,
+        plan: effectivePlan,
+        displayName,
+        avatarUrl,
+      });
 
       // Auto-apply the internal testing coupon for the approved email only.
       // This keeps the flow invisible for the test user while remaining scoped.

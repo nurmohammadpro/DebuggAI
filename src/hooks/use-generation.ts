@@ -142,38 +142,77 @@ export function useGeneration(options: UseGenerationOptions = {}) {
     return headers;
   };
 
+  // Track in-flight thread creation to prevent race conditions when
+  // ensureThread is called concurrently before the first resolves.
+  let threadPromise: Promise<string> | null = null;
+
   const ensureThread = useCallback(async (): Promise<string> => {
     if (currentThreadId) return currentThreadId;
+    if (threadPromise) return threadPromise;
 
-    const authHeaders = await getAuthHeaders();
-    if (!authHeaders) throw new Error('Unauthorized: please sign in again');
+    threadPromise = (async () => {
+      const authHeaders = await getAuthHeaders();
+      if (!authHeaders) throw new Error('Unauthorized: please sign in again');
 
-    const res = await fetch('/api/threads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({
-        title: null,
-        projectId: currentProjectId,
-        workspaceId: null,
-        metadata: { source: 'use-generation' },
-      }),
-    });
+      const res = await fetch('/api/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          title: null,
+          projectId: currentProjectId,
+          workspaceId: null,
+          metadata: { source: 'use-generation' },
+        }),
+      });
 
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      const msg = typeof j?.error === 'string' ? j.error
-        : typeof j?.error?.message === 'string' ? j.error.message
-        : typeof j?.message === 'string' ? j.message
-        : `Failed to create thread (HTTP ${res.status})`;
-      throw new Error(msg);
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        const msg = typeof j?.error === 'string' ? j.error
+          : typeof j?.error?.message === 'string' ? j.error.message
+          : typeof j?.message === 'string' ? j.message
+          : `Failed to create thread (HTTP ${res.status})`;
+        throw new Error(msg);
+      }
+
+      const j = await res.json();
+      const id = j?.thread?.id;
+      if (!id) throw new Error('Thread creation failed');
+      setThreadId(id);
+      return id;
+    })();
+
+    try {
+      return await threadPromise;
+    } finally {
+      threadPromise = null;
     }
-
-    const j = await res.json();
-    const id = j?.thread?.id;
-    if (!id) throw new Error('Thread creation failed');
-    setThreadId(id);
-    return id;
   }, [currentProjectId, currentThreadId, setThreadId]);
+
+  /**
+   * Persist an assistant message to the thread so follow-up turns
+   * (refactor, fix, polish) have DB-backed context of prior generations.
+   */
+  const persistAssistantMessage = useCallback(
+    async (threadId: string, content: string, metadata?: Record<string, unknown>) => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders) return;
+        await fetch(`/api/threads/${threadId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            role: 'assistant',
+            content,
+            projectId: currentProjectId,
+            metadata: { type: 'generation', ...(metadata || {}) },
+          }),
+        });
+      } catch {
+        // Best-effort — generation already succeeded, don't fail over message persistence
+      }
+    },
+    [currentProjectId],
+  );
 
   /**
    * Generate code from AI prompt with SSE streaming
@@ -337,12 +376,22 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             console.error('Failed to persist generation:', saveError);
           }
 
+          // Persist assistant message to thread so follow-up turns
+          // (refactor, fix, polish) have DB-backed context.
+          if (accumulated.trim()) {
+            await persistAssistantMessage(threadId, accumulated);
+          }
+
           // Call onDone callback with serialized multi-file project
           onDone?.(serialized);
           return serialized;
         }
 
         // Chat-only response: no code files extracted. Call onDone with empty string.
+        // Still persist the assistant message so the thread has a record.
+        if (accumulated.trim()) {
+          await persistAssistantMessage(threadId, accumulated);
+        }
         onDone?.('');
         return '';
       } catch (err) {
@@ -371,7 +420,8 @@ export function useGeneration(options: UseGenerationOptions = {}) {
       currentProjectId,
       ensureThread,
       setProjectId,
-      queryClient
+      queryClient,
+      persistAssistantMessage,
     ]
   );
 
@@ -800,6 +850,11 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           console.error('Failed to persist agent generation:', saveError);
         }
 
+        // Persist assistant message to thread for follow-up context
+        if (accumulated.trim()) {
+          await persistAssistantMessage(threadId, accumulated);
+        }
+
         onDone?.(serialized);
         return serialized;
       } catch (err) {
@@ -812,7 +867,7 @@ export function useGeneration(options: UseGenerationOptions = {}) {
         abortRef.current = null;
       }
     },
-    [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError, currentProjectId, ensureThread, setProjectId, queryClient],
+    [appendAccumulated, resetAccumulated, setCurrentCode, addVersion, onChunk, onDone, onError, currentProjectId, ensureThread, setProjectId, queryClient, persistAssistantMessage],
   );
 
   const cancel = useCallback(() => {

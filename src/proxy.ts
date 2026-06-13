@@ -164,6 +164,24 @@ export async function proxy(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
+
+    // If the access token expires within 60s, proactively refresh it via
+    // getUser(). A stale token would let the middleware pass but cause all
+    // client-side API calls to 401 — the dashboard loads empty, and the user
+    // sees no projects or data. Forcing a refresh here guarantees the client
+    // receives a fresh token in the cookie.
+    const expiresAt = sessionData.session.expires_at;
+    if (expiresAt) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (expiresAt - nowSec < 60) {
+        const { error: refreshError } = await supabase.auth.getUser();
+        if (refreshError) {
+          const loginUrl = new URL('/login', request.url);
+          loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search);
+          return NextResponse.redirect(loginUrl);
+        }
+      }
+    }
   }
 
   return response;
