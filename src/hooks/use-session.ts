@@ -7,9 +7,9 @@
  */
 
 import { getClerkToken } from '@/lib/clerk-token';
-import { useUser, useAuth } from '@/hooks/clerk-safe';
+import { useUser } from '@/hooks/clerk-safe';
 
-export { useUser, useAuth };
+export { useUser };
 
 export function useSession() {
   const { isLoaded, isSignedIn, user } = useUser();
