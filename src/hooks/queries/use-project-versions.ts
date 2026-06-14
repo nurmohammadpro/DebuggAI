@@ -21,14 +21,15 @@ export function useProjectVersions(
     queryFn: async (): Promise<GenerationRow[]> => {
       if (!projectKey) return [];
       const { session } = await getSession();
-      if (!session?.user) return [];
+      const userId = session?.user?.id;
+      if (!userId) return [];
 
       // Prefer canonical project_id-based history when available.
       // Fall back to legacy metadata.project_key for older rows.
       const baseQuery = supabase
         .from('generations')
         .select('id,code,version,description,stack,prompt,metadata,created_at')
-        .eq('user_id', session.user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(50);
 

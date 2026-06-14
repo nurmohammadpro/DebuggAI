@@ -1,6 +1,29 @@
 import 'server-only';
 import type { NextRequest } from 'next/server';
 
+export function getBearerToken(req: NextRequest) {
+  const header = req.headers.get('authorization') || req.headers.get('Authorization');
+  return header?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
+}
+
+export function decodeSupabaseCookiePayload(raw: string) {
+  const encoded = raw.startsWith('base64-') ? raw.slice('base64-'.length) : raw;
+  const candidates = raw.startsWith('base64-')
+    ? [
+        () => Buffer.from(encoded, 'base64url').toString('utf8'),
+        () => Buffer.from(encoded, 'base64').toString('utf8'),
+      ]
+    : [() => encoded];
+
+  for (const decode of candidates) {
+    try {
+      const payload = JSON.parse(decode()) as { access_token?: string } | null;
+      if (payload?.access_token) return payload.access_token;
+    } catch {}
+  }
+  return null;
+}
+
 /**
  * Server-side auth — Clerk-only.
  *
@@ -105,4 +128,14 @@ export async function createAdminClient() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const { createClient } = await import('@supabase/supabase-js');
   return createClient(supabaseUrl, serviceKey);
+}
+
+export const createClient = createAdminClient;
+
+export function createServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+  return createSupabaseClient(supabaseUrl, serviceKey);
 }

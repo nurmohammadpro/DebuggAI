@@ -8,11 +8,21 @@
 
 import { getClerkToken } from '@/lib/clerk-token';
 import { useUser } from '@/hooks/clerk-safe';
+import { useSessionStore } from '@/store/session-store';
 
 export { useUser };
 
+type LegacySessionUser = {
+  id: string;
+  email?: string | null;
+};
+
 export function useSession() {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser() as {
+    isLoaded: boolean;
+    isSignedIn: boolean;
+    user: LegacySessionUser | null;
+  };
   return {
     user: isSignedIn ? user : null,
     isReady: isLoaded,
@@ -24,16 +34,17 @@ export function useSession() {
  * Returns the Clerk token in the legacy { session: { access_token } } format.
  * This makes every existing (await getSession()).session?.access_token call work.
  */
-export async function getSession(): Promise<{ user: null; isReady: boolean; isLoading: boolean; session: { access_token: string } | null }> {
+export async function getSession(): Promise<{ user: LegacySessionUser | null; isReady: boolean; isLoading: boolean; session: { access_token: string; user?: LegacySessionUser | null } | null }> {
   const token = getClerkToken();
+  const user = useSessionStore.getState().user;
   return {
-    user: null,
+    user,
     isLoading: false,
     isReady: true,
-    session: token ? { access_token: token } : null,
+    session: token ? { access_token: token, user } : null,
   };
 }
 
-export function setCachedSession() {}
+export function setCachedSession(..._args: unknown[]) {}
 export function setBootstrapperReady() {}
 export function getCachedSessionSnapshot() { return null; }
