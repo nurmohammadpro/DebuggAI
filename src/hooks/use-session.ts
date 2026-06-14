@@ -23,10 +23,13 @@ export function useSession() {
     isSignedIn: boolean;
     user: LegacySessionUser | null;
   };
+  const mappedUser = useSessionStore((state) => state.user);
+  const storeLoading = useSessionStore((state) => state.isLoading);
+
   return {
-    user: isSignedIn ? user : null,
+    user: isSignedIn ? mappedUser : null,
     isReady: isLoaded,
-    isLoading: !isLoaded,
+    isLoading: !isLoaded || (isSignedIn && storeLoading),
   };
 }
 

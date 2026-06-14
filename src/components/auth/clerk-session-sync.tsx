@@ -15,43 +15,41 @@ export function ClerkSessionSync() {
     if (!isLoaded) return;
 
     if (isSignedIn && user) {
-      // Mark auth as loaded — populates backward-compat store user
-      store.setUser({
-        id: user.id,
-        email: user.primaryEmailAddress?.emailAddress || '',
-        displayName: user.fullName || user.firstName || 'Developer',
-        avatarUrl: user.imageUrl,
-        plan: 'free',
-        credits: 0,
-        isAdmin: false,
-      });
-
       // Populate the global token cache for data hooks
+      store.setIsLoading(true);
       getToken().then((token: string | null) => { if (token) setClerkToken(token); });
 
-      // Fetch credits and plan from Supabase
+      // Fetch the mapped Supabase profile id before marking the app authenticated.
+      // Clerk ids look like user_xxx, while our existing Supabase user_id columns
+      // are UUIDs. Hydrating the store with the raw Clerk id causes 400s/empty
+      // project history after refresh.
       if (!syncedRef.current) {
         syncedRef.current = true;
         getToken().then(async (token: string | null) => {
-          if (!token) return;
+          if (!token) {
+            store.logout();
+            return;
+          }
           try {
             const res = await fetch('/api/me', {
               headers: { Authorization: `Bearer ${token}` },
             });
-            if (res.ok) {
-              const data = await res.json();
-              store.setUser({
-                id: user.id,
-                email: user.primaryEmailAddress?.emailAddress || '',
-                displayName: user.fullName || user.firstName || 'Developer',
-                avatarUrl: user.imageUrl,
-                plan: data.plan ?? 'free',
-                credits: data.credits ?? 0,
-                isAdmin: data.isAdmin ?? false,
-              });
+            if (!res.ok) {
+              store.logout();
+              return;
             }
+            const data = await res.json();
+            store.setUser({
+              id: data.id,
+              email: data.email || user.primaryEmailAddress?.emailAddress || '',
+              displayName: data.displayName || user.fullName || user.firstName || 'Developer',
+              avatarUrl: data.avatarUrl || user.imageUrl,
+              plan: data.plan ?? 'free',
+              credits: data.credits ?? 0,
+              isAdmin: data.isAdmin ?? false,
+            });
           } catch {
-            // best-effort, defaults already set
+            store.logout();
           }
         });
       }

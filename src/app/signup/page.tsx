@@ -1,8 +1,13 @@
 import { SignUp } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { PublicLayout } from '@/components/public-layout';
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const { userId } = await auth();
+  if (userId) redirect('/dashboard/home');
+
   const clerkConfigured = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
   return (
