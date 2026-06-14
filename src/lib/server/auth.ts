@@ -21,15 +21,6 @@ export async function requireUser(req: NextRequest) {
   const header = req.headers.get('authorization') || req.headers.get('Authorization');
   const token = header?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
 
-  if (!token) {
-    return {
-      user: null, userId: null, token: null, supabase: null,
-      errorResponse: new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-
   const clerkSecretKey = process.env.CLERK_SECRET_KEY;
   if (!clerkSecretKey || clerkSecretKey.length < 10) {
     return {
@@ -47,8 +38,20 @@ export async function requireUser(req: NextRequest) {
   const adminClient = createClient(supabaseUrl, serviceKey);
 
   try {
-    const { createClerkClient } = await import('@clerk/backend');
-    const clerkUser = await createClerkClient({ secretKey: clerkSecretKey }).users.getUser(token);
+    const { auth, clerkClient } = await import('@clerk/nextjs/server');
+    const { userId } = await auth();
+
+    if (!userId) {
+      return {
+        user: null, userId: null, token: null, supabase: null,
+        errorResponse: new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { 'Content-Type': 'application/json' },
+        }),
+      };
+    }
+
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(userId);
 
     if (!clerkUser?.id) throw new Error('Invalid Clerk user');
 
@@ -76,15 +79,11 @@ export async function requireUser(req: NextRequest) {
       }) as unknown as Promise<any>).catch(() => {});
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-
     return {
       user: { id: supabaseUserId, email: clerkEmail || '' },
       userId: supabaseUserId,
       token,
-      supabase,
+      supabase: adminClient,
       errorResponse: null,
     };
   } catch (err) {

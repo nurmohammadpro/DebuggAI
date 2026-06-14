@@ -10,7 +10,9 @@ export default async function middleware(req: NextRequest) {
       const { userId } = await auth();
       const { pathname } = req.nextUrl;
       if (!userId && pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/signin', req.url));
+        const loginUrl = new URL('/login', req.url);
+        loginUrl.searchParams.set('redirect', pathname + req.nextUrl.search);
+        return NextResponse.redirect(loginUrl);
       }
       return NextResponse.next();
     });

@@ -155,7 +155,13 @@ function stripClientFileContext(prompt: string) {
 function detectAgentIntent(prompt: string, generationDirective?: string) {
   const directive = generationDirective?.toLowerCase() || '';
   if (directive.includes('mode: resolve')) return 'debug' as const;
-  if (directive.includes('mode: ux polish') || directive.includes('mode: restructure')) return 'generate' as const;
+  if (
+    directive.includes('mode: ux polish') ||
+    directive.includes('mode: restructure') ||
+    directive.includes('existing project files are already loaded')
+  ) {
+    return 'code_edit' as const;
+  }
   return detectIntent(prompt);
 }
 
@@ -194,6 +200,14 @@ function buildAgentSystemPrompt({
 3. **Edit** → line_replace (preferred) or write_file (new files)
 4. **Verify** → read_dev_logs after changes
 5. **Research** → web_search for up-to-date docs
+
+## EXISTING PROJECT RULES
+- If current files are present, treat the request as an edit to those files.
+- For refactor, polish, or fix requests, you MUST change at least one file unless the request is impossible.
+- Prefer targeted line_replace edits. Do not rebuild the whole app unless the user explicitly asks.
+- If polishing UI, inspect app/globals.css plus the visible page/component files, then update CSS tokens/components.
+- If refactoring, preserve behavior and routes; move code only when it improves boundaries.
+- Finish by returning the changed files through tool writes, not by describing what the user should do.
 
 ## DESIGN RULES
 - Edit globals.css CSS variables for theme colors (--primary, --foreground, etc.)

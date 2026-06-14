@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickModel, safeGroqModel, type ProviderConfigs } from '@/lib/ai/router';
+import { detectIntent, pickModel, safeGroqModel, type ProviderConfigs } from '@/lib/ai/router';
 
 describe('AI router', () => {
   it('uses the configured model for custom OpenAI-compatible providers', () => {
@@ -104,5 +104,11 @@ describe('AI router', () => {
     expect(routed?.provider).toBe('zai');
     expect(routed?.model).toBe('GLM-4.6');
     expect(routed?.baseUrl).toBe('https://api.z.ai/api/coding/paas/v4');
+  });
+
+  it('routes iterative UI actions to code edits instead of planning or regeneration', () => {
+    expect(detectIntent('refactor the existing app into better components')).toBe('code_edit');
+    expect(detectIntent('polish the current UI and improve the cards')).toBe('code_edit');
+    expect(detectIntent('redesign this page with better spacing')).toBe('code_edit');
   });
 });
