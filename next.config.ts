@@ -36,6 +36,20 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: [
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net blob:",
+              "style-src 'self' 'unsafe-inline'",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://api.openai.com https://api.anthropic.com https://api.deepseek.com https://api.groq.com blob:",
+              "img-src 'self' data: https://*.supabase.co https://cdn.jsdelivr.net",
+              "font-src 'self' data:",
+              "worker-src blob:",
+              "frame-src 'self'",
+              "frame-ancestors 'self'",
+            ].join('; '),
+          },
         ],
       },
       {

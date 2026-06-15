@@ -189,6 +189,19 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
       if (typeof type.default === 'function' || (type.default && type.default.$$typeof)) {
         return type.default;
       }
+      var typeInfo = '[unknown]';
+      try {
+        if (Array.isArray(type)) typeInfo = 'Array[' + type.length + ']';
+        else if (typeof type === 'object' && type !== null) {
+          var keys = Object.keys(type).slice(0, 8);
+          typeInfo = '{ ' + keys.join(', ') + (Object.keys(type).length > 8 ? ', ...' : '') + ' }';
+          if (typeof type.displayName === 'string') typeInfo += ' displayName=' + JSON.stringify(type.displayName);
+          if (typeof type.toString === 'function') {
+            try { var s = type.toString(); if (s !== '[object Object]') typeInfo += ' toString=' + JSON.stringify(s.slice(0, 120)); } catch(e) {}
+          }
+        }
+      } catch(e) {}
+      console.warn('[preview] UnsupportedPreviewComponent — type is not a valid React component. typeof=' + typeof type + ' keys=' + typeInfo);
       return function UnsupportedPreviewComponent({ children }) {
         return React.createElement(
           'div',
@@ -231,6 +244,19 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
       if (typeof type.default === 'function' || (type.default && type.default.$$typeof)) {
         return type.default;
       }
+      var typeInfo = '[unknown]';
+      try {
+        if (Array.isArray(type)) typeInfo = 'Array[' + type.length + ']';
+        else if (typeof type === 'object' && type !== null) {
+          var keys = Object.keys(type).slice(0, 8);
+          typeInfo = '{ ' + keys.join(', ') + (Object.keys(type).length > 8 ? ', ...' : '') + ' }';
+          if (typeof type.displayName === 'string') typeInfo += ' displayName=' + JSON.stringify(type.displayName);
+          if (typeof type.toString === 'function') {
+            try { var s = type.toString(); if (s !== '[object Object]') typeInfo += ' toString=' + JSON.stringify(s.slice(0, 120)); } catch(e) {}
+          }
+        }
+      } catch(e) {}
+      console.warn('[preview] UnsupportedPreviewComponent — type is not a valid React component. typeof=' + typeof type + ' keys=' + typeInfo);
       return function UnsupportedPreviewComponent({ children }) {
         return React.createElement(
           'div',

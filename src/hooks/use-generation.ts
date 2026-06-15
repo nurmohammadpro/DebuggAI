@@ -760,7 +760,19 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
         const baseFiles = useGenerationStore.getState().files || undefined;
         let virtualFiles = streamedFiles
-          ? templateToVirtualFiles(streamedFiles)
+          ? (() => {
+              const incoming = templateToVirtualFiles(streamedFiles);
+              // Merge base files so unchanged files (config, layout, css, etc.)
+              // are not dropped when the agent returns only changed files.
+              const mergedFiles: Record<string, VirtualFile> = { ...(baseFiles?.files || {}) };
+              for (const [p, f] of Object.entries(incoming.files)) {
+                mergedFiles[p] = f;
+              }
+              const mergedEntry = incoming.entryPath && incoming.files[incoming.entryPath]
+                ? incoming.entryPath
+                : baseFiles?.entryPath || incoming.entryPath;
+              return { entryPath: mergedEntry, files: mergedFiles } as VirtualProjectFiles;
+            })()
           : extractVirtualFiles(accumulated, baseFiles || undefined);
 
         if (!hasSubstantiveFiles(virtualFiles) && projectIdForTurn) {
