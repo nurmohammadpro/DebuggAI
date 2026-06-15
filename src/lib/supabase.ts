@@ -1,14 +1,15 @@
 /**
  * Supabase Client — client-side singleton for database queries and auth.
  *
- * Auth is handled via @supabase/ssr cookies. Server-side routes create
- * their own client via requireUser() which verifies the Supabase JWT.
+ * Uses @supabase/ssr's createBrowserClient so that auth state is stored
+ * in cookies (not localStorage). This means signOut() properly clears
+ * the session cookie and the middleware won't re-login the user.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 function fail(name: string): any {
   return new Proxy({} as any, {
@@ -17,7 +18,7 @@ function fail(name: string): any {
 }
 
 const _supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey)
   : fail('client');
 
 export const supabase = _supabase;
