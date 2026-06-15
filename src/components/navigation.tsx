@@ -23,7 +23,7 @@ import { NotificationCenter } from '@/components/dashboard/notification-center';
 
 export function Navigation() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useSessionStore();
+  const { user, isAuthenticated } = useSessionStore();
   const credits = user?.credits;
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -54,7 +54,7 @@ export function Navigation() {
 
         {/* Right Side Actions */}
         <div className="ml-auto flex items-center gap-2">
-          {isLoading ? null : isAuthenticated ? (
+          {isAuthenticated ? (
             <>
               {/* Credits Badge */}
               <div className="nav-credit">

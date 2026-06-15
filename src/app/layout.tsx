@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeInitScript } from "@/components/theme-init-script";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SessionBootstrapper } from "@/components/auth/session-bootstrapper";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
         <ThemeInitScript />
         <ThemeProvider defaultTheme="dark">
           <QueryProvider>
+            <SessionBootstrapper />
             <TooltipProvider>{children}</TooltipProvider>
             <Toaster />
           </QueryProvider>
