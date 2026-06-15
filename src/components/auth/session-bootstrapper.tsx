@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { createClient as createCookieClient } from '@/lib/supabase/client';
 import { useSessionStore } from '@/store/session-store';
 
 export function shouldClearClientSession(event: AuthChangeEvent | 'INITIAL' | 'ERROR') {
@@ -13,36 +14,58 @@ export function shouldClearMissingSession(hasSupabaseSession: boolean, hasCached
   return !hasSupabaseSession && hasCachedSession;
 }
 
+async function fetchAndSetUser(store: ReturnType<typeof useSessionStore.getState>, accessToken: string, emailFallback: string) {
+  store.setIsLoading(true);
+  try {
+    const res = await fetch('/api/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) { store.logout(); return; }
+    const data = await res.json();
+    store.setUser({
+      id: data.id,
+      email: data.email || emailFallback,
+      displayName: data.displayName || data.full_name || 'Developer',
+      avatarUrl: data.avatarUrl,
+      plan: data.plan ?? 'free',
+      credits: data.credits ?? 0,
+      isAdmin: data.isAdmin ?? false,
+    });
+  } catch {
+    store.logout();
+  }
+}
+
 export function SessionBootstrapper() {
   const store = useSessionStore();
 
   useEffect(() => {
-    // Initial session check
+    // Initial session check — localStorage first
     supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       if (session?.user) {
-        store.setIsLoading(true);
-        fetch('/api/me', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-          .then((res) => {
-            if (!res.ok) { store.logout(); return; }
-            return res.json();
-          })
-          .then((data) => {
-            if (!data) return;
-            store.setUser({
-              id: data.id,
-              email: data.email || session.user.email || '',
-              displayName: data.displayName || data.full_name || 'Developer',
-              avatarUrl: data.avatarUrl,
-              plan: data.plan ?? 'free',
-              credits: data.credits ?? 0,
-              isAdmin: data.isAdmin ?? false,
-            });
-          })
-          .catch(() => store.logout());
+        fetchAndSetUser(useSessionStore.getState(), session.access_token, session.user.email || '');
       } else {
-        store.logout();
+        // Fallback: the middleware may have a valid cookie even when
+        // localStorage does not. If we don't check, the Navigation
+        // shows "Sign In" but clicking it redirects straight to
+        // /dashboard/home because the middleware sees the cookie.
+        const cookieClient = createCookieClient();
+        cookieClient.auth.getSession().then(({ data: { session: cookieSession } }: { data: { session: Session | null } }) => {
+          if (cookieSession?.user) {
+            // Sync the cookie session back to localStorage so the
+            // two stores stay consistent going forward.
+            supabase.auth.setSession({
+              access_token: cookieSession.access_token,
+              refresh_token: cookieSession.refresh_token,
+            }).then(() => {
+              fetchAndSetUser(useSessionStore.getState(), cookieSession.access_token, cookieSession.user.email || '');
+            }).catch(() => {
+              store.logout();
+            });
+          } else {
+            store.logout();
+          }
+        });
       }
     });
 

@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import { Menu, Zap } from 'lucide-react';
 import { BrandLockup } from '@/components/logo';
+import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -22,16 +23,14 @@ import { NotificationCenter } from '@/components/dashboard/notification-center';
 
 export function Navigation() {
   const router = useRouter();
-  const { user, isAuthenticated } = useSessionStore();
+  const { user, isAuthenticated, isLoading } = useSessionStore();
   const credits = user?.credits;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await console.log('signed out')
-    } finally {
-      window.location.href = '/';
-    }
+  const handleLogout = () => {
+    supabase.auth.signOut().catch(() => {});
+    navigator.sendBeacon('/api/auth/signout', JSON.stringify({}));
+    window.location.href = '/';
   };
 
   return (
@@ -55,7 +54,7 @@ export function Navigation() {
 
         {/* Right Side Actions */}
         <div className="ml-auto flex items-center gap-2">
-          {isAuthenticated ? (
+          {isLoading ? null : isAuthenticated ? (
             <>
               {/* Credits Badge */}
               <div className="nav-credit">
