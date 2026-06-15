@@ -3,75 +3,40 @@
 import { useEffect } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { createClient as createCookieClient } from '@/lib/supabase/client';
 import { useSessionStore } from '@/store/session-store';
 
-export function shouldClearClientSession(event: AuthChangeEvent | 'INITIAL' | 'ERROR') {
-  return event === 'SIGNED_OUT';
-}
-
-export function shouldClearMissingSession(hasSupabaseSession: boolean, hasCachedSession: boolean) {
-  return !hasSupabaseSession && hasCachedSession;
-}
-
-async function fetchAndSetUser(store: ReturnType<typeof useSessionStore.getState>, accessToken: string, emailFallback: string) {
-  store.setIsLoading(true);
-  try {
-    const res = await fetch('/api/me', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) { store.logout(); return; }
-    const data = await res.json();
-    store.setUser({
-      id: data.id,
-      email: data.email || emailFallback,
-      displayName: data.displayName || data.full_name || 'Developer',
-      avatarUrl: data.avatarUrl,
-      plan: data.plan ?? 'free',
-      credits: data.credits ?? 0,
-      isAdmin: data.isAdmin ?? false,
-    });
-  } catch {
-    store.logout();
-  }
-}
-
 export function SessionBootstrapper() {
-  const store = useSessionStore();
-
+  // IMPORTANT: Do NOT use `useSessionStore()` (no selector) as an effect dependency.
+  // It returns the full state object which changes on every setter call, causing an
+  // infinite loop: state change → re-render → new `store` ref → cleanup (unsubscribes
+  // onAuthStateChange) → re-run effect → getSession() → state change → ...
+  //
+  // Use an empty deps array instead — this effect runs once on mount. The
+  // onAuthStateChange subscription handles all subsequent state transitions.
   useEffect(() => {
-    // Initial session check — localStorage first
+    let cancelled = false;
+
+    // Initial session check — one-shot; never create a second Supabase client
+    // which would race on the gotrue lock.
     supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+      if (cancelled) return;
+      const store = useSessionStore.getState();
       if (session?.user) {
-        fetchAndSetUser(useSessionStore.getState(), session.access_token, session.user.email || '');
+        fetchAndSetUser(store, session.access_token, session.user.email || '');
       } else {
-        // Fallback: the middleware may have a valid cookie even when
-        // localStorage does not. If we don't check, the Navigation
-        // shows "Sign In" but clicking it redirects straight to
-        // /dashboard/home because the middleware sees the cookie.
-        const cookieClient = createCookieClient();
-        cookieClient.auth.getSession().then(({ data: { session: cookieSession } }: { data: { session: Session | null } }) => {
-          if (cookieSession?.user) {
-            // Sync the cookie session back to localStorage so the
-            // two stores stay consistent going forward.
-            supabase.auth.setSession({
-              access_token: cookieSession.access_token,
-              refresh_token: cookieSession.refresh_token,
-            }).then(() => {
-              fetchAndSetUser(useSessionStore.getState(), cookieSession.access_token, cookieSession.user.email || '');
-            }).catch(() => {
-              store.logout();
-            });
-          } else {
-            store.logout();
-          }
-        });
+        // No localStorage session. The middleware handles cookie-based auth
+        // for route protection, so there is no need to re-check with a second
+        // client — that would only cause gotrue lock contention.
+        store.logout();
       }
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
+        if (cancelled) return;
+        const store = useSessionStore.getState();
+
         if (event === 'SIGNED_IN' && session?.user) {
           store.setIsLoading(true);
           try {
@@ -98,8 +63,37 @@ export function SessionBootstrapper() {
       },
     );
 
-    return () => { subscription.unsubscribe(); };
-  }, [store]);
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return null;
+}
+
+async function fetchAndSetUser(
+  store: ReturnType<typeof useSessionStore.getState>,
+  accessToken: string,
+  emailFallback: string,
+) {
+  store.setIsLoading(true);
+  try {
+    const res = await fetch('/api/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) { store.logout(); return; }
+    const data = await res.json();
+    store.setUser({
+      id: data.id,
+      email: data.email || emailFallback,
+      displayName: data.displayName || data.full_name || 'Developer',
+      avatarUrl: data.avatarUrl,
+      plan: data.plan ?? 'free',
+      credits: data.credits ?? 0,
+      isAdmin: data.isAdmin ?? false,
+    });
+  } catch {
+    store.logout();
+  }
 }
