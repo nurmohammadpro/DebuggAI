@@ -10,7 +10,7 @@ import { Code2, Plus, Loader2 } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { WEB_BUILDER_STACKS } from '@/lib/constants';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession } from '@/hooks/use-session';
 import { createProjectFromGeneration } from '@/lib/projects/create-project';
 
 export function CreateProjectDialog({
@@ -44,8 +44,8 @@ export function CreateProjectDialog({
 
     setCreating(true);
     try {
-      // getSession() internally waits up to 5s for the bootstrapper
-      const token = getClerkToken();
+      const session = await getSession();
+      const token = session?.session?.access_token;
       if (!token) {
         toast.error('Please sign in again');
         return;

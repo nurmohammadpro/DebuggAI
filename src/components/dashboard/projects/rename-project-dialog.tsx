@@ -1,5 +1,4 @@
 'use client';
-import { getClerkToken } from '@/lib/clerk-token';
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -39,8 +38,8 @@ export function RenameProjectDialog({
     }
     setSaving(true);
     try {
-      const { session } = await getSession();
-      const token = getClerkToken();
+      const session = await getSession();
+      const token = session?.session?.access_token;
       if (!token) throw new Error('Please sign in again');
 
       const response = await fetch(`/api/projects/${projectId}`, {

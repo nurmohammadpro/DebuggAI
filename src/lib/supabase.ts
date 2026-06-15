@@ -1,8 +1,8 @@
 /**
- * Supabase Client — Clerk handles auth, Supabase is just a database client.
+ * Supabase Client — client-side singleton for database queries and auth.
  *
- * Client-side singleton for queries. Server-side routes create their own
- * client via requireUser() which passes the Clerk JWT.
+ * Auth is handled via @supabase/ssr cookies. Server-side routes create
+ * their own client via requireUser() which verifies the Supabase JWT.
  */
 
 import { createClient } from '@supabase/supabase-js';

@@ -1,10 +1,6 @@
 import 'server-only';
 import type { NextRequest } from 'next/server';
-
-export function getBearerToken(req: NextRequest) {
-  const header = req.headers.get('authorization') || req.headers.get('Authorization');
-  return header?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
-}
+import { createClient } from '@supabase/supabase-js';
 
 export function decodeSupabaseCookiePayload(raw: string) {
   const encoded = raw.startsWith('base64-') ? raw.slice('base64-'.length) : raw;
@@ -24,47 +20,39 @@ export function decodeSupabaseCookiePayload(raw: string) {
   return null;
 }
 
+export function getBearerToken(req: NextRequest) {
+  const header = req.headers.get('authorization') || req.headers.get('Authorization');
+  return header?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
+}
+
 /**
- * Server-side auth — Clerk-only.
+ * Verify the user's Supabase JWT and return their profile.
  *
- *   Bearer token (Clerk JWT from Authorization header)
- *         │
- *         ▼
- *   Verify via CLERK_SECRET_KEY
- *         │
- *         ▼
- *   Look up profiles table (by clerk_id or email)
- *         │
- *         ▼
- *   Return auth.user.id = Supabase user UUID
- *
- * All API routes downstream use auth.user.id unchanged.
+ * All API routes use this as their auth guard. It:
+ * 1. Extracts the Bearer token from the Authorization header
+ * 2. Verifies it with Supabase Auth (getUser)
+ * 3. Looks up the user's profile in the profiles table
+ * 4. Returns { user, userId, token, supabase } for downstream use
  */
 export async function requireUser(req: NextRequest) {
-  const header = req.headers.get('authorization') || req.headers.get('Authorization');
-  const token = header?.match(/^Bearer\s+(.+)$/i)?.[1] || null;
-
-  const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-  if (!clerkSecretKey || clerkSecretKey.length < 10) {
+  const token = getBearerToken(req);
+  if (!token) {
     return {
       user: null, userId: null, token: null, supabase: null,
-      errorResponse: new Response(JSON.stringify({ error: 'CLERK_SECRET_KEY not configured' }), {
-        status: 500, headers: { 'Content-Type': 'application/json' },
+      errorResponse: new Response(JSON.stringify({ error: 'Missing authorization token' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
       }),
     };
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseKey;
-  const { createClient } = await import('@supabase/supabase-js');
-  const adminClient = createClient(supabaseUrl, serviceKey);
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    const { auth, clerkClient } = await import('@clerk/nextjs/server');
-    const { userId } = await auth();
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
 
-    if (!userId) {
+    if (authError || !authUser) {
       return {
         user: null, userId: null, token: null, supabase: null,
         errorResponse: new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -73,44 +61,50 @@ export async function requireUser(req: NextRequest) {
       };
     }
 
-    const client = await clerkClient();
-    const clerkUser = await client.users.getUser(userId);
-
-    if (!clerkUser?.id) throw new Error('Invalid Clerk user');
-
-    const clerkUserId = clerkUser.id;
-    const clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress;
-    let supabaseUserId = clerkUserId;
-
-    // Resolve or create Supabase user mapping
-    const { data: profile } = await adminClient
+    // Look up the profile — create one if it doesn't exist (first sign-in)
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('id')
-      .or(`clerk_id.eq.${clerkUserId},email.eq.${clerkEmail}`)
-      .limit(1)
+      .select('id, email, full_name, avatar_url, plan_type, is_admin')
+      .eq('id', authUser.id)
       .maybeSingle();
 
-    if (profile?.id) {
-      supabaseUserId = profile.id;
-      await (adminClient.from('profiles').update({ clerk_id: clerkUserId }).eq('id', profile.id) as unknown as Promise<any>).catch(() => {});
-    } else if (clerkEmail) {
-      const name = clerkUser.firstName || clerkUser.username || 'Developer';
-      await (adminClient.from('profiles').insert({
-        id: clerkUserId, clerk_id: clerkUserId,
-        email: clerkEmail, full_name: name,
-        plan_type: 'free', is_admin: false,
-      }) as unknown as Promise<any>).catch(() => {});
+    if (!profile) {
+      // First sign-in: create profile via the handle_new_user trigger would've
+      // done this, but create one just in case the trigger missed it.
+      const email = authUser.email || '';
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .insert({
+          id: authUser.id,
+          email,
+          full_name: authUser.user_metadata?.full_name || email.split('@')[0] || 'Developer',
+          plan_type: 'free',
+          is_admin: false,
+        })
+        .select('id, email, full_name, avatar_url, plan_type, is_admin')
+        .single();
+
+      if (newProfile) {
+        return {
+          user: { id: newProfile.id, email: newProfile.email || '' },
+          userId: newProfile.id,
+          token,
+          supabase,
+          errorResponse: null,
+        };
+      }
     }
 
+    const p = profile || null;
     return {
-      user: { id: supabaseUserId, email: clerkEmail || '' },
-      userId: supabaseUserId,
+      user: { id: authUser.id, email: authUser.email || '' },
+      userId: authUser.id,
       token,
-      supabase: adminClient,
+      supabase,
       errorResponse: null,
     };
   } catch (err) {
-    console.error('[auth] Clerk auth failed:', err instanceof Error ? err.message : String(err));
+    console.error('[auth] Auth failed:', err instanceof Error ? err.message : String(err));
     return {
       user: null, userId: null, token: null, supabase: null,
       errorResponse: new Response(JSON.stringify({ error: 'Authentication failed' }), {
@@ -119,23 +113,17 @@ export async function requireUser(req: NextRequest) {
     };
   }
 }
-/**
- * Creates a Supabase admin client using the service role key.
- * Used by admin authentication routes.
- */
+
 export async function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  const { createClient } = await import('@supabase/supabase-js');
   return createClient(supabaseUrl, serviceKey);
 }
 
-export const createClient = createAdminClient;
+export { createAdminClient as createClient };
 
 export function createServiceRoleClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-  return createSupabaseClient(supabaseUrl, serviceKey);
+  return createClient(supabaseUrl, serviceKey);
 }

@@ -311,6 +311,8 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             activeFilePath: virtualFiles.entryPath,
           });
 
+          useGenerationStore.getState().bumpPreviewNonce();
+
           setCurrentCode(entryContent);
           addVersion(serialized, 'Generated');
 
@@ -806,6 +808,8 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           files: virtualFiles,
           activeFilePath: virtualFiles.entryPath,
         });
+
+        useGenerationStore.getState().bumpPreviewNonce();
 
         setCurrentCode(entryContent);
         addVersion(serialized, 'Generated via agent');

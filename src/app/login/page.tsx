@@ -1,15 +1,8 @@
-import Link from 'next/link';
-import { SignIn } from '@clerk/nextjs';
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { LoginForm } from '@/components/auth/login-form';
 import { PublicLayout } from '@/components/public-layout';
+import Link from 'next/link';
 
-export default async function LoginPage() {
-  const { userId } = await auth();
-  if (userId) redirect('/dashboard/home');
-
-  const clerkConfigured = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
-
+export default function LoginPage() {
   return (
     <PublicLayout>
       <div className="min-h-[calc(100vh-52px)] flex items-center justify-center p-4">
@@ -26,19 +19,7 @@ export default async function LoginPage() {
             </p>
           </div>
 
-          {clerkConfigured ? (
-            <SignIn
-              routing="path"
-              path="/login"
-              signUpUrl="/signup"
-              fallbackRedirectUrl="/dashboard/home"
-              forceRedirectUrl="/dashboard/home"
-            />
-          ) : (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-              Clerk is not configured. Set <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> and <code>CLERK_SECRET_KEY</code>.
-            </div>
-          )}
+          <LoginForm />
 
           <p className="text-[13px] text-[var(--app-text-muted)] text-center mt-4">
             Don&apos;t have an account?{' '}

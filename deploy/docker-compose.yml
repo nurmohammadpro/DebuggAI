@@ -6,7 +6,6 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     container_name: debuggai_app
     restart: unless-stopped
     env_file:
@@ -14,8 +13,6 @@ services:
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_APP_URL: https://debuggaidemo.appbrainer.tech
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
       PROJECTS_DIR: /var/lib/debuggai/projects
       SANDBOX_BASE_PORT: "4000"
       MAX_SANDBOXES: "10"

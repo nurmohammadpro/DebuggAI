@@ -322,6 +322,7 @@ export function VisualEditor({ className, onGenerateCode }: VisualEditorProps) {
     const code = generateComponentCode(activePage.rootComponents, activePage);
     setCurrentCode(code);
     addVersion(code, 'Visual Editor Export');
+    useGenerationStore.getState().bumpPreviewNonce();
     onGenerateCode?.(code);
   }, [activePage, setCurrentCode, addVersion, onGenerateCode]);
 

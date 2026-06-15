@@ -1,8 +1,8 @@
 /**
- * Dashboard Layout — Clerk middleware handles auth redirect.
+ * Dashboard Layout — Supabase SSR middleware handles auth redirect.
  */
 
-import { ClerkSessionSync } from '@/components/auth/clerk-session-sync';
+import { SessionBootstrapper } from '@/components/auth/session-bootstrapper';
 import { ClientDashboardShell } from '@/components/dashboard/client-dashboard-shell';
 import { DashboardErrorBoundary } from '@/components/dashboard/dashboard-error-boundary';
 
@@ -13,7 +13,7 @@ export default function DashboardLayout({
 }) {
   return (
     <>
-      <ClerkSessionSync />
+      <SessionBootstrapper />
       <ClientDashboardShell>
         <DashboardErrorBoundary>
           {children}

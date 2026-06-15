@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { AppClerkProvider } from "@/components/auth/app-clerk-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeInitScript } from "@/components/theme-init-script";
-import { SupabaseLockHandler } from "@/components/supabase-lock-handler";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -26,16 +24,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <AppClerkProvider>
-          <ThemeInitScript />
-          <ThemeProvider defaultTheme="dark">
-            <QueryProvider>
-              <SupabaseLockHandler />
-              <TooltipProvider>{children}</TooltipProvider>
-              <Toaster />
-            </QueryProvider>
-          </ThemeProvider>
-        </AppClerkProvider>
+        <ThemeInitScript />
+        <ThemeProvider defaultTheme="dark">
+          <QueryProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+            <Toaster />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
