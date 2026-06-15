@@ -44,10 +44,18 @@ export function SignupForm() {
 
       // Check if user was created and if email confirmation is needed
       if (data.user) {
-        if (data.user.email_confirmed_at) {
-          // Email auto-confirmed (development mode)
+        if (data.user.email_confirmed_at && data.session) {
+          // Email auto-confirmed (development mode). Sync session to SSR
+          // cookie so the middleware allows access to /dashboard/*.
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
+          });
           toast.success('Account created successfully!');
-          // Redirect to dashboard after a short delay
           setTimeout(() => {
             window.location.href = '/dashboard/home';
           }, 500);

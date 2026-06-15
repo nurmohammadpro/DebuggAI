@@ -52,7 +52,10 @@ export function AccountMenu({
 
   const handleLogout = async () => {
     try {
+      // Clear localStorage session (client-side Supabase client)
       await supabase.auth.signOut();
+      // Also clear the SSR cookie so the middleware doesn't re-authenticate
+      await fetch('/api/auth/signout', { method: 'POST' });
     } finally {
       window.location.href = '/';
     }

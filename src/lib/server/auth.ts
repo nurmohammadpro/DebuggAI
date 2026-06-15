@@ -61,33 +61,58 @@ export async function requireUser(req: NextRequest) {
       };
     }
 
-    // Look up the profile — create one if it doesn't exist (first sign-in)
+    const email = authUser.email || '';
+
+    // Look up the profile by Supabase Auth UUID first.
     const { data: profile } = await supabase
       .from('profiles')
       .select('id, email, full_name, avatar_url, plan_type, is_admin')
       .eq('id', authUser.id)
       .maybeSingle();
 
-    if (!profile) {
-      // First sign-in: create profile via the handle_new_user trigger would've
-      // done this, but create one just in case the trigger missed it.
-      const email = authUser.email || '';
-      const { data: newProfile } = await supabase
-        .from('profiles')
-        .insert({
-          id: authUser.id,
-          email,
-          full_name: authUser.user_metadata?.full_name || email.split('@')[0] || 'Developer',
-          plan_type: 'free',
-          is_admin: false,
-        })
-        .select('id, email, full_name, avatar_url, plan_type, is_admin')
-        .single();
+    if (profile) {
+      return {
+        user: { id: profile.id, email: profile.email || '' },
+        userId: profile.id,
+        token,
+        supabase,
+        errorResponse: null,
+      };
+    }
 
-      if (newProfile) {
+    // Not found by UUID — the user may have signed up through Clerk
+    // previously, which stored the Clerk ID (user_xxx) as the profile id.
+    // Look up by email and migrate the profile id to the Supabase Auth UUID.
+    if (email) {
+      const { data: legacyProfile } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, avatar_url, plan_type, is_admin')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (legacyProfile) {
+        // Migrate the profile id from the legacy Clerk ID to the Supabase
+        // Auth UUID. Update all FK-referencing tables so existing data
+        // (projects, credits, etc.) stays linked to this user.
+        const oldId = legacyProfile.id;
+        const newId = authUser.id;
+
+        // These tables all reference profiles(id). Update them in parallel.
+        const tables = ['projects', 'generations', 'credit_wallets',
+          'credit_transactions', 'debug_sessions', 'web_builder_sessions',
+          'threads', 'run_steps', 'runs', 'notifications', 'project_files',
+        ] as const;
+
+        await Promise.all([
+          supabase.from('profiles').update({ id: newId }).eq('id', oldId),
+          ...tables.map((t) =>
+            supabase.from(t).update({ user_id: newId }).eq('user_id', oldId),
+          ),
+        ]);
+
         return {
-          user: { id: newProfile.id, email: newProfile.email || '' },
-          userId: newProfile.id,
+          user: { id: newId, email: legacyProfile.email || email },
+          userId: newId,
           token,
           supabase,
           errorResponse: null,
@@ -95,9 +120,33 @@ export async function requireUser(req: NextRequest) {
       }
     }
 
-    const p = profile || null;
+    // First sign-in: create a fresh profile (the handle_new_user trigger
+    // should have done this, but guard against a missing trigger).
+    const { data: newProfile } = await supabase
+      .from('profiles')
+      .insert({
+        id: authUser.id,
+        email,
+        full_name: authUser.user_metadata?.full_name || email.split('@')[0] || 'Developer',
+        plan_type: 'free',
+        is_admin: false,
+      })
+      .select('id, email, full_name, avatar_url, plan_type, is_admin')
+      .single();
+
+    if (newProfile) {
+      return {
+        user: { id: newProfile.id, email: newProfile.email || '' },
+        userId: newProfile.id,
+        token,
+        supabase,
+        errorResponse: null,
+      };
+    }
+
+    // Fallback: return the auth user even without a profile row.
     return {
-      user: { id: authUser.id, email: authUser.email || '' },
+      user: { id: authUser.id, email },
       userId: authUser.id,
       token,
       supabase,
