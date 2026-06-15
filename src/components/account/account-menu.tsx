@@ -50,15 +50,14 @@ export function AccountMenu({
     );
   }, [user?.displayName, user?.email]);
 
-  const handleLogout = async () => {
-    try {
-      // Clear localStorage session (client-side Supabase client)
-      await supabase.auth.signOut();
-      // Also clear the SSR cookie so the middleware doesn't re-authenticate
-      await fetch('/api/auth/signout', { method: 'POST' });
-    } finally {
-      window.location.href = '/';
-    }
+  const handleLogout = () => {
+    // Clear localStorage synchronously, then redirect immediately.
+    // Use sendBeacon for the API call — it's fire-and-forget and
+    // survives page navigation (unlike fetch, which the browser
+    // cancels on unload).
+    supabase.auth.signOut().catch(() => {});
+    navigator.sendBeacon('/api/auth/signout', JSON.stringify({}));
+    window.location.href = '/';
   };
 
   return (
