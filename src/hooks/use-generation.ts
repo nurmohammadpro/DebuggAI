@@ -768,9 +768,10 @@ export function useGeneration(options: UseGenerationOptions = {}) {
               for (const [p, f] of Object.entries(incoming.files)) {
                 mergedFiles[p] = f;
               }
-              const mergedEntry = incoming.entryPath && incoming.files[incoming.entryPath]
-                ? incoming.entryPath
-                : baseFiles?.entryPath || incoming.entryPath;
+              // Prefer the base entry point — streamedFiles are a partial
+              // update from the agent and templateToVirtualFiles may pick
+              // a non-page file (e.g. package.json) as its fallback entry.
+              const mergedEntry = baseFiles?.entryPath || incoming.entryPath;
               return { entryPath: mergedEntry, files: mergedFiles } as VirtualProjectFiles;
             })()
           : extractVirtualFiles(accumulated, baseFiles || undefined);
