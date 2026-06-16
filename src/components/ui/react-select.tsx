@@ -16,8 +16,8 @@ export interface ReactSelectWrapperProps<
 }
 
 const sizeMap = {
-  sm: { controlHeight: 28, fontSize: 11, pad: '0 6px', optionPad: '4px 8px' },
-  md: { controlHeight: 36, fontSize: 13, pad: '0 8px', optionPad: '8px 12px' },
+  sm: { controlHeight: 32, fontSize: 11, pad: '0 8px', optionPad: '6px 10px' },
+  md: { controlHeight: 44, fontSize: 13, pad: '0 10px', optionPad: '8px 12px' },
 };
 
 function baseStyles<

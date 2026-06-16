@@ -95,6 +95,8 @@ export function ProjectCard({
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const actionsVisible = isHovered || showActions;
   
   const title = project.description || 
     (project.prompt ? truncate(project.prompt, 60) : 'Untitled project');
@@ -104,10 +106,11 @@ export function ProjectCard({
 
   if (viewMode === 'grid') {
     return (
-      <div 
+      <div
         className={`group relative bg-[var(--app-panel)] rounded-xl border border-[var(--app-border)] overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-black/10 hover:border-[var(--app-accent)]/30 hover:-translate-y-0.5 ${isDragging ? 'opacity-50 scale-95' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={() => { setIsHovered(false); setShowActions(false); }}
+        onClick={() => setShowActions(!showActions)}
         draggable={!!onDragStart}
         onDragStart={(e) => onDragStart?.(e, project.id)}
         onDragOver={(e) => { e.preventDefault(); onDragOver?.(e, project.id); }}
@@ -155,12 +158,15 @@ export function ProjectCard({
           {hasCode && <CodePreviewSnippet code={project.code} />}
         </div>
         
-        {/* Hover actions overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {/* Hover/tap actions overlay */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-200 ${actionsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
             <Link
               href={`/dashboard?project=${project.id}`}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-gray-900 text-xs font-semibold hover:bg-gray-100 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-gray-900 text-xs font-semibold hover:bg-gray-100 transition-colors min-h-11"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Open
@@ -169,7 +175,7 @@ export function ProjectCard({
               variant="ghost"
               size="icon"
               onClick={(e) => { e.preventDefault(); onDuplicate(project); }}
-              className="bg-white/20 text-white hover:bg-white/30"
+              className="bg-white/20 text-white hover:bg-white/30 touch-target"
               title="Duplicate"
             >
               <Copy className="h-3.5 w-3.5" />
@@ -178,7 +184,7 @@ export function ProjectCard({
               variant="ghost"
               size="icon"
               onClick={(e) => { e.preventDefault(); setRenameOpen(true); }}
-              className="bg-white/20 text-white hover:bg-white/30"
+              className="bg-white/20 text-white hover:bg-white/30 touch-target"
               title="Rename"
             >
               <span className="text-[10px] font-bold">Aa</span>
@@ -187,7 +193,7 @@ export function ProjectCard({
               variant="ghost"
               size="icon"
               onClick={(e) => { e.preventDefault(); setDeleteOpen(true); }}
-              className="bg-white/20 text-white hover:bg-red-500/80"
+              className="bg-white/20 text-white hover:bg-red-500/80 touch-target"
               title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -261,6 +267,7 @@ export function ProjectCard({
             <Button
               variant="ghost"
               size="icon"
+              className="touch-target"
               title="Duplicate"
               onClick={() => onDuplicate(project)}
             >
@@ -269,6 +276,7 @@ export function ProjectCard({
             <Button
               variant="ghost"
               size="icon"
+              className="touch-target"
               title="Rename"
               onClick={() => setRenameOpen(true)}
             >
@@ -277,12 +285,13 @@ export function ProjectCard({
             <Button
               variant="ghost"
               size="icon"
+              className="touch-target"
               title="Delete"
               onClick={() => setDeleteOpen(true)}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
-            <Link href={`/dashboard?project=${project.id}`} className="inline-flex items-center justify-center size-10 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors touch-manipulation" aria-label={`Open ${title}`}>
+            <Link href={`/dashboard?project=${project.id}`} className="inline-flex items-center justify-center touch-target rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors touch-manipulation" aria-label={`Open ${title}`}>
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>
