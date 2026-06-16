@@ -82,7 +82,7 @@ describe('AI router', () => {
     expect(pickModel('generate', configs)?.maxTokens).toBeLessThanOrEqual(3072);
   });
 
-  it('uses Z.ai GLM before Groq and DeepSeek when configured', () => {
+  it('uses DeepSeek before Z.ai GLM for code generation when both are configured', () => {
     const configs: ProviderConfigs = {
       zai: {
         apiKey: 'zai-key',
@@ -100,9 +100,11 @@ describe('AI router', () => {
     };
 
     const routed = pickModel('code_edit', configs);
+    const generated = pickModel('generate', configs);
 
-    expect(routed?.provider).toBe('zai');
-    expect(routed?.model).toBe('GLM-4.6');
-    expect(routed?.baseUrl).toBe('https://api.z.ai/api/coding/paas/v4');
+    expect(routed?.provider).toBe('deepseek');
+    expect(routed?.model).toBe('deepseek-chat');
+    expect(routed?.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(generated?.provider).toBe('deepseek');
   });
 });

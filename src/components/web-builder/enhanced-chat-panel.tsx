@@ -47,6 +47,7 @@ import { extractCodeBlocks, sanitizeChatContent } from '@/lib/utils/code-extract
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
 import { BRAND_NAME, Logo } from '@/components/logo';
 import { formatExistingCodeModeRules } from '@/lib/agent/builder-mode-rules';
+import { formatShadcnUiRules } from '@/lib/agent/shadcn-ui-rules';
 import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 
 
@@ -166,6 +167,8 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
     ...(hasExistingFiles
       ? ['Existing-code mode rules:', formatExistingCodeModeRules(builderMode)]
       : []),
+    'shadcn-standard UI rules:',
+    formatShadcnUiRules(),
     'UI quality rules:',
     formatUiQualityRules(),
     'Return complete file blocks for every changed file so the editor can apply the update deterministically. Never return partial snippets.',

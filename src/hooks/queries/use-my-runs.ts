@@ -2,8 +2,7 @@
 
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/hooks/use-session';
-import { useSessionStore } from '@/store/session-store';
+import { useUser } from '@/hooks/clerk-safe';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type RunRow = {
@@ -25,22 +24,21 @@ export type UseMyRunsOptions = Pick<
 >;
 
 export function useMyRuns(limit = 20, enabled = true, options?: UseMyRunsOptions) {
-  const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
+  const { user: clerkUser } = useUser();
 
   return useQuery<RunRow[], Error, RunRow[]>({
     queryKey: [...queryKeys.myRuns, { limit }] as const,
-    enabled: enabled && isAuthenticated,
+    enabled: enabled && !!clerkUser,
     refetchInterval: options?.refetchInterval,
     staleTime: 0,
-    gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
+    gcTime: clerkUser ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<RunRow[]> => {
-      const session = await getSession();
-      if (!session.user) throw new Error('Not authenticated — retrying...');
+      if (!clerkUser?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('runs')
         .select('id,thread_id,user_id,status,objective,error,created_at,started_at,ended_at,updated_at')
-        .eq('user_id', session.user.id)
+        .eq('user_id', clerkUser.id)
         .order('created_at', { ascending: false })
         .limit(limit);
 

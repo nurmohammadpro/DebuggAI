@@ -18,6 +18,7 @@ import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { extractVirtualFiles } from '@/lib/project/virtual-files';
+import { formatShadcnUiRules } from '@/lib/agent/shadcn-ui-rules';
 import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 
 export const runtime = 'nodejs';
@@ -176,12 +177,14 @@ function buildAgentSystemPrompt({
   fileContext: string;
 }) {
   const fileList = currentFiles.length > 0 ? currentFiles.join(', ') : '(empty)';
+  const shadcnUiRules = formatShadcnUiRules();
   const uiQualityRules = formatUiQualityRules();
   if (provider === 'groq') {
     return [
       'You are DeBuggAI, an expert Next.js engineer. Use tools to make small, exact file edits.',
       'Rules: view_file before editing existing files; prefer line_replace; write_file for new files; return concise status.',
       'Design: use app/globals.css theme tokens and semantic Tailwind. Avoid raw hex in JSX.',
+      `shadcn-standard UI rules:\n${shadcnUiRules}`,
       `UI quality rules:\n${uiQualityRules}`,
       generationDirective ? `Directive:\n${generationDirective}` : '',
       `Current files: ${fileList}`,
@@ -206,6 +209,9 @@ function buildAgentSystemPrompt({
 - Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
 - If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
 - If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
+
+## SHADCN-STANDARD UI RULES
+${shadcnUiRules}
 
 ## UI QUALITY RULES
 ${uiQualityRules}

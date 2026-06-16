@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { supabase } from '@/lib/supabase';
-import { getSession, useSession } from '@/hooks/use-session';
+import { useUser } from '@/hooks/clerk-safe';
 
 export interface MeProfile {
   id: string;
@@ -15,19 +15,18 @@ export interface MeProfile {
 }
 
 export function useMeProfile(enabled = true) {
-  const { user: sessionUser } = useSession();
+  const { user: clerkUser } = useUser();
 
   return useQuery({
     queryKey: queryKeys.me,
-    enabled: enabled && !!sessionUser,
+    enabled: enabled && !!clerkUser,
     queryFn: async (): Promise<MeProfile | null> => {
-      const session = await getSession();
-      if (!session.user) return null;
+      if (!clerkUser?.id) return null;
 
       const { data, error } = await supabase
         .from('profiles')
         .select('id,email,full_name,avatar_url,plan_type,is_admin')
-        .eq('id', session.user.id)
+        .eq('id', clerkUser.id)
         .single();
 
       if (error) throw error;

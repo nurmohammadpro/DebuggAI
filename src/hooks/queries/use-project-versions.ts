@@ -2,33 +2,29 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getSession, useSession } from '@/hooks/use-session';
+import { useUser } from '@/hooks/clerk-safe';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import type { GenerationRow } from '@/hooks/queries/use-my-projects';
 
 export function useProjectVersions(
   projectKey: string | null,
   projectId: string | null,
-  enabled = true
+  enabled = true,
 ) {
-  const { user: sessionUser } = useSession();
+  const { user: clerkUser } = useUser();
 
   return useQuery({
     queryKey: projectKey
       ? [...queryKeys.projectVersions(projectKey), { projectId }] as const
       : ['project-versions', 'none'],
-    enabled: enabled && !!projectKey && !!sessionUser,
+    enabled: enabled && !!projectKey && !!clerkUser,
     queryFn: async (): Promise<GenerationRow[]> => {
-      if (!projectKey) return [];
-      const { session } = await getSession();
-      if (!session?.user) return [];
+      if (!projectKey || !clerkUser?.id) return [];
 
-      // Prefer canonical project_id-based history when available.
-      // Fall back to legacy metadata.project_key for older rows.
       const baseQuery = supabase
         .from('generations')
         .select('id,code,version,description,stack,prompt,metadata,created_at')
-        .eq('user_id', session.user.id)
+        .eq('user_id', clerkUser.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -53,7 +49,7 @@ export function useProjectVersions(
       if (root) merged.set(root.id, root);
 
       return [...merged.values()].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
     },
   });
