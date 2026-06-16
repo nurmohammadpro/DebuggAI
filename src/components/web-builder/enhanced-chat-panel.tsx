@@ -46,6 +46,8 @@ import { getSession } from '@/hooks/use-session';
 import { extractCodeBlocks, sanitizeChatContent } from '@/lib/utils/code-extraction';
 import { useCodeBlocksStore } from '@/store/code-blocks-store';
 import { BRAND_NAME, Logo } from '@/components/logo';
+import { formatExistingCodeModeRules } from '@/lib/agent/builder-mode-rules';
+import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -161,6 +163,11 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
     ...architecture,
     'Operate like a senior product engineer: inspect the current project, choose the smallest high-leverage edits, and preserve user intent.',
     'Preserve working structure, imports, route names, package versions, and design tokens unless changing them is required.',
+    ...(hasExistingFiles
+      ? ['Existing-code mode rules:', formatExistingCodeModeRules(builderMode)]
+      : []),
+    'UI quality rules:',
+    formatUiQualityRules(),
     'Return complete file blocks for every changed file so the editor can apply the update deterministically. Never return partial snippets.',
     'Keep responses concise but useful: say what changed, why it matters, and which files were touched.',
     'Use short status lines before meaningful phases: First, Inspecting, Editing, Verifying, Done, Warning, or Error.',

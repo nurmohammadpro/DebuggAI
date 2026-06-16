@@ -13,11 +13,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { checkIPRateLimit } from '@/lib/server/plan-enforcement';
-import { AGENT_TOOLS, executeToolCall, type ToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
+import { AGENT_TOOLS, executeToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
 import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { extractVirtualFiles } from '@/lib/project/virtual-files';
+import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -181,11 +182,13 @@ function buildAgentSystemPrompt({
   fileContext: string;
 }) {
   const fileList = currentFiles.length > 0 ? currentFiles.join(', ') : '(empty)';
+  const uiQualityRules = formatUiQualityRules();
   if (provider === 'groq') {
     return [
       'You are DeBuggAI, an expert Next.js engineer. Use tools to make small, exact file edits.',
       'Rules: view_file before editing existing files; prefer line_replace; write_file for new files; return concise status.',
-      'Design: improve app/globals.css theme variables and card classes using semantic Tailwind. Avoid raw hex in JSX.',
+      'Design: use app/globals.css theme tokens and semantic Tailwind. Avoid raw hex in JSX.',
+      `UI quality rules:\n${uiQualityRules}`,
       generationDirective ? `Directive:\n${generationDirective}` : '',
       `Current files: ${fileList}`,
       fileContext,
@@ -224,6 +227,9 @@ function buildAgentSystemPrompt({
 - 'className' props ARE passed through to the HTML elements. Use standard Tailwind classes like bg-primary, text-lg, rounded-lg, p-4, flex, gap-2, etc. — these all work.
 - The preview renders without allow-same-origin (localStorage is shimmed in memory). Do not rely on localStorage persisting across refreshes.
 - CSS custom properties (--primary, --muted, etc.) are set in globals.css and mapped to Tailwind theme colors. Use semantic Tailwind classes (bg-primary, text-muted-foreground, border-border) rather than inline styles.
+
+## UI QUALITY RULES
+${uiQualityRules}
 
 ## BOOTSTRAP (empty project)
 Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs
