@@ -218,6 +218,13 @@ function buildAgentSystemPrompt({
 - If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
 - If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
 
+## PREVIEW LIMITATIONS
+- The preview uses Tailwind CSS Play CDN v3 — all standard utility classes work (flex, grid, colors, spacing, typography) but DO NOT rely on advanced Tailwind v4 features. Use standard v3 class names.
+- shadcn/ui components render as basic HTML elements inside the preview. Their shadcn-specific sub-components (SheetContent, DialogTrigger, etc.) are placeholder divs. Structure the page layout with standard Tailwind classes instead of relying on complex shadcn dialog/sheet behavior.
+- 'className' props ARE passed through to the HTML elements. Use standard Tailwind classes like bg-primary, text-lg, rounded-lg, p-4, flex, gap-2, etc. — these all work.
+- The preview renders without allow-same-origin (localStorage is shimmed in memory). Do not rely on localStorage persisting across refreshes.
+- CSS custom properties (--primary, --muted, etc.) are set in globals.css and mapped to Tailwind theme colors. Use semantic Tailwind classes (bg-primary, text-muted-foreground, border-border) rather than inline styles.
+
 ## BOOTSTRAP (empty project)
 Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs
 When the project is empty, you MUST create files using write_file. Do not answer conversationally without writing code.

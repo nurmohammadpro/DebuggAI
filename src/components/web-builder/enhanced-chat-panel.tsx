@@ -196,6 +196,8 @@ function buildGenerationDirective(builderMode: BuilderMode, hasExistingFiles: bo
       'Improve background/text contrast, card surfaces, spacing rhythm, section hierarchy, button states, empty/loading states, mobile layout, keyboard focus, and accessible labels.',
       'Prefer app/globals.css design tokens and reusable component class improvements over one-off inline styles.',
       'Avoid decorative gradients, glass effects, nested cards, raw hex colors in JSX, and generic AI-looking bloat.',
+      'Use Tailwind utility classes (bg-primary, text-muted-foreground, rounded-lg, p-4, flex, gap-2, etc.) rather than inline styles — the preview has full Tailwind v3 support via CDN.',
+      'For shadcn components, pass className with theme-aware Tailwind classes like bg-card, border-border, text-muted-foreground. Use CSS variables (--primary, --muted, etc.) through Tailwind semantic colors (bg-primary, text-muted-foreground).',
     ].join('\n');
   }
 

@@ -1405,8 +1405,12 @@ export function buildPreviewHtml(js: string, css: string): string {
   const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js';
   const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js';
 
+  // Detect light theme from CSS variables (user's globals.css overrides the defaults)
+  const usesLightBg = css.includes('--background: 0 0% 100%');
+  const themeClass = usesLightBg ? '""' : '"dark"';
+
   return `<!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class=${themeClass}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1416,6 +1420,43 @@ export function buildPreviewHtml(js: string, css: string): string {
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     ${css}
   </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            'secondary-foreground': 'hsl(var(--secondary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            'accent-foreground': 'hsl(var(--accent-foreground))',
+            destructive: 'hsl(var(--destructive))',
+            'destructive-foreground': 'hsl(var(--destructive-foreground))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            card: 'hsl(var(--card))',
+            'card-foreground': 'hsl(var(--card-foreground))',
+            popover: 'hsl(var(--popover))',
+            'popover-foreground': 'hsl(var(--popover-foreground))',
+          },
+          borderRadius: {
+            xl: 'calc(var(--radius) + 4px)',
+            lg: 'var(--radius)',
+            md: 'calc(var(--radius) - 2px)',
+            sm: 'calc(var(--radius) - 4px)',
+          },
+        },
+      },
+    }
+  </script>
 </head>
 <body>
   <div id="root"></div>
