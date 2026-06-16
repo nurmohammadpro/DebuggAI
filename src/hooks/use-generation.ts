@@ -45,6 +45,8 @@ function templateToVirtualFiles(flatFiles: Record<string, string>): VirtualProje
 
   // Pick the best entry point
   const entryCandidates = [
+    'app/page.tsx',
+    'src/app/page.tsx',
     'client/src/App.js',
     'client/src/App.tsx',
     'client/src/App.jsx',

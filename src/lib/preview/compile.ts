@@ -1175,6 +1175,9 @@ export async function bundlePreview(
     let resolvedEntry: string | null = null;
 
     // Try several entry point patterns
+    const VALID_CODE_EXTS = ['.tsx', '.ts', '.jsx', '.js', '.mjs'];
+    const isValidEntry = (p: string) => VALID_CODE_EXTS.some((ext) => p.endsWith(ext));
+
     const entryCandidates = [
       entryFull,
       path.join(workDir, 'src', entryPoint),
@@ -1188,13 +1191,14 @@ export async function bundlePreview(
     ];
 
     for (const candidate of entryCandidates) {
+      if (!isValidEntry(candidate)) continue;
       try {
         await fsp.access(candidate);
         resolvedEntry = candidate;
         break;
       } catch {
-        // Try .jsx variants
         const jsxCandidate = candidate.replace(/\.tsx$/, '.jsx').replace(/\.ts$/, '.js');
+        if (!isValidEntry(jsxCandidate)) continue;
         try {
           await fsp.access(jsxCandidate);
           resolvedEntry = jsxCandidate;
