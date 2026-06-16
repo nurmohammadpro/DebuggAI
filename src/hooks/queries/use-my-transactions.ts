@@ -3,8 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/hooks/queries/query-keys';
-import { getSession } from '@/hooks/use-session';
-import { useSessionStore } from '@/store/session-store';
+import { useUser } from '@/hooks/clerk-safe';
 
 export type TransactionRow = {
   id: string;
@@ -15,21 +14,20 @@ export type TransactionRow = {
 };
 
 export function useMyTransactions(limit = 100, enabled = true) {
-  const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
+  const { user: clerkUser } = useUser();
 
   return useQuery({
     queryKey: [...queryKeys.myTransactions, { limit }] as const,
-    enabled: enabled && isAuthenticated,
+    enabled: enabled && !!clerkUser,
     staleTime: 0,
-    gcTime: isAuthenticated ? 5 * 60 * 1000 : 10_000,
+    gcTime: clerkUser ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<TransactionRow[]> => {
-      const session = await getSession();
-      if (!session.user) throw new Error('Not authenticated — retrying...');
+      if (!clerkUser?.id) throw new Error('Not authenticated');
 
       const { data: wallet, error: walletError } = await supabase
         .from('credit_wallets')
         .select('id')
-        .eq('user_id', session.user.id)
+        .eq('user_id', clerkUser.id)
         .single();
 
       if (walletError) throw walletError;

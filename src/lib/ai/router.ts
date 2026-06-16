@@ -2,7 +2,7 @@
  * AI Provider Router
  *
  * Routes requests to the appropriate model based on intent:
- * - DeepSeek first for builder edits/generation (larger practical budget)
+ * - DeepSeek first for builder edits/generation (faster code-generation path)
  * - Groq fallback with conservative output tokens for free-tier TPM limits
  */
 
@@ -94,22 +94,22 @@ export function pickModel(intent: ModelIntent, configs: ProviderConfigs): Routed
   switch (intent) {
     // Builder edits need reliable file output; prefer DeepSeek.
     case 'code_edit':
-      return zai(8192) ?? deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
+      return deepseek(DEEPSEEK_MODELS.chat, 8192) ?? zai(8192) ?? groq(GROQ_MODELS.fast, 3072);
 
-    // Planning needs reasoning → DeepSeek, fall back to Groq
+    // Planning needs reasoning; prefer DeepSeek reasoner, then GLM, then Groq.
     case 'planning':
-      return zai(16384) ?? deepseek(DEEPSEEK_MODELS.reasoner, 16384) ?? groq(GROQ_MODELS.fast, 3072);
+      return deepseek(DEEPSEEK_MODELS.reasoner, 16384) ?? zai(16384) ?? groq(GROQ_MODELS.fast, 3072);
 
     // Full generation → DeepSeek preferred, Groq fallback
     case 'generate':
-      return zai(16384) ?? deepseek(DEEPSEEK_MODELS.chat, 16384) ?? groq(GROQ_MODELS.fast, 3072);
+      return deepseek(DEEPSEEK_MODELS.chat, 16384) ?? zai(16384) ?? groq(GROQ_MODELS.fast, 3072);
 
     // Debugging → DeepSeek (good at analysis)
     case 'debug':
-      return zai(8192) ?? deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
+      return deepseek(DEEPSEEK_MODELS.chat, 8192) ?? zai(8192) ?? groq(GROQ_MODELS.fast, 3072);
 
     default:
-      return zai(8192) ?? deepseek(DEEPSEEK_MODELS.chat, 8192) ?? groq(GROQ_MODELS.fast, 3072);
+      return deepseek(DEEPSEEK_MODELS.chat, 8192) ?? zai(8192) ?? groq(GROQ_MODELS.fast, 3072);
   }
 }
 
