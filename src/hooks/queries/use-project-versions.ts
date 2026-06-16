@@ -19,12 +19,15 @@ export function useProjectVersions(
       : ['project-versions', 'none'],
     enabled: enabled && !!projectKey && !!clerkUser,
     queryFn: async (): Promise<GenerationRow[]> => {
-      if (!projectKey || !clerkUser?.id) return [];
+      if (!projectKey) return [];
+      const { session } = await getSession();
+      const userId = session?.user?.id;
+      if (!userId) return [];
 
       const baseQuery = supabase
         .from('generations')
         .select('id,code,version,description,stack,prompt,metadata,created_at')
-        .eq('user_id', clerkUser.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(50);
 

@@ -120,19 +120,21 @@ export function pickModel(intent: ModelIntent, configs: ProviderConfigs): Routed
 export function detectIntent(prompt: string): ModelIntent {
   const lower = prompt.toLowerCase();
 
-  // Planning keywords
-  if (/plan|architect|design (the|a) system|how should i|best practice|refactor|restructure/i.test(lower)) {
-    return 'planning';
-  }
-
-  // Code edit keywords
-  if (/change|fix|update|replace|edit|modify|add (a|the) |remove|delete|rename|move /i.test(lower)) {
+  // Existing-app edit keywords. These must route to the tool-edit agent, not
+  // planning, otherwise Refactor/Polish buttons produce advice or full
+  // regeneration instead of modifying the current files.
+  if (/refactor|restructure|polish|redesign|improve|enhance|clean up|cleanup|make .*better|change|fix|update|replace|edit|modify|add (a|the) |remove|delete|rename|move /i.test(lower)) {
     return 'code_edit';
   }
 
   // Debug keywords
   if (/debug|error|bug|crash|failing|broken|not working|wrong|issue/i.test(lower)) {
     return 'debug';
+  }
+
+  // Planning keywords
+  if (/plan|architect|design (the|a) system|how should i|best practice/i.test(lower)) {
+    return 'planning';
   }
 
   // Default: full generation

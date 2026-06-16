@@ -43,7 +43,7 @@ export function LoginForm() {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -51,6 +51,21 @@ export function LoginForm() {
       if (error) {
         toast.error(error.message);
         return;
+      }
+
+      // Sync the session to an SSR cookie so the middleware can see it
+      // on subsequent requests. Without this, the client has the session
+      // in localStorage but the middleware sees no cookie and redirects
+      // back to /login.
+      if (data.session) {
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          }),
+        });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to sign in');

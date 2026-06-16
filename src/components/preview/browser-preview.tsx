@@ -191,6 +191,7 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   }, [files, clearError]);
 
   useEffect(() => {
+    previousSnapshot.current = '';
     compile();
   }, [compile, previewNonce]);
 

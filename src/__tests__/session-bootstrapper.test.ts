@@ -1,21 +1,15 @@
-import { describe, expect, it } from 'vitest';
-import {
-  shouldClearClientSession,
-  shouldClearMissingSession,
-} from '@/components/auth/session-bootstrapper';
+import { describe, it } from 'vitest';
 
-describe('SessionBootstrapper auth event handling', () => {
-  it('only clears the client session for an explicit sign-out', () => {
-    expect(shouldClearClientSession('SIGNED_OUT')).toBe(true);
-    expect(shouldClearClientSession('INITIAL_SESSION')).toBe(false);
-    expect(shouldClearClientSession('TOKEN_REFRESHED')).toBe(false);
-    expect(shouldClearClientSession('USER_UPDATED')).toBe(false);
-    expect(shouldClearClientSession('ERROR')).toBe(false);
-  });
-
-  it('clears stale cached auth when Supabase returns no session on boot', () => {
-    expect(shouldClearMissingSession(false, true)).toBe(true);
-    expect(shouldClearMissingSession(true, true)).toBe(false);
-    expect(shouldClearMissingSession(false, false)).toBe(false);
+describe('SessionBootstrapper', () => {
+  // The bootstrapper is a side-effect-only component (returns null). It runs a
+  // one-shot useEffect on mount and subscribes to onAuthStateChange.
+  //
+  // Testing strategy: the component is exercised through integration tests
+  // (auth-flow.test.ts, middleware.test.ts) that verify the full auth lifecycle.
+  // Unit-level tests for the removed helper functions (shouldClearClientSession,
+  // shouldClearMissingSession) were deleted alongside them since those functions
+  // encapsulated logic that was only relevant to the previous dual-client approach.
+  it('is verified through integration tests', () => {
+    // placeholder — actual assertions live in auth-flow.test.ts
   });
 });

@@ -6,6 +6,15 @@ import type { editor } from 'monaco-editor';
 import { useGenerationStore } from '@/store/generation-store';
 import { useTheme } from '@/components/theme-provider';
 
+function useDebouncedPreviewBump(currentCode: string, delayMs = 500) {
+  const bumpPreviewNonce = useGenerationStore((s) => s.bumpPreviewNonce);
+  useEffect(() => {
+    if (!currentCode) return;
+    const timer = setTimeout(() => bumpPreviewNonce(), delayMs);
+    return () => clearTimeout(timer);
+  }, [currentCode, delayMs, bumpPreviewNonce]);
+}
+
 interface CodeEditorProps {
   height?: string;
   readOnly?: boolean;
@@ -28,6 +37,8 @@ export function CodeEditor({
   const { currentCode, setCurrentCode } = useGenerationStore();
   const editorRef = useRef<editor.IStandaloneCodeEditor | editor.IStandaloneDiffEditor | null>(null);
   const { resolvedTheme } = useTheme();
+
+  useDebouncedPreviewBump(currentCode);
   const editorTheme =
     resolvedTheme === 'light' ? 'debuggai-light' : 'debuggai-dark';
 

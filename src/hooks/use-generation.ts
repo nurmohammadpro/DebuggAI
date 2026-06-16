@@ -45,6 +45,8 @@ function templateToVirtualFiles(flatFiles: Record<string, string>): VirtualProje
 
   // Pick the best entry point
   const entryCandidates = [
+    'app/page.tsx',
+    'src/app/page.tsx',
     'client/src/App.js',
     'client/src/App.tsx',
     'client/src/App.jsx',
@@ -310,6 +312,8 @@ export function useGeneration(options: UseGenerationOptions = {}) {
             files: virtualFiles,
             activeFilePath: virtualFiles.entryPath,
           });
+
+          useGenerationStore.getState().bumpPreviewNonce();
 
           setCurrentCode(entryContent);
           addVersion(serialized, 'Generated');
@@ -758,7 +762,20 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
         const baseFiles = useGenerationStore.getState().files || undefined;
         let virtualFiles = streamedFiles
-          ? templateToVirtualFiles(streamedFiles)
+          ? (() => {
+              const incoming = templateToVirtualFiles(streamedFiles);
+              // Merge base files so unchanged files (config, layout, css, etc.)
+              // are not dropped when the agent returns only changed files.
+              const mergedFiles: Record<string, VirtualFile> = { ...(baseFiles?.files || {}) };
+              for (const [p, f] of Object.entries(incoming.files)) {
+                mergedFiles[p] = f;
+              }
+              // Prefer the base entry point — streamedFiles are a partial
+              // update from the agent and templateToVirtualFiles may pick
+              // a non-page file (e.g. package.json) as its fallback entry.
+              const mergedEntry = baseFiles?.entryPath || incoming.entryPath;
+              return { entryPath: mergedEntry, files: mergedFiles } as VirtualProjectFiles;
+            })()
           : extractVirtualFiles(accumulated, baseFiles || undefined);
 
         if (!hasSubstantiveFiles(virtualFiles) && projectIdForTurn) {
@@ -806,6 +823,8 @@ export function useGeneration(options: UseGenerationOptions = {}) {
           files: virtualFiles,
           activeFilePath: virtualFiles.entryPath,
         });
+
+        useGenerationStore.getState().bumpPreviewNonce();
 
         setCurrentCode(entryContent);
         addVersion(serialized, 'Generated via agent');

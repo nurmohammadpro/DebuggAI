@@ -50,13 +50,14 @@ export function AccountMenu({
     );
   }, [user?.displayName, user?.email]);
 
-  const handleLogout = async () => {
-    try {
-      await console.log('signed out')
-    } finally {
-      // Hard redirect forces middleware to re-check auth and breaks any stale Zustand persist
-      window.location.href = '/';
-    }
+  const handleLogout = () => {
+    // Clear localStorage synchronously, then redirect immediately.
+    // Use sendBeacon for the API call — it's fire-and-forget and
+    // survives page navigation (unlike fetch, which the browser
+    // cancels on unload).
+    supabase.auth.signOut().catch(() => {});
+    navigator.sendBeacon('/api/auth/signout', JSON.stringify({}));
+    window.location.href = '/';
   };
 
   return (

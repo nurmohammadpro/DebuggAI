@@ -30,11 +30,23 @@ export function AuthCallbackClient() {
       }
 
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
           toast.error(error.message);
           router.replace('/login');
           return;
+        }
+
+        // Sync the session to an SSR cookie so the middleware can see it.
+        if (data.session) {
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
+          });
         }
       }
 

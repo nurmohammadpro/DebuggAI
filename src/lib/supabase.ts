@@ -1,14 +1,16 @@
 /**
- * Supabase Client — Clerk handles auth, Supabase is just a database client.
+ * Supabase Client — client-side singleton for database queries and auth.
  *
- * Client-side singleton for queries. Server-side routes create their own
- * client via requireUser() which passes the Clerk JWT.
+ * Uses localStorage for session storage (standard supabase-js client).
+ * The SSR middleware manages cookies independently for route protection.
+ * Logout calls both supabase.auth.signOut() (clears localStorage) and
+ * the /api/auth/signout endpoint (clears the SSR cookie).
  */
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 function fail(name: string): any {
   return new Proxy({} as any, {

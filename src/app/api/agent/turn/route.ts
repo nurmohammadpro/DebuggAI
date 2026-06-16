@@ -18,7 +18,6 @@ import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { extractVirtualFiles } from '@/lib/project/virtual-files';
-import { formatShadcnUiRules } from '@/lib/agent/shadcn-ui-rules';
 import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 
 export const runtime = 'nodejs';
@@ -157,7 +156,13 @@ function stripClientFileContext(prompt: string) {
 function detectAgentIntent(prompt: string, generationDirective?: string) {
   const directive = generationDirective?.toLowerCase() || '';
   if (directive.includes('mode: resolve')) return 'debug' as const;
-  if (directive.includes('mode: ux polish') || directive.includes('mode: restructure')) return 'generate' as const;
+  if (
+    directive.includes('mode: ux polish') ||
+    directive.includes('mode: restructure') ||
+    directive.includes('existing project files are already loaded')
+  ) {
+    return 'code_edit' as const;
+  }
   return detectIntent(prompt);
 }
 
@@ -177,14 +182,12 @@ function buildAgentSystemPrompt({
   fileContext: string;
 }) {
   const fileList = currentFiles.length > 0 ? currentFiles.join(', ') : '(empty)';
-  const shadcnUiRules = formatShadcnUiRules();
   const uiQualityRules = formatUiQualityRules();
   if (provider === 'groq') {
     return [
       'You are DeBuggAI, an expert Next.js engineer. Use tools to make small, exact file edits.',
       'Rules: view_file before editing existing files; prefer line_replace; write_file for new files; return concise status.',
       'Design: use app/globals.css theme tokens and semantic Tailwind. Avoid raw hex in JSX.',
-      `shadcn-standard UI rules:\n${shadcnUiRules}`,
       `UI quality rules:\n${uiQualityRules}`,
       generationDirective ? `Directive:\n${generationDirective}` : '',
       `Current files: ${fileList}`,
@@ -201,6 +204,14 @@ function buildAgentSystemPrompt({
 4. **Verify** → read_dev_logs after changes
 5. **Research** → web_search for up-to-date docs
 
+## EXISTING PROJECT RULES
+- If current files are present, treat the request as an edit to those files.
+- For refactor, polish, or fix requests, you MUST change at least one file unless the request is impossible.
+- Prefer targeted line_replace edits. Do not rebuild the whole app unless the user explicitly asks.
+- If polishing UI, inspect app/globals.css plus the visible page/component files, then update CSS tokens/components.
+- If refactoring, preserve behavior and routes; move code only when it improves boundaries.
+- Finish by returning the changed files through tool writes, not by describing what the user should do.
+
 ## DESIGN RULES
 - Edit globals.css CSS variables for theme colors (--primary, --foreground, etc.)
 - NEVER use raw hex (#xxx) in JSX — use Tailwind semantic classes
@@ -210,8 +221,12 @@ function buildAgentSystemPrompt({
 - If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
 - If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
 
-## SHADCN-STANDARD UI RULES
-${shadcnUiRules}
+## PREVIEW LIMITATIONS
+- The preview uses Tailwind CSS Play CDN v3 — all standard utility classes work (flex, grid, colors, spacing, typography) but DO NOT rely on advanced Tailwind v4 features. Use standard v3 class names.
+- shadcn/ui components render as basic HTML elements inside the preview. Their shadcn-specific sub-components (SheetContent, DialogTrigger, etc.) are placeholder divs. Structure the page layout with standard Tailwind classes instead of relying on complex shadcn dialog/sheet behavior.
+- 'className' props ARE passed through to the HTML elements. Use standard Tailwind classes like bg-primary, text-lg, rounded-lg, p-4, flex, gap-2, etc. — these all work.
+- The preview renders without allow-same-origin (localStorage is shimmed in memory). Do not rely on localStorage persisting across refreshes.
+- CSS custom properties (--primary, --muted, etc.) are set in globals.css and mapped to Tailwind theme colors. Use semantic Tailwind classes (bg-primary, text-muted-foreground, border-border) rather than inline styles.
 
 ## UI QUALITY RULES
 ${uiQualityRules}

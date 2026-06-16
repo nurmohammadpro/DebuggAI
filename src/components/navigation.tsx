@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/s
 import { Button } from '@/components/ui/button';
 import { Menu, Zap } from 'lucide-react';
 import { BrandLockup } from '@/components/logo';
+import { supabase } from '@/lib/supabase';
 import { useSessionStore } from '@/store/session-store';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -26,12 +27,10 @@ export function Navigation() {
   const credits = user?.credits;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await console.log('signed out')
-    } finally {
-      window.location.href = '/';
-    }
+  const handleLogout = () => {
+    supabase.auth.signOut().catch(() => {});
+    navigator.sendBeacon('/api/auth/signout', JSON.stringify({}));
+    window.location.href = '/';
   };
 
   return (

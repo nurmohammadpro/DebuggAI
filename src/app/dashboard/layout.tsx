@@ -1,8 +1,11 @@
 /**
- * Dashboard Layout — Clerk middleware handles auth redirect.
+ * Dashboard Layout — Supabase SSR middleware handles auth redirect.
+ *
+ * NOTE: SessionBootstrapper is in the root layout (src/app/layout.tsx) and
+ * must NOT be duplicated here. A second instance would create a second
+ * useEffect subscription and double the API calls on mount.
  */
 
-import { ClerkSessionSync } from '@/components/auth/clerk-session-sync';
 import { ClientDashboardShell } from '@/components/dashboard/client-dashboard-shell';
 import { DashboardErrorBoundary } from '@/components/dashboard/dashboard-error-boundary';
 
@@ -13,7 +16,6 @@ export default function DashboardLayout({
 }) {
   return (
     <>
-      <ClerkSessionSync />
       <ClientDashboardShell>
         <DashboardErrorBoundary>
           {children}

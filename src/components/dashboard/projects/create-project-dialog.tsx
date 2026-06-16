@@ -44,8 +44,8 @@ export function CreateProjectDialog({
 
     setCreating(true);
     try {
-      // getSession() internally waits up to 5s for the bootstrapper
-      const token = getClerkToken();
+      const session = await getSession();
+      const token = session?.session?.access_token;
       if (!token) {
         toast.error('Please sign in again');
         return;

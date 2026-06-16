@@ -1,10 +1,6 @@
-/**
- * Client Login Page
- */
-
-import Link from 'next/link';
-import { PublicLayout } from '@/components/public-layout';
 import { LoginForm } from '@/components/auth/login-form';
+import { PublicLayout } from '@/components/public-layout';
+import Link from 'next/link';
 
 export default function LoginPage() {
   return (
