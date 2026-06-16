@@ -13,11 +13,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { checkIPRateLimit } from '@/lib/server/plan-enforcement';
-import { AGENT_TOOLS, executeToolCall, type ToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
+import { AGENT_TOOLS, executeToolCall, type ToolResult, type ProjectContext } from '@/lib/agent/tools';
 import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { extractVirtualFiles } from '@/lib/project/virtual-files';
+import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -175,11 +176,13 @@ function buildAgentSystemPrompt({
   fileContext: string;
 }) {
   const fileList = currentFiles.length > 0 ? currentFiles.join(', ') : '(empty)';
+  const uiQualityRules = formatUiQualityRules();
   if (provider === 'groq') {
     return [
       'You are DeBuggAI, an expert Next.js engineer. Use tools to make small, exact file edits.',
       'Rules: view_file before editing existing files; prefer line_replace; write_file for new files; return concise status.',
-      'Design: improve app/globals.css theme variables and card classes using semantic Tailwind. Avoid raw hex in JSX.',
+      'Design: use app/globals.css theme tokens and semantic Tailwind. Avoid raw hex in JSX.',
+      `UI quality rules:\n${uiQualityRules}`,
       generationDirective ? `Directive:\n${generationDirective}` : '',
       `Current files: ${fileList}`,
       fileContext,
@@ -203,6 +206,9 @@ function buildAgentSystemPrompt({
 - Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
 - If generated code imports a package, package.json must include it. For shadcn/ui primitives this commonly includes @radix-ui/react-slot, class-variance-authority, clsx, tailwind-merge, and lucide-react.
 - If postcss.config uses tailwindcss and autoprefixer, package.json devDependencies must include tailwindcss, postcss, and autoprefixer. If it uses @tailwindcss/postcss, include @tailwindcss/postcss and tailwindcss.
+
+## UI QUALITY RULES
+${uiQualityRules}
 
 ## BOOTSTRAP (empty project)
 Required files: package.json, tsconfig.json, next.config.js, app/layout.tsx, app/page.tsx, app/globals.css, tailwind.config.ts, postcss.config.mjs
