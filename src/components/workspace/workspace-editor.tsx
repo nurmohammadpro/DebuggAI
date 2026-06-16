@@ -7,12 +7,14 @@ import { useGenerationStore } from '@/store/generation-store';
 import { useState } from 'react';
 import {
   Code2,
+  Download,
   Eye,
   Folder,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProjectDownload } from '@/hooks/use-project-download';
 
 export type EditorView = 'code' | 'preview';
 
@@ -40,6 +42,7 @@ export function WorkspaceEditor({
   showFileTree?: boolean;
 }) {
   const { activeFilePath, files, setActiveFilePath } = useGenerationStore();
+  const { downloadProject, downloading, currentProjectId } = useProjectDownload();
   const language = activeFilePath ? files?.files[activeFilePath]?.language : undefined;
   const [fileTreeOpen, setFileTreeOpen] = useState(true);
 
@@ -90,6 +93,16 @@ export function WorkspaceEditor({
               Preview
             </button>
           </div>
+
+          <button
+            onClick={() => downloadProject()}
+            disabled={downloading || !currentProjectId}
+            className="h-7 px-2.5 rounded-[6px] text-[11px] font-medium transition-colors flex items-center gap-1.5 text-[var(--app-text-dim)] hover:bg-[var(--app-panel-2)] hover:text-[var(--app-text)] disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Download project as ZIP"
+          >
+            <Download className="h-3 w-3" />
+            {downloading ? 'Zipping...' : 'Download'}
+          </button>
         </div>
       )}
 

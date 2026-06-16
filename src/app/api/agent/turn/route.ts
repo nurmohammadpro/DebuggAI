@@ -19,12 +19,14 @@ import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { extractVirtualFiles } from '@/lib/project/virtual-files';
 import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
+import { sandboxManager } from '@/lib/sandbox/sandbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 const MAX_TOOL_TURNS = 25;
+const MAX_VERIFY_RETRIES = 3;
 const MAX_HISTORY_TOKENS = 1200; // keep agent requests under free-tier Groq/DeepSeek limits
 const CONVERSATION_LIMIT = 30;     // Max messages to load
 
@@ -469,25 +471,17 @@ export async function POST(req: NextRequest) {
     } : undefined,
     onReadDevLogs: projectId ? async (filter, lines = 50) => {
       try {
-        const sandboxBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const res = await fetch(`${sandboxBase}/api/sandbox/status?projectId=${projectId}`, {
-          headers: serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {},
-        });
-        if (!res.ok) throw new Error('Sandbox not running');
-        const { sandboxId } = await res.json().catch(() => ({}));
-        if (!sandboxId) return 'No sandbox is running.';
-
-        const logRes = await fetch(`${sandboxBase}/api/sandbox/${sandboxId}/logs`, {
-          headers: serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {},
-        });
-        if (!logRes.ok) return 'Could not read sandbox logs.';
-        const text = await logRes.text();
-        const allLines = text.split('\n').filter(Boolean).slice(-lines);
+        const sandbox = await sandboxManager.findByProjectId(projectId);
+        if (!sandbox) return 'No sandbox is running for this project.';
+        const { lines: logLines, isRunning } = await sandboxManager.getLogs(sandbox.id);
+        const recent = logLines.slice(-lines);
+        const statusTag = isRunning ? '' : ' [sandbox stopped]';
         if (filter) {
           const f = filter.toLowerCase();
-          return allLines.filter(l => l.toLowerCase().includes(f)).join('\n') || 'No matching logs';
+          const filtered = recent.filter(l => l.toLowerCase().includes(f));
+          return (filtered.join('\n') || 'No matching logs') + statusTag;
         }
-        return allLines.join('\n') || 'No recent log output.';
+        return (recent.join('\n') || 'No recent log output.') + statusTag;
       } catch { return 'Dev server logs not available.'; }
     } : undefined,
     onWebSearch: async (query) => {
@@ -507,23 +501,10 @@ export async function POST(req: NextRequest) {
     },
     onReadNetworkRequests: projectId ? async (filter, statusCode) => {
       try {
-        const sandboxBase = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const res = await fetch(`${sandboxBase}/api/sandbox/status?projectId=${projectId}`, {
-          headers: serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {},
-        });
-        if (!res.ok) return 'Sandbox not running. Network request inspection unavailable.';
-        const { sandboxId } = await res.json().catch(() => ({}));
-        if (!sandboxId) return 'No sandbox running.';
-
-        const logRes = await fetch(`${sandboxBase}/api/sandbox/${sandboxId}/logs?filter=error&lines=100`, {
-          headers: serviceKey ? { Authorization: `Bearer ${serviceKey}` } : {},
-        });
-        if (!logRes.ok) return 'Could not read sandbox logs.';
-        const text = await logRes.text();
-        const lines = text.split('\n').filter(Boolean);
-
-        // Filter for HTTP error patterns
-        let httpErrors = lines.filter(l =>
+        const sandbox = await sandboxManager.findByProjectId(projectId);
+        if (!sandbox) return 'No sandbox is running for this project.';
+        const { lines: logLines } = await sandboxManager.getLogs(sandbox.id);
+        let httpErrors = logLines.filter(l =>
           l.includes('GET http') || l.includes('POST http') ||
           l.includes('fetch failed') || l.includes('ECONNREFUSED') ||
           l.includes('ENOTFOUND') || l.includes('CORS')
@@ -644,6 +625,7 @@ export async function POST(req: NextRequest) {
 
         // ── Tool-calling loop ────────────────────────────────────────────
         let turnCount = 0;
+        let verifyRetries = 0;
 
         while (turnCount < MAX_TOOL_TURNS && !cancelled) {
           turnCount++;
@@ -735,6 +717,37 @@ export async function POST(req: NextRequest) {
                 // @ts-expect-error tool_call_id not in standard types
                 tool_call_id: tc.id,
               });
+            }
+
+            // ── Auto-verify: check sandbox logs for errors after writes ────
+            if (writes.length > 0 && projectId && verifyRetries < MAX_VERIFY_RETRIES) {
+              const sandbox = await sandboxManager.findByProjectId(projectId);
+              if (sandbox) {
+                const { lines: logLines } = await sandboxManager.getLogs(sandbox.id);
+                const recent = logLines.slice(-80);
+                const errorPatterns = [
+                  /error/i, /failed/i, /cannot find module/i,
+                  /unexpected token/i, /ecacc/i, /eisdir/i,
+                  /build fail/i, /compilation fail/i,
+                ];
+                const errors = recent.filter(line =>
+                  errorPatterns.some(p => p.test(line))
+                );
+                if (errors.length > 0) {
+                  verifyRetries++;
+                  enqueue(sseEvent('verify', { attempt: verifyRetries, errors: errors.slice(-15) }));
+                  // Inject error log as tool result so the model can fix issues
+                  messages.push({
+                    role: 'tool', content: `Sandbox errors after latest changes:\n${errors.join('\n')}\n\nFix these errors.`,
+                    // @ts-expect-error
+                    tool_call_id: 'verify',
+                  });
+                  messages.push({
+                    role: 'user', content: 'The dev server reported errors after your changes. Read dev_logs for details, then fix each error.',
+                  });
+                  continue;
+                }
+              }
             }
 
             continue;

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 
 import type { RuntimeError } from '@/store/generation-store';
-import { AlertCircle, Info, Play, RefreshCw } from 'lucide-react';
+import { AlertCircle, Info, Monitor, Smartphone, Tablet, Play, RefreshCw, Maximize2, Minimize2 } from 'lucide-react';
+
+type DeviceMode = 'desktop' | 'tablet' | 'mobile';
 
 interface BrowserPreviewProps {
   height?: string;
@@ -13,6 +15,11 @@ interface BrowserPreviewProps {
 }
 
 const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
+const DEVICE_WIDTHS: Record<DeviceMode, string> = {
+  desktop: '100%',
+  tablet: '768px',
+  mobile: '375px',
+};
 
 /**
  * In-browser preview that compiles generated TSX/JSX on the server
@@ -27,6 +34,8 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   const [html, setHtml] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'compiling' | 'ready' | 'error'>('idle');
   const [compileErrors, setCompileErrors] = useState<string[]>([]);
+  const [device, setDevice] = useState<DeviceMode>('desktop');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previousSnapshot = useRef<string>('');
   const abortRef = useRef<AbortController | null>(null);
@@ -216,6 +225,10 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
           status={status}
           onRefresh={handleRefresh}
           hasErrors={!!lastError || compileErrors.length > 0}
+          device={device}
+          onDeviceChange={setDevice}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
         />
       )}
 
@@ -228,8 +241,8 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         </div>
       )}
 
-      <div className="flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-stretch justify-stretch p-0">
-        <div className="bg-white flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className={`flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#F0F0F0] dark:bg-[#1A1A1A]' : ''}`}>
+        <div className="bg-white flex flex-col min-h-0 overflow-hidden rounded-lg shadow-sm border border-[var(--app-border)] transition-all duration-200" style={{ width: DEVICE_WIDTHS[device], height: isFullscreen ? '100%' : '100%' }}>
           {status === 'idle' && <IdleState />}
           {status === 'compiling' && <CompilingState />}
           {status === 'error' && (
@@ -312,11 +325,25 @@ function BrowserHeader({
   status,
   onRefresh,
   hasErrors,
+  device,
+  onDeviceChange,
+  isFullscreen,
+  onToggleFullscreen,
 }: {
   status: string;
   onRefresh: () => void;
   hasErrors: boolean;
+  device: DeviceMode;
+  onDeviceChange: (d: DeviceMode) => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }) {
+  const devices: { mode: DeviceMode; icon: typeof Monitor; label: string }[] = [
+    { mode: 'desktop', icon: Monitor, label: 'Desktop' },
+    { mode: 'tablet', icon: Tablet, label: 'Tablet' },
+    { mode: 'mobile', icon: Smartphone, label: 'Mobile' },
+  ];
+
   return (
     <div className="h-11 flex items-center gap-1.5 px-3 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
       <div className="flex items-center gap-2.5">
@@ -336,7 +363,29 @@ function BrowserHeader({
         )}
       </div>
       <div className="flex-1" />
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
+        {devices.map(({ mode, icon: Icon, label }) => (
+          <button
+            key={mode}
+            onClick={() => onDeviceChange(mode)}
+            className={`h-7 w-7 rounded-[6px] flex items-center justify-center transition-colors ${
+              device === mode
+                ? 'bg-[var(--app-accent)]/15 text-[var(--app-accent)]'
+                : 'text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
+            }`}
+            title={`${label} view`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+          </button>
+        ))}
+        <div className="w-px h-4 bg-[var(--app-border)] mx-0.5" />
+        <button
+          onClick={onToggleFullscreen}
+          className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+        </button>
         <button
           onClick={onRefresh}
           className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
