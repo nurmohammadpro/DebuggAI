@@ -244,7 +244,7 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
               srcDoc={html}
               className="h-full w-full border-0"
               title="Preview"
-              sandbox="allow-scripts allow-forms allow-modals"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
             />
           )}
         </div>
