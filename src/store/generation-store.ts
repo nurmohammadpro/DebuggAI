@@ -46,6 +46,15 @@ interface GenerationState {
   // Error state (from iframe runtime errors)
   lastError: RuntimeError | null;
 
+  // Inspect-element bridge (Gap 2: visual editor -> agent)
+  pendingInspectPrompt: string | null;
+  setPendingInspectPrompt: (prompt: string | null) => void;
+
+  // Turn snapshots for diff timeline (Gap 3)
+  turnSnapshots: Array<{ turnId: string; timestamp: number; files: Record<string, string> }>;
+  snapshotBeforeTurn: (turnId: string) => void;
+  getTurnDiffs: (turnId: string) => Array<{ path: string; oldContent: string; newContent: string }>;
+
   // Actions
   setCurrentCode: (code: string) => void;
   setActiveFilePath: (path: string) => void;
@@ -86,6 +95,8 @@ const initialState = {
   versions: [],
   currentVersionId: null,
   lastError: null,
+  pendingInspectPrompt: null,
+  turnSnapshots: [],
   currentProjectId: null,
   currentThreadId: null,
 };
@@ -182,6 +193,33 @@ export const useGenerationStore = create<GenerationState>()(
     setLastError: (error) => set({ lastError: error }),
 
     clearError: () => set({ lastError: null }),
+    setPendingInspectPrompt: (prompt) => set({ pendingInspectPrompt: prompt }),
+    snapshotBeforeTurn: (turnId) =>
+      set((s) => {
+        if (!s.files) return s;
+        const snapshot: Record<string, string> = {};
+        for (const [path, f] of Object.entries(s.files.files)) {
+          if (f.status !== 'deleted') snapshot[path] = f.content;
+        }
+        return { turnSnapshots: [...s.turnSnapshots, { turnId, timestamp: Date.now(), files: snapshot }] };
+      }),
+    getTurnDiffs: (turnId) => {
+      const state = get();
+      const snapshot = state.turnSnapshots.find((s) => s.turnId === turnId);
+      if (!snapshot || !state.files) return [];
+      const diffs: Array<{ path: string; oldContent: string; newContent: string }> = [];
+      const currentPaths = new Set(Object.keys(state.files.files));
+      const snapshotPaths = new Set(Object.keys(snapshot.files));
+      for (const path of new Set([...currentPaths, ...snapshotPaths])) {
+        const oldContent = snapshot.files[path] ?? '';
+        const newFile = state.files.files[path];
+        const newContent = newFile && newFile.status !== 'deleted' ? newFile.content : '';
+        if (oldContent !== newContent) {
+          diffs.push({ path, oldContent, newContent });
+        }
+      }
+      return diffs;
+    },
 
     setProjectId: (id) => set({ currentProjectId: id }),
     setThreadId: (id) => set({ currentThreadId: id }),

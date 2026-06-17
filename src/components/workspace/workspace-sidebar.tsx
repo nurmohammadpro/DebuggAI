@@ -29,6 +29,7 @@ import {
   Trash2,
   Pencil as PencilIcon,
   Loader2,
+  Brain,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { WorkspaceAccountMenu } from '@/components/workspace/workspace-account-menu';
@@ -58,6 +59,7 @@ interface WorkspaceSidebarProps {
   /** External mobile drawer control (e.g. from hamburger button). Overrides internal state. */
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  onMemoryOpen?: () => void;
 }
 
 /**
@@ -77,6 +79,7 @@ export function WorkspaceSidebar({
   recentThreads: externalThreads,
   mobileOpen: externalMobileOpen,
   onMobileClose: externalMobileClose,
+  onMemoryOpen,
 }: WorkspaceSidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -365,10 +368,18 @@ export function WorkspaceSidebar({
               <span className="text-[9px] text-[var(--app-text-dim)]">•</span>
               <span className="text-[9px] text-[var(--app-text-dim)]">{fmtRelative(currentProject.updated_at || currentProject.created_at)}</span>
             </div>
-            <Link href={activeProjectId ? `/dashboard/settings?project=${activeProjectId}` : '/dashboard/settings'}
-              className="inline-flex items-center gap-1 mt-2 text-[10px] text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
-              <Settings className="h-3 w-3" /> Settings
-            </Link>
+            <div className="flex items-center gap-3 mt-2">
+              <Link href={activeProjectId ? `/dashboard/settings?project=${activeProjectId}` : '/dashboard/settings'}
+                className="inline-flex items-center gap-1 text-[10px] text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
+                <Settings className="h-3 w-3" /> Settings
+              </Link>
+              {onMemoryOpen && (
+                <button onClick={onMemoryOpen}
+                  className="inline-flex items-center gap-1 text-[10px] text-[var(--app-text-dim)] hover:text-[var(--app-text)] transition-colors">
+                  <Brain className="h-3 w-3" /> Memory
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

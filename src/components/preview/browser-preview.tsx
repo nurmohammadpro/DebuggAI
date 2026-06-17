@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 
 import type { RuntimeError } from '@/store/generation-store';
-import { AlertCircle, Info, Monitor, Smartphone, Tablet, Play, RefreshCw, Maximize2, Minimize2 } from 'lucide-react';
+import { AlertCircle, Info, Monitor, Smartphone, Tablet, Play, RefreshCw, Maximize2, Minimize2, Crosshair } from 'lucide-react';
 
 type DeviceMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -12,6 +12,8 @@ interface BrowserPreviewProps {
   height?: string;
   className?: string;
   chromeless?: boolean;
+  sandboxUrl?: string | null;
+  sandboxStatus?: 'idle' | 'creating' | 'installing' | 'running' | 'error' | 'stopped';
 }
 
 const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
@@ -101,7 +103,7 @@ const DEVICE_WIDTHS: Record<DeviceMode, string> = {
  *
  * Replaces the Docker sandbox-based preview for UI rendering.
  */
-export function BrowserPreview({ className, chromeless = false }: BrowserPreviewProps) {
+export function BrowserPreview({ className, chromeless = false, sandboxUrl, sandboxStatus }: BrowserPreviewProps) {
   const { files, previewNonce, bumpPreviewNonce, setLastError, clearError, lastError, currentProjectId } =
     useGenerationStore();
 
@@ -110,6 +112,12 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   const [compileErrors, setCompileErrors] = useState<string[]>([]);
   const [device, setDevice] = useState<DeviceMode>('desktop');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [inspectMode, setInspectMode] = useState(false);
+  const [inspectedElement, setInspectedElement] = useState<{
+    tag: string; id: string | null; classes: string; text: string; path: string; attributes: string;
+  } | null>(null);
+  const [inspectEditText, setInspectEditText] = useState('');
+  const { setPendingInspectPrompt } = useGenerationStore();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previousSnapshot = useRef<string>('');
   const abortRef = useRef<AbortController | null>(null);
@@ -195,6 +203,15 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
             message: data.message,
             source: 'unhandled-rejection',
           });
+          break;
+        case 'element-clicked':
+          if (data.element) {
+            setInspectedElement(data.element);
+            setInspectEditText('');
+          }
+          break;
+        case 'inspect-mode-changed':
+          if (data.active === false) setInspectMode(false);
           break;
       }
     },
@@ -345,6 +362,24 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
     bumpPreviewNonce();
   }, [clearError, bumpPreviewNonce]);
 
+  // Sync inspect mode to iframe
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { source: 'debuggai-parent', type: 'inspect-mode', active: inspectMode },
+      '*',
+    );
+  }, [inspectMode]);
+
+  // Send inspect prompt to agent
+  const handleSendInspectPrompt = useCallback(() => {
+    if (!inspectedElement || !inspectEditText.trim()) return;
+    const prompt = `Edit the <${inspectedElement.tag}> element${inspectedElement.id ? ` with id="${inspectedElement.id}"` : ''}${inspectedElement.classes ? ` with classes "${inspectedElement.classes}"` : ''} at path \`${inspectedElement.path}\`. Current text: "${inspectedElement.text}". ${inspectEditText.trim()}`;
+    setPendingInspectPrompt(prompt);
+    setInspectedElement(null);
+    setInspectEditText('');
+    setInspectMode(false);
+  }, [inspectedElement, inspectEditText, setPendingInspectPrompt]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -364,6 +399,8 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
           onDeviceChange={setDevice}
           isFullscreen={isFullscreen}
           onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+          inspectMode={inspectMode}
+          onToggleInspect={() => { setInspectMode(!inspectMode); setInspectedElement(null); }}
         />
       )}
 
@@ -386,7 +423,16 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
               onRetry={handleRefresh}
             />
           )}
-          {status === 'ready' && html && (
+          {sandboxStatus === 'running' && sandboxUrl ? (
+            <iframe
+              ref={iframeRef}
+              src={sandboxUrl}
+              className="h-full w-full border-0"
+              title="Live Preview"
+            />
+          ) : sandboxStatus === 'installing' || sandboxStatus === 'creating' ? (
+            <SandboxStartingState />
+          ) : status === 'ready' && html ? (
             <iframe
               ref={iframeRef}
               srcDoc={html}
@@ -394,7 +440,7 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
               title="Preview"
               sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
             />
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -449,7 +495,51 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         </div>
       )}
 
-      <PreviewStatusBar engine="esbuild/React" />
+      {/* Inspect element prompt bar */}
+      {inspectedElement && (
+        <div className="border-t border-blue-500/30 p-3 bg-blue-500/5 shrink-0 animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-start gap-2">
+            <Crosshair className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1">
+                Element Selected
+              </p>
+              <p className="text-[11px] text-[var(--app-text)] font-mono mb-1">
+                &lt;{inspectedElement.tag}{inspectedElement.id ? ` #${inspectedElement.id}` : ''}{inspectedElement.classes ? ` .${inspectedElement.classes.split(/\s+/).slice(0, 3).join('.')}` : ''}&gt;
+              </p>
+              {inspectedElement.text && (
+                <p className="text-[10px] text-[var(--app-text-dim)] truncate">"{inspectedElement.text.slice(0, 100)}"</p>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="text"
+                  value={inspectEditText}
+                  onChange={(e) => setInspectEditText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendInspectPrompt(); if (e.key === 'Escape') { setInspectedElement(null); setInspectEditText(''); } }}
+                  placeholder="What should the AI change? e.g. 'make this button blue'"
+                  className="flex-1 h-8 px-2.5 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)] text-[11px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] focus:outline-none focus:border-blue-400"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSendInspectPrompt}
+                  disabled={!inspectEditText.trim()}
+                  className="h-8 px-3 rounded-[6px] bg-blue-500 text-white text-[11px] font-semibold uppercase hover:bg-blue-600 disabled:opacity-40 transition-opacity shrink-0"
+                >
+                  Ask AI
+                </button>
+                <button
+                  onClick={() => { setInspectedElement(null); setInspectEditText(''); }}
+                  className="h-8 px-2 rounded-[6px] text-[var(--app-text-dim)] hover:text-[var(--app-text)] text-[11px] transition-colors shrink-0"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PreviewStatusBar engine={sandboxStatus === 'running' ? 'Docker/Next.js' : 'esbuild/React'} />
     </div>
   );
 }
@@ -464,6 +554,8 @@ function BrowserHeader({
   onDeviceChange,
   isFullscreen,
   onToggleFullscreen,
+  inspectMode,
+  onToggleInspect,
 }: {
   status: string;
   onRefresh: () => void;
@@ -472,6 +564,8 @@ function BrowserHeader({
   onDeviceChange: (d: DeviceMode) => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  inspectMode?: boolean;
+  onToggleInspect?: () => void;
 }) {
   const devices: { mode: DeviceMode; icon: typeof Monitor; label: string }[] = [
     { mode: 'desktop', icon: Monitor, label: 'Desktop' },
@@ -514,6 +608,19 @@ function BrowserHeader({
           </button>
         ))}
         <div className="w-px h-4 bg-[var(--app-border)] mx-0.5" />
+        {onToggleInspect && (
+          <button
+            onClick={onToggleInspect}
+            className={`h-7 w-7 rounded-[6px] flex items-center justify-center transition-colors ${
+              inspectMode
+                ? 'bg-blue-500/15 text-blue-400'
+                : 'text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
+            }`}
+            title={inspectMode ? 'Exit inspect mode' : 'Inspect element — click an element to ask AI to edit it'}
+          >
+            <Crosshair className="h-3.5 w-3.5" />
+          </button>
+        )}
         <button
           onClick={onToggleFullscreen}
           className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
@@ -562,6 +669,27 @@ function CompilingState() {
           <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
           <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SandboxStartingState() {
+  return (
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)]">
+      <div className="relative mb-8">
+        <div className="w-16 h-16 rounded-[10px] border-2 border-emerald-400/25 animate-spin [animation-duration:4s]" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-lg">🐳</div>
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-[0.3em] animate-pulse">
+          Starting Dev Server
+        </span>
+        <span className="text-[10px] text-[var(--app-text-dim)]">
+          Installing dependencies and building…
+        </span>
       </div>
     </div>
   );

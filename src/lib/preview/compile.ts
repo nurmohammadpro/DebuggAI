@@ -1680,6 +1680,119 @@ export function buildPreviewHtml(js: string, css: string): string {
       };
     })();
 
+    // ── Element inspection mode ──────────────────────────────────────────
+    (function() {
+      var inspectActive = false;
+      var overlay = null;
+      var tooltip = null;
+
+      function createOverlay() {
+        if (overlay) return;
+        overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;pointer-events:none;z-index:99999;border:2px solid #3b82f6;background:rgba(59,130,246,0.08);border-radius:2px;transition:all 0.08s ease;display:none;';
+        document.body.appendChild(overlay);
+        tooltip = document.createElement('div');
+        tooltip.style.cssText = 'position:fixed;z-index:100000;background:#1e1e2e;color:#cdd6f4;font-size:11px;font-family:monospace;padding:6px 10px;border-radius:6px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.4);max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none;';
+        document.body.appendChild(tooltip);
+      }
+
+      function removeOverlay() {
+        if (overlay) { overlay.remove(); overlay = null; }
+        if (tooltip) { tooltip.remove(); tooltip = null; }
+      }
+
+      function getElementPath(el) {
+        var path = [];
+        while (el && el !== document.body && el !== document.documentElement) {
+          var tag = el.tagName.toLowerCase();
+          if (el.id) { path.unshift(tag + '#' + el.id); break; }
+          var siblings = Array.from(el.parentNode ? el.parentNode.children : []).filter(function(s) { return s.tagName === el.tagName; });
+          var idx = siblings.indexOf(el);
+          path.unshift(tag + (siblings.length > 1 ? ':nth-child(' + (idx + 1) + ')' : ''));
+          el = el.parentNode;
+        }
+        return path.join(' > ');
+      }
+
+      function getElementInfo(el) {
+        var rect = el.getBoundingClientRect();
+        return {
+          tag: el.tagName.toLowerCase(),
+          id: el.id || null,
+          classes: (el.className && typeof el.className === 'string') ? el.className.trim() : '',
+          text: (el.textContent || '').trim().slice(0, 120),
+          path: getElementPath(el),
+          attributes: Array.from(el.attributes || []).filter(function(a) { return !['class','id','style'].includes(a.name); }).map(function(a) { return a.name + '="' + a.value + '"'; }).join(' '),
+          rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+        };
+      }
+
+      function onMouseMove(e) {
+        if (!inspectActive) return;
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el === overlay || el === tooltip) return;
+        var rect = el.getBoundingClientRect();
+        overlay.style.display = 'block';
+        overlay.style.top = rect.top + 'px';
+        overlay.style.left = rect.left + 'px';
+        overlay.style.width = rect.width + 'px';
+        overlay.style.height = rect.height + 'px';
+        var info = getElementInfo(el);
+        tooltip.style.display = 'block';
+        tooltip.textContent = '<' + info.tag + (info.id ? '#' + info.id : '') + (info.classes ? '.' + info.classes.split(/\\s+/).slice(0, 3).join('.') : '') + '>';
+        var tx = rect.left;
+        var ty = rect.top - 28;
+        if (ty < 4) ty = rect.bottom + 6;
+        if (tx + 320 > window.innerWidth) tx = window.innerWidth - 328;
+        tooltip.style.top = ty + 'px';
+        tooltip.style.left = tx + 'px';
+      }
+
+      function onClick(e) {
+        if (!inspectActive) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el === overlay || el === tooltip) return;
+        var info = getElementInfo(el);
+        try {
+          parent.postMessage({ source: 'debuggai-preview', type: 'element-clicked', element: info, timestamp: Date.now() }, '*');
+        } catch(ex) {}
+        setInspectMode(false);
+      }
+
+      function onKeyDown(e) {
+        if (e.key === 'Escape' && inspectActive) { e.preventDefault(); setInspectMode(false); }
+      }
+
+      function setInspectMode(active) {
+        inspectActive = active;
+        if (active) {
+          createOverlay();
+          document.body.style.cursor = 'crosshair';
+          document.addEventListener('mousemove', onMouseMove, true);
+          document.addEventListener('click', onClick, true);
+          document.addEventListener('keydown', onKeyDown, true);
+        } else {
+          removeOverlay();
+          document.body.style.cursor = '';
+          document.removeEventListener('mousemove', onMouseMove, true);
+          document.removeEventListener('click', onClick, true);
+          document.removeEventListener('keydown', onKeyDown, true);
+          try {
+            parent.postMessage({ source: 'debuggai-preview', type: 'inspect-mode-changed', active: false }, '*');
+          } catch(ex) {}
+        }
+      }
+
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.source === 'debuggai-parent' && event.data.type === 'inspect-mode') {
+          setInspectMode(!!event.data.active);
+        }
+      });
+    })();
+
     try {
       ${js}
     } catch(e) {

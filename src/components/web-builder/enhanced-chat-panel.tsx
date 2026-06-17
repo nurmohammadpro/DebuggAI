@@ -1031,7 +1031,7 @@ export function EnhancedChatPanel({
   // Ref gate — prevents empty state flash during thread sync
   const threadBootedRef = useRef(false);
 
-  const { currentThreadId, accumulated, resetAccumulated, files } = useGenerationStore();
+  const { currentThreadId, accumulated, resetAccumulated, files, pendingInspectPrompt, setPendingInspectPrompt } = useGenerationStore();
   const { addCodeBlocks, setStreaming, reset: resetCodeBlocks } = useCodeBlocksStore();
   const { setSidebarCollapsed } = useShellStore();
   const hasExistingFiles = Boolean(files && Object.values(files.files).some((file) => file.status !== 'deleted'));
@@ -1065,6 +1065,20 @@ export function EnhancedChatPanel({
       threadBootedRef.current = false;
     }
   }, [currentThreadId, resetAccumulated, resetCodeBlocks, setStreaming]);
+
+  // Gap 2: Listen for inspect-element prompts from the preview and auto-send
+  useEffect(() => {
+    if (!pendingInspectPrompt) return;
+    setInput(pendingInspectPrompt);
+    setPendingInspectPrompt(null);
+    // Defer to next tick so setInput has taken effect
+    const timer = setTimeout(() => {
+      handleSend();
+    }, 50);
+    return () => clearTimeout(timer);
+    // handleSend is intentionally omitted — it captures input via closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingInspectPrompt]);
 
   const loadThreadMessages = useCallback(async (threadId: string) => {
     const session = await getSession();
@@ -1197,7 +1211,7 @@ export function EnhancedChatPanel({
     }));
   }, [updateStreamingAssistant]);
 
-  const { generate, agentTurn, ensureThreadId, cancel } = useGeneration({
+  const { agentTurn, ensureThreadId, cancel } = useGeneration({
     onChunk: appendStreamingChunk,
     onDone: async () => {
       setIsLoading(false);
@@ -1357,41 +1371,24 @@ export function EnhancedChatPanel({
         });
       }
 
-      // When existing project files are loaded, include them as context so the AI
-      // can make targeted edits instead of guessing the current code. This is
-      // essential for refactor/fix/polish to produce correct file blocks.
-      let fullPrompt = text;
-      if (hasExistingFiles && files) {
-        const serialized = serializeVirtualFiles(files);
-        const tokenEstimate = serialized.length / 4; // rough: ~4 chars per token
-        // Fallback generation is an emergency path; keep context compact so
-        // Groq/DeepSeek free-tier limits do not reject polish/refactor prompts.
-        const truncated = tokenEstimate > 2500
-          ? serialized.slice(0, 10000) + '\n// ... (truncated for length)'
-          : serialized;
-        fullPrompt = `${text}\n\n--- CURRENT PROJECT FILES ---\n${truncated}\n--- END PROJECT FILES ---\n\nApply the changes above to the existing project. Return complete file blocks for every changed file using the // File: path format.`;
-      }
-
       const generationDirective = buildGenerationDirective(builderMode, hasExistingFiles);
 
-      // Try agent loop first (tool-calling, surgical edits).
-      // Only unavailable agent routes fall back to the legacy generator.
-      // Real provider/runtime errors must surface; otherwise polish/fix can
-      // silently regress from the configured Z.ai model to the old Groq path.
-      let agentResult: string | null = null;
+      // Agent tool-calling loop — the only code generation path.
+      // The agent uses surgical tool edits (write_file, line_replace) against
+      // project_files, with auto-verify after each batch of writes.
       const toolEventsAccum: ToolEvent[] = [];
-      agentResult = await agentTurn(
+      const agentResult = await agentTurn(
         { prompt: text, persistUserMessage: false, generationDirective },
         (evt) => { toolEventsAccum.push(evt); setToolEvents([...toolEventsAccum]); },
       );
 
       if (agentResult === null) {
-        // Agent route not available — fall back to single-shot generate.
-        await generate({
-          prompt: fullPrompt,
-          persistUserMessage: false,
-          generationDirective,
-        });
+        toast.error('Agent service is temporarily unavailable. Please try again in a moment.');
+        updateStreamingAssistant((message) => ({
+          ...message,
+          content: 'Agent service unavailable. Please try again.',
+          status: 'error',
+        }));
       }
     } catch (error) {
       console.error('Generation error:', error);

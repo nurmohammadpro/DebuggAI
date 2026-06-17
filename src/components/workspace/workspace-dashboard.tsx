@@ -20,12 +20,14 @@ import dynamic from 'next/dynamic';
 import { Panel } from '@/components/panel/panel';
 import { WorkspaceSaveVersionButton } from '@/components/workspace/workspace-save-version-button';
 import { ShareDialog } from '@/components/workspace/share-dialog';
+import { ProjectMemoryDialog } from '@/components/workspace/project-memory-dialog';
 import { CommandPalette } from '@/components/dashboard/command-palette';
 
 const DeployModal = dynamic(() => import('@/components/workspace/deploy-modal').then(m => m.DeployModal), {
   loading: () => null,
 });
 import { useCursorTracking, CollabCursorOverlay } from '@/components/workspace/collab-cursors';
+import { useSandboxPreview } from '@/hooks/use-sandbox-preview';
 import { supabase } from '@/lib/supabase';
 import { useDashboardShell } from '@/hooks/use-dashboard-shell';
 import { getSession, useSession } from '@/hooks/use-session';
@@ -49,6 +51,8 @@ export function WorkspaceDashboard() {
   const [workspaceSidebarOpen, setWorkspaceSidebarOpen] = useState(false);
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
+  const sandboxPreview = useSandboxPreview();
   const projectBootStartedAtRef = useRef<number | null>(null);
   const projectBootLoggedRef = useRef<string | null>(null);
   const threadBootedRef = useRef<string | null>(null);
@@ -387,6 +391,11 @@ export function WorkspaceDashboard() {
         url={shareUrl}
       />
 
+      <ProjectMemoryDialog
+        open={memoryDialogOpen}
+        onClose={() => setMemoryDialogOpen(false)}
+      />
+
       {/* Workspace sidebar trigger — hidden by default, v0-style */}
       <button
         type="button"
@@ -407,6 +416,7 @@ export function WorkspaceDashboard() {
       <WorkspaceSidebar
         isOpen={workspaceSidebarOpen}
         onClose={() => setWorkspaceSidebarOpen(false)}
+        onMemoryOpen={() => setMemoryDialogOpen(true)}
       />
 
       {/* Main workspace — no top bar, v0.dev clean layout */}
@@ -465,6 +475,8 @@ export function WorkspaceDashboard() {
               onDeploy={() => setDeployModalOpen(true)}
               onShare={handleShare}
               onSave={() => saveButtonRef.current?.click()}
+              sandboxUrl={sandboxPreview.previewUrl}
+              sandboxStatus={sandboxPreview.status}
             />
           </Panel>
 
@@ -481,6 +493,8 @@ export function WorkspaceDashboard() {
               onViewChange={setRightView}
               onDeploy={() => setDeployModalOpen(true)}
               onShare={handleShare}
+              sandboxUrl={sandboxPreview.previewUrl}
+              sandboxStatus={sandboxPreview.status}
             />
           </Panel>
         </div>

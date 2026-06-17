@@ -662,6 +662,9 @@ export function useGeneration(options: UseGenerationOptions = {}) {
 
         const threadId = await ensureThread();
         const projectIdForTurn = useGenerationStore.getState().currentProjectId || currentProjectId;
+        // Snapshot current files for diff timeline before agent modifies them
+        const turnId = `turn_${Date.now()}`;
+        useGenerationStore.getState().snapshotBeforeTurn(turnId);
         const res = await fetch('/api/agent/turn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders },
