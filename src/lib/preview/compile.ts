@@ -1510,6 +1510,28 @@ export function buildPreviewHtml(js: string, css: string): string {
       installStorage('sessionStorage');
     })();
 
+    // ── Navigation interceptor ──────────────────────────────────────────
+    // Prevents <a> tag clicks from navigating the top-level window out of
+    // the preview sandbox. When allow-same-origin is set, same-origin links
+    // would otherwise cause a full-page top-level navigation.
+    (function() {
+      document.addEventListener('click', function(e) {
+        var el = e.target;
+        while (el && el !== document.body) {
+          if (el.tagName === 'A' && el.href) {
+            var href = el.getAttribute('href');
+            if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !el.hasAttribute('download')) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[preview] Intercepted navigation: ' + href);
+            }
+            break;
+          }
+          el = el.parentElement;
+        }
+      }, true);
+    })();
+
     // ── Error & console trap ────────────────────────────────────────────
     (function() {
       const originalConsole = {};
