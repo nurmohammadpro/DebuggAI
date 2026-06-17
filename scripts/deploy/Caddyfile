@@ -1,0 +1,30 @@
+# DebuggAI — Caddy reverse proxy with automatic HTTPS
+# Place at /etc/caddy/Caddyfile
+
+{$DOMAIN:localhost} {
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Real IP from reverse proxy / Cloudflare
+	@trustedProxies {
+		remote_ip 10.0.0.0/8
+		remote_ip 172.16.0.0/12
+		remote_ip 192.168.0.0/16
+	}
+	@cloudflare {
+		header CF-Connecting-IP *
+	}
+
+	reverse_proxy localhost:3000 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

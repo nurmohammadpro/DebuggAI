@@ -15,6 +15,80 @@ interface BrowserPreviewProps {
 }
 
 const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
+
+/**
+ * Resolve an href to the corresponding Next.js App Router page file path.
+ * e.g. "/about" → "app/about/page.tsx", "/" → "app/page.tsx"
+ */
+function resolvePageEntry(
+  href: string,
+  fileEntries: Record<string, { path: string; content: string; status?: string; language?: string }>,
+): string | null {
+  // Parse the pathname from the href (ignore protocol/host for relative URLs)
+  let pathname = href;
+  try {
+    const u = new URL(href, 'http://localhost');
+    pathname = u.pathname;
+  } catch {}
+  if (!pathname.startsWith('/')) pathname = '/' + pathname;
+
+  // Normalize: strip trailing slash (except root)
+  if (pathname !== '/') pathname = pathname.replace(/\/+$/, '');
+
+  const fileKeys = Object.keys(fileEntries);
+
+  // Build candidate paths (ordered by priority)
+  const candidates: string[] = [];
+
+  // 1. Exact match: /about → app/about/page.tsx
+  const segment = pathname === '/' ? '' : pathname;
+  for (const ext of ['tsx', 'ts', 'jsx', 'js']) {
+    candidates.push(`app${segment}/page.${ext}`);
+    candidates.push(`src/app${segment}/page.${ext}`);
+  }
+
+  // 2. Dynamic routes: /blog/post-1 → app/blog/[slug]/page.tsx
+  //    Split the path into segments and look for [param] patterns
+  const pathSegments = pathname.split('/').filter(Boolean);
+  for (const key of fileKeys) {
+    const match = matchDynamicRoute(key, pathSegments);
+    if (match) candidates.push(key);
+  }
+
+  // 3. Nested layouts: check if any layout file exists for this path
+  for (const ext of ['tsx', 'ts', 'jsx', 'js']) {
+    // Walk up from the deepest segment
+    for (let i = pathSegments.length; i >= 0; i--) {
+      const prefix = pathSegments.slice(0, i).join('/');
+      const dir = prefix ? `app/${prefix}` : 'app';
+      candidates.push(`${dir}/page.${ext}`);
+      candidates.push(`src/${dir}/page.${ext}`);
+    }
+  }
+
+  for (const c of candidates) {
+    if (fileEntries[c]) return c;
+  }
+
+  return null;
+}
+
+/** Match a dynamic route pattern like app/blog/[slug]/page.tsx against segments */
+function matchDynamicRoute(pattern: string, segments: string[]): boolean {
+  // Only match app/.../page.{ext} patterns
+  const pageMatch = pattern.match(/^(?:src\/)?app\/(.*)\/page\.(tsx|ts|jsx|js)$/);
+  if (!pageMatch) return false;
+  const routeParts = (pageMatch[1] || '').split('/');
+  if (routeParts.length !== segments.length) return false;
+  for (let i = 0; i < routeParts.length; i++) {
+    const part = routeParts[i]!;
+    if (part.startsWith('[') && part.endsWith(']')) continue; // dynamic segment
+    if (part.startsWith('[...') && part.endsWith(']')) return true; // catch-all matches anything
+    if (part !== segments[i]) return false;
+  }
+  return true;
+}
+
 const DEVICE_WIDTHS: Record<DeviceMode, string> = {
   desktop: '100%',
   tablet: '768px',
@@ -28,7 +102,7 @@ const DEVICE_WIDTHS: Record<DeviceMode, string> = {
  * Replaces the Docker sandbox-based preview for UI rendering.
  */
 export function BrowserPreview({ className, chromeless = false }: BrowserPreviewProps) {
-  const { files, previewNonce, bumpPreviewNonce, setLastError, clearError, lastError } =
+  const { files, previewNonce, bumpPreviewNonce, setLastError, clearError, lastError, currentProjectId } =
     useGenerationStore();
 
   const [html, setHtml] = useState<string | null>(null);
@@ -41,6 +115,8 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
   const abortRef = useRef<AbortController | null>(null);
   const htmlRef = useRef<string | null>(null);
   const compileRunRef = useRef(0);
+  const consoleBufRef = useRef<Array<{ type: string; args: string[]; timestamp: number }>>([]);
+  const networkBufRef = useRef<Array<{ url: string; method: string; status: number; statusText: string; error?: string; timestamp: number }>>([]);
 
   useEffect(() => {
     htmlRef.current = html;
@@ -54,17 +130,57 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
 
       switch (data.type) {
         case 'ready':
-          // Preview is loaded and trap is active
+          break;
+        case 'console.log':
+        case 'console.info':
+        case 'console.debug':
+          consoleBufRef.current.push({
+            type: data.type.replace('console.', ''),
+            args: data.args || [],
+            timestamp: data.timestamp || Date.now(),
+          });
           break;
         case 'console.error':
         case 'console.warn':
-          // Convert console errors to preview errors
+          consoleBufRef.current.push({
+            type: data.type.replace('console.', ''),
+            args: data.args || [],
+            timestamp: data.timestamp || Date.now(),
+          });
           if (data.type === 'console.error') {
             setLastError({
               message: data.args?.join(' ') || 'Console error',
               source: 'console',
             });
           }
+          break;
+        case 'navigate':
+          // SPA routing: find matching page file and recompile with it as entry point
+          if (data.href && files) {
+            const targetHref = String(data.href);
+            const resolved = resolvePageEntry(targetHref, files.files);
+            if (resolved) {
+              // Set the new entry path and trigger recompilation
+              const store = useGenerationStore.getState();
+              if (resolved !== files.entryPath) {
+                // Update files entryPath and kick off recompile
+                const { bumpPreviewNonce } = store;
+                // Mutate the entryPath via store internal (safe since bump triggers recompile)
+                files.entryPath = resolved;
+                bumpPreviewNonce();
+              }
+            }
+          }
+          break;
+        case 'network-error':
+          networkBufRef.current.push({
+            url: data.url || '',
+            method: data.method || 'GET',
+            status: data.status || 0,
+            statusText: data.statusText || '',
+            error: data.error || '',
+            timestamp: data.timestamp || Date.now(),
+          });
           break;
         case 'runtime-error':
           setLastError({
@@ -82,13 +198,32 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
           break;
       }
     },
-    [setLastError],
+    [setLastError, files],
   );
 
   useEffect(() => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [handleMessage]);
+
+  // Flush console/network logs to the server-side buffer so the agent
+  // can read them via read_dev_logs and read_network_requests.
+  useEffect(() => {
+    const flushInterval = setInterval(() => {
+      const consoleEntries = consoleBufRef.current.splice(0);
+      const networkEntries = networkBufRef.current.splice(0);
+      if (!consoleEntries.length && !networkEntries.length) return;
+      if (!currentProjectId) return;
+
+      fetch('/api/preview/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: currentProjectId, console: consoleEntries, network: networkEntries }),
+      }).catch(() => { /* best-effort, don't spam console */ });
+    }, 5_000);
+
+    return () => clearInterval(flushInterval);
+  }, [currentProjectId]);
 
   // Compile and render whenever files or nonce changes
   const compile = useCallback(async () => {

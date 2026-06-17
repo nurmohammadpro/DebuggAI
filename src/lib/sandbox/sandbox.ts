@@ -566,7 +566,9 @@ fi
 
     record.containerId = containerName;
 
-    // Monitor container — detect running dev server or catch crashes
+    // Monitor container — detect dev server readiness, crashes, and stalled processes.
+    // Fast polling during install (3s), slow polling once running (30s).
+    let monitorPhase: 'installing' | 'running' = 'installing';
     const monitor = setInterval(() => {
       try {
         const running = execSync(
@@ -576,43 +578,59 @@ fi
         if (!running) {
           clearInterval(monitor);
           this.monitors.delete(record.id);
-          // Skip if already stopped intentionally
           if (record.status === 'stopped') return;
 
           const exitCode = execSync(
             `docker inspect -f '{{.State.ExitCode}}' ${containerName} 2>/dev/null || echo -1`,
           ).toString().trim();
-          const recentLogs = this.readRecentLogs(containerName);
+          const logs = this.readRecentLogs(containerName);
 
-          if (record.status !== 'running') {
-            record.status = 'error';
-            record.error = recentLogs
-              ? `Process exited with code ${exitCode}\n\nRecent logs:\n${recentLogs}`
-              : `Process exited with code ${exitCode}`;
-          }
+          record.status = 'error';
+          record.error = logs
+            ? `Process exited with code ${exitCode}\n\nRecent logs:\n${logs}`
+            : `Process exited with code ${exitCode}`;
           record.lastActiveAt = Date.now();
           this.saveState();
-        } else if (record.status === 'installing') {
-          // Health check: try to reach the dev server
-          try {
-            const httpCode = execSync(
-              `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${port} 2>/dev/null || echo ""`,
-              { timeout: 3000 },
-            ).toString().trim();
-            if (httpCode && httpCode !== '000') {
-              record.status = 'running';
-              clearInterval(monitor);
-              this.monitors.delete(record.id);
-              record.lastActiveAt = Date.now();
-              this.saveState();
-            }
-          } catch {}
+          return;
+        }
+
+        // Health check: probe the dev server
+        let httpCode = '';
+        try {
+          httpCode = execSync(
+            `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${port} 2>/dev/null || echo "000"`,
+            { timeout: 3000 },
+          ).toString().trim();
+        } catch {}
+
+        if (monitorPhase === 'installing') {
+          if (httpCode && httpCode !== '000') {
+            record.status = 'running';
+            monitorPhase = 'running';
+            record.lastActiveAt = Date.now();
+            this.saveState();
+            // Switch to slower interval for ongoing health monitoring
+            // (the interval itself stays at 30s from here; we update next tick)
+          }
+        } else if (monitorPhase === 'running') {
+          // Dev server crashed while container is still up
+          if (!httpCode || httpCode === '000') {
+            record.status = 'error';
+            const logs = this.readRecentLogs(containerName);
+            record.error = logs
+              ? `Dev server on port ${port} stopped responding.\n\nRecent logs:\n${logs}`
+              : `Dev server on port ${port} stopped responding.`;
+            record.lastActiveAt = Date.now();
+            this.saveState();
+            clearInterval(monitor);
+            this.monitors.delete(record.id);
+          }
         }
       } catch {
         clearInterval(monitor);
         this.monitors.delete(record.id);
       }
-    }, 3000);
+    }, monitorPhase === 'installing' ? 3000 : 30000);
     this.monitors.set(record.id, monitor);
   }
 
@@ -634,14 +652,53 @@ fi
     return this.sandboxes.get(id) ?? null;
   }
 
-  async findByProjectId(projectId: string): Promise<SandboxRecord | null> {
+  async findByProjectId(projectId: string, autoResume = true): Promise<SandboxRecord | null> {
     await this.init();
     for (const [, sandbox] of this.sandboxes) {
       if (sandbox.projectId === projectId && sandbox.status === 'running') {
         return sandbox;
       }
     }
+    // Auto-resume a stopped sandbox for this project
+    if (autoResume) {
+      for (const [, sandbox] of this.sandboxes) {
+        if (sandbox.projectId === projectId && sandbox.status === 'stopped') {
+          return await this.resumeSandbox(sandbox);
+        }
+      }
+    }
     return null;
+  }
+
+  private async resumeSandbox(sandbox: SandboxRecord): Promise<SandboxRecord | null> {
+    try {
+      this.assertDockerAvailable();
+      sandbox.lastActiveAt = Date.now();
+      sandbox.status = 'creating';
+      sandbox.error = undefined;
+      await this.saveState();
+      await this.startContainer(sandbox);
+      return sandbox;
+    } catch (err) {
+      sandbox.status = 'error';
+      sandbox.error = `Auto-resume failed: ${err instanceof Error ? err.message : String(err)}`;
+      await this.saveState();
+      return null;
+    }
+  }
+
+  async healthCheck(id: string): Promise<boolean> {
+    const sandbox = this.sandboxes.get(id);
+    if (!sandbox) return false;
+    try {
+      const httpCode = execSync(
+        `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${sandbox.port} 2>/dev/null || echo "000"`,
+        { timeout: 3000 },
+      ).toString().trim();
+      return httpCode !== '000';
+    } catch {
+      return false;
+    }
   }
 
   async getLogs(id: string): Promise<{ lines: string[]; isRunning: boolean }> {

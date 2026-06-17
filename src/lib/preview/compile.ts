@@ -1414,6 +1414,7 @@ export function buildPreviewHtml(js: string, css: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://esm.sh; connect-src 'self' http://localhost:* https://cdn.tailwindcss.com https://unpkg.com https://esm.sh; img-src 'self' data: blob: https:; font-src 'self' data:;" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
@@ -1510,11 +1511,12 @@ export function buildPreviewHtml(js: string, css: string): string {
       installStorage('sessionStorage');
     })();
 
-    // ── Navigation interceptor ──────────────────────────────────────────
-    // Prevents <a> tag clicks from navigating the top-level window out of
-    // the preview sandbox. When allow-same-origin is set, same-origin links
-    // would otherwise cause a full-page top-level navigation.
+    // ── Navigation interceptor (SPA routing) ────────────────────────────
+    // Intercepts <a> clicks and routes them through the parent frame so the
+    // compile pipeline can swap to the correct page entry point without a
+    // full-page top-level navigation.
     (function() {
+      var currentPath = '/';
       document.addEventListener('click', function(e) {
         var el = e.target;
         while (el && el !== document.body) {
@@ -1523,13 +1525,30 @@ export function buildPreviewHtml(js: string, css: string): string {
             if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !el.hasAttribute('download')) {
               e.preventDefault();
               e.stopPropagation();
-              console.log('[preview] Intercepted navigation: ' + href);
+              if (href !== currentPath) {
+                currentPath = href;
+                try {
+                  parent.postMessage({
+                    source: 'debuggai-preview',
+                    type: 'navigate',
+                    href: href,
+                    timestamp: Date.now()
+                  }, '*');
+                } catch(e) {}
+              }
             }
             break;
           }
           el = el.parentElement;
         }
       }, true);
+
+      // Listen for the parent to signal which page to show after recompilation
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.source === 'debuggai-parent' && event.data.type === 'route') {
+          currentPath = event.data.href || '/';
+        }
+      });
     })();
 
     // ── Error & console trap ────────────────────────────────────────────
@@ -1581,7 +1600,85 @@ export function buildPreviewHtml(js: string, css: string): string {
 
       parent.postMessage({ source: 'debuggai-preview', type: 'ready', timestamp: Date.now() }, '*');
     })();
-    // ── End error trap ──────────────────────────────────────────────────
+
+    // ── Network interceptor ──────────────────────────────────────────────
+    // Captures fetch/XHR failures so the agent can diagnose API errors,
+    // CORS issues, and missing endpoints visible only in the browser.
+    // Also blocks requests to external domains (not localhost or CDN) to
+    // prevent accidental data exfiltration from the preview sandbox.
+    (function() {
+      function reportNetworkError(details) {
+        try {
+          parent.postMessage({
+            source: 'debuggai-preview',
+            type: 'network-error',
+            url: details.url,
+            method: details.method,
+            status: details.status,
+            statusText: details.statusText || '',
+            error: details.error || '',
+            timestamp: Date.now()
+          }, '*');
+        } catch(e) {}
+      }
+
+      var ALLOWED_DOMAINS = ['localhost', '127.0.0.1', 'cdn.tailwindcss.com', 'unpkg.com', 'esm.sh', 'cdn.jsdelivr.net'];
+
+      function isExternal(url) {
+        if (!url || url.startsWith('/') || url.startsWith('#') || url.startsWith('data:') || url.startsWith('blob:')) return false;
+        if (url.startsWith('http://localhost') || url.startsWith('https://localhost')) return false;
+        if (url.startsWith('http://127.0.0.1') || url.startsWith('https://127.0.0.1')) return false;
+        for (var i = 0; i < ALLOWED_DOMAINS.length; i++) {
+          if (url.indexOf(ALLOWED_DOMAINS[i]) !== -1) return false;
+        }
+        return true;
+      }
+
+      // Intercept fetch
+      var _fetch = window.fetch;
+      window.fetch = function(input, init) {
+        var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+        var method = (init && init.method) || 'GET';
+        if (isExternal(url)) {
+          console.warn('[preview] Blocked external fetch: ' + method + ' ' + url + ' — only localhost and CDN requests are allowed in preview.');
+          reportNetworkError({ url: url, method: method, status: 0, statusText: '', error: 'External requests blocked in preview sandbox' });
+          return Promise.reject(new Error('External requests blocked in preview sandbox'));
+        }
+        return _fetch.apply(this, arguments).then(function(res) {
+          if (!res.ok) {
+            reportNetworkError({ url: url, method: method, status: res.status, statusText: res.statusText });
+          }
+          return res;
+        }).catch(function(err) {
+          reportNetworkError({ url: url, method: method, status: 0, statusText: '', error: err.message || String(err) });
+          throw err;
+        });
+      };
+
+      // Intercept XMLHttpRequest
+      var XHR = XMLHttpRequest;
+      var _open = XHR.prototype.open;
+      var _send = XHR.prototype.send;
+      XHR.prototype.open = function(method, url) {
+        this._debuggai_method = method;
+        this._debuggai_url = url;
+        return _open.apply(this, arguments);
+      };
+      XHR.prototype.send = function() {
+        var self = this;
+        var url = self._debuggai_url || '';
+        var method = self._debuggai_method || 'GET';
+        self.addEventListener('error', function() {
+          reportNetworkError({ url: url, method: method, status: self.status || 0, statusText: self.statusText || '', error: 'XHR network error' });
+        });
+        self.addEventListener('loadend', function() {
+          if (self.status > 0 && self.status >= 400) {
+            reportNetworkError({ url: url, method: method, status: self.status, statusText: self.statusText || '' });
+          }
+        });
+        return _send.apply(this, arguments);
+      };
+    })();
 
     try {
       ${js}

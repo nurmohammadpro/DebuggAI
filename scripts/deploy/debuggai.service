@@ -1,0 +1,33 @@
+# DebuggAI — systemd service
+# Place at /etc/systemd/system/debuggai.service
+
+[Unit]
+Description=DebuggAI — AI App Builder
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=debuggai
+Group=debuggai
+WorkingDirectory=/home/debuggai/app
+EnvironmentFile=/home/debuggai/app/.env
+ExecStart=/usr/bin/node --max-old-space-size=4096 node_modules/.bin/next start
+Restart=on-failure
+RestartSec=10
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/debuggai/app/.next /home/debuggai/app/node_modules/.cache /tmp
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictRealtime=yes
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

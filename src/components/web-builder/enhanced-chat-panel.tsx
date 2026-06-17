@@ -793,6 +793,45 @@ function ToolTimeline({ events }: { events: ToolEvent[] }) {
   );
 }
 
+// ── Live Agent Activity ─────────────────────────────────────────────────────
+
+function getAgentPhase(events: ToolEvent[]): { label: string; sublabel: string } {
+  if (!events.length) return { label: 'Thinking', sublabel: 'Analyzing your request' };
+  const last = events[events.length - 1]!;
+  if (last.type === 'tool_call') {
+    const name = last.name;
+    if (name === 'view_file' || name === 'list_dir' || name === 'search_files') return { label: 'Exploring', sublabel: `Reading ${typeof last.args?.path === 'string' ? last.args.path : 'files'}` };
+    if (name === 'write_file' || name === 'line_replace') return { label: 'Editing', sublabel: `Writing ${typeof last.args?.path === 'string' ? last.args.path : 'code'}` };
+    if (name === 'read_dev_logs') return { label: 'Verifying', sublabel: 'Checking for errors' };
+    if (name === 'web_search') return { label: 'Researching', sublabel: `Searching for ${String(last.args?.query || 'docs').slice(0, 40)}` };
+    if (name === 'generate_image') return { label: 'Generating', sublabel: `Creating ${typeof last.args?.path === 'string' ? last.args.path : 'image'}` };
+    return { label: 'Working', sublabel: name.replace(/_/g, ' ') };
+  }
+  return { label: 'Processing', sublabel: 'Applying changes' };
+}
+
+function LiveToolActivity({ events, isActive }: { events: ToolEvent[]; isActive: boolean }) {
+  if (!events.length) return null;
+  const phase = getAgentPhase(events);
+  const writeCount = events.filter(e => e.type === 'tool_call' && (e.name === 'write_file' || e.name === 'line_replace')).length;
+  const readCount = events.filter(e => e.type === 'tool_call' && (e.name === 'view_file' || e.name === 'list_dir' || e.name === 'search_files')).length;
+
+  return (
+    <div className="rounded-[8px] border border-[var(--app-border)] overflow-hidden bg-[var(--app-panel-2)] animate-in fade-in duration-200">
+      <div className="px-3 py-2 border-b border-[var(--app-border)] flex items-center gap-2">
+        <span className={cn('h-1.5 w-1.5 rounded-full', isActive ? 'bg-[var(--app-accent)] animate-pulse' : 'bg-emerald-400')} />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--app-text-dim)]">{phase.label}</span>
+        <span className="text-[10px] text-[var(--app-text-muted)] ml-auto">{phase.sublabel}</span>
+      </div>
+      <div className="px-3 py-1.5 flex items-center gap-4 text-[10px] text-[var(--app-text-dim)]">
+        {readCount > 0 && <span>{readCount} read{readCount !== 1 ? 's' : ''}</span>}
+        {writeCount > 0 && <span className="text-amber-400">{writeCount} edit{writeCount !== 1 ? 's' : ''}</span>}
+        {events.filter(e => e.type === 'tool_result' && e.is_error).length > 0 && <span className="text-[var(--app-danger)]">Error</span>}
+      </div>
+    </div>
+  );
+}
+
 // ── Typing Indicator ────────────────────────────────────────────────────────
 
 function TypingIndicator({ label = 'Thinking' }: { label?: string }) {
@@ -1371,11 +1410,40 @@ export function EnhancedChatPanel({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault();
+      handleSend();
+    }
+    // Cmd/Ctrl+Enter always sends regardless of shift
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  // Global keyboard shortcuts: Esc = cancel, Cmd/Ctrl+Enter = send
+  useEffect(() => {
+    const globalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isLoading) {
+        e.preventDefault();
+        cancel();
+        updateStreamingAssistant((message) => ({
+          ...message,
+          content: message.content || 'Generation cancelled.',
+          status: 'done',
+        }));
+        setIsLoading(false);
+        setStreaming(false);
+        streamingMessageIdRef.current = null;
+      }
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && input.trim() && !isLoading) {
+        e.preventDefault();
+        handleSend();
+      }
+    };
+    window.addEventListener('keydown', globalKeyDown);
+    return () => window.removeEventListener('keydown', globalKeyDown);
+  }, [isLoading, input, cancel, updateStreamingAssistant, setStreaming, setIsLoading, handleSend]);
 
   const handleCopyMessage = async (content: string, id: string) => {
     await navigator.clipboard.writeText(content).catch(() => {});
@@ -1422,11 +1490,14 @@ export function EnhancedChatPanel({
           'My app crashes with: TypeError — fix it and explain.',
           'Review this function for bugs and edge cases.',
           'I get a hydration error in Next.js — help me fix it.',
+          'API route returns 500 — help me debug the server error.',
         ]
       : [
-          'Build a landing page with hero section and pricing cards',
-          'Create a dashboard with stats cards and charts',
-          'Build a todo app with drag-and-drop reordering',
+          'Build a modern SaaS landing page with hero, features, pricing, and footer',
+          'Create a dashboard with stats cards, a table, and a chart component',
+          'Build a todo app with add/delete/toggle and local storage persistence',
+          'Design a blog homepage with post cards, categories sidebar, and newsletter CTA',
+          'Create a user settings page with profile form, theme toggle, and danger zone',
         ];
   const activeBuilderMode = BUILDER_MODES.find((option) => option.id === builderMode) || BUILDER_MODES[0]!;
   const ActiveBuilderModeIcon = activeBuilderMode.icon;
@@ -1633,12 +1704,14 @@ export function EnhancedChatPanel({
                       <div className="rounded-[10px] px-4 py-3 bg-[var(--app-panel)] border border-[var(--app-border)]">
                         {message.status === 'thinking' && !message.content.trim() ? (
                           <div className="space-y-3">
-                            <TypingIndicator label="Thinking" />
-                            <AssistantActivityList status={message.status} hasFiles={false} fileCount={message.fileCount} />
+                            <TypingIndicator label={toolEvents.length > 0 ? getAgentPhase(toolEvents).label : 'Thinking'} />
+                            <LiveToolActivity events={toolEvents} isActive />
+                            <AssistantActivityList status={message.status} hasFiles={toolEvents.some(e => e.type === 'tool_call' && (e.name === 'write_file' || e.name === 'line_replace'))} fileCount={message.fileCount} />
                           </div>
                         ) : message.status === 'streaming' ? (
                           <div className="space-y-3">
                             <SkeletonStreamingContent content={displayText} />
+                            <LiveToolActivity events={toolEvents} isActive />
                             <AssistantActivityList status={message.status} hasFiles={extractedCodeBlocks.length > 0 || Boolean(message.fileCount)} fileCount={message.fileCount || extractedCodeBlocks.length || undefined} />
                           </div>
                         ) : displayText.trim() ? (
@@ -1651,6 +1724,12 @@ export function EnhancedChatPanel({
                             <span className="text-emerald-400">
                               {message.fileCount || extractedCodeBlocks.length} file{(message.fileCount || extractedCodeBlocks.length) !== 1 ? 's' : ''} ready · check the code pane
                             </span>
+                          </div>
+                        )}
+
+                        {message.status === 'done' && toolEvents.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-[var(--app-border)]">
+                            <LiveToolActivity events={toolEvents} isActive={false} />
                           </div>
                         )}
                       </div>
@@ -1803,7 +1882,7 @@ export function EnhancedChatPanel({
           )}
         </div>
         <p className="hidden sm:block text-[10px] text-[var(--app-text-dim)] mt-1.5 px-1">
-          Press <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Enter</kbd> to send · <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Shift+Enter</kbd> for newline
+          <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Enter</kbd> send · <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Shift+Enter</kbd> newline · <kbd className="px-1 py-0.5 rounded bg-[var(--app-panel-2)] border border-[var(--app-border)] text-[9px] font-mono">Esc</kbd> cancel
         </p>
       </div>
     </div>

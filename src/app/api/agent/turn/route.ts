@@ -20,6 +20,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { extractVirtualFiles } from '@/lib/project/virtual-files';
 import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
+import { getConsoleLogs, getNetworkLogs } from '@/lib/preview/log-buffer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,7 @@ const MAX_TOOL_TURNS = 25;
 const MAX_VERIFY_RETRIES = 3;
 const MAX_HISTORY_TOKENS = 1200; // keep agent requests under free-tier Groq/DeepSeek limits
 const CONVERSATION_LIMIT = 30;     // Max messages to load
+const webSearchCache = new Map<string, { text: string; ts: number }>();
 
 const COMPACT_AGENT_TOOLS = [
   {
@@ -133,6 +135,20 @@ function ssePing(): string {
   return ': ping\n\n';
 }
 
+function generateSimpleSvgIcon(prompt: string, style?: string): string {
+  const colors: Record<string, { bg: string; fg: string }> = {
+    dark: { bg: '#1a1a2e', fg: '#e94560' },
+    gradient: { bg: '#667eea', fg: '#ffffff' },
+    minimal: { bg: '#ffffff', fg: '#1a1a1a' },
+  };
+  const c = colors[style || ''] || colors.gradient;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="12" fill="${c.bg}"/>
+  <circle cx="24" cy="20" r="8" stroke="${c.fg}" stroke-width="2.5" fill="none"/>
+  <path d="M12 38c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="${c.fg}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>`;
+}
+
 function hasSubstantiveFiles(files: Record<string, string>): boolean {
   return Object.values(files).some((content) => content.trim().length > 0);
 }
@@ -214,9 +230,12 @@ function buildAgentSystemPrompt({
 - If refactoring, preserve behavior and routes; move code only when it improves boundaries.
 - Finish by returning the changed files through tool writes, not by describing what the user should do.
 
-## DESIGN RULES
-- Edit globals.css CSS variables for theme colors (--primary, --foreground, etc.)
-- NEVER use raw hex (#xxx) in JSX — use Tailwind semantic classes
+## DESIGN RULES (token enforcement)
+- ALL colors MUST come from globals.css CSS variables. Define tokens like --primary, --foreground, --muted, --background, --border, --accent, --destructive in app/globals.css. Then reference them through Tailwind semantic classes: bg-primary, text-muted-foreground, border-border, bg-destructive.
+- NEVER use raw hex colors (#xxx, #xxxxxx) in JSX/TSX components, inline styles, or anywhere outside of globals.css. This is the #1 design quality violation.
+- ❌ BAD: className="bg-[#3B82F6]" or style={{ color: '#1a1a1a' }}
+- ✅ GOOD: className="bg-primary text-primary-foreground" (after defining --primary: 217 91% 60%; in globals.css)
+- For custom one-off colors, add a new CSS variable to globals.css rather than using arbitrary values.
 - Use @/ import alias for local imports
 - Keep edits SMALL — one logical change per turn
 - Use shadcn/ui components — import from @/components/ui/<name> for UI elements (Button, Card, Input, Textarea, Badge, Tabs, Dialog, Select, Avatar, etc.). For missing components, use base Tailwind.
@@ -470,103 +489,156 @@ export async function POST(req: NextRequest) {
       } catch { }
     } : undefined,
     onReadDevLogs: projectId ? async (filter, lines = 50) => {
+      const parts: string[] = [];
+      // 1. Docker sandbox (build) logs
       try {
         const sandbox = await sandboxManager.findByProjectId(projectId);
-        if (!sandbox) return 'No sandbox is running for this project.';
-        const { lines: logLines, isRunning } = await sandboxManager.getLogs(sandbox.id);
-        const recent = logLines.slice(-lines);
-        const statusTag = isRunning ? '' : ' [sandbox stopped]';
-        if (filter) {
-          const f = filter.toLowerCase();
-          const filtered = recent.filter(l => l.toLowerCase().includes(f));
-          return (filtered.join('\n') || 'No matching logs') + statusTag;
+        if (sandbox) {
+          const { lines: logLines, isRunning } = await sandboxManager.getLogs(sandbox.id);
+          const recent = logLines.slice(-lines);
+          const statusTag = isRunning ? '' : ' [sandbox stopped]';
+          if (filter) {
+            const f = filter.toLowerCase();
+            const filtered = recent.filter(l => l.toLowerCase().includes(f));
+            if (filtered.length) parts.push('## Sandbox Logs\n' + filtered.join('\n') + statusTag);
+          } else if (recent.length) {
+            parts.push('## Sandbox Logs\n' + recent.join('\n') + statusTag);
+          }
         }
-        return (recent.join('\n') || 'No recent log output.') + statusTag;
-      } catch { return 'Dev server logs not available.'; }
+      } catch {}
+
+      // 2. Browser console (runtime) logs
+      const browserLogs = getConsoleLogs(projectId, filter, lines);
+      if (browserLogs) parts.push('## Browser Console\n' + browserLogs);
+
+      return parts.join('\n\n') || 'No logs available. Sandbox may not be running and no browser console output captured yet.';
     } : undefined,
     onWebSearch: async (query) => {
       try {
         const tavilyKey = process.env.TAVILY_API_KEY;
         if (!tavilyKey) return `Web search not configured. Check docs for "${query}".`;
+
+        // Check in-memory cache for recent searches
+        const cacheKey = `ws:${query.toLowerCase().trim()}`;
+        const cached = webSearchCache.get(cacheKey);
+        if (cached && Date.now() - cached.ts < 10 * 60_000) return cached.text;
+
         const res = await fetch('https://api.tavily.com/search', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ api_key: tavilyKey, query, search_depth: 'basic', max_results: 3 }),
         });
-        if (!res.ok) throw new Error('Search failed');
+        if (!res.ok) throw new Error(`Tavily returned ${res.status}`);
         const data = await res.json();
         const results = (data?.results || []) as Array<{ title: string; url: string; content: string }>;
-        if (!results.length) return `No results for "${query}"`;
-        return results.map(r => `**${r.title}**\n${r.url}\n${r.content?.slice(0, 500)}`).join('\n\n');
-      } catch { return `Search failed for "${query}".`; }
+        if (!results.length) return `No results for "${query}". Try broader keywords.`;
+
+        const formatted = results.map((r, i) =>
+          `### Result ${i + 1}: ${r.title}\n- URL: ${r.url}\n- Summary: ${r.content?.slice(0, 400) || 'No summary available'}`
+        ).join('\n\n');
+
+        // Include a concise "Key Takeaway" hint for the agent
+        const header = `**Search results for "${query}"** (${results.length} result${results.length > 1 ? 's' : ''}):\n\n`;
+        const output = header + formatted;
+
+        webSearchCache.set(cacheKey, { text: output, ts: Date.now() });
+        return output;
+      } catch { return `Search failed for "${query}". Try rephrasing or check docs directly.`; }
     },
     onReadNetworkRequests: projectId ? async (filter, statusCode) => {
+      const parts: string[] = [];
+      // 1. Sandbox log grep (server-side HTTP errors seen in dev server)
       try {
         const sandbox = await sandboxManager.findByProjectId(projectId);
-        if (!sandbox) return 'No sandbox is running for this project.';
-        const { lines: logLines } = await sandboxManager.getLogs(sandbox.id);
-        let httpErrors = logLines.filter(l =>
-          l.includes('GET http') || l.includes('POST http') ||
-          l.includes('fetch failed') || l.includes('ECONNREFUSED') ||
-          l.includes('ENOTFOUND') || l.includes('CORS')
-        );
-        if (filter) {
-          httpErrors = httpErrors.filter(l => l.toLowerCase().includes(filter.toLowerCase()));
+        if (sandbox) {
+          const { lines: logLines } = await sandboxManager.getLogs(sandbox.id);
+          let httpErrors = logLines.filter(l =>
+            l.includes('GET http') || l.includes('POST http') ||
+            l.includes('fetch failed') || l.includes('ECONNREFUSED') ||
+            l.includes('ENOTFOUND') || l.includes('CORS')
+          );
+          if (filter) {
+            httpErrors = httpErrors.filter(l => l.toLowerCase().includes(filter.toLowerCase()));
+          }
+          if (statusCode) {
+            httpErrors = httpErrors.filter(l => l.includes(` ${statusCode} `) || l.includes(` ${statusCode}\n`));
+          }
+          if (httpErrors.length) {
+            parts.push('## Sandbox HTTP Errors\n' + httpErrors.slice(-10).join('\n'));
+          }
         }
-        if (statusCode) {
-          httpErrors = httpErrors.filter(l => l.includes(` ${statusCode} `) || l.includes(` ${statusCode}\n`));
-        }
-        const recent = httpErrors.slice(-10);
-        if (!recent.length) return 'No HTTP request errors detected. The app appears to be making successful requests.';
-        return recent.join('\n');
-      } catch {
-        return 'Network request inspection not available.';
-      }
+      } catch {}
+
+      // 2. Browser-level network errors (captured in iframe fetch/XHR interceptor)
+      const browserNet = getNetworkLogs(projectId, filter, statusCode);
+      if (browserNet) parts.push('## Browser Network\n' + browserNet);
+
+      return parts.join('\n\n') || 'No HTTP request errors detected. The app appears to be making successful requests.';
     } : undefined,
     onGenerateImage: async (prompt, path, style) => {
       try {
-        const replicateToken = process.env.REPLICATE_API_TOKEN;
         const togetherKey = process.env.TOGETHER_API_KEY;
-        const apiKey = replicateToken || togetherKey;
-        if (!apiKey) return 'Image generation not configured. Set REPLICATE_API_TOKEN or TOGETHER_API_KEY.';
+        if (!togetherKey) return 'Image generation not configured. Set TOGETHER_API_KEY for AI image generation.';
 
-        if (togetherKey) {
-          // Together AI — FLUX model
-          const fullPrompt = style
-            ? `${prompt} — ${style} style, high quality, professional, clean design`
-            : `${prompt} — high quality, professional, clean design`;
+        const ext = (path || '').split('.').pop()?.toLowerCase() || 'png';
 
-          const res = await fetch('https://api.together.xyz/v1/images/generations', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${togetherKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: 'black-forest-labs/FLUX.1-schnell',
-              prompt: fullPrompt,
-              width: 1024, height: 768, steps: 4,
-            }),
-            signal: AbortSignal.timeout(30_000),
-          });
-          if (!res.ok) throw new Error(`Together API: ${res.status}`);
-          const data = await res.json();
-          const imageUrl = data?.data?.[0]?.url;
-          if (!imageUrl) throw new Error('No image URL in response');
-
-          // Download and save to project_files
-          const imgRes = await fetch(imageUrl);
-          const buffer = Buffer.from(await imgRes.arrayBuffer());
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-          const admin = createClient(supabaseUrl, serviceKey);
-
-          // Store the image as base64 in project_files (small enough for icons)
-          const base64 = buffer.toString('base64');
+        // SVG icons: generate a simple SVG placeholder instead of using FLUX
+        if (ext === 'svg' && (path.includes('icon') || path.includes('logo') || path.includes('favicon'))) {
+          const svgContent = generateSimpleSvgIcon(prompt, style);
           if (projectId) {
+            const admin = createClient(supabaseUrl, serviceKey);
             await admin.from('project_files').upsert({
-              project_id: projectId, path, content: base64,
+              project_id: projectId, path, content: svgContent,
               status: 'modified', updated_at: new Date().toISOString(),
             }, { onConflict: 'project_id,path' });
           }
-          return `Image generated and saved to ${path}. Size: ${Math.round(buffer.length / 1024)}KB.`;
+          return `SVG icon generated and saved to ${path}.`;
         }
-        return 'Image generation via Replicate not yet implemented. Set TOGETHER_API_KEY for FLUX.1-schnell.';
+
+        // Dimension presets based on path hint
+        let width = 1024, height = 768;
+        if (path.includes('icon') || path.includes('favicon')) { width = 512; height = 512; }
+        if (path.includes('logo')) { width = 768; height = 512; }
+        if (path.includes('hero') || path.includes('banner')) { width = 1280; height = 720; }
+        if (path.includes('og-') || path.includes('social')) { width = 1200; height = 630; }
+
+        // Style presets
+        const stylePrefix: Record<string, string> = {
+          minimal: 'minimalist design, clean lines, negative space, ',
+          gradient: 'smooth gradients, vibrant colors, modern, ',
+          illustration: 'flat vector illustration style, colorful, modern, ',
+          abstract: 'abstract geometric patterns, gradient, modern, ',
+          dark: 'dark theme, neon accents, modern, ',
+        };
+        const styleHint = style ? (stylePrefix[style] || `${style} style, `) : '';
+        const fullPrompt = `${styleHint}${prompt} — high quality, professional, clean design, no text overlays`;
+
+        const res = await fetch('https://api.together.xyz/v1/images/generations', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${togetherKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'black-forest-labs/FLUX.1-schnell',
+            prompt: fullPrompt,
+            width, height, steps: 4,
+          }),
+          signal: AbortSignal.timeout(30_000),
+        });
+        if (!res.ok) throw new Error(`Together API: ${res.status}`);
+        const data = await res.json();
+        const imageUrl = data?.data?.[0]?.url;
+        if (!imageUrl) throw new Error('No image URL in response');
+
+        const imgRes = await fetch(imageUrl);
+        const buffer = Buffer.from(await imgRes.arrayBuffer());
+        const admin = createClient(supabaseUrl, serviceKey);
+
+        const base64 = buffer.toString('base64');
+        if (projectId) {
+          await admin.from('project_files').upsert({
+            project_id: projectId, path, content: base64,
+            status: 'modified', updated_at: new Date().toISOString(),
+          }, { onConflict: 'project_id,path' });
+        }
+        return `Image generated and saved to ${path}. Dimensions: ${width}x${height}, size: ${Math.round(buffer.length / 1024)}KB. Use the preview asset endpoint to reference it.`;
       } catch (err) {
         return `Image generation failed: ${err instanceof Error ? err.message : String(err)}`;
       }
@@ -594,10 +666,19 @@ export async function POST(req: NextRequest) {
   // ── Stream the agent loop as SSE ───────────────────────────────────────
   const encoder = new TextEncoder();
 
+  const abortController = new AbortController();
+
   const stream = new ReadableStream({
     async start(controller) {
       const enqueue = (data: string) => { try { controller.enqueue(encoder.encode(data)); } catch {} };
-      const cancelled = false;
+      let cancelled = false;
+
+      // Listen for client disconnect or explicit abort
+      req.signal.addEventListener('abort', () => {
+        cancelled = true;
+        abortController.abort();
+      });
+
       const heartbeat = setInterval(() => { if (!cancelled) enqueue(ssePing()); }, 15_000);
 
       try {
@@ -628,6 +709,7 @@ export async function POST(req: NextRequest) {
         let verifyRetries = 0;
 
         while (turnCount < MAX_TOOL_TURNS && !cancelled) {
+          if (abortController.signal.aborted) { cancelled = true; break; }
           turnCount++;
 
           const res = await fetch(`${primary.baseUrl}/chat/completions`, {
@@ -640,7 +722,7 @@ export async function POST(req: NextRequest) {
               tool_choice: 'auto', stream: false,
               max_tokens: primary.maxTokens, temperature: 0.3,
             }),
-            signal: AbortSignal.timeout(120_000),
+            signal: AbortSignal.any([abortController.signal, AbortSignal.timeout(120_000)]),
           });
 
           if (!res.ok) {
@@ -777,7 +859,7 @@ export async function POST(req: NextRequest) {
         try { controller.close(); } catch {}
       }
     },
-    cancel() {},
+    cancel() { abortController.abort(); },
   });
 
   return new Response(stream, {
