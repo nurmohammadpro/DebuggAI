@@ -1334,14 +1334,13 @@ export async function bundlePreview(
       },
     });
 
-    // Catch-all: any package still unresolved gets an empty stub.
+    // Catch-all: any bare package import still unresolved gets an empty stub.
     // Prevents "Could not resolve" hard failures for packages the AI imports
     // but that aren't shimmed above.
     plugins.push({
       name: 'unresolved-fallback',
       setup(build: any) {
         build.onResolve({ filter: /^[^./]/ }, (args: { path: string; resolveDir: string }) => {
-          // Only intercept bare imports (packages), not relative paths
           if (args.resolveDir === '' || args.path.startsWith('.')) return;
           return { path: args.path, namespace: 'empty-stub' };
         });
@@ -1349,6 +1348,47 @@ export async function bundlePreview(
           contents: makeUnknownPackageShim(args.path, namedImportsByModule.get(args.path)),
           loader: 'js',
         }));
+      },
+    });
+
+    // Fallback for unresolved relative imports (./foo, ../bar).
+    // When the AI generates a large page that imports many component files
+    // (e.g. ./components/Navbar, ./components/Hero) but those files aren't
+    // included in the generated output, the build would otherwise hard-fail.
+    // Instead, create a stub component so the preview renders with placeholders.
+    plugins.push({
+      name: 'relative-import-fallback',
+      setup(build: any) {
+        const extensions = ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'];
+        build.onResolve({ filter: /^\.\.?\// }, (args: { path: string; resolveDir: string }) => {
+          if (!args.resolveDir) return;
+          // Try to resolve the path on disk (esbuild default resolver would do this,
+          // but we need to check ourselves to detect the "file not found" case)
+          const base = path.resolve(args.resolveDir, args.path);
+          if (fs.existsSync(base)) return;
+          for (const ext of extensions) {
+            if (fs.existsSync(base + ext)) return;
+          }
+          for (const ext of extensions) {
+            if (fs.existsSync(path.join(base, 'index' + ext))) return;
+          }
+          // File doesn't exist — provide a stub
+          return { path: args.path, namespace: 'relative-import-stub' };
+        });
+        build.onLoad({ filter: /.*/, namespace: 'relative-import-stub' }, (args: { path: string }) => {
+          const name = args.path.split('/').pop() || 'Component';
+          return {
+            contents: `
+import React from 'react';
+const Stub = React.forwardRef(function Stub(props, ref) {
+  return React.createElement('div', { ref, style: { padding: '1rem', border: '1px dashed #444', borderRadius: '0.375rem', color: '#888', fontSize: '0.75rem', fontFamily: 'monospace', textAlign: 'center' } }, '// ${name}');
+});
+Stub.displayName = 'Stub(${name})';
+export default Stub;
+`.trimStart(),
+            loader: 'jsx',
+          };
+        });
       },
     });
 
