@@ -7,8 +7,8 @@
  * - Uses esbuild (server-side) for fast TSX→JS compilation
  * - Strips Next.js-specific imports (next/navigation, next/link, next/image)
  * - Extracts CSS module files and converts to plain CSS
- * - Uses tiny React virtual modules backed by browser globals, avoiding
- *   CodeSandbox package fetches and serverless node_modules tracing issues.
+ * - Bundles React directly so the iframe does not depend on remote CDN
+ *   scripts at runtime.
  */
 
 import path from 'path';
@@ -16,8 +16,10 @@ import os from 'os';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
+import { createRequire } from 'module';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
+const nodeRequire = createRequire(import.meta.url);
 const RESPONSIVE_VARIANTS: Record<string, string> = {
   sm: '@media (min-width: 640px)',
   md: '@media (min-width: 768px)',
@@ -288,6 +290,7 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
     }
   `,
 };
+void REACT_GLOBAL_MODULES;
 
 // Next.js modules that get mock replacements in preview mode
 const NEXT_MOCKS: Record<string, string> = {
@@ -1321,23 +1324,25 @@ export async function bundlePreview(
       },
     });
 
-    // Keep React package resolution virtual. Serverless builds may not include
-    // React's nested CJS files, and Sandpack/CodeSandbox package fetches are
-    // blocked in production. The iframe loads React globals before this bundle.
+    // Resolve React to the installed package so the preview bundle stays local.
     plugins.push({
-      name: 'react-global-shims',
+      name: 'react-package-resolver',
       setup(build: any) {
+        const reactPaths = new Map<string, string>();
+        const resolveReact = (specifier: string) => {
+          const cached = reactPaths.get(specifier);
+          if (cached) return cached;
+          const resolved = nodeRequire.resolve(specifier);
+          reactPaths.set(specifier, resolved);
+          return resolved;
+        };
+
         build.onResolve(
-          { filter: /^(react|react-dom(?:\/client)?|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
+          { filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path: string }) => ({
-            path: args.path,
-            namespace: 'react-global',
+            path: resolveReact(args.path),
           }),
         );
-        build.onLoad({ filter: /.*/, namespace: 'react-global' }, (args: { path: string }) => ({
-          contents: REACT_GLOBAL_MODULES[args.path] || '',
-          loader: 'js',
-        }));
       },
     });
 
@@ -1349,6 +1354,15 @@ export async function bundlePreview(
       setup(build: any) {
         build.onResolve({ filter: /^[^./]/ }, (args: { path: string; resolveDir: string }) => {
           if (args.resolveDir === '' || args.path.startsWith('.')) return;
+          if (
+            args.path === 'react' ||
+            args.path === 'react-dom' ||
+            args.path === 'react-dom/client' ||
+            args.path === 'react/jsx-runtime' ||
+            args.path === 'react/jsx-dev-runtime'
+          ) {
+            return;
+          }
           return { path: args.path, namespace: 'empty-stub' };
         });
         build.onLoad({ filter: /.*/, namespace: 'empty-stub' }, (args: { path: string }) => ({
@@ -1449,67 +1463,25 @@ export default Stub;
  * Build a complete HTML document from compiled JS + CSS for iframe rendering.
  */
 export function buildPreviewHtml(js: string, css: string): string {
-  const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js';
-  const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js';
-
-  // Detect light theme from CSS variables (user's globals.css overrides the defaults)
-  const usesLightBg = css.includes('--background: 0 0% 100%');
-  const themeClass = usesLightBg ? '""' : '"dark"';
+  // Force dark mode so Tailwind `dark:` variants remain available without
+  // relying on upstream theme inference from generated CSS.
+  const themeClass = '"dark"';
 
   return `<!DOCTYPE html>
 <html lang="en" class=${themeClass}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' http://localhost:* https://cdn.tailwindcss.com https://unpkg.com https://esm.sh https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; font-src 'self' data:;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:*; img-src 'self' data: blob: https:; font-src 'self' data:;" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     ${css}
   </style>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            secondary: 'hsl(var(--secondary))',
-            'secondary-foreground': 'hsl(var(--secondary-foreground))',
-            muted: 'hsl(var(--muted))',
-            'muted-foreground': 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--accent))',
-            'accent-foreground': 'hsl(var(--accent-foreground))',
-            destructive: 'hsl(var(--destructive))',
-            'destructive-foreground': 'hsl(var(--destructive-foreground))',
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            card: 'hsl(var(--card))',
-            'card-foreground': 'hsl(var(--card-foreground))',
-            popover: 'hsl(var(--popover))',
-            'popover-foreground': 'hsl(var(--popover-foreground))',
-          },
-          borderRadius: {
-            xl: 'calc(var(--radius) + 4px)',
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
 </head>
 <body>
   <div id="root"></div>
-  <script src="${reactCdn}"></script>
-  <script src="${reactDomCdn}"></script>
   <script>
     // ── Sandboxed storage shim ──────────────────────────────────────────
     // srcDoc previews intentionally do not use allow-same-origin, so direct
@@ -1669,7 +1641,7 @@ export function buildPreviewHtml(js: string, css: string): string {
         } catch(e) {}
       }
 
-      var ALLOWED_DOMAINS = ['localhost', '127.0.0.1', 'cdn.tailwindcss.com', 'unpkg.com', 'esm.sh', 'cdn.jsdelivr.net'];
+       var ALLOWED_DOMAINS = ['localhost', '127.0.0.1', 'unpkg.com', 'esm.sh', 'cdn.jsdelivr.net'];
 
       function isExternal(url) {
         if (!url || url.startsWith('/') || url.startsWith('#') || url.startsWith('data:') || url.startsWith('blob:')) return false;

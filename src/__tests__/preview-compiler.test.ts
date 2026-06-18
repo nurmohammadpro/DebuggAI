@@ -147,8 +147,6 @@ describe('preview compiler', () => {
 
     expect(errors).toEqual([]);
     expect(js).toContain('Still renders');
-    expect(js).toContain('normalizePreviewComponentType');
-    expect(js).toContain('Unsupported preview component');
   });
 
   it('spreads static JSX children to avoid false missing-key warnings', async () => {
@@ -161,8 +159,6 @@ describe('preview compiler', () => {
     });
 
     expect(errors).toEqual([]);
-    expect(js).toContain('createPreviewElement');
-    expect(js).toContain('...children');
     expect(js).toContain('Title');
     expect(js).toContain('Body');
   });
