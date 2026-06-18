@@ -1414,7 +1414,7 @@ export function buildPreviewHtml(js: string, css: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://esm.sh; connect-src 'self' http://localhost:* https://cdn.tailwindcss.com https://unpkg.com https://esm.sh; img-src 'self' data: blob: https:; font-src 'self' data:;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://esm.sh https://cdn.jsdelivr.net; connect-src 'self' http://localhost:* https://cdn.tailwindcss.com https://unpkg.com https://esm.sh https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; font-src 'self' data:;" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
