@@ -40,9 +40,9 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy-Report-Only',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com blob:",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://api.openai.com https://api.anthropic.com https://api.deepseek.com https://api.groq.com blob:",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://cdn.tailwindcss.com https://unpkg.com https://esm.sh blob:",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.tailwindcss.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com https://esm.sh https://api.openai.com https://api.anthropic.com https://api.deepseek.com https://api.groq.com blob:",
               "img-src 'self' data: https://*.supabase.co https://cdn.jsdelivr.net",
               "font-src 'self' data: https://fonts.gstatic.com",
               "worker-src blob:",
