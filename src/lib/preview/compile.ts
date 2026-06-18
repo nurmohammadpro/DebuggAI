@@ -1170,6 +1170,13 @@ export async function bundlePreview(
       await fsp.writeFile(fullPath, content, 'utf-8');
     }
 
+    // Auto-generate missing component files for unresolved relative imports.
+    // When the AI generates a page.tsx that imports ./components/Navbar,
+    // ./components/Hero, etc. without creating those files, this generates
+    // minimal React components on disk so they render as real elements in
+    // the preview (empty divs) instead of showing placeholder stubs.
+    await autoGenerateMissingComponents(workDir, files);
+
     // Determine the actual entry point
     const entryFull = path.join(workDir, entryPoint);
     let resolvedEntry: string | null = null;
@@ -1867,4 +1874,76 @@ async function findFiles(dir: string): Promise<string[]> {
     // skip inaccessible dirs
   }
   return results;
+}
+
+/**
+ * Scan source files for unresolved relative imports and auto-generate
+ * minimal component files so they render as real React elements in the
+ * preview (empty divs) instead of producing "Could not resolve" build
+ * errors or showing placeholder stubs.
+ */
+async function autoGenerateMissingComponents(
+  workDir: string,
+  files: Record<string, string>,
+) {
+  const CODE_EXTS = ['.tsx', '.ts', '.jsx', '.js'];
+  const SKIP_EXTS = /\.(css|json|svg|png|jpe?g|gif|webp|woff2?|mp4|webm|ico)$/i;
+
+  // Build lookup of existing paths (normalized, no extension)
+  const existingPaths = new Set<string>();
+  for (const fp of Object.keys(files)) {
+    existingPaths.add(path.normalize(fp));
+  }
+
+  for (const [filePath, content] of Object.entries(files)) {
+    if (!/\.(tsx?|jsx?|mjs)$/i.test(filePath)) continue;
+    const fileDir = path.dirname(filePath);
+
+    // Match all `from '...'` import paths (handles import X, import {X}, export {X}, etc.)
+    const importRe = /from\s+['"]([^'"]+)['"]/g;
+    let match: RegExpExecArray | null;
+    while ((match = importRe.exec(content)) !== null) {
+      const importPath = match[1]!;
+
+      // Only care about relative and @/ alias imports
+      let resolved: string | null = null;
+      if (importPath.startsWith('./') || importPath.startsWith('../')) {
+        resolved = path.normalize(path.join(fileDir, importPath));
+      } else if (importPath.startsWith('@/')) {
+        resolved = path.normalize(importPath.slice(2));
+      }
+      if (!resolved || SKIP_EXTS.test(resolved)) continue;
+
+      // Check if file already exists on disk
+      if (existingPaths.has(resolved)) continue;
+      let found = false;
+      for (const ext of CODE_EXTS) {
+        if (existingPaths.has(resolved + ext)) { found = true; break; }
+        if (existingPaths.has(path.join(resolved, 'index' + ext))) { found = true; break; }
+      }
+      if (found) continue;
+
+      // Derive component name from filename
+      const segment = resolved.split(/[/\\]/).pop() || 'Component';
+      const componentName = toPascalCase(segment.replace(/\.\w+$/, ''));
+
+      // Generate a minimal component file on disk
+      const generatedPath = resolved + '.tsx';
+      const fullPath = path.join(workDir, generatedPath);
+      await fsp.mkdir(path.dirname(fullPath), { recursive: true });
+      await fsp.writeFile(
+        fullPath,
+        [
+          "import React from 'react';",
+          '',
+          `export default function ${componentName}() {`,
+          "  return React.createElement('div', null);",
+          '}',
+          '',
+        ].join('\n'),
+        'utf-8',
+      );
+      existingPaths.add(generatedPath);
+    }
+  }
 }
