@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import {
   extractVirtualFiles,
   serializeVirtualFiles,
+  shouldIgnorePreviewPath,
   type VirtualFile,
   type VirtualProjectFiles,
 } from '@/lib/project/virtual-files';
@@ -255,6 +256,7 @@ export const useGenerationStore = create<GenerationState>()(
       set((state) => {
         const fileEntries: Record<string, VirtualFile> = {};
         for (const [path, content] of Object.entries(flatFiles)) {
+          if (shouldIgnorePreviewPath(path)) continue;
           const ext = path.split('.').pop()?.toLowerCase() || '';
           const langMap: Record<string, string> = {
             tsx: 'typescript', ts: 'typescript', jsx: 'javascript', js: 'javascript',

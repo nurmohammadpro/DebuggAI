@@ -11,6 +11,12 @@ export type VirtualProjectFiles = {
 };
 
 const DEFAULT_ENTRY = 'app/page.tsx';
+const IGNORED_PATH_RE = /(^|\/)(?:\.next|node_modules|\.turbo|dist|build|out|\.vercel|\.cache)(?:\/|$)/;
+
+export function shouldIgnorePreviewPath(path: string): boolean {
+  const normalized = normalizePath(path);
+  return IGNORED_PATH_RE.test(normalized);
+}
 
 export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): VirtualProjectFiles {
   if (!raw.trim()) {
@@ -24,7 +30,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 
   const pushFile = (path: string, content: string, language?: string) => {
     const normalized = normalizePath(path);
-    if (!normalized) return;
+    if (!normalized || shouldIgnorePreviewPath(normalized)) return;
     
     const formattedContent = stripLeadingFilenameHeader(content, normalized).replace(/\s+$/, '') + '\n';
     let status: VirtualFile['status'] = 'added';
@@ -119,7 +125,9 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 }
 
 export function serializeVirtualFiles(project: VirtualProjectFiles) {
-  const ordered = Object.keys(project.files).sort();
+  const ordered = Object.keys(project.files)
+    .filter((path) => !shouldIgnorePreviewPath(path))
+    .sort();
   if (ordered.length === 1) {
     const only = project.files[ordered[0]!];
     return only?.content || '';

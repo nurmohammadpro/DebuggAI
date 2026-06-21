@@ -43,6 +43,23 @@ describe('preview compiler', () => {
     expect(html).not.toContain('cdn.tailwindcss.com');
   });
 
+  it('ignores Next build artifacts when bundling preview code', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        'export default function Home() {',
+        '  return <main className="min-h-screen">Hello</main>;',
+        '}',
+      ].join('\n'),
+      '.next/server/chunks/[root-of-the-server]__0qmlxzp._.js': [
+        'const loader = (specifier) => require(specifier + Math.random());',
+        'export default loader;',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Hello');
+  });
+
   it('uses preview shims when generated shadcn ui files miss named exports', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [

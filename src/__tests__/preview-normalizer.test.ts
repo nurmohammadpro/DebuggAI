@@ -23,6 +23,23 @@ export default function Page() {
     expect(project.files['app/page.tsx']?.content).toContain('Ready');
   });
 
+  it('drops Next build artifacts from extracted virtual files', () => {
+    const project = extractVirtualFiles(`// File: app/page.tsx
+\`\`\`tsx
+export default function Page() {
+  return <main>Ready</main>;
+}
+\`\`\`
+
+// File: .next/server/chunks/[root-of-the-server]__abc.js
+\`\`\`js
+require(someVeryDynamicModule);
+\`\`\``);
+
+    expect(project.files['app/page.tsx']).toBeTruthy();
+    expect(project.files['.next/server/chunks/[root-of-the-server]__abc.js']).toBeUndefined();
+  });
+
   it('removes filename comments from package.json code blocks', () => {
     const project = extractVirtualFiles(`// File: package.json
 \`\`\`json

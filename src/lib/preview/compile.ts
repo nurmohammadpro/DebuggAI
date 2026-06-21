@@ -17,6 +17,7 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
 import { createRequire } from 'module';
+import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
 const nodeRequire = createRequire(import.meta.url);
@@ -1148,6 +1149,7 @@ export async function bundlePreview(
 
     for (const [filePath, content] of Object.entries(files)) {
       const normalized = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/g, '');
+      if (shouldIgnorePreviewPath(normalized)) continue;
       const fullPath = path.join(workDir, normalized);
 
       // Check for directory traversal
