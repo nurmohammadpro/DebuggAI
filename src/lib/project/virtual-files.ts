@@ -18,11 +18,17 @@ export function shouldIgnorePreviewPath(path: string): boolean {
   return IGNORED_PATH_RE.test(normalized);
 }
 
+export function filterIgnoredPreviewPaths<T>(files: Record<string, T>): Record<string, T> {
+  return Object.fromEntries(
+    Object.entries(files).filter(([path]) => !shouldIgnorePreviewPath(path)),
+  );
+}
+
 export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): VirtualProjectFiles {
   if (!raw.trim()) {
     return {
       entryPath: DEFAULT_ENTRY,
-      files: base ? { ...base.files } : {},
+      files: base ? filterIgnoredPreviewPaths(base.files) : {},
     };
   }
 
@@ -106,6 +112,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
   //    from the sandbox and break the preview.
   if (base) {
     for (const path of Object.keys(base.files)) {
+      if (shouldIgnorePreviewPath(path)) continue;
       if (!files.has(path)) {
         files.set(path, {
           ...base.files[path],
@@ -120,7 +127,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 
   return {
     entryPath,
-    files: Object.fromEntries([...files.entries()].map(([k, v]) => [k, v])),
+    files: filterIgnoredPreviewPaths(Object.fromEntries([...files.entries()].map(([k, v]) => [k, v]))),
   };
 }
 

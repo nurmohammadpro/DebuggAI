@@ -9,6 +9,8 @@
  * 2. Docker volume (runtime state → /api/sandbox)
  */
 
+import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
+
 // ── Tool definitions (OpenAI-compatible JSON schemas) ────────────────────
 
 export const AGENT_TOOLS = [
@@ -255,6 +257,9 @@ async function executeByName(
       const path = String(args.path || '');
       const content = String(args.content || '');
       if (!path) return 'Error: path is required';
+      if (shouldIgnorePreviewPath(path)) {
+        return `Error: preview/build artifacts are ignored: ${path}`;
+      }
       ctx.files[path] = content;
       if (ctx.onFileChange) await ctx.onFileChange(path, content);
       return `Wrote ${content.split('\n').length} lines to ${path}`;
@@ -269,6 +274,9 @@ async function executeByName(
 
       const content = ctx.files[path];
       if (content === undefined) return `Error: file not found: ${path}`;
+      if (shouldIgnorePreviewPath(path)) {
+        return `Error: preview/build artifacts are ignored: ${path}`;
+      }
 
       const lines = content.split('\n');
       const slice = lines.slice(firstLine - 1, lastLine).join('\n');

@@ -17,7 +17,7 @@ import { AGENT_TOOLS, executeToolCall, type ToolResult, type ProjectContext } fr
 import { pickModel, detectIntent, type ProviderConfigs } from '@/lib/ai/router';
 import { getRelevantSkills } from '@/lib/agent/skills-retrieval';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { extractVirtualFiles } from '@/lib/project/virtual-files';
+import { extractVirtualFiles, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 import { formatUiQualityRules } from '@/lib/agent/ui-quality-rules';
 import { sandboxManager } from '@/lib/sandbox/sandbox';
 import { getConsoleLogs, getNetworkLogs } from '@/lib/preview/log-buffer';
@@ -421,7 +421,7 @@ export async function POST(req: NextRequest) {
         .select('path, content')
         .eq('project_id', projectId);
       for (const row of (fileRows || [])) {
-        if (row.path && row.content !== undefined) {
+        if (row.path && row.content !== undefined && !shouldIgnorePreviewPath(row.path)) {
           projectFiles[row.path] = sanitizeFileContent(row.content);
         }
       }
@@ -821,7 +821,7 @@ export async function POST(req: NextRequest) {
                   // Inject error log as tool result so the model can fix issues
                   messages.push({
                     role: 'tool', content: `Sandbox errors after latest changes:\n${errors.join('\n')}\n\nFix these errors.`,
-                    // @ts-expect-error
+                    // @ts-expect-error tool_call_id is not in the standard message type
                     tool_call_id: 'verify',
                   });
                   messages.push({

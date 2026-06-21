@@ -40,6 +40,28 @@ require(someVeryDynamicModule);
     expect(project.files['.next/server/chunks/[root-of-the-server]__abc.js']).toBeUndefined();
   });
 
+  it('drops ignored preview files from base project state', () => {
+    const project = extractVirtualFiles('', {
+      entryPath: '.next/server/chunks/[root-of-the-server]__abc.js',
+      files: {
+        'app/page.tsx': {
+          path: 'app/page.tsx',
+          content: 'export default function Page() { return <main>Ready</main>; }',
+          status: 'unchanged',
+        },
+        '.next/server/chunks/[root-of-the-server]__abc.js': {
+          path: '.next/server/chunks/[root-of-the-server]__abc.js',
+          content: 'require(someVeryDynamicModule);',
+          status: 'unchanged',
+        },
+      },
+    });
+
+    expect(project.files['app/page.tsx']).toBeTruthy();
+    expect(project.files['.next/server/chunks/[root-of-the-server]__abc.js']).toBeUndefined();
+    expect(project.entryPath).toBe('app/page.tsx');
+  });
+
   it('removes filename comments from package.json code blocks', () => {
     const project = extractVirtualFiles(`// File: package.json
 \`\`\`json
@@ -78,6 +100,25 @@ require(someVeryDynamicModule);
     expect(packageJson.dependencies['tailwind-merge']).toBeTruthy();
     expect(packageJson.devDependencies.autoprefixer).toBeTruthy();
     expect(packageJson.devDependencies.typescript).toBeTruthy();
+  });
+
+  it('strips ignored build artifacts before sandbox normalization', () => {
+    const files = normalizePreviewFiles({
+      'app/page.tsx': 'export default function Page() { return <main>Ready</main>; }',
+      '.next/server/chunks/[root-of-the-server]__abc.js': 'require(someVeryDynamicModule);',
+      'package.json': JSON.stringify({
+        name: 'preview-app',
+        scripts: { dev: 'next dev' },
+        dependencies: {
+          next: '^16.2.7',
+          react: '^19.2.4',
+          'react-dom': '^19.2.4',
+        },
+      }),
+    });
+
+    expect(files['app/page.tsx']).toBeTruthy();
+    expect(files['.next/server/chunks/[root-of-the-server]__abc.js']).toBeUndefined();
   });
 
   it('keeps generated source code out of assistant chat prose', () => {

@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queries/query-keys';
 import { useGenerationStore } from '@/store/generation-store';
 import type { VirtualProjectFiles, VirtualFile } from '@/lib/project/virtual-files';
-import { extractVirtualFiles, serializeVirtualFiles } from '@/lib/project/virtual-files';
+import { extractVirtualFiles, serializeVirtualFiles, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 function languageFromPath(path: string): string | undefined {
   const lower = path.toLowerCase();
@@ -35,6 +35,7 @@ function templateToVirtualFiles(flatFiles: Record<string, string>): VirtualProje
 
   for (const [path, content] of Object.entries(flatFiles)) {
     const normalizedPath = path.replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+    if (shouldIgnorePreviewPath(normalizedPath)) continue;
     files[normalizedPath] = {
       path: normalizedPath,
       content,
@@ -794,11 +795,13 @@ export function useGeneration(options: UseGenerationOptions = {}) {
                 .neq('status', 'deleted');
 
               if (fileRows && fileRows.length > 0) {
-                const entryPath = fileRows.find((row: { path: string }) => row.path === 'app/page.tsx')
+                const visibleRows = fileRows.filter((row: { path: string }) => !shouldIgnorePreviewPath(row.path));
+                if (visibleRows.length === 0) return;
+                const entryPath = visibleRows.find((row: { path: string }) => row.path === 'app/page.tsx')
                   ? 'app/page.tsx'
-                  : fileRows[0]!.path;
+                  : visibleRows[0]!.path;
                 const files: Record<string, VirtualFile> = {};
-                for (const row of fileRows) {
+                for (const row of visibleRows) {
                   files[row.path] = {
                     path: row.path,
                     content: row.content || '',
