@@ -1,3 +1,5 @@
+import { filterIgnoredPreviewPaths } from '@/lib/project/virtual-files';
+
 type PackageJson = {
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
@@ -41,7 +43,7 @@ const TAILWIND_V4_DEV_DEPENDENCIES: Record<string, string> = {
 };
 
 export function normalizePreviewFiles(files: Record<string, string>): Record<string, string> {
-  const normalized = { ...files };
+  const normalized = filterIgnoredPreviewPaths({ ...files });
   let packagePath = findPackagePath(normalized);
 
   // Auto-bootstrap a minimal package.json when we detect a Next.js project

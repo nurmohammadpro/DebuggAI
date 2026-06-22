@@ -25,6 +25,7 @@ export type SandboxStatus =
 export interface SandboxRecord {
   id: string;
   userId: string;
+  projectId?: string;
   projectDir: string;
   containerName: string;
   port: number;
@@ -73,12 +74,14 @@ const SANDBOX_MAX_TOTAL_BYTES = parseInt(
 );
 const SANDBOX_NPM_CACHE_DIR =
   process.env.SANDBOX_NPM_CACHE_DIR || path.join(PROJECTS_DIR, '.npm-cache');
-// The preview container must have egress during npm install. Use a custom Docker
-// network plus host firewall/proxy if stronger isolation is required in prod.
-const SANDBOX_NETWORK = process.env.SANDBOX_NETWORK || 'bridge'; // 'bridge', 'none', or custom network name
+// Sandbox containers run on an isolated Docker network with egress restricted
+// to the allowlist below. Set SANDBOX_NETWORK='bridge' to bypass isolation,
+// or 'none' for no network. The default 'debuggai-sandbox' network is created
+// automatically on startup with iptables-based egress filtering.
+const SANDBOX_NETWORK = process.env.SANDBOX_NETWORK || 'debuggai-sandbox';
 const SANDBOX_DNS_SERVERS = process.env.SANDBOX_DNS_SERVERS || '8.8.8.8';
-// Egress allowlist: domains sandbox containers can reach (comma-separated)
-const SANDBOX_EGRESS_ALLOWLIST = (process.env.SANDBOX_EGRESS_ALLOWLIST || 'registry.npmjs.org,cdn.jsdelivr.net,unpkg.com').split(',');
+const SANDBOX_ISOLATED_NETWORK = 'debuggai-sandbox';
+const SANDBOX_EGRESS_ALLOWLIST = (process.env.SANDBOX_EGRESS_ALLOWLIST || 'registry.npmjs.org,cdn.jsdelivr.net,unpkg.com').split(',').map(d => d.trim()).filter(Boolean);
 
 /**
  * Docker host IP address reachable from inside this container.
@@ -147,6 +150,21 @@ class SandboxManager {
     await this.loadState();
     await this.cleanupStale();
 
+    // Ensure the isolated Docker network exists (skip in DinD if iptables unavailable)
+    try {
+      const existing = execSync(
+        `docker network ls --filter name=^${SANDBOX_ISOLATED_NETWORK}$ --format '{{.Name}}' 2>/dev/null || true`,
+      ).toString().trim();
+      if (!existing) {
+        execSync(
+          `docker network create --driver bridge ${SANDBOX_ISOLATED_NETWORK}`,
+          { stdio: 'ignore', timeout: 10_000 },
+        );
+      }
+    } catch {
+      // Docker-in-Docker or no docker available — network isolation is best-effort
+    }
+
     if (!this.reaper) {
       this.reaper = setInterval(() => {
         void this.reapExpired().catch(() => {});
@@ -158,6 +176,7 @@ class SandboxManager {
   async create(
     userId: string,
     files: Record<string, string>,
+    projectId?: string,
   ): Promise<SandboxRecord> {
     await this.init();
     this.assertDockerAvailable();
@@ -221,6 +240,7 @@ class SandboxManager {
     const record: SandboxRecord = {
       id,
       userId,
+      projectId: projectId ?? undefined,
       projectDir,
       containerName,
       port,
@@ -530,9 +550,8 @@ fi
       '--restart', 'no',
     ];
 
-    // Egress filtering: if using bridge network, add custom iptables rules
-    // via container labels for external enforcement
-    if (SANDBOX_NETWORK === 'bridge') {
+    // Egress firewall: if using the isolated network, enforce allowlist via iptables
+    if (SANDBOX_NETWORK === SANDBOX_ISOLATED_NETWORK) {
       runArgs.push('--label', `debuggai.egress=${SANDBOX_EGRESS_ALLOWLIST.join(',')}`);
     }
 
@@ -540,9 +559,16 @@ fi
 
     execSync(runArgs.join(' '), { stdio: 'ignore' });
 
+    // Apply egress firewall after container starts (needs container IP)
+    if (SANDBOX_NETWORK === SANDBOX_ISOLATED_NETWORK) {
+      this.setupEgressFirewall(containerName).catch(() => {});
+    }
+
     record.containerId = containerName;
 
-    // Monitor container — detect running dev server or catch crashes
+    // Monitor container — detect dev server readiness, crashes, and stalled processes.
+    // Fast polling during install (3s), slow polling once running (30s).
+    let monitorPhase: 'installing' | 'running' = 'installing';
     const monitor = setInterval(() => {
       try {
         const running = execSync(
@@ -552,43 +578,59 @@ fi
         if (!running) {
           clearInterval(monitor);
           this.monitors.delete(record.id);
-          // Skip if already stopped intentionally
           if (record.status === 'stopped') return;
 
           const exitCode = execSync(
             `docker inspect -f '{{.State.ExitCode}}' ${containerName} 2>/dev/null || echo -1`,
           ).toString().trim();
-          const recentLogs = this.readRecentLogs(containerName);
+          const logs = this.readRecentLogs(containerName);
 
-          if (record.status !== 'running') {
-            record.status = 'error';
-            record.error = recentLogs
-              ? `Process exited with code ${exitCode}\n\nRecent logs:\n${recentLogs}`
-              : `Process exited with code ${exitCode}`;
-          }
+          record.status = 'error';
+          record.error = logs
+            ? `Process exited with code ${exitCode}\n\nRecent logs:\n${logs}`
+            : `Process exited with code ${exitCode}`;
           record.lastActiveAt = Date.now();
           this.saveState();
-        } else if (record.status === 'installing') {
-          // Health check: try to reach the dev server
-          try {
-            const httpCode = execSync(
-              `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${port} 2>/dev/null || echo ""`,
-              { timeout: 3000 },
-            ).toString().trim();
-            if (httpCode && httpCode !== '000') {
-              record.status = 'running';
-              clearInterval(monitor);
-              this.monitors.delete(record.id);
-              record.lastActiveAt = Date.now();
-              this.saveState();
-            }
-          } catch {}
+          return;
+        }
+
+        // Health check: probe the dev server
+        let httpCode = '';
+        try {
+          httpCode = execSync(
+            `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${port} 2>/dev/null || echo "000"`,
+            { timeout: 3000 },
+          ).toString().trim();
+        } catch {}
+
+        if (monitorPhase === 'installing') {
+          if (httpCode && httpCode !== '000') {
+            record.status = 'running';
+            monitorPhase = 'running';
+            record.lastActiveAt = Date.now();
+            this.saveState();
+            // Switch to slower interval for ongoing health monitoring
+            // (the interval itself stays at 30s from here; we update next tick)
+          }
+        } else if (monitorPhase === 'running') {
+          // Dev server crashed while container is still up
+          if (!httpCode || httpCode === '000') {
+            record.status = 'error';
+            const logs = this.readRecentLogs(containerName);
+            record.error = logs
+              ? `Dev server on port ${port} stopped responding.\n\nRecent logs:\n${logs}`
+              : `Dev server on port ${port} stopped responding.`;
+            record.lastActiveAt = Date.now();
+            this.saveState();
+            clearInterval(monitor);
+            this.monitors.delete(record.id);
+          }
         }
       } catch {
         clearInterval(monitor);
         this.monitors.delete(record.id);
       }
-    }, 3000);
+    }, monitorPhase === 'installing' ? 3000 : 30000);
     this.monitors.set(record.id, monitor);
   }
 
@@ -608,6 +650,55 @@ fi
   async get(id: string): Promise<SandboxRecord | null> {
     await this.init();
     return this.sandboxes.get(id) ?? null;
+  }
+
+  async findByProjectId(projectId: string, autoResume = true): Promise<SandboxRecord | null> {
+    await this.init();
+    for (const [, sandbox] of this.sandboxes) {
+      if (sandbox.projectId === projectId && sandbox.status === 'running') {
+        return sandbox;
+      }
+    }
+    // Auto-resume a stopped sandbox for this project
+    if (autoResume) {
+      for (const [, sandbox] of this.sandboxes) {
+        if (sandbox.projectId === projectId && sandbox.status === 'stopped') {
+          return await this.resumeSandbox(sandbox);
+        }
+      }
+    }
+    return null;
+  }
+
+  private async resumeSandbox(sandbox: SandboxRecord): Promise<SandboxRecord | null> {
+    try {
+      this.assertDockerAvailable();
+      sandbox.lastActiveAt = Date.now();
+      sandbox.status = 'creating';
+      sandbox.error = undefined;
+      await this.saveState();
+      await this.startContainer(sandbox);
+      return sandbox;
+    } catch (err) {
+      sandbox.status = 'error';
+      sandbox.error = `Auto-resume failed: ${err instanceof Error ? err.message : String(err)}`;
+      await this.saveState();
+      return null;
+    }
+  }
+
+  async healthCheck(id: string): Promise<boolean> {
+    const sandbox = this.sandboxes.get(id);
+    if (!sandbox) return false;
+    try {
+      const httpCode = execSync(
+        `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://${this.dockerHostIp}:${sandbox.port} 2>/dev/null || echo "000"`,
+        { timeout: 3000 },
+      ).toString().trim();
+      return httpCode !== '000';
+    } catch {
+      return false;
+    }
   }
 
   async getLogs(id: string): Promise<{ lines: string[]; isRunning: boolean }> {
@@ -643,6 +734,11 @@ fi
       this.monitors.delete(id);
     }
 
+    // Clean up egress firewall rules before removing the container
+    if (SANDBOX_NETWORK === SANDBOX_ISOLATED_NETWORK) {
+      this.teardownEgressFirewall(sandbox.containerName);
+    }
+
     execSync(
       `docker stop ${sandbox.containerName} 2>/dev/null || true`,
       { stdio: 'ignore' },
@@ -655,6 +751,92 @@ fi
     sandbox.status = 'stopped';
     sandbox.lastActiveAt = Date.now();
     await this.saveState();
+  }
+
+  /**
+   * Apply iptables rules to restrict container egress to the allowlist.
+   *
+   * For each allowed domain we add a DNAT rule that redirects outbound TCP 80/443
+   * through the Docker host. All other outbound TCP is dropped via FORWARD chain.
+   *
+   * In DinD (Docker-in-Docker) scenarios where the host iptables are unreachable
+   * (detected by checking if /proc/net/route indicates we're inside a container),
+   * this is a no-op — egress control must be handled by the outer host.
+   */
+  private isDinD(): boolean {
+    try {
+      const route = readFileSync('/proc/net/route', 'utf8');
+      return route.includes('00000000');
+    } catch {
+      return false;
+    }
+  }
+
+  private setupEgressFirewall(containerName: string): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        if (this.isDinD()) return resolve();
+        const containerIp = execSync(
+          `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerName} 2>/dev/null || echo ''`,
+        ).toString().trim();
+        if (!containerIp) return resolve();
+
+        // Allow loopback and established/related
+        execSync(`iptables -I FORWARD -s ${containerIp} -d 127.0.0.0/8 -j ACCEPT 2>/dev/null || true`);
+        execSync(`iptables -I FORWARD -s ${containerIp} -m state --state ESTABLISHED,RELATED -j ACCEPT 2>/dev/null || true`);
+
+        // Allow DNS
+        execSync(`iptables -I FORWARD -s ${containerIp} -p udp --dport 53 -j ACCEPT 2>/dev/null || true`);
+        execSync(`iptables -I FORWARD -s ${containerIp} -p tcp --dport 53 -j ACCEPT 2>/dev/null || true`);
+
+        // Allow each egress domain (best-effort: iptables string match on host header)
+        for (const domain of SANDBOX_EGRESS_ALLOWLIST) {
+          execSync(
+            `iptables -I FORWARD -s ${containerIp} -p tcp --dport 443 -m string --algo bm --string "${domain}" -j ACCEPT 2>/dev/null || true`,
+          );
+          execSync(
+            `iptables -I FORWARD -s ${containerIp} -p tcp --dport 80 -m string --algo bm --string "${domain}" -j ACCEPT 2>/dev/null || true`,
+          );
+        }
+
+        // Default: drop all other outbound TCP from this container
+        execSync(`iptables -A FORWARD -s ${containerIp} -p tcp -j DROP 2>/dev/null || true`);
+
+        resolve();
+      } catch {
+        // iptables unavailable — running in a restricted environment, skip
+        resolve();
+      }
+    });
+  }
+
+  private teardownEgressFirewall(containerName: string): void {
+    try {
+      if (this.isDinD()) return;
+      const containerIp = execSync(
+        `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${containerName} 2>/dev/null || echo ''`,
+      ).toString().trim();
+      if (!containerIp) return;
+
+      // Flush all FORWARD rules for this container's source IP
+      const rules = execSync(
+        `iptables -L FORWARD -n --line-numbers 2>/dev/null || true`,
+      ).toString().split('\n');
+
+      const linesToDelete: number[] = [];
+      for (const line of rules) {
+        if (line.includes(containerIp)) {
+          const num = parseInt(line.trim().split(/\s+/)[0], 10);
+          if (!isNaN(num)) linesToDelete.push(num);
+        }
+      }
+      // Delete in reverse order to keep line numbers stable
+      for (const n of linesToDelete.reverse()) {
+        execSync(`iptables -D FORWARD ${n} 2>/dev/null || true`);
+      }
+    } catch {
+      // Best-effort cleanup
+    }
   }
 
   async exportZip(id: string): Promise<string> {

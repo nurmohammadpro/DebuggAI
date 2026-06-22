@@ -15,7 +15,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
+  const body = await req.json().catch(() => null) as null | {
+    files?: Record<string, string>;
+    entryPoint?: string;
+    routePath?: string;
+  };
   if (!body || typeof body !== 'object') {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
   const startTime = performance.now();
 
   // Dynamic import to avoid Turbopack bundling esbuild native binaries
-  const { bundlePreview, buildPreviewHtml } = await import('@/lib/preview/compile');
+  const { bundlePreview, buildPreviewHtml, entryPointToRoutePattern, entryPointToPreviewPath } = await import('@/lib/preview/compile');
 
   const { js, css, errors } = await bundlePreview(files, entryPoint);
 
@@ -42,7 +46,11 @@ export async function POST(req: NextRequest) {
     }, { status: 422 });
   }
 
-  const html = buildPreviewHtml(js, css);
+  const routePath = typeof body.routePath === 'string' && body.routePath.trim()
+    ? body.routePath.trim()
+    : entryPointToPreviewPath(entryPoint || 'app/page.tsx');
+  const routePattern = entryPointToRoutePattern(entryPoint || 'app/page.tsx');
+  const html = buildPreviewHtml(js, css, routePath, routePattern);
 
   return NextResponse.json({
     html,

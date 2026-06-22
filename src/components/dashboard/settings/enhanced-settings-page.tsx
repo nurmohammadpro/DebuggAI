@@ -195,9 +195,9 @@ export function EnhancedSettingsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg ${
                       isActive
-                        ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)] border-l-2 border-[var(--app-accent)]'
+                        ? 'bg-[var(--app-accent-soft)] text-[var(--app-accent)] ring-1 ring-inset ring-[var(--app-accent)]/30'
                         : 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
                     }`}
                   >
@@ -211,9 +211,9 @@ export function EnhancedSettingsPage() {
               <div className="border-t border-[var(--app-border)]">
                 <button
                   onClick={() => setActiveTab('danger')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg ${
                     activeTab === 'danger'
-                      ? 'bg-[var(--app-danger-soft)] text-[var(--app-danger)] border-l-2 border-[var(--app-danger)]'
+                      ? 'bg-[var(--app-danger-soft)] text-[var(--app-danger)] ring-1 ring-inset ring-[var(--app-danger)]/20'
                       : 'text-[var(--app-danger)] hover:bg-[var(--app-danger-soft)]'
                   }`}
                 >
@@ -302,7 +302,7 @@ export function EnhancedSettingsPage() {
                   {/* Theme Selection */}
                   <div>
                     <label className="block text-sm font-medium text-[var(--app-text)] mb-2">Theme</label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {([
                         { value: 'light', label: 'Light', icon: Sun },
                         { value: 'dark', label: 'Dark', icon: Moon },
@@ -341,29 +341,30 @@ export function EnhancedSettingsPage() {
                         { key: 'marketing', label: 'Marketing Updates', description: 'Receive product updates and offers' },
                         { key: 'security', label: 'Security Alerts', description: 'Important security notifications' },
                       ].map(notification => (
-                        <div key={notification.key} className="flex items-center justify-between py-2">
-                          <div>
+                        <button
+                          key={notification.key}
+                          onClick={() => setNotifications(prev => ({ ...prev, [notification.key]: !prev[notification.key as keyof typeof prev] }))}
+                          className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-[var(--app-surface)] transition-colors text-left touch-manipulation"
+                        >
+                          <div className="min-w-0 mr-4">
                             <div className="text-sm font-medium text-[var(--app-text)]">{notification.label}</div>
                             <div className="text-xs text-[var(--app-text-muted)]">{notification.description}</div>
                           </div>
-                          <button
-                            onClick={() => setNotifications(prev => ({ ...prev, [notification.key]: !prev[notification.key as keyof typeof prev] }))}
-                            className={`w-11 h-6 rounded-full transition-colors ${
+                          <div
+                            className={`shrink-0 w-11 h-6 rounded-full transition-colors ${
                               notifications[notification.key as keyof typeof notifications]
                                 ? 'bg-[var(--app-accent)]'
                                 : 'bg-[var(--app-panel-2)]'
                             }`}
                           >
                             <div
-                              className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                                notifications[notification.key as keyof typeof notifications] ? 'translate-x-0' : '-translate-x-0.5'
-                              }`}
+                              className="w-5 h-5 rounded-full bg-white transition-transform"
                               style={{
                                 transform: notifications[notification.key as keyof typeof notifications] ? 'translateX(100%)' : 'translateX(0)',
                               }}
                             />
-                          </button>
-                        </div>
+                          </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -472,7 +473,7 @@ export function EnhancedSettingsPage() {
                         {isPaidPlan ? 'Active' : 'Free'}
                       </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
                       <div className="p-3 bg-[var(--app-surface)] rounded">
                         <div className="text-2xl font-semibold text-[var(--app-accent)]">{user?.credits === -1 ? '∞' : user?.credits || 0}</div>
                         <div className="text-xs text-[var(--app-text-muted)]">Credits</div>

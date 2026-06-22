@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { requireUser } from '@/lib/server/auth';
-import { type VirtualFile } from '@/lib/project/virtual-files';
+import { normalizePreviewCode, type VirtualFile, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +41,11 @@ export async function GET(
 
   const { data: latestGen } = genResult;
   const fileTreeCode = serializeProjectFiles(filesResult.data || []);
+  const latestGenCode = latestGen?.code?.trim() ? normalizePreviewCode(latestGen.code) : '';
   const latest = latestGen
     ? {
         ...latestGen,
-        code: fileTreeCode || (latestGen.code?.trim() ? latestGen.code : ''),
+        code: fileTreeCode || latestGenCode,
       }
     : fileTreeCode
       ? {
@@ -102,7 +103,7 @@ function serializeProjectFiles(rows: ProjectFileRow[]) {
   const files: Record<string, VirtualFile> = {};
 
   for (const row of rows) {
-    if (!row.path || row.status === 'deleted') continue;
+    if (!row.path || row.status === 'deleted' || shouldIgnorePreviewPath(row.path)) continue;
     files[row.path] = {
       path: row.path,
       content: row.content || '',

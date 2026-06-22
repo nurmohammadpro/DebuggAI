@@ -7,8 +7,8 @@
  * - Uses esbuild (server-side) for fast TSX→JS compilation
  * - Strips Next.js-specific imports (next/navigation, next/link, next/image)
  * - Extracts CSS module files and converts to plain CSS
- * - Uses tiny React virtual modules backed by browser globals, avoiding
- *   CodeSandbox package fetches and serverless node_modules tracing issues.
+ * - Bundles React directly so the iframe does not depend on remote CDN
+ *   scripts at runtime.
  */
 
 import path from 'path';
@@ -16,8 +16,11 @@ import os from 'os';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
+import { createRequire } from 'module';
+import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
+const nodeRequire = createRequire(import.meta.url);
 const RESPONSIVE_VARIANTS: Record<string, string> = {
   sm: '@media (min-width: 640px)',
   md: '@media (min-width: 768px)',
@@ -288,19 +291,44 @@ const REACT_GLOBAL_MODULES: Record<string, string> = {
     }
   `,
 };
+void REACT_GLOBAL_MODULES;
 
 // Next.js modules that get mock replacements in preview mode
 const NEXT_MOCKS: Record<string, string> = {
   'next/navigation': `
     const noop = () => {};
-    export const useRouter = () => ({
-      push: noop, replace: noop, back: noop, forward: noop,
-      refresh: noop, prefetch: noop,
-      pathname: '/', query: {}, asPath: '/',
-    });
-    export const usePathname = () => '/';
-    export const useSearchParams = () => new URLSearchParams();
-    export const useParams = () => ({});
+    function getRouteState() {
+      return window.__debuggaiRouteState || {
+        pathname: '/',
+        search: '',
+        hash: '',
+        href: '/',
+        params: {},
+        push: noop,
+        replace: noop,
+        back: noop,
+        forward: noop,
+        refresh: noop,
+        prefetch: noop,
+      };
+    }
+    export const useRouter = () => {
+      const route = getRouteState();
+      return {
+        push: route.push,
+        replace: route.replace,
+        back: route.back,
+        forward: route.forward,
+        refresh: route.refresh,
+        prefetch: route.prefetch,
+        pathname: route.pathname || '/',
+        query: route.query || {},
+        asPath: route.href || '/',
+      };
+    };
+    export const usePathname = () => getRouteState().pathname || '/';
+    export const useSearchParams = () => new URLSearchParams(getRouteState().search || '');
+    export const useParams = () => getRouteState().params || {};
     export const redirect = (url) => { window.__debuggai_redirect = url; };
     export const notFound = noop;
     export const useSelectedLayoutSegment = () => null;
@@ -310,7 +338,19 @@ const NEXT_MOCKS: Record<string, string> = {
   'next/link': `
     import React from 'react';
     export default function Link({ href, children, className, ...props }) {
-      return React.createElement('a', { href, className, onClick: (e) => { e.preventDefault(); window.__debuggai_link = href; }, ...props }, children);
+      return React.createElement('a', {
+        href,
+        className,
+        onClick: (e) => {
+          e.preventDefault();
+          if (window.__debuggaiRouteState && typeof window.__debuggaiRouteState.push === 'function') {
+            window.__debuggaiRouteState.push(href);
+          } else {
+            window.__debuggai_link = href;
+          }
+        },
+        ...props
+      }, children);
     }
   `,
   'next/image': `
@@ -1145,6 +1185,7 @@ export async function bundlePreview(
 
     for (const [filePath, content] of Object.entries(files)) {
       const normalized = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/g, '');
+      if (shouldIgnorePreviewPath(normalized)) continue;
       const fullPath = path.join(workDir, normalized);
 
       // Check for directory traversal
@@ -1169,6 +1210,13 @@ export async function bundlePreview(
 
       await fsp.writeFile(fullPath, content, 'utf-8');
     }
+
+    // Auto-generate missing component files for unresolved relative imports.
+    // When the AI generates a page.tsx that imports ./components/Navbar,
+    // ./components/Hero, etc. without creating those files, this generates
+    // minimal React components on disk so they render as real elements in
+    // the preview (empty divs) instead of showing placeholder stubs.
+    await autoGenerateMissingComponents(workDir, files);
 
     // Determine the actual entry point
     const entryFull = path.join(workDir, entryPoint);
@@ -1314,41 +1362,92 @@ export async function bundlePreview(
       },
     });
 
-    // Keep React package resolution virtual. Serverless builds may not include
-    // React's nested CJS files, and Sandpack/CodeSandbox package fetches are
-    // blocked in production. The iframe loads React globals before this bundle.
+    // Resolve React to the installed package so the preview bundle stays local.
     plugins.push({
-      name: 'react-global-shims',
+      name: 'react-package-resolver',
       setup(build: any) {
+        const reactPaths = new Map<string, string>();
+        const resolveReact = (specifier: string) => {
+          const cached = reactPaths.get(specifier);
+          if (cached) return cached;
+          const resolved = nodeRequire.resolve(specifier);
+          reactPaths.set(specifier, resolved);
+          return resolved;
+        };
+
         build.onResolve(
-          { filter: /^(react|react-dom(?:\/client)?|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
+          { filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path: string }) => ({
-            path: args.path,
-            namespace: 'react-global',
+            path: resolveReact(args.path),
           }),
         );
-        build.onLoad({ filter: /.*/, namespace: 'react-global' }, (args: { path: string }) => ({
-          contents: REACT_GLOBAL_MODULES[args.path] || '',
-          loader: 'js',
-        }));
       },
     });
 
-    // Catch-all: any package still unresolved gets an empty stub.
+    // Catch-all: any bare package import still unresolved gets an empty stub.
     // Prevents "Could not resolve" hard failures for packages the AI imports
     // but that aren't shimmed above.
     plugins.push({
       name: 'unresolved-fallback',
       setup(build: any) {
         build.onResolve({ filter: /^[^./]/ }, (args: { path: string; resolveDir: string }) => {
-          // Only intercept bare imports (packages), not relative paths
           if (args.resolveDir === '' || args.path.startsWith('.')) return;
+          if (
+            args.path === 'react' ||
+            args.path === 'react-dom' ||
+            args.path === 'react-dom/client' ||
+            args.path === 'react/jsx-runtime' ||
+            args.path === 'react/jsx-dev-runtime'
+          ) {
+            return;
+          }
           return { path: args.path, namespace: 'empty-stub' };
         });
         build.onLoad({ filter: /.*/, namespace: 'empty-stub' }, (args: { path: string }) => ({
           contents: makeUnknownPackageShim(args.path, namedImportsByModule.get(args.path)),
           loader: 'js',
         }));
+      },
+    });
+
+    // Fallback for unresolved relative imports (./foo, ../bar).
+    // When the AI generates a large page that imports many component files
+    // (e.g. ./components/Navbar, ./components/Hero) but those files aren't
+    // included in the generated output, the build would otherwise hard-fail.
+    // Instead, create a stub component so the preview renders with placeholders.
+    plugins.push({
+      name: 'relative-import-fallback',
+      setup(build: any) {
+        const extensions = ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'];
+        build.onResolve({ filter: /^\.\.?\// }, (args: { path: string; resolveDir: string }) => {
+          if (!args.resolveDir) return;
+          // Try to resolve the path on disk (esbuild default resolver would do this,
+          // but we need to check ourselves to detect the "file not found" case)
+          const base = path.resolve(args.resolveDir, args.path);
+          if (fs.existsSync(base)) return;
+          for (const ext of extensions) {
+            if (fs.existsSync(base + ext)) return;
+          }
+          for (const ext of extensions) {
+            if (fs.existsSync(path.join(base, 'index' + ext))) return;
+          }
+          // File doesn't exist — provide a stub
+          return { path: args.path, namespace: 'relative-import-stub' };
+        });
+        build.onLoad({ filter: /.*/, namespace: 'relative-import-stub' }, (args: { path: string }) => {
+          const name = args.path.split('/').pop() || 'Component';
+          return {
+            contents: `
+import React from 'react';
+const Stub = React.forwardRef(function Stub(props, ref) {
+  return React.createElement('div', { ref, style: { padding: '1rem', border: '1px dashed #444', borderRadius: '0.375rem', color: '#888', fontSize: '0.75rem', fontFamily: 'monospace', textAlign: 'center' } }, '// ${name}');
+});
+Stub.displayName = 'Stub(${name})';
+export default Stub;
+`.trimStart(),
+            loader: 'jsx',
+          };
+        });
       },
     });
 
@@ -1401,67 +1500,26 @@ export async function bundlePreview(
 /**
  * Build a complete HTML document from compiled JS + CSS for iframe rendering.
  */
-export function buildPreviewHtml(js: string, css: string): string {
-  const reactCdn = 'https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js';
-  const reactDomCdn = 'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js';
-
-  // Detect light theme from CSS variables (user's globals.css overrides the defaults)
-  const usesLightBg = css.includes('--background: 0 0% 100%');
-  const themeClass = usesLightBg ? '""' : '"dark"';
+export function buildPreviewHtml(js: string, css: string, routePath: string = '/', routePattern: string = routePath): string {
+  // Force dark mode so Tailwind `dark:` variants remain available without
+  // relying on upstream theme inference from generated CSS.
+  const themeClass = '"dark"';
 
   return `<!DOCTYPE html>
 <html lang="en" class=${themeClass}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:*; img-src 'self' data: blob: https:; font-src 'self' data:;" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     ${css}
   </style>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            secondary: 'hsl(var(--secondary))',
-            'secondary-foreground': 'hsl(var(--secondary-foreground))',
-            muted: 'hsl(var(--muted))',
-            'muted-foreground': 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--accent))',
-            'accent-foreground': 'hsl(var(--accent-foreground))',
-            destructive: 'hsl(var(--destructive))',
-            'destructive-foreground': 'hsl(var(--destructive-foreground))',
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            card: 'hsl(var(--card))',
-            'card-foreground': 'hsl(var(--card-foreground))',
-            popover: 'hsl(var(--popover))',
-            'popover-foreground': 'hsl(var(--popover-foreground))',
-          },
-          borderRadius: {
-            xl: 'calc(var(--radius) + 4px)',
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
 </head>
 <body>
   <div id="root"></div>
-  <script src="${reactCdn}"></script>
-  <script src="${reactDomCdn}"></script>
   <script>
     // ── Sandboxed storage shim ──────────────────────────────────────────
     // srcDoc previews intentionally do not use allow-same-origin, so direct
@@ -1508,6 +1566,166 @@ export function buildPreviewHtml(js: string, css: string): string {
 
       installStorage('localStorage');
       installStorage('sessionStorage');
+    })();
+
+    // ── Preview route state ─────────────────────────────────────────────
+    // Keeps the iframe aware of the current route so useRouter/usePathname
+    // inside generated code can behave like a real app.
+    (function() {
+      function parseHref(href) {
+        var raw = String(href || '/');
+        var resolved;
+        try {
+          resolved = new URL(raw, window.location.origin);
+        } catch (e) {
+          resolved = new URL('/', window.location.origin);
+        }
+        var pathname = resolved.pathname || '/';
+        if (pathname !== '/') pathname = pathname.replace(/\/+$/, '');
+        var search = resolved.search || '';
+        var hash = resolved.hash || '';
+        return {
+          pathname: pathname || '/',
+          search: search,
+          hash: hash,
+          href: (pathname || '/') + search + hash,
+        };
+      }
+
+      function normalizePattern(entryPoint) {
+        var normalized = String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+        normalized = normalized.replace(/^(?:src\/)?app\//, '');
+        normalized = normalized.replace(/^(?:src\/)?pages\//, '');
+        normalized = normalized.replace(/\/page\.[a-zA-Z0-9]+$/, '');
+        normalized = normalized.replace(/\/index\.[a-zA-Z0-9]+$/, '');
+        normalized = normalized.replace(/\.[a-zA-Z0-9]+$/, '');
+        normalized = normalized.replace(/^\/*/, '').replace(/\/*$/, '');
+        return '/' + normalized;
+      }
+
+      function matchParams(pattern, pathname) {
+        var params = {};
+        var patternParts = String(pattern || '/').split('/').filter(Boolean);
+        var pathParts = String(pathname || '/').split('/').filter(Boolean);
+        for (var i = 0, j = 0; i < patternParts.length; i++, j++) {
+          var part = patternParts[i];
+          if (!part) continue;
+          if (part.startsWith('[...') && part.endsWith(']')) {
+            params[part.slice(4, -1)] = pathParts.slice(j).join('/');
+            return params;
+          }
+          if (part.startsWith('[[...') && part.endsWith(']]')) {
+            params[part.slice(5, -2)] = pathParts.slice(j).join('/');
+            return params;
+          }
+          if (part.startsWith('[') && part.endsWith(']')) {
+            params[part.slice(1, -1)] = pathParts[j] || '';
+            continue;
+          }
+          if (pathParts[j] !== part) return {};
+        }
+        return params;
+      }
+
+      var state = parseHref(${JSON.stringify(routePath)});
+      var pattern = ${JSON.stringify(routePattern || routePath)};
+      var historyStack = [state.href];
+      var historyIndex = 0;
+
+      function sync(nextHref, mode, silent) {
+        var next = parseHref(nextHref);
+        state.pathname = next.pathname;
+        state.search = next.search;
+        state.hash = next.hash;
+        state.href = next.href;
+        state.params = matchParams(pattern, state.pathname);
+
+        if (mode === 'replace') {
+          historyStack[historyIndex] = next.href;
+        } else if (mode === 'push') {
+          historyStack = historyStack.slice(0, historyIndex + 1);
+          historyStack.push(next.href);
+          historyIndex = historyStack.length - 1;
+        }
+
+        if (!silent) {
+          try {
+            parent.postMessage({
+              source: 'debuggai-preview',
+              type: 'navigate',
+              href: state.href,
+              pathname: state.pathname,
+              search: state.search,
+              hash: state.hash,
+              timestamp: Date.now(),
+            }, '*');
+          } catch (e) {}
+        }
+      }
+
+      window.__debuggaiRouteState = {
+        get pathname() { return state.pathname; },
+        get search() { return state.search; },
+        get hash() { return state.hash; },
+        get href() { return state.href; },
+        get params() { return state.params || {}; },
+        push: function(href) { sync(href, 'push', false); },
+        replace: function(href) { sync(href, 'replace', false); },
+        back: function() {
+          if (historyIndex <= 0) return;
+          historyIndex--;
+          sync(historyStack[historyIndex], 'replace', false);
+        },
+        forward: function() {
+          if (historyIndex >= historyStack.length - 1) return;
+          historyIndex++;
+          sync(historyStack[historyIndex], 'replace', false);
+        },
+        refresh: function() {},
+        prefetch: function() {},
+      };
+
+      state.params = matchParams(pattern, state.pathname);
+    })();
+
+    // ── Navigation interceptor (SPA routing) ────────────────────────────
+    // Intercepts <a> clicks and routes them through the parent frame so the
+    // compile pipeline can swap to the correct page entry point without a
+    // full-page top-level navigation.
+    (function() {
+      var currentPath = '/';
+      document.addEventListener('click', function(e) {
+        var el = e.target;
+        while (el && el !== document.body) {
+          if (el.tagName === 'A' && el.href) {
+            var href = el.getAttribute('href');
+            if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !el.hasAttribute('download')) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (href !== currentPath) {
+                currentPath = href;
+                try {
+                  parent.postMessage({
+                    source: 'debuggai-preview',
+                    type: 'navigate',
+                    href: href,
+                    timestamp: Date.now()
+                  }, '*');
+                } catch(e) {}
+              }
+            }
+            break;
+          }
+          el = el.parentElement;
+        }
+      }, true);
+
+      // Listen for the parent to signal which page to show after recompilation
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.source === 'debuggai-parent' && event.data.type === 'route') {
+          currentPath = event.data.href || '/';
+        }
+      });
     })();
 
     // ── Error & console trap ────────────────────────────────────────────
@@ -1559,7 +1777,198 @@ export function buildPreviewHtml(js: string, css: string): string {
 
       parent.postMessage({ source: 'debuggai-preview', type: 'ready', timestamp: Date.now() }, '*');
     })();
-    // ── End error trap ──────────────────────────────────────────────────
+
+    // ── Network interceptor ──────────────────────────────────────────────
+    // Captures fetch/XHR failures so the agent can diagnose API errors,
+    // CORS issues, and missing endpoints visible only in the browser.
+    // Also blocks requests to external domains (not localhost or CDN) to
+    // prevent accidental data exfiltration from the preview sandbox.
+    (function() {
+      function reportNetworkError(details) {
+        try {
+          parent.postMessage({
+            source: 'debuggai-preview',
+            type: 'network-error',
+            url: details.url,
+            method: details.method,
+            status: details.status,
+            statusText: details.statusText || '',
+            error: details.error || '',
+            timestamp: Date.now()
+          }, '*');
+        } catch(e) {}
+      }
+
+       var ALLOWED_DOMAINS = ['localhost', '127.0.0.1', 'unpkg.com', 'esm.sh', 'cdn.jsdelivr.net'];
+
+      function isExternal(url) {
+        if (!url || url.startsWith('/') || url.startsWith('#') || url.startsWith('data:') || url.startsWith('blob:')) return false;
+        if (url.startsWith('http://localhost') || url.startsWith('https://localhost')) return false;
+        if (url.startsWith('http://127.0.0.1') || url.startsWith('https://127.0.0.1')) return false;
+        for (var i = 0; i < ALLOWED_DOMAINS.length; i++) {
+          if (url.indexOf(ALLOWED_DOMAINS[i]) !== -1) return false;
+        }
+        return true;
+      }
+
+      // Intercept fetch
+      var _fetch = window.fetch;
+      window.fetch = function(input, init) {
+        var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+        var method = (init && init.method) || 'GET';
+        if (isExternal(url)) {
+          console.warn('[preview] Blocked external fetch: ' + method + ' ' + url + ' — only localhost and CDN requests are allowed in preview.');
+          reportNetworkError({ url: url, method: method, status: 0, statusText: '', error: 'External requests blocked in preview sandbox' });
+          return Promise.reject(new Error('External requests blocked in preview sandbox'));
+        }
+        return _fetch.apply(this, arguments).then(function(res) {
+          if (!res.ok) {
+            reportNetworkError({ url: url, method: method, status: res.status, statusText: res.statusText });
+          }
+          return res;
+        }).catch(function(err) {
+          reportNetworkError({ url: url, method: method, status: 0, statusText: '', error: err.message || String(err) });
+          throw err;
+        });
+      };
+
+      // Intercept XMLHttpRequest
+      var XHR = XMLHttpRequest;
+      var _open = XHR.prototype.open;
+      var _send = XHR.prototype.send;
+      XHR.prototype.open = function(method, url) {
+        this._debuggai_method = method;
+        this._debuggai_url = url;
+        return _open.apply(this, arguments);
+      };
+      XHR.prototype.send = function() {
+        var self = this;
+        var url = self._debuggai_url || '';
+        var method = self._debuggai_method || 'GET';
+        self.addEventListener('error', function() {
+          reportNetworkError({ url: url, method: method, status: self.status || 0, statusText: self.statusText || '', error: 'XHR network error' });
+        });
+        self.addEventListener('loadend', function() {
+          if (self.status > 0 && self.status >= 400) {
+            reportNetworkError({ url: url, method: method, status: self.status, statusText: self.statusText || '' });
+          }
+        });
+        return _send.apply(this, arguments);
+      };
+    })();
+
+    // ── Element inspection mode ──────────────────────────────────────────
+    (function() {
+      var inspectActive = false;
+      var overlay = null;
+      var tooltip = null;
+
+      function createOverlay() {
+        if (overlay) return;
+        overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;pointer-events:none;z-index:99999;border:2px solid #3b82f6;background:rgba(59,130,246,0.08);border-radius:2px;transition:all 0.08s ease;display:none;';
+        document.body.appendChild(overlay);
+        tooltip = document.createElement('div');
+        tooltip.style.cssText = 'position:fixed;z-index:100000;background:#1e1e2e;color:#cdd6f4;font-size:11px;font-family:monospace;padding:6px 10px;border-radius:6px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.4);max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none;';
+        document.body.appendChild(tooltip);
+      }
+
+      function removeOverlay() {
+        if (overlay) { overlay.remove(); overlay = null; }
+        if (tooltip) { tooltip.remove(); tooltip = null; }
+      }
+
+      function getElementPath(el) {
+        var path = [];
+        while (el && el !== document.body && el !== document.documentElement) {
+          var tag = el.tagName.toLowerCase();
+          if (el.id) { path.unshift(tag + '#' + el.id); break; }
+          var siblings = Array.from(el.parentNode ? el.parentNode.children : []).filter(function(s) { return s.tagName === el.tagName; });
+          var idx = siblings.indexOf(el);
+          path.unshift(tag + (siblings.length > 1 ? ':nth-child(' + (idx + 1) + ')' : ''));
+          el = el.parentNode;
+        }
+        return path.join(' > ');
+      }
+
+      function getElementInfo(el) {
+        var rect = el.getBoundingClientRect();
+        return {
+          tag: el.tagName.toLowerCase(),
+          id: el.id || null,
+          classes: (el.className && typeof el.className === 'string') ? el.className.trim() : '',
+          text: (el.textContent || '').trim().slice(0, 120),
+          path: getElementPath(el),
+          attributes: Array.from(el.attributes || []).filter(function(a) { return !['class','id','style'].includes(a.name); }).map(function(a) { return a.name + '="' + a.value + '"'; }).join(' '),
+          rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+        };
+      }
+
+      function onMouseMove(e) {
+        if (!inspectActive) return;
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el === overlay || el === tooltip) return;
+        var rect = el.getBoundingClientRect();
+        overlay.style.display = 'block';
+        overlay.style.top = rect.top + 'px';
+        overlay.style.left = rect.left + 'px';
+        overlay.style.width = rect.width + 'px';
+        overlay.style.height = rect.height + 'px';
+        var info = getElementInfo(el);
+        tooltip.style.display = 'block';
+        tooltip.textContent = '<' + info.tag + (info.id ? '#' + info.id : '') + (info.classes ? '.' + info.classes.split(/\\s+/).slice(0, 3).join('.') : '') + '>';
+        var tx = rect.left;
+        var ty = rect.top - 28;
+        if (ty < 4) ty = rect.bottom + 6;
+        if (tx + 320 > window.innerWidth) tx = window.innerWidth - 328;
+        tooltip.style.top = ty + 'px';
+        tooltip.style.left = tx + 'px';
+      }
+
+      function onClick(e) {
+        if (!inspectActive) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el === overlay || el === tooltip) return;
+        var info = getElementInfo(el);
+        try {
+          parent.postMessage({ source: 'debuggai-preview', type: 'element-clicked', element: info, timestamp: Date.now() }, '*');
+        } catch(ex) {}
+        setInspectMode(false);
+      }
+
+      function onKeyDown(e) {
+        if (e.key === 'Escape' && inspectActive) { e.preventDefault(); setInspectMode(false); }
+      }
+
+      function setInspectMode(active) {
+        inspectActive = active;
+        if (active) {
+          createOverlay();
+          document.body.style.cursor = 'crosshair';
+          document.addEventListener('mousemove', onMouseMove, true);
+          document.addEventListener('click', onClick, true);
+          document.addEventListener('keydown', onKeyDown, true);
+        } else {
+          removeOverlay();
+          document.body.style.cursor = '';
+          document.removeEventListener('mousemove', onMouseMove, true);
+          document.removeEventListener('click', onClick, true);
+          document.removeEventListener('keydown', onKeyDown, true);
+          try {
+            parent.postMessage({ source: 'debuggai-preview', type: 'inspect-mode-changed', active: false }, '*');
+          } catch(ex) {}
+        }
+      }
+
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.source === 'debuggai-parent' && event.data.type === 'inspect-mode') {
+          setInspectMode(!!event.data.active);
+        }
+      });
+    })();
 
     try {
       ${js}
@@ -1574,8 +1983,56 @@ export function buildPreviewHtml(js: string, css: string): string {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+export function entryPointToPreviewPath(entryPoint: string): string {
+  return routePathFromEntryPoint(entryPoint);
+}
+
+export function entryPointToRoutePattern(entryPoint: string): string {
+  return routePathFromEntryPoint(entryPoint);
+}
+
+function routePathFromEntryPoint(entryPoint: string): string {
+  const normalized = normalizeEntryPoint(entryPoint);
+  if (!normalized) return '/';
+
+  const appMatch = normalized.match(/^(?:src\/)?app\/(.+)\/page\.[a-zA-Z0-9]+$/);
+  if (appMatch) {
+    return segmentsToRoutePath(appMatch[1] || '');
+  }
+
+  const rootAppMatch = normalized.match(/^(?:src\/)?app\/page\.[a-zA-Z0-9]+$/);
+  if (rootAppMatch) return '/';
+
+  const pagesMatch = normalized.match(/^(?:src\/)?pages\/(.+)\.[a-zA-Z0-9]+$/);
+  if (pagesMatch) {
+    const route = pagesMatch[1] || '';
+    if (route === 'index') return '/';
+    return segmentsToRoutePath(route.replace(/\/index$/, ''));
+  }
+
+  return '/';
+}
+
 function escapeRegex(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeEntryPoint(entryPoint: string) {
+  return String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+}
+
+function segmentsToRoutePath(route: string) {
+  const segments = String(route || '')
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => {
+      if (/^\(.*\)$/.test(segment)) return false;
+      if (segment.startsWith('_')) return false;
+      return true;
+    });
+  if (segments.length === 0) return '/';
+  return `/${segments.join('/')}`;
 }
 
 async function findFiles(dir: string): Promise<string[]> {
@@ -1595,4 +2052,76 @@ async function findFiles(dir: string): Promise<string[]> {
     // skip inaccessible dirs
   }
   return results;
+}
+
+/**
+ * Scan source files for unresolved relative imports and auto-generate
+ * minimal component files so they render as real React elements in the
+ * preview (empty divs) instead of producing "Could not resolve" build
+ * errors or showing placeholder stubs.
+ */
+async function autoGenerateMissingComponents(
+  workDir: string,
+  files: Record<string, string>,
+) {
+  const CODE_EXTS = ['.tsx', '.ts', '.jsx', '.js'];
+  const SKIP_EXTS = /\.(css|json|svg|png|jpe?g|gif|webp|woff2?|mp4|webm|ico)$/i;
+
+  // Build lookup of existing paths (normalized, no extension)
+  const existingPaths = new Set<string>();
+  for (const fp of Object.keys(files)) {
+    existingPaths.add(path.normalize(fp));
+  }
+
+  for (const [filePath, content] of Object.entries(files)) {
+    if (!/\.(tsx?|jsx?|mjs)$/i.test(filePath)) continue;
+    const fileDir = path.dirname(filePath);
+
+    // Match all `from '...'` import paths (handles import X, import {X}, export {X}, etc.)
+    const importRe = /from\s+['"]([^'"]+)['"]/g;
+    let match: RegExpExecArray | null;
+    while ((match = importRe.exec(content)) !== null) {
+      const importPath = match[1]!;
+
+      // Only care about relative and @/ alias imports
+      let resolved: string | null = null;
+      if (importPath.startsWith('./') || importPath.startsWith('../')) {
+        resolved = path.normalize(path.join(fileDir, importPath));
+      } else if (importPath.startsWith('@/')) {
+        resolved = path.normalize(importPath.slice(2));
+      }
+      if (!resolved || SKIP_EXTS.test(resolved)) continue;
+
+      // Check if file already exists on disk
+      if (existingPaths.has(resolved)) continue;
+      let found = false;
+      for (const ext of CODE_EXTS) {
+        if (existingPaths.has(resolved + ext)) { found = true; break; }
+        if (existingPaths.has(path.join(resolved, 'index' + ext))) { found = true; break; }
+      }
+      if (found) continue;
+
+      // Derive component name from filename
+      const segment = resolved.split(/[/\\]/).pop() || 'Component';
+      const componentName = toPascalCase(segment.replace(/\.\w+$/, ''));
+
+      // Generate a minimal component file on disk
+      const generatedPath = resolved + '.tsx';
+      const fullPath = path.join(workDir, generatedPath);
+      await fsp.mkdir(path.dirname(fullPath), { recursive: true });
+      await fsp.writeFile(
+        fullPath,
+        [
+          "import React from 'react';",
+          '',
+          `export default function ${componentName}() {`,
+          "  return React.createElement('div', null);",
+          '}',
+          '',
+        ].join('\n'),
+        'utf-8',
+      );
+      existingPaths.add(generatedPath);
+    }
+  }
 }

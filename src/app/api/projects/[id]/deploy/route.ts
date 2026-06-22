@@ -12,6 +12,7 @@ import { requireUser } from '@/lib/server/auth';
 import { createSupabaseAdmin } from '@/lib/server/supabase-admin';
 import { logAuditEvent } from '@/lib/server/audit-log';
 import { createClient } from '@supabase/supabase-js';
+import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         if (fileRows && fileRows.length > 0) {
           deployFiles = {};
           for (const row of fileRows) {
-            if (row.path && row.content !== undefined && row.path !== 'project_memory.md') {
+            if (row.path && row.content !== undefined && row.path !== 'project_memory.md' && !shouldIgnorePreviewPath(row.path)) {
               deployFiles[row.path] = row.content;
             }
           }

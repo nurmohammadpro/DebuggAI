@@ -2,7 +2,7 @@
 
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useUser } from '@/hooks/clerk-safe';
+import { useSessionStore } from '@/store/session-store';
 import { queryKeys } from '@/hooks/queries/query-keys';
 
 export type RunRow = {
@@ -24,21 +24,21 @@ export type UseMyRunsOptions = Pick<
 >;
 
 export function useMyRuns(limit = 20, enabled = true, options?: UseMyRunsOptions) {
-  const { user: clerkUser } = useUser();
+  const userId = useSessionStore((s) => s.user?.id);
 
   return useQuery<RunRow[], Error, RunRow[]>({
     queryKey: [...queryKeys.myRuns, { limit }] as const,
-    enabled: enabled && !!clerkUser,
+    enabled: enabled && !!userId,
     refetchInterval: options?.refetchInterval,
     staleTime: 0,
-    gcTime: clerkUser ? 5 * 60 * 1000 : 10_000,
+    gcTime: userId ? 5 * 60 * 1000 : 10_000,
     queryFn: async (): Promise<RunRow[]> => {
-      if (!clerkUser?.id) throw new Error('Not authenticated');
+      if (!userId) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('runs')
         .select('id,thread_id,user_id,status,objective,error,created_at,started_at,ended_at,updated_at')
-        .eq('user_id', clerkUser.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit);
 

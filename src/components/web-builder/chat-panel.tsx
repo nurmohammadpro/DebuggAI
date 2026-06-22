@@ -1,3 +1,8 @@
+/**
+ * DEPRECATED: Legacy chat panel using single-shot /api/generate.
+ * Use EnhancedChatPanel instead — it uses the agent tool-calling loop
+ * (/api/agent/turn) with surgical file edits and auto-verify.
+ */
 'use client';
 
 import { useState, useRef, useEffect } from 'react';

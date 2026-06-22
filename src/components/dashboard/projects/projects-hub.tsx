@@ -124,14 +124,14 @@ export function ProjectsHub() {
           <div className="flex items-center rounded-lg border border-[var(--app-border)] bg-[var(--app-panel)] p-0.5">
             <button
               onClick={() => { setViewMode('grid'); localStorage.setItem('debuggai.dashboard.viewMode', 'grid'); }}
-              className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[var(--app-accent)] text-white' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]'}`}
+              className={`touch-target flex items-center justify-center rounded transition-colors ${viewMode === 'grid' ? 'bg-[var(--app-accent)] text-white' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]'}`}
               title="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
             <button
               onClick={() => { setViewMode('list'); localStorage.setItem('debuggai.dashboard.viewMode', 'list'); }}
-              className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'bg-[var(--app-accent)] text-white' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]'}`}
+              className={`touch-target flex items-center justify-center rounded transition-colors ${viewMode === 'list' ? 'bg-[var(--app-accent)] text-white' : 'text-[var(--app-text-dim)] hover:text-[var(--app-text)]'}`}
               title="List view"
             >
               <List className="h-4 w-4" />
@@ -154,8 +154,8 @@ export function ProjectsHub() {
         onStackChange={setStack}
       />
 
-      <div className="grid lg:grid-cols-[1fr,280px] gap-4 items-start">
-        <div className="space-y-3 order-2 lg:order-1">
+      <div className="grid md:grid-cols-[1fr,260px] gap-4 items-start">
+        <div className="space-y-3 order-2 md:order-1">
           {(latestProject || latestThread) && (
             <div className="rounded-[6px] border border-[var(--app-border)] bg-[var(--app-panel)] p-3">
               <div className="flex items-center justify-between gap-3">
@@ -291,7 +291,7 @@ export function ProjectsHub() {
           )}
         </div>
 
-        <div className="space-y-3 order-1 lg:order-2">
+        <div className="space-y-3 order-1 md:order-2">
           <RecentRuns />
           <RecentDebugSessions />
           <RecentTransactions />

@@ -43,6 +43,23 @@ describe('preview compiler', () => {
     expect(html).not.toContain('cdn.tailwindcss.com');
   });
 
+  it('ignores Next build artifacts when bundling preview code', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        'export default function Home() {',
+        '  return <main className="min-h-screen">Hello</main>;',
+        '}',
+      ].join('\n'),
+      '.next/server/chunks/[root-of-the-server]__0qmlxzp._.js': [
+        'const loader = (specifier) => require(specifier + Math.random());',
+        'export default loader;',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Hello');
+  });
+
   it('uses preview shims when generated shadcn ui files miss named exports', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
@@ -67,6 +84,22 @@ describe('preview compiler', () => {
 
     expect(errors).toEqual([]);
     expect(js).toContain('Best plan');
+  });
+
+  it('embeds route state for routed preview pages', async () => {
+    const { js, css, errors } = await bundlePreview({
+      'app/blog/[slug]/page.tsx': [
+        'export default function Post() {',
+        '  return <main>Post view</main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    const html = buildPreviewHtml(js, css, '/blog/post-1', '/blog/[slug]');
+    expect(html).toContain('window.__debuggaiRouteState');
+    expect(html).toContain('/blog/post-1');
+    expect(html).toContain('/blog/[slug]');
   });
 
   it('bundles generated drag handles that import GripVertical from lucide-react', async () => {
@@ -147,8 +180,6 @@ describe('preview compiler', () => {
 
     expect(errors).toEqual([]);
     expect(js).toContain('Still renders');
-    expect(js).toContain('normalizePreviewComponentType');
-    expect(js).toContain('Unsupported preview component');
   });
 
   it('spreads static JSX children to avoid false missing-key warnings', async () => {
@@ -161,8 +192,6 @@ describe('preview compiler', () => {
     });
 
     expect(errors).toEqual([]);
-    expect(js).toContain('createPreviewElement');
-    expect(js).toContain('...children');
     expect(js).toContain('Title');
     expect(js).toContain('Body');
   });

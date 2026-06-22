@@ -10,7 +10,7 @@ import { Code2, Plus, Loader2 } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { WEB_BUILDER_STACKS } from '@/lib/constants';
-import { getClerkToken } from '@/lib/clerk-token';
+import { getSession } from '@/hooks/use-session';
 import { createProjectFromGeneration } from '@/lib/projects/create-project';
 
 export function CreateProjectDialog({

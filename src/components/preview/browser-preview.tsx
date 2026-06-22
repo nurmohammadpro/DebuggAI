@@ -3,16 +3,122 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 
-import type { RuntimeError } from '@/store/generation-store';
-import { AlertCircle, Info, Play, RefreshCw } from 'lucide-react';
+import { AlertCircle, Info, Monitor, Smartphone, Tablet, Play, RefreshCw, Maximize2, Minimize2, Crosshair } from 'lucide-react';
+
+type DeviceMode = 'desktop' | 'tablet' | 'mobile';
 
 interface BrowserPreviewProps {
   height?: string;
   className?: string;
   chromeless?: boolean;
+  sandboxUrl?: string | null;
+  sandboxStatus?: 'idle' | 'creating' | 'installing' | 'running' | 'error' | 'stopped';
 }
 
 const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
+
+function entryPointToPreviewPath(entryPoint: string): string {
+  const normalized = String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+  const appMatch = normalized.match(/^(?:src\/)?app\/(.+)\/page\.[a-zA-Z0-9]+$/);
+  if (appMatch) return segmentsToRoutePath(appMatch[1] || '');
+  if (/^(?:src\/)?app\/page\.[a-zA-Z0-9]+$/.test(normalized)) return '/';
+  const pagesMatch = normalized.match(/^(?:src\/)?pages\/(.+)\.[a-zA-Z0-9]+$/);
+  if (pagesMatch) {
+    const route = pagesMatch[1] || '';
+    if (route === 'index') return '/';
+    return segmentsToRoutePath(route.replace(/\/index$/, ''));
+  }
+  return '/';
+}
+
+function segmentsToRoutePath(route: string): string {
+  const segments = String(route || '')
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => !/^\(.*\)$/.test(segment) && !segment.startsWith('_'));
+  if (segments.length === 0) return '/';
+  return `/${segments.join('/')}`;
+}
+
+/**
+ * Resolve an href to the corresponding Next.js App Router page file path.
+ * e.g. "/about" → "app/about/page.tsx", "/" → "app/page.tsx"
+ */
+function resolvePageEntry(
+  href: string,
+  fileEntries: Record<string, { path: string; content: string; status?: string; language?: string }>,
+): string | null {
+  // Parse the pathname from the href (ignore protocol/host for relative URLs)
+  let pathname = href;
+  try {
+    const u = new URL(href, 'http://localhost');
+    pathname = u.pathname;
+  } catch {}
+  if (!pathname.startsWith('/')) pathname = '/' + pathname;
+
+  // Normalize: strip trailing slash (except root)
+  if (pathname !== '/') pathname = pathname.replace(/\/+$/, '');
+
+  const fileKeys = Object.keys(fileEntries);
+
+  // Build candidate paths (ordered by priority)
+  const candidates: string[] = [];
+
+  // 1. Exact match: /about → app/about/page.tsx
+  const segment = pathname === '/' ? '' : pathname;
+  for (const ext of ['tsx', 'ts', 'jsx', 'js']) {
+    candidates.push(`app${segment}/page.${ext}`);
+    candidates.push(`src/app${segment}/page.${ext}`);
+  }
+
+  // 2. Dynamic routes: /blog/post-1 → app/blog/[slug]/page.tsx
+  //    Split the path into segments and look for [param] patterns
+  const pathSegments = pathname.split('/').filter(Boolean);
+  for (const key of fileKeys) {
+    const match = matchDynamicRoute(key, pathSegments);
+    if (match) candidates.push(key);
+  }
+
+  // 3. Nested layouts: check if any layout file exists for this path
+  for (const ext of ['tsx', 'ts', 'jsx', 'js']) {
+    // Walk up from the deepest segment
+    for (let i = pathSegments.length; i >= 0; i--) {
+      const prefix = pathSegments.slice(0, i).join('/');
+      const dir = prefix ? `app/${prefix}` : 'app';
+      candidates.push(`${dir}/page.${ext}`);
+      candidates.push(`src/${dir}/page.${ext}`);
+    }
+  }
+
+  for (const c of candidates) {
+    if (fileEntries[c]) return c;
+  }
+
+  return null;
+}
+
+/** Match a dynamic route pattern like app/blog/[slug]/page.tsx against segments */
+function matchDynamicRoute(pattern: string, segments: string[]): boolean {
+  // Only match app/.../page.{ext} patterns
+  const pageMatch = pattern.match(/^(?:src\/)?app\/(.*)\/page\.(tsx|ts|jsx|js)$/);
+  if (!pageMatch) return false;
+  const routeParts = (pageMatch[1] || '').split('/');
+  if (routeParts.length !== segments.length) return false;
+  for (let i = 0; i < routeParts.length; i++) {
+    const part = routeParts[i]!;
+    if (part.startsWith('[') && part.endsWith(']')) continue; // dynamic segment
+    if (part.startsWith('[...') && part.endsWith(']')) return true; // catch-all matches anything
+    if (part !== segments[i]) return false;
+  }
+  return true;
+}
+
+const DEVICE_WIDTHS: Record<DeviceMode, string> = {
+  desktop: '100%',
+  tablet: '768px',
+  mobile: '375px',
+};
 
 /**
  * In-browser preview that compiles generated TSX/JSX on the server
@@ -20,18 +126,29 @@ const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
  *
  * Replaces the Docker sandbox-based preview for UI rendering.
  */
-export function BrowserPreview({ className, chromeless = false }: BrowserPreviewProps) {
-  const { files, previewNonce, bumpPreviewNonce, setLastError, clearError, lastError } =
+export function BrowserPreview({ className, chromeless = false, sandboxUrl, sandboxStatus }: BrowserPreviewProps) {
+  const { files, previewNonce, bumpPreviewNonce, setLastError, clearError, lastError, currentProjectId } =
     useGenerationStore();
 
   const [html, setHtml] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'compiling' | 'ready' | 'error'>('idle');
   const [compileErrors, setCompileErrors] = useState<string[]>([]);
+  const [device, setDevice] = useState<DeviceMode>('desktop');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [inspectMode, setInspectMode] = useState(false);
+  const [currentRouteHref, setCurrentRouteHref] = useState<string | null>(null);
+  const [inspectedElement, setInspectedElement] = useState<{
+    tag: string; id: string | null; classes: string; text: string; path: string; attributes: string;
+  } | null>(null);
+  const [inspectEditText, setInspectEditText] = useState('');
+  const { setPendingInspectPrompt } = useGenerationStore();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previousSnapshot = useRef<string>('');
   const abortRef = useRef<AbortController | null>(null);
   const htmlRef = useRef<string | null>(null);
   const compileRunRef = useRef(0);
+  const consoleBufRef = useRef<Array<{ type: string; args: string[]; timestamp: number }>>([]);
+  const networkBufRef = useRef<Array<{ url: string; method: string; status: number; statusText: string; error?: string; timestamp: number }>>([]);
 
   useEffect(() => {
     htmlRef.current = html;
@@ -45,17 +162,54 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
 
       switch (data.type) {
         case 'ready':
-          // Preview is loaded and trap is active
+          break;
+        case 'console.log':
+        case 'console.info':
+        case 'console.debug':
+          consoleBufRef.current.push({
+            type: data.type.replace('console.', ''),
+            args: data.args || [],
+            timestamp: data.timestamp || Date.now(),
+          });
           break;
         case 'console.error':
         case 'console.warn':
-          // Convert console errors to preview errors
+          consoleBufRef.current.push({
+            type: data.type.replace('console.', ''),
+            args: data.args || [],
+            timestamp: data.timestamp || Date.now(),
+          });
           if (data.type === 'console.error') {
             setLastError({
               message: data.args?.join(' ') || 'Console error',
               source: 'console',
             });
           }
+          break;
+        case 'navigate':
+          // SPA routing: find matching page file and recompile with it as entry point
+          if (data.href && files) {
+            const targetHref = String(data.href);
+            const resolved = resolvePageEntry(targetHref, files.files);
+            if (resolved) {
+              setCurrentRouteHref(targetHref);
+              const store = useGenerationStore.getState();
+              if (resolved !== files.entryPath || targetHref !== currentRouteHref) {
+                files.entryPath = resolved;
+                store.bumpPreviewNonce();
+              }
+            }
+          }
+          break;
+        case 'network-error':
+          networkBufRef.current.push({
+            url: data.url || '',
+            method: data.method || 'GET',
+            status: data.status || 0,
+            statusText: data.statusText || '',
+            error: data.error || '',
+            timestamp: data.timestamp || Date.now(),
+          });
           break;
         case 'runtime-error':
           setLastError({
@@ -71,15 +225,43 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
             source: 'unhandled-rejection',
           });
           break;
+        case 'element-clicked':
+          if (data.element) {
+            setInspectedElement(data.element);
+            setInspectEditText('');
+          }
+          break;
+        case 'inspect-mode-changed':
+          if (data.active === false) setInspectMode(false);
+          break;
       }
     },
-    [setLastError],
+    [currentRouteHref, setLastError, files],
   );
 
   useEffect(() => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [handleMessage]);
+
+  // Flush console/network logs to the server-side buffer so the agent
+  // can read them via read_dev_logs and read_network_requests.
+  useEffect(() => {
+    const flushInterval = setInterval(() => {
+      const consoleEntries = consoleBufRef.current.splice(0);
+      const networkEntries = networkBufRef.current.splice(0);
+      if (!consoleEntries.length && !networkEntries.length) return;
+      if (!currentProjectId) return;
+
+      fetch('/api/preview/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: currentProjectId, console: consoleEntries, network: networkEntries }),
+      }).catch(() => { /* best-effort, don't spam console */ });
+    }, 5_000);
+
+    return () => clearInterval(flushInterval);
+  }, [currentProjectId]);
 
   // Compile and render whenever files or nonce changes
   const compile = useCallback(async () => {
@@ -110,7 +292,8 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
     }
 
     // Snapshot check to avoid re-compiling identical code
-    const snapshot = JSON.stringify({ entryPath: files.entryPath, files: flatFiles });
+    const routePath = currentRouteHref || entryPointToPreviewPath(files.entryPath);
+    const snapshot = JSON.stringify({ entryPath: files.entryPath, routePath, files: flatFiles });
     if (snapshot === previousSnapshot.current && htmlRef.current) {
       setStatus('ready');
       setCompileErrors([]);
@@ -146,6 +329,7 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         body: JSON.stringify({
           files: flatFiles,
           entryPoint: files.entryPath,
+          routePath,
         }),
         signal: controller.signal,
       });
@@ -188,18 +372,40 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         abortRef.current = null;
       }
     }
-  }, [files, clearError]);
+  }, [currentRouteHref, files, clearError]);
 
   useEffect(() => {
     previousSnapshot.current = '';
     compile();
   }, [compile, previewNonce]);
 
+  useEffect(() => {
+    setCurrentRouteHref(null);
+  }, [currentProjectId]);
+
   const handleRefresh = useCallback(() => {
     previousSnapshot.current = '';
     clearError();
     bumpPreviewNonce();
   }, [clearError, bumpPreviewNonce]);
+
+  // Sync inspect mode to iframe
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { source: 'debuggai-parent', type: 'inspect-mode', active: inspectMode },
+      '*',
+    );
+  }, [inspectMode]);
+
+  // Send inspect prompt to agent
+  const handleSendInspectPrompt = useCallback(() => {
+    if (!inspectedElement || !inspectEditText.trim()) return;
+    const prompt = `Edit the <${inspectedElement.tag}> element${inspectedElement.id ? ` with id="${inspectedElement.id}"` : ''}${inspectedElement.classes ? ` with classes "${inspectedElement.classes}"` : ''} at path \`${inspectedElement.path}\`. Current text: "${inspectedElement.text}". ${inspectEditText.trim()}`;
+    setPendingInspectPrompt(prompt);
+    setInspectedElement(null);
+    setInspectEditText('');
+    setInspectMode(false);
+  }, [inspectedElement, inspectEditText, setPendingInspectPrompt]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -216,6 +422,12 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
           status={status}
           onRefresh={handleRefresh}
           hasErrors={!!lastError || compileErrors.length > 0}
+          device={device}
+          onDeviceChange={setDevice}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+          inspectMode={inspectMode}
+          onToggleInspect={() => { setInspectMode(!inspectMode); setInspectedElement(null); }}
         />
       )}
 
@@ -228,8 +440,8 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         </div>
       )}
 
-      <div className="flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-stretch justify-stretch p-0">
-        <div className="bg-white flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className={`flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#F0F0F0] dark:bg-[#1A1A1A]' : ''}`}>
+        <div className="bg-white flex flex-col min-h-0 overflow-hidden rounded-lg shadow-sm border border-[var(--app-border)] transition-all duration-200" style={{ width: DEVICE_WIDTHS[device], height: isFullscreen ? '100%' : '100%' }}>
           {status === 'idle' && <IdleState />}
           {status === 'compiling' && <CompilingState />}
           {status === 'error' && (
@@ -238,15 +450,24 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
               onRetry={handleRefresh}
             />
           )}
-          {status === 'ready' && html && (
+          {sandboxStatus === 'running' && sandboxUrl ? (
+            <iframe
+              ref={iframeRef}
+              src={sandboxUrl}
+              className="h-full w-full border-0"
+              title="Live Preview"
+            />
+          ) : sandboxStatus === 'installing' || sandboxStatus === 'creating' ? (
+            <SandboxStartingState />
+          ) : status === 'ready' && html ? (
             <iframe
               ref={iframeRef}
               srcDoc={html}
               className="h-full w-full border-0"
               title="Preview"
-              sandbox="allow-scripts allow-forms allow-modals"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
             />
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -301,7 +522,51 @@ export function BrowserPreview({ className, chromeless = false }: BrowserPreview
         </div>
       )}
 
-      <PreviewStatusBar engine="esbuild/React" />
+      {/* Inspect element prompt bar */}
+      {inspectedElement && (
+        <div className="border-t border-blue-500/30 p-3 bg-blue-500/5 shrink-0 animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-start gap-2">
+            <Crosshair className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1">
+                Element Selected
+              </p>
+              <p className="text-[11px] text-[var(--app-text)] font-mono mb-1">
+                &lt;{inspectedElement.tag}{inspectedElement.id ? ` #${inspectedElement.id}` : ''}{inspectedElement.classes ? ` .${inspectedElement.classes.split(/\s+/).slice(0, 3).join('.')}` : ''}&gt;
+              </p>
+              {inspectedElement.text && (
+                <p className="text-[10px] text-[var(--app-text-dim)] truncate">&quot;{inspectedElement.text.slice(0, 100)}&quot;</p>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="text"
+                  value={inspectEditText}
+                  onChange={(e) => setInspectEditText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendInspectPrompt(); if (e.key === 'Escape') { setInspectedElement(null); setInspectEditText(''); } }}
+                  placeholder="What should the AI change? e.g. 'make this button blue'"
+                  className="flex-1 h-8 px-2.5 rounded-[6px] bg-[var(--app-surface)] border border-[var(--app-border)] text-[11px] text-[var(--app-text)] placeholder:text-[var(--app-text-dim)] focus:outline-none focus:border-blue-400"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSendInspectPrompt}
+                  disabled={!inspectEditText.trim()}
+                  className="h-8 px-3 rounded-[6px] bg-blue-500 text-white text-[11px] font-semibold uppercase hover:bg-blue-600 disabled:opacity-40 transition-opacity shrink-0"
+                >
+                  Ask AI
+                </button>
+                <button
+                  onClick={() => { setInspectedElement(null); setInspectEditText(''); }}
+                  className="h-8 px-2 rounded-[6px] text-[var(--app-text-dim)] hover:text-[var(--app-text)] text-[11px] transition-colors shrink-0"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PreviewStatusBar engine={sandboxStatus === 'running' ? 'Docker/Next.js' : 'esbuild/React'} />
     </div>
   );
 }
@@ -312,11 +577,29 @@ function BrowserHeader({
   status,
   onRefresh,
   hasErrors,
+  device,
+  onDeviceChange,
+  isFullscreen,
+  onToggleFullscreen,
+  inspectMode,
+  onToggleInspect,
 }: {
   status: string;
   onRefresh: () => void;
   hasErrors: boolean;
+  device: DeviceMode;
+  onDeviceChange: (d: DeviceMode) => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
+  inspectMode?: boolean;
+  onToggleInspect?: () => void;
 }) {
+  const devices: { mode: DeviceMode; icon: typeof Monitor; label: string }[] = [
+    { mode: 'desktop', icon: Monitor, label: 'Desktop' },
+    { mode: 'tablet', icon: Tablet, label: 'Tablet' },
+    { mode: 'mobile', icon: Smartphone, label: 'Mobile' },
+  ];
+
   return (
     <div className="h-11 flex items-center gap-1.5 px-3 shrink-0 border-b border-[var(--app-border)] bg-[var(--app-panel)]">
       <div className="flex items-center gap-2.5">
@@ -336,7 +619,42 @@ function BrowserHeader({
         )}
       </div>
       <div className="flex-1" />
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
+        {devices.map(({ mode, icon: Icon, label }) => (
+          <button
+            key={mode}
+            onClick={() => onDeviceChange(mode)}
+            className={`h-7 w-7 rounded-[6px] flex items-center justify-center transition-colors ${
+              device === mode
+                ? 'bg-[var(--app-accent)]/15 text-[var(--app-accent)]'
+                : 'text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
+            }`}
+            title={`${label} view`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+          </button>
+        ))}
+        <div className="w-px h-4 bg-[var(--app-border)] mx-0.5" />
+        {onToggleInspect && (
+          <button
+            onClick={onToggleInspect}
+            className={`h-7 w-7 rounded-[6px] flex items-center justify-center transition-colors ${
+              inspectMode
+                ? 'bg-blue-500/15 text-blue-400'
+                : 'text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)]'
+            }`}
+            title={inspectMode ? 'Exit inspect mode' : 'Inspect element — click an element to ask AI to edit it'}
+          >
+            <Crosshair className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <button
+          onClick={onToggleFullscreen}
+          className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        >
+          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+        </button>
         <button
           onClick={onRefresh}
           className="h-7 w-7 rounded-[6px] flex items-center justify-center text-[var(--app-text-dim)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] transition-colors"
@@ -378,6 +696,27 @@ function CompilingState() {
           <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce [animation-delay:-0.15s]" />
           <div className="w-1 h-1 bg-[var(--app-accent)]/40 rounded-full animate-bounce" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SandboxStartingState() {
+  return (
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-[var(--app-bg)]">
+      <div className="relative mb-8">
+        <div className="w-16 h-16 rounded-[10px] border-2 border-emerald-400/25 animate-spin [animation-duration:4s]" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-lg">🐳</div>
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-[0.3em] animate-pulse">
+          Starting Dev Server
+        </span>
+        <span className="text-[10px] text-[var(--app-text-dim)]">
+          Installing dependencies and building…
+        </span>
       </div>
     </div>
   );

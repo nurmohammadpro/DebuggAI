@@ -8,6 +8,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createClient } from '@supabase/supabase-js';
+import { filterIgnoredPreviewPaths, normalizePreviewCode, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,8 @@ export async function POST(
 
   const nextVersion = (latest?.version || 0) + 1;
 
-  const code = body.code || serializeFiles(body.files || {});
+  const filteredFiles = body.files ? filterIgnoredPreviewPaths(body.files) : null;
+  const code = body.code ? normalizePreviewCode(body.code) : serializeFiles(filteredFiles || {});
 
   const { error } = await auth.supabase
     .from('generations')
@@ -66,13 +68,13 @@ export async function POST(
 
   // ── Save to project_files table (per-file persistence) ──────────────────
   const projectFileErrors: string[] = [];
-  if (body.files) {
+  if (filteredFiles) {
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if (serviceKey) {
         const admin = createClient(supabaseUrl, serviceKey);
-        for (const [path, content] of Object.entries(body.files)) {
+        for (const [path, content] of Object.entries(filteredFiles)) {
           const { error: fileError } = await admin.from('project_files').upsert({
             project_id: id,
             path,
@@ -113,6 +115,7 @@ export async function POST(
 
 function serializeFiles(files: Record<string, string>): string {
   return Object.entries(files)
+    .filter(([path]) => !shouldIgnorePreviewPath(path))
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([path, content]) => {
       const lang = detectLanguage(path);

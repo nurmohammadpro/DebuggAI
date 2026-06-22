@@ -23,7 +23,7 @@ export function UnifiedLayout({
   const { openCommandPalette, setOpenCommandPalette } = useDashboardShell();
 
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider>
       <CommandPalette open={openCommandPalette} onOpenChange={setOpenCommandPalette} />
 
       <Suspense fallback={null}>

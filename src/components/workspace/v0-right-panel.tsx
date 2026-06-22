@@ -3,6 +3,7 @@
 import {
   Code2,
   Eye,
+  GitBranch,
   Maximize2,
   Minimize2,
   PanelRightClose,
@@ -16,10 +17,11 @@ import {
 import { useState, useCallback } from 'react';
 import { WorkspaceEditor } from '@/components/workspace/workspace-editor';
 import { BrowserPreview } from '@/components/preview/browser-preview';
+import { DiffTimeline } from '@/components/workspace/diff-timeline';
 import { useGenerationStore } from '@/store/generation-store';
 import { cn } from '@/lib/utils';
 
-export type V0RightView = 'preview' | 'code';
+export type V0RightView = 'preview' | 'code' | 'changes';
 
 interface V0RightPanelProps {
   activeView: V0RightView;
@@ -29,6 +31,8 @@ interface V0RightPanelProps {
   onDeploy?: () => void;
   onShare?: () => void;
   onSave?: () => void;
+  sandboxUrl?: string | null;
+  sandboxStatus?: 'idle' | 'creating' | 'installing' | 'running' | 'error' | 'stopped';
 }
 
 /**
@@ -43,6 +47,8 @@ export function V0RightPanel({
   onDeploy,
   onShare,
   onSave,
+  sandboxUrl,
+  sandboxStatus,
 }: V0RightPanelProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { bumpPreviewNonce, files } = useGenerationStore();
@@ -71,6 +77,13 @@ export function V0RightPanel({
               activeView === 'code' ? 'bg-[var(--app-panel)] text-[var(--app-text)] shadow-sm' : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]')}
           >
             <Code2 className="h-3.5 w-3.5" /> Code
+          </button>
+          <button
+            onClick={() => onViewChange('changes')}
+            className={cn('h-7 px-3 rounded-[5px] flex items-center gap-1.5 text-[11px] font-medium transition-colors',
+              activeView === 'changes' ? 'bg-[var(--app-panel)] text-[var(--app-text)] shadow-sm' : 'text-[var(--app-text-muted)] hover:text-[var(--app-text)]')}
+          >
+            <GitBranch className="h-3.5 w-3.5" /> Changes
           </button>
         </div>
 
@@ -129,6 +142,8 @@ export function V0RightPanel({
           <BrowserPreview
             className="flex-1 min-h-0 border-0 rounded-none"
             chromeless
+            sandboxUrl={sandboxUrl}
+            sandboxStatus={sandboxStatus}
           />
         </div>
         <div
@@ -145,6 +160,16 @@ export function V0RightPanel({
             showFileTree
             onEditorViewChange={(view) => onViewChange(view as V0RightView)}
           />
+        </div>
+        <div
+          className="absolute inset-0 flex flex-col"
+          style={{
+            visibility: activeView === 'changes' ? 'visible' : 'hidden',
+            pointerEvents: activeView === 'changes' ? 'auto' : 'none',
+          }}
+          aria-hidden={activeView !== 'changes'}
+        >
+          <DiffTimeline />
         </div>
       </div>
     </div>

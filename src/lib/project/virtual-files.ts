@@ -11,12 +11,29 @@ export type VirtualProjectFiles = {
 };
 
 const DEFAULT_ENTRY = 'app/page.tsx';
+const IGNORED_PATH_RE = /(^|\/)(?:\.next|node_modules|\.turbo|dist|build|out|\.vercel|\.cache)(?:\/|$)/;
+const FILE_PATH_RE = '[\\w./()\\-\\[\\]]+';
+
+export function shouldIgnorePreviewPath(path: string): boolean {
+  const normalized = normalizePath(path);
+  return IGNORED_PATH_RE.test(normalized);
+}
+
+export function filterIgnoredPreviewPaths<T>(files: Record<string, T>): Record<string, T> {
+  return Object.fromEntries(
+    Object.entries(files).filter(([path]) => !shouldIgnorePreviewPath(path)),
+  );
+}
+
+export function normalizePreviewCode(code: string): string {
+  return serializeVirtualFiles(extractVirtualFiles(code));
+}
 
 export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): VirtualProjectFiles {
   if (!raw.trim()) {
     return {
       entryPath: DEFAULT_ENTRY,
-      files: base ? { ...base.files } : {},
+      files: base ? filterIgnoredPreviewPaths(base.files) : {},
     };
   }
 
@@ -24,7 +41,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 
   const pushFile = (path: string, content: string, language?: string) => {
     const normalized = normalizePath(path);
-    if (!normalized) return;
+    if (!normalized || shouldIgnorePreviewPath(normalized)) return;
     
     const formattedContent = stripLeadingFilenameHeader(content, normalized).replace(/\s+$/, '') + '\n';
     let status: VirtualFile['status'] = 'added';
@@ -43,8 +60,10 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
   };
 
   // 1) Markdown code fences with optional filename=...
-  const fenceRegex =
-    /(?:(?:^|\n)\s*(?:\/\/|#|<!--)\s*(?:file|path):\s*([\w./-]+\.[a-zA-Z0-9]+)\s*(?:-->)?\s*\n)?\s*```([a-zA-Z0-9_-]+)?(?:[^\n]*?filename=(?:"|')([^"']+)(?:"|'))?[^\n]*\n([\s\S]*?)```/gi;
+  const fenceRegex = new RegExp(
+    '(?:(?:^|\\n)\\s*(?:\\/\\/|#|<!--)\\s*(?:file|path):\\s*(' + FILE_PATH_RE + '\\.[a-zA-Z0-9]+)\\s*(?:-->)?\\s*\\n)?\\s*```([a-zA-Z0-9_-]+)?(?:[^\\n]*?filename=(?:"|\')([^"\']+)(?:"|\'))?[^\\n]*\\n([\\s\\S]*?)```',
+    'gi',
+  );
   for (const match of raw.matchAll(fenceRegex)) {
     const precedingName = match[1] || undefined;
     const language = match[2] || undefined;
@@ -61,7 +80,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
     // If the preceding marker name looks like a config explanation or
     // narration rather than a real file path, try harder to find one.
     if (!extractedName) {
-      const inlineMatch = code.match(/^\s*(?:\/\/|#)\s*File:\s*([\w./-]+\.[a-zA-Z0-9]+)\s*$/im);
+      const inlineMatch = code.match(new RegExp(`^\\s*(?:\\/\\/|#)\\s*File:\\s*(${FILE_PATH_RE}\\.[a-zA-Z0-9]+)\\s*$`, 'im'));
       if (inlineMatch) {
         pushFile(inlineMatch[1], code, language);
         continue;
@@ -100,6 +119,7 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
   //    from the sandbox and break the preview.
   if (base) {
     for (const path of Object.keys(base.files)) {
+      if (shouldIgnorePreviewPath(path)) continue;
       if (!files.has(path)) {
         files.set(path, {
           ...base.files[path],
@@ -114,12 +134,14 @@ export function extractVirtualFiles(raw: string, base?: VirtualProjectFiles): Vi
 
   return {
     entryPath,
-    files: Object.fromEntries([...files.entries()].map(([k, v]) => [k, v])),
+    files: filterIgnoredPreviewPaths(Object.fromEntries([...files.entries()].map(([k, v]) => [k, v]))),
   };
 }
 
 export function serializeVirtualFiles(project: VirtualProjectFiles) {
-  const ordered = Object.keys(project.files).sort();
+  const ordered = Object.keys(project.files)
+    .filter((path) => !shouldIgnorePreviewPath(path))
+    .sort();
   if (ordered.length === 1) {
     const only = project.files[ordered[0]!];
     return only?.content || '';
@@ -164,8 +186,8 @@ function extractLeadingFilenameComment(code: string) {
   const firstLine = code.split('\n', 1)[0] || '';
   // Examples: // src/App.tsx, // File: src/App.tsx
   const m =
-    firstLine.match(/^\s*\/\/\s*(?:file:\s*)?([\w./-]+\.[a-zA-Z0-9]+)\s*$/i) ||
-    firstLine.match(/^\s*\/\*\s*(?:file:\s*)?([\w./-]+\.[a-zA-Z0-9]+)\s*\*\/\s*$/i);
+    firstLine.match(new RegExp(`^\\s*\\/\\/\\s*(?:file:\\s*)?(${FILE_PATH_RE}\\.[a-zA-Z0-9]+)\\s*$`, 'i')) ||
+    firstLine.match(new RegExp(`^\\s*\\/\\*\\s*(?:file:\\s*)?(${FILE_PATH_RE}\\.[a-zA-Z0-9]+)\\s*\\*\\/\\s*$`, 'i'));
   return m?.[1] || null;
 }
 
@@ -182,7 +204,7 @@ function stripLeadingFilenameHeader(content: string, path: string) {
 }
 
 function extractFileHeaderMarker(code: string) {
-  const marker = code.match(/^\s*(?:#|\/\/)\s*File:\s*([\w./-]+\.[a-zA-Z0-9]+)\s*$/im);
+  const marker = code.match(new RegExp(`^\\s*(?:#|\\/\\/)\\s*File:\\s*(${FILE_PATH_RE}\\.[a-zA-Z0-9]+)\\s*$`, 'im'));
   return marker?.[1] || null;
 }
 
@@ -194,8 +216,10 @@ function extractFilesAggressive(raw: string) {
   //   "app/page.tsx:\n```tsx\n...\n```"
   //   "**app/page.tsx**\n```tsx\n...\n```"
   //   "### components/hero.tsx\n```tsx\n...\n```"
-  const segmentRegex =
-    /(?:^|\n)\s*(?:\*{1,2}|#{1,3}\s*)?\s*([\w./-]+\.[a-zA-Z0-9]+)\s*(?:\*{1,2})?\s*(?::)?\s*(?:\n|$)\s*```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)```/gi;
+  const segmentRegex = new RegExp(
+    '(?:^|\\n)\\s*(?:\\*{1,2}|#{1,3}\\s*)?\\s*(' + FILE_PATH_RE + '\\.[a-zA-Z0-9]+)\\s*(?:\\*{1,2})?\\s*(?::)?\\s*(?:\\n|$)\\s*```[a-zA-Z0-9_-]*\\s*\\n([\\s\\S]*?)```',
+    'gi',
+  );
 
   let match: RegExpExecArray | null;
   while ((match = segmentRegex.exec(raw)) !== null) {
@@ -216,7 +240,7 @@ function extractFilesAggressive(raw: string) {
       if (!code || code.length < 20) continue;
 
       // Try to find a file path in the preceding line
-      const pathMatch = preceding.match(/([\w./-]+\.[a-zA-Z0-9]+)/);
+      const pathMatch = preceding.match(new RegExp(`(${FILE_PATH_RE}\\.[a-zA-Z0-9]+)`));
       const path = pathMatch ? normalizePath(pathMatch[1]) : '';
 
       if (path) {
@@ -248,7 +272,7 @@ function splitByFileMarkers(raw: string) {
   //   // path/to/file.tsx
   //   **File: path/to/file.tsx**
   const markerRegex =
-    /^\s*(?:\/\/|#|###\s|\*\*)\s*(?:File:\s*)?([\w./-]+\.[a-zA-Z0-9]+)\s*(?:\*\*)?\s*$/i;
+    new RegExp(`^\\s*(?:\\/\\/|#|###\\s|\\*\\*)\\s*(?:File:\\s*)?(${FILE_PATH_RE}\\.[a-zA-Z0-9]+)\\s*(?:\\*\\*)?\\s*$`, 'i');
 
   for (const line of lines) {
     const m = line.match(markerRegex);
