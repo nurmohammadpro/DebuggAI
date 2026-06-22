@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
-import { type VirtualFile, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
+import { normalizePreviewCode, type VirtualFile, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,10 +53,11 @@ export async function GET(
   const { data: latestGen } = genResult;
   const { data: firstThread } = threadResult;
   const fileTreeCode = serializeProjectFiles(filesResult.data || []);
+  const latestGenCode = latestGen?.code?.trim() ? normalizePreviewCode(latestGen.code) : '';
   const latest = latestGen
     ? {
         ...latestGen,
-        code: fileTreeCode || (latestGen.code?.trim() ? latestGen.code : ''),
+        code: fileTreeCode || latestGenCode,
       }
     : fileTreeCode
       ? {

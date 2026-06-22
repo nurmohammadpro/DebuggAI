@@ -8,7 +8,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/lib/server/auth';
 import { createClient } from '@supabase/supabase-js';
-import { filterIgnoredPreviewPaths, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
+import { filterIgnoredPreviewPaths, normalizePreviewCode, shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +47,7 @@ export async function POST(
   const nextVersion = (latest?.version || 0) + 1;
 
   const filteredFiles = body.files ? filterIgnoredPreviewPaths(body.files) : null;
-  const code = body.code || serializeFiles(filteredFiles || {});
+  const code = body.code ? normalizePreviewCode(body.code) : serializeFiles(filteredFiles || {});
 
   const { error } = await auth.supabase
     .from('generations')

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizePreviewFiles } from '@/lib/project/package-normalizer';
-import { extractVirtualFiles } from '@/lib/project/virtual-files';
+import { extractVirtualFiles, normalizePreviewCode } from '@/lib/project/virtual-files';
 import { sanitizeChatContent } from '@/lib/utils/code-extraction';
 
 describe('preview generation hardening', () => {
@@ -119,6 +119,24 @@ require(someVeryDynamicModule);
 
     expect(files['app/page.tsx']).toBeTruthy();
     expect(files['.next/server/chunks/[root-of-the-server]__abc.js']).toBeUndefined();
+  });
+
+  it('normalizes polluted generation code before preview loading', () => {
+    const code = normalizePreviewCode(`// File: app/page.tsx
+\`\`\`tsx
+export default function Page() {
+  return <main>Ready</main>;
+}
+\`\`\`
+
+// File: .next/server/chunks/[root-of-the-server]__abc.js
+\`\`\`js
+require(someVeryDynamicModule);
+\`\`\``);
+
+    expect(code).toContain('Ready');
+    expect(code).not.toContain('.next/server/chunks/[root-of-the-server]__abc.js');
+    expect(code).not.toContain('someVeryDynamicModule');
   });
 
   it('keeps generated source code out of assistant chat prose', () => {
