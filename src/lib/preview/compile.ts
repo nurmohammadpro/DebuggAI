@@ -1375,9 +1375,12 @@ export async function bundlePreview(
       setup(build: any) {
         build.onResolve(
           { filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
-          (args: { path: string }) => ({
-            path: RESOLVED_REACT_IMPORTS[args.path] || args.path,
-          }),
+          (args: { path?: unknown }) => {
+            if (typeof args.path !== 'string') return null;
+            const resolved = RESOLVED_REACT_IMPORTS[args.path];
+            if (!resolved) return null;
+            return { path: resolved };
+          },
         );
       },
     });

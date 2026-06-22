@@ -65,6 +65,19 @@ describe('preview compiler', () => {
     expect(js).toContain('Dashboard');
   });
 
+  it('bundles a minimal jsx page without resolver path errors', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        'export default function Home() {',
+        '  return <main>Hello world</main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Hello world');
+  });
+
   it('ignores Next build artifacts when bundling preview code', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
