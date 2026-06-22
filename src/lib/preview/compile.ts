@@ -297,14 +297,38 @@ void REACT_GLOBAL_MODULES;
 const NEXT_MOCKS: Record<string, string> = {
   'next/navigation': `
     const noop = () => {};
-    export const useRouter = () => ({
-      push: noop, replace: noop, back: noop, forward: noop,
-      refresh: noop, prefetch: noop,
-      pathname: '/', query: {}, asPath: '/',
-    });
-    export const usePathname = () => '/';
-    export const useSearchParams = () => new URLSearchParams();
-    export const useParams = () => ({});
+    function getRouteState() {
+      return window.__debuggaiRouteState || {
+        pathname: '/',
+        search: '',
+        hash: '',
+        href: '/',
+        params: {},
+        push: noop,
+        replace: noop,
+        back: noop,
+        forward: noop,
+        refresh: noop,
+        prefetch: noop,
+      };
+    }
+    export const useRouter = () => {
+      const route = getRouteState();
+      return {
+        push: route.push,
+        replace: route.replace,
+        back: route.back,
+        forward: route.forward,
+        refresh: route.refresh,
+        prefetch: route.prefetch,
+        pathname: route.pathname || '/',
+        query: route.query || {},
+        asPath: route.href || '/',
+      };
+    };
+    export const usePathname = () => getRouteState().pathname || '/';
+    export const useSearchParams = () => new URLSearchParams(getRouteState().search || '');
+    export const useParams = () => getRouteState().params || {};
     export const redirect = (url) => { window.__debuggai_redirect = url; };
     export const notFound = noop;
     export const useSelectedLayoutSegment = () => null;
@@ -314,7 +338,19 @@ const NEXT_MOCKS: Record<string, string> = {
   'next/link': `
     import React from 'react';
     export default function Link({ href, children, className, ...props }) {
-      return React.createElement('a', { href, className, onClick: (e) => { e.preventDefault(); window.__debuggai_link = href; }, ...props }, children);
+      return React.createElement('a', {
+        href,
+        className,
+        onClick: (e) => {
+          e.preventDefault();
+          if (window.__debuggaiRouteState && typeof window.__debuggaiRouteState.push === 'function') {
+            window.__debuggaiRouteState.push(href);
+          } else {
+            window.__debuggai_link = href;
+          }
+        },
+        ...props
+      }, children);
     }
   `,
   'next/image': `
@@ -1464,7 +1500,7 @@ export default Stub;
 /**
  * Build a complete HTML document from compiled JS + CSS for iframe rendering.
  */
-export function buildPreviewHtml(js: string, css: string): string {
+export function buildPreviewHtml(js: string, css: string, routePath: string = '/', routePattern: string = routePath): string {
   // Force dark mode so Tailwind `dark:` variants remain available without
   // relying on upstream theme inference from generated CSS.
   const themeClass = '"dark"';
@@ -1530,6 +1566,126 @@ export function buildPreviewHtml(js: string, css: string): string {
 
       installStorage('localStorage');
       installStorage('sessionStorage');
+    })();
+
+    // ── Preview route state ─────────────────────────────────────────────
+    // Keeps the iframe aware of the current route so useRouter/usePathname
+    // inside generated code can behave like a real app.
+    (function() {
+      function parseHref(href) {
+        var raw = String(href || '/');
+        var resolved;
+        try {
+          resolved = new URL(raw, window.location.origin);
+        } catch (e) {
+          resolved = new URL('/', window.location.origin);
+        }
+        var pathname = resolved.pathname || '/';
+        if (pathname !== '/') pathname = pathname.replace(/\/+$/, '');
+        var search = resolved.search || '';
+        var hash = resolved.hash || '';
+        return {
+          pathname: pathname || '/',
+          search: search,
+          hash: hash,
+          href: (pathname || '/') + search + hash,
+        };
+      }
+
+      function normalizePattern(entryPoint) {
+        var normalized = String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+        normalized = normalized.replace(/^(?:src\/)?app\//, '');
+        normalized = normalized.replace(/^(?:src\/)?pages\//, '');
+        normalized = normalized.replace(/\/page\.[a-zA-Z0-9]+$/, '');
+        normalized = normalized.replace(/\/index\.[a-zA-Z0-9]+$/, '');
+        normalized = normalized.replace(/\.[a-zA-Z0-9]+$/, '');
+        normalized = normalized.replace(/^\/*/, '').replace(/\/*$/, '');
+        return '/' + normalized;
+      }
+
+      function matchParams(pattern, pathname) {
+        var params = {};
+        var patternParts = String(pattern || '/').split('/').filter(Boolean);
+        var pathParts = String(pathname || '/').split('/').filter(Boolean);
+        for (var i = 0, j = 0; i < patternParts.length; i++, j++) {
+          var part = patternParts[i];
+          if (!part) continue;
+          if (part.startsWith('[...') && part.endsWith(']')) {
+            params[part.slice(4, -1)] = pathParts.slice(j).join('/');
+            return params;
+          }
+          if (part.startsWith('[[...') && part.endsWith(']]')) {
+            params[part.slice(5, -2)] = pathParts.slice(j).join('/');
+            return params;
+          }
+          if (part.startsWith('[') && part.endsWith(']')) {
+            params[part.slice(1, -1)] = pathParts[j] || '';
+            continue;
+          }
+          if (pathParts[j] !== part) return {};
+        }
+        return params;
+      }
+
+      var state = parseHref(${JSON.stringify(routePath)});
+      var pattern = ${JSON.stringify(routePattern || routePath)};
+      var historyStack = [state.href];
+      var historyIndex = 0;
+
+      function sync(nextHref, mode, silent) {
+        var next = parseHref(nextHref);
+        state.pathname = next.pathname;
+        state.search = next.search;
+        state.hash = next.hash;
+        state.href = next.href;
+        state.params = matchParams(pattern, state.pathname);
+
+        if (mode === 'replace') {
+          historyStack[historyIndex] = next.href;
+        } else if (mode === 'push') {
+          historyStack = historyStack.slice(0, historyIndex + 1);
+          historyStack.push(next.href);
+          historyIndex = historyStack.length - 1;
+        }
+
+        if (!silent) {
+          try {
+            parent.postMessage({
+              source: 'debuggai-preview',
+              type: 'navigate',
+              href: state.href,
+              pathname: state.pathname,
+              search: state.search,
+              hash: state.hash,
+              timestamp: Date.now(),
+            }, '*');
+          } catch (e) {}
+        }
+      }
+
+      window.__debuggaiRouteState = {
+        get pathname() { return state.pathname; },
+        get search() { return state.search; },
+        get hash() { return state.hash; },
+        get href() { return state.href; },
+        get params() { return state.params || {}; },
+        push: function(href) { sync(href, 'push', false); },
+        replace: function(href) { sync(href, 'replace', false); },
+        back: function() {
+          if (historyIndex <= 0) return;
+          historyIndex--;
+          sync(historyStack[historyIndex], 'replace', false);
+        },
+        forward: function() {
+          if (historyIndex >= historyStack.length - 1) return;
+          historyIndex++;
+          sync(historyStack[historyIndex], 'replace', false);
+        },
+        refresh: function() {},
+        prefetch: function() {},
+      };
+
+      state.params = matchParams(pattern, state.pathname);
     })();
 
     // ── Navigation interceptor (SPA routing) ────────────────────────────
@@ -1827,8 +1983,56 @@ export function buildPreviewHtml(js: string, css: string): string {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+export function entryPointToPreviewPath(entryPoint: string): string {
+  return routePathFromEntryPoint(entryPoint);
+}
+
+export function entryPointToRoutePattern(entryPoint: string): string {
+  return routePathFromEntryPoint(entryPoint);
+}
+
+function routePathFromEntryPoint(entryPoint: string): string {
+  const normalized = normalizeEntryPoint(entryPoint);
+  if (!normalized) return '/';
+
+  const appMatch = normalized.match(/^(?:src\/)?app\/(.+)\/page\.[a-zA-Z0-9]+$/);
+  if (appMatch) {
+    return segmentsToRoutePath(appMatch[1] || '');
+  }
+
+  const rootAppMatch = normalized.match(/^(?:src\/)?app\/page\.[a-zA-Z0-9]+$/);
+  if (rootAppMatch) return '/';
+
+  const pagesMatch = normalized.match(/^(?:src\/)?pages\/(.+)\.[a-zA-Z0-9]+$/);
+  if (pagesMatch) {
+    const route = pagesMatch[1] || '';
+    if (route === 'index') return '/';
+    return segmentsToRoutePath(route.replace(/\/index$/, ''));
+  }
+
+  return '/';
+}
+
 function escapeRegex(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeEntryPoint(entryPoint: string) {
+  return String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+}
+
+function segmentsToRoutePath(route: string) {
+  const segments = String(route || '')
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => {
+      if (/^\(.*\)$/.test(segment)) return false;
+      if (segment.startsWith('_')) return false;
+      return true;
+    });
+  if (segments.length === 0) return '/';
+  return `/${segments.join('/')}`;
 }
 
 async function findFiles(dir: string): Promise<string[]> {

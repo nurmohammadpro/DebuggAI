@@ -86,6 +86,22 @@ describe('preview compiler', () => {
     expect(js).toContain('Best plan');
   });
 
+  it('embeds route state for routed preview pages', async () => {
+    const { js, css, errors } = await bundlePreview({
+      'app/blog/[slug]/page.tsx': [
+        'export default function Post() {',
+        '  return <main>Post view</main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    const html = buildPreviewHtml(js, css, '/blog/post-1', '/blog/[slug]');
+    expect(html).toContain('window.__debuggaiRouteState');
+    expect(html).toContain('/blog/post-1');
+    expect(html).toContain('/blog/[slug]');
+  });
+
   it('bundles generated drag handles that import GripVertical from lucide-react', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [

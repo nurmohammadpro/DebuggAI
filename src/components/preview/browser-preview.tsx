@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGenerationStore } from '@/store/generation-store';
 
-import type { RuntimeError } from '@/store/generation-store';
 import { AlertCircle, Info, Monitor, Smartphone, Tablet, Play, RefreshCw, Maximize2, Minimize2, Crosshair } from 'lucide-react';
 
 type DeviceMode = 'desktop' | 'tablet' | 'mobile';
@@ -17,6 +16,30 @@ interface BrowserPreviewProps {
 }
 
 const PREVIEW_COMPILE_TIMEOUT_MS = 20_000;
+
+function entryPointToPreviewPath(entryPoint: string): string {
+  const normalized = String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
+  const appMatch = normalized.match(/^(?:src\/)?app\/(.+)\/page\.[a-zA-Z0-9]+$/);
+  if (appMatch) return segmentsToRoutePath(appMatch[1] || '');
+  if (/^(?:src\/)?app\/page\.[a-zA-Z0-9]+$/.test(normalized)) return '/';
+  const pagesMatch = normalized.match(/^(?:src\/)?pages\/(.+)\.[a-zA-Z0-9]+$/);
+  if (pagesMatch) {
+    const route = pagesMatch[1] || '';
+    if (route === 'index') return '/';
+    return segmentsToRoutePath(route.replace(/\/index$/, ''));
+  }
+  return '/';
+}
+
+function segmentsToRoutePath(route: string): string {
+  const segments = String(route || '')
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => !/^\(.*\)$/.test(segment) && !segment.startsWith('_'));
+  if (segments.length === 0) return '/';
+  return `/${segments.join('/')}`;
+}
 
 /**
  * Resolve an href to the corresponding Next.js App Router page file path.
@@ -113,6 +136,7 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
   const [device, setDevice] = useState<DeviceMode>('desktop');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [inspectMode, setInspectMode] = useState(false);
+  const [currentRouteHref, setCurrentRouteHref] = useState<string | null>(null);
   const [inspectedElement, setInspectedElement] = useState<{
     tag: string; id: string | null; classes: string; text: string; path: string; attributes: string;
   } | null>(null);
@@ -168,14 +192,11 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
             const targetHref = String(data.href);
             const resolved = resolvePageEntry(targetHref, files.files);
             if (resolved) {
-              // Set the new entry path and trigger recompilation
+              setCurrentRouteHref(targetHref);
               const store = useGenerationStore.getState();
-              if (resolved !== files.entryPath) {
-                // Update files entryPath and kick off recompile
-                const { bumpPreviewNonce } = store;
-                // Mutate the entryPath via store internal (safe since bump triggers recompile)
+              if (resolved !== files.entryPath || targetHref !== currentRouteHref) {
                 files.entryPath = resolved;
-                bumpPreviewNonce();
+                store.bumpPreviewNonce();
               }
             }
           }
@@ -215,7 +236,7 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
           break;
       }
     },
-    [setLastError, files],
+    [currentRouteHref, setLastError, files],
   );
 
   useEffect(() => {
@@ -271,7 +292,8 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
     }
 
     // Snapshot check to avoid re-compiling identical code
-    const snapshot = JSON.stringify({ entryPath: files.entryPath, files: flatFiles });
+    const routePath = currentRouteHref || entryPointToPreviewPath(files.entryPath);
+    const snapshot = JSON.stringify({ entryPath: files.entryPath, routePath, files: flatFiles });
     if (snapshot === previousSnapshot.current && htmlRef.current) {
       setStatus('ready');
       setCompileErrors([]);
@@ -307,6 +329,7 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
         body: JSON.stringify({
           files: flatFiles,
           entryPoint: files.entryPath,
+          routePath,
         }),
         signal: controller.signal,
       });
@@ -349,12 +372,16 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
         abortRef.current = null;
       }
     }
-  }, [files, clearError]);
+  }, [currentRouteHref, files, clearError]);
 
   useEffect(() => {
     previousSnapshot.current = '';
     compile();
   }, [compile, previewNonce]);
+
+  useEffect(() => {
+    setCurrentRouteHref(null);
+  }, [currentProjectId]);
 
   const handleRefresh = useCallback(() => {
     previousSnapshot.current = '';
@@ -508,7 +535,7 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
                 &lt;{inspectedElement.tag}{inspectedElement.id ? ` #${inspectedElement.id}` : ''}{inspectedElement.classes ? ` .${inspectedElement.classes.split(/\s+/).slice(0, 3).join('.')}` : ''}&gt;
               </p>
               {inspectedElement.text && (
-                <p className="text-[10px] text-[var(--app-text-dim)] truncate">"{inspectedElement.text.slice(0, 100)}"</p>
+                <p className="text-[10px] text-[var(--app-text-dim)] truncate">&quot;{inspectedElement.text.slice(0, 100)}&quot;</p>
               )}
               <div className="flex items-center gap-2 mt-2">
                 <input
