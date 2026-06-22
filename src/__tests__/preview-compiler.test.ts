@@ -43,6 +43,28 @@ describe('preview compiler', () => {
     expect(html).not.toContain('cdn.tailwindcss.com');
   });
 
+  it('bundles routed previews that import next/link without dynamic resolver failures', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import { Navbar } from '@/components/navbar';",
+        '',
+        'export default function Home() {',
+        '  return <Navbar />;',
+        '}',
+      ].join('\n'),
+      'components/navbar.tsx': [
+        "import Link from 'next/link';",
+        '',
+        'export function Navbar() {',
+        '  return <nav><Link href=\"/dashboard\">Dashboard</Link></nav>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Dashboard');
+  });
+
   it('ignores Next build artifacts when bundling preview code', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [

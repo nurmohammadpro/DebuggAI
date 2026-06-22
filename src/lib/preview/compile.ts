@@ -21,6 +21,13 @@ import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
 const nodeRequire = createRequire(import.meta.url);
+const RESOLVED_REACT_IMPORTS: Record<string, string> = {
+  react: nodeRequire.resolve('react'),
+  'react-dom': nodeRequire.resolve('react-dom'),
+  'react-dom/client': nodeRequire.resolve('react-dom/client'),
+  'react/jsx-runtime': nodeRequire.resolve('react/jsx-runtime'),
+  'react/jsx-dev-runtime': nodeRequire.resolve('react/jsx-dev-runtime'),
+};
 const RESPONSIVE_VARIANTS: Record<string, string> = {
   sm: '@media (min-width: 640px)',
   md: '@media (min-width: 768px)',
@@ -1366,19 +1373,10 @@ export async function bundlePreview(
     plugins.push({
       name: 'react-package-resolver',
       setup(build: any) {
-        const reactPaths = new Map<string, string>();
-        const resolveReact = (specifier: string) => {
-          const cached = reactPaths.get(specifier);
-          if (cached) return cached;
-          const resolved = nodeRequire.resolve(specifier);
-          reactPaths.set(specifier, resolved);
-          return resolved;
-        };
-
         build.onResolve(
           { filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path: string }) => ({
-            path: resolveReact(args.path),
+            path: RESOLVED_REACT_IMPORTS[args.path] || args.path,
           }),
         );
       },
