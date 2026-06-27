@@ -1501,6 +1501,8 @@ export function buildPreviewHtml(js: string, css: string, routePath: string = '/
   // Force dark mode so Tailwind `dark:` variants remain available without
   // relying on upstream theme inference from generated CSS.
   const themeClass = '"dark"';
+  const escapeInlineScript = (value: string) => value.replace(/<\/script/gi, '<\\/script');
+  const escapeInlineStyle = (value: string) => value.replace(/<\/style/gi, '<\\/style');
 
   return `<!DOCTYPE html>
 <html lang="en" class=${themeClass}>
@@ -1512,7 +1514,7 @@ export function buildPreviewHtml(js: string, css: string, routePath: string = '/
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    ${css}
+    ${escapeInlineStyle(css)}
   </style>
 </head>
 <body>
@@ -1968,7 +1970,7 @@ export function buildPreviewHtml(js: string, css: string, routePath: string = '/
     })();
 
     try {
-      ${js}
+      ${escapeInlineScript(js)}
     } catch(e) {
       console.error('Preview render error:', e);
       window.onerror && window.onerror(e.message, '', 0, 0, e);

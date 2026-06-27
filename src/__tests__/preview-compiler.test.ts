@@ -159,6 +159,18 @@ describe('preview compiler', () => {
     expect(html).toContain('/blog/[slug]');
   });
 
+  it('escapes closing script and style tags in preview html', () => {
+    const html = buildPreviewHtml(
+      `console.log("</script><div>broken</div>");`,
+      `body::after { content: "</style><div>broken</div>"; }`,
+    );
+
+    expect(html).toContain('<\\/script>');
+    expect(html).toContain('<\\/style>');
+    expect(html).not.toContain('</script><div>broken</div>');
+    expect(html).not.toContain('</style><div>broken</div>');
+  });
+
   it('bundles generated drag handles that import GripVertical from lucide-react', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
