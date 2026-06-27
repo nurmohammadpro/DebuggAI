@@ -133,7 +133,17 @@ docker compose up -d --build --pull always
 ### CI/CD
 
 - GitHub Actions runs lint, typecheck, tests, and build on every PR
+- Pushes to `main` trigger the production deploy workflow once the GitHub secrets below are configured
 - Supabase migrations and edge functions deploy from `main` branch automatically
+
+#### Production deploy secrets
+
+Set these repository secrets so the deploy workflow can reach the VPS:
+
+- `DEPLOY_HOST`
+- `DEPLOY_USER`
+- `DEPLOY_PATH`
+- `DEPLOY_SSH_KEY`
 
 ## Architecture Notes
 
