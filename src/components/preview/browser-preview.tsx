@@ -442,9 +442,18 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
 
       <div className={`flex-1 min-h-0 bg-[#F0F0F0] dark:bg-[#1A1A1A] flex items-center justify-center p-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-[#F0F0F0] dark:bg-[#1A1A1A]' : ''}`}>
         <div className="bg-white flex flex-col min-h-0 overflow-hidden rounded-lg shadow-sm border border-[var(--app-border)] transition-all duration-200" style={{ width: DEVICE_WIDTHS[device], height: isFullscreen ? '100%' : '100%' }}>
+          {status === 'ready' && html ? (
+            <iframe
+              ref={iframeRef}
+              srcDoc={html}
+              className="h-full w-full border-0"
+              title="Preview"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+            />
+          ) : null}
           {status === 'idle' && <IdleState />}
           {status === 'compiling' && <CompilingState />}
-          {status === 'error' && (
+          {status === 'error' && !html && (
             <CompileErrorState
               errors={compileErrors}
               onRetry={handleRefresh}
@@ -457,16 +466,8 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
               className="h-full w-full border-0"
               title="Live Preview"
             />
-          ) : sandboxStatus === 'installing' || sandboxStatus === 'creating' ? (
+          ) : (sandboxStatus === 'installing' || sandboxStatus === 'creating') && !(status === 'ready' && html) ? (
             <SandboxStartingState />
-          ) : status === 'ready' && html ? (
-            <iframe
-              ref={iframeRef}
-              srcDoc={html}
-              className="h-full w-full border-0"
-              title="Preview"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
-            />
           ) : null}
         </div>
       </div>

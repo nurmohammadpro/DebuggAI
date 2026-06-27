@@ -48,4 +48,42 @@ describe('BrowserPreview', () => {
     expect(screen.getByText('Compilation Failed')).toBeInTheDocument();
     expect(screen.getAllByText(/Preview compile timed out after 20s/)).toHaveLength(2);
   });
+
+  it('still shows the compiled preview when sandbox creation fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (String(url).includes('/api/compile')) {
+          return {
+            ok: true,
+            json: async () => ({
+              html: '<!DOCTYPE html><html><body><iframe title="nested"></iframe></body></html>',
+              errors: [],
+            }),
+          } as Response;
+        }
+        if (String(url).includes('/api/sandbox/create')) {
+          return {
+            ok: false,
+            status: 503,
+            json: async () => ({ error: 'Live preview is temporarily disabled.' }),
+            text: async () => 'Live preview is temporarily disabled.',
+          } as Response;
+        }
+        throw new Error(`Unexpected fetch: ${String(url)}`);
+      }),
+    );
+
+    await act(async () => {
+      useGenerationStore.getState().loadFromProjectFiles({
+        'app/page.tsx': 'export default function Home() { return <main>Hello preview</main>; }',
+      });
+
+      render(<BrowserPreview />);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTitle('Preview')).toBeInTheDocument();
+    expect(screen.queryByText('Compilation Failed')).not.toBeInTheDocument();
+  });
 });
