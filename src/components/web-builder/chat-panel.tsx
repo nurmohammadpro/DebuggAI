@@ -42,7 +42,7 @@ export function ChatPanel({
   const [showTemplates, setShowTemplates] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { currentThreadId, accumulated, resetAccumulated } = useGenerationStore();
+  const { currentThreadId, currentProjectId, accumulated, resetAccumulated } = useGenerationStore();
 
   const loadThreadMessages = async (threadId: string) => {
     const session = await getSession();
@@ -111,6 +111,13 @@ export function ChatPanel({
     loadThreadMessages(currentThreadId).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentThreadId]);
+
+  useEffect(() => {
+    setMessages([]);
+    setInput('');
+    setIsLoading(false);
+    setShowTemplates(false);
+  }, [currentProjectId]);
 
   const { setSidebarCollapsed } = useShellStore();
 

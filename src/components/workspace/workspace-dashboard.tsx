@@ -148,6 +148,7 @@ export function WorkspaceDashboard() {
 
     if (project?.code) {
       loadFromProject(project.code, project.description || 'Loaded project');
+      setThreadId(urlThreadId || null);
     }
   }, [effectiveProjectId, loadFromProject, project, project?.code, project?.description, resetGenerationStore, setProjectId, setThreadId, urlThreadId]);
 
@@ -234,6 +235,7 @@ export function WorkspaceDashboard() {
         const serialized = serializeVirtualFiles(virtualFiles);
         if (serialized) {
           loadFromProject(serialized, project?.description || 'Restored from project files');
+          setThreadId(urlThreadId || null);
         }
       } catch {
         // Silently fail — no files to restore

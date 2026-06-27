@@ -1031,7 +1031,15 @@ export function EnhancedChatPanel({
   // Ref gate — prevents empty state flash during thread sync
   const threadBootedRef = useRef(false);
 
-  const { currentThreadId, accumulated, resetAccumulated, files, pendingInspectPrompt, setPendingInspectPrompt } = useGenerationStore();
+  const {
+    currentThreadId,
+    currentProjectId,
+    accumulated,
+    resetAccumulated,
+    files,
+    pendingInspectPrompt,
+    setPendingInspectPrompt,
+  } = useGenerationStore();
   const { addCodeBlocks, setStreaming, reset: resetCodeBlocks } = useCodeBlocksStore();
   const { setSidebarCollapsed } = useShellStore();
   const hasExistingFiles = Boolean(files && Object.values(files.files).some((file) => file.status !== 'deleted'));
@@ -1065,6 +1073,22 @@ export function EnhancedChatPanel({
       threadBootedRef.current = false;
     }
   }, [currentThreadId, resetAccumulated, resetCodeBlocks, setStreaming]);
+
+  // Project switches should always start with a clean local chat surface.
+  // Thread restoration happens in the workspace boot flow, so this only
+  // clears stale UI state from the previous project while the new project
+  // context is hydrating.
+  useEffect(() => {
+    setMessages([]);
+    setHasSentFirstMessage(false);
+    setToolEvents([]);
+    setInput('');
+    setEditingMessageId(null);
+    setEditingContent('');
+    setCopiedMessageId(null);
+    streamingMessageIdRef.current = null;
+    threadBootedRef.current = false;
+  }, [currentProjectId]);
 
   // Gap 2: Listen for inspect-element prompts from the preview and auto-send
   useEffect(() => {
