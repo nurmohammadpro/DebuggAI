@@ -41,10 +41,13 @@ export function ChatPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const projectLoadTokenRef = useRef(0);
 
   const { currentThreadId, currentProjectId, accumulated, resetAccumulated } = useGenerationStore();
 
   const loadThreadMessages = async (threadId: string) => {
+    const projectIdAtCall = useGenerationStore.getState().currentProjectId;
+    const loadTokenAtCall = projectLoadTokenRef.current;
     const session = await getSession();
     const token = session.session?.access_token;
     if (!token) return;
@@ -54,6 +57,9 @@ export function ChatPanel({
     if (!res.ok) return;
     const j = await res.json().catch(() => ({}));
     const list = (j?.messages || []) as Array<any>;
+    if (projectLoadTokenRef.current !== loadTokenAtCall) return;
+    if (useGenerationStore.getState().currentProjectId !== projectIdAtCall) return;
+    if (useGenerationStore.getState().currentThreadId !== threadId) return;
     setMessages(
       list.map((m) => ({
         id: String(m.id),
@@ -113,6 +119,7 @@ export function ChatPanel({
   }, [currentThreadId]);
 
   useEffect(() => {
+    projectLoadTokenRef.current += 1;
     setMessages([]);
     setInput('');
     setIsLoading(false);

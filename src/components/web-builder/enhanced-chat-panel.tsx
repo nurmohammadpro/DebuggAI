@@ -1030,6 +1030,7 @@ export function EnhancedChatPanel({
   const streamingMessageIdRef = useRef<string | null>(null);
   // Ref gate — prevents empty state flash during thread sync
   const threadBootedRef = useRef(false);
+  const projectLoadTokenRef = useRef(0);
 
   const {
     currentThreadId,
@@ -1079,6 +1080,7 @@ export function EnhancedChatPanel({
   // clears stale UI state from the previous project while the new project
   // context is hydrating.
   useEffect(() => {
+    projectLoadTokenRef.current += 1;
     setMessages([]);
     setHasSentFirstMessage(false);
     setToolEvents([]);
@@ -1105,6 +1107,8 @@ export function EnhancedChatPanel({
   }, [pendingInspectPrompt]);
 
   const loadThreadMessages = useCallback(async (threadId: string) => {
+    const projectIdAtCall = useGenerationStore.getState().currentProjectId;
+    const loadTokenAtCall = projectLoadTokenRef.current;
     const session = await getSession();
     const token = session.session?.access_token;
     if (!token) return;
@@ -1114,6 +1118,9 @@ export function EnhancedChatPanel({
     if (!res.ok) return;
     const j = await res.json().catch(() => ({}));
     const list = (j?.messages || []) as ServerChatMessage[];
+    if (projectLoadTokenRef.current !== loadTokenAtCall) return;
+    if (useGenerationStore.getState().currentProjectId !== projectIdAtCall) return;
+    if (useGenerationStore.getState().currentThreadId !== threadId) return;
 
     const serverMessages: ChatMessage[] = list.map((m) => {
       const rawContent = String(m.content || '');
