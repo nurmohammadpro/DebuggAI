@@ -16,17 +16,17 @@ import os from 'os';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
-import { createRequire } from 'module';
 import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
-const nodeRequire = createRequire(import.meta.url);
+const NODE_MODULES_DIR = path.join(process.cwd(), 'node_modules');
+const resolveNodeModuleFile = (...segments: string[]) => path.join(NODE_MODULES_DIR, ...segments);
 const RESOLVED_REACT_IMPORTS: Record<string, string> = {
-  react: nodeRequire.resolve('react'),
-  'react-dom': nodeRequire.resolve('react-dom'),
-  'react-dom/client': nodeRequire.resolve('react-dom/client'),
-  'react/jsx-runtime': nodeRequire.resolve('react/jsx-runtime'),
-  'react/jsx-dev-runtime': nodeRequire.resolve('react/jsx-dev-runtime'),
+  react: resolveNodeModuleFile('react', 'index.js'),
+  'react-dom': resolveNodeModuleFile('react-dom', 'index.js'),
+  'react-dom/client': resolveNodeModuleFile('react-dom', 'client.js'),
+  'react/jsx-runtime': resolveNodeModuleFile('react', 'jsx-runtime.js'),
+  'react/jsx-dev-runtime': resolveNodeModuleFile('react', 'jsx-dev-runtime.js'),
 };
 const REACT_PACKAGE_DEFAULT_EXPORTS = new Set(['react', 'react-dom']);
 const RESPONSIVE_VARIANTS: Record<string, string> = {

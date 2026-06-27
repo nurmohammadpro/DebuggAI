@@ -78,6 +78,28 @@ describe('preview compiler', () => {
     expect(js).toContain('Hello world');
   });
 
+  it('bundles explicit React imports without resolver path errors', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import React from 'react';",
+        '',
+        'export default function Home() {',
+        '  return <main><span>React import works</span></main>;',
+        '}',
+      ].join('\n'),
+      'components/footer.tsx': [
+        "import React from 'react';",
+        '',
+        'export function Footer() {',
+        '  return <footer>Footer</footer>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('React import works');
+  });
+
   it('ignores Next build artifacts when bundling preview code', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
