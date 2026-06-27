@@ -28,6 +28,7 @@ const RESOLVED_REACT_IMPORTS: Record<string, string> = {
   'react/jsx-runtime': nodeRequire.resolve('react/jsx-runtime'),
   'react/jsx-dev-runtime': nodeRequire.resolve('react/jsx-dev-runtime'),
 };
+const REACT_PACKAGE_DEFAULT_EXPORTS = new Set(['react', 'react-dom']);
 const RESPONSIVE_VARIANTS: Record<string, string> = {
   sm: '@media (min-width: 640px)',
   md: '@media (min-width: 768px)',
@@ -1377,11 +1378,23 @@ export async function bundlePreview(
           { filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path?: unknown }) => {
             if (typeof args.path !== 'string') return null;
-            const resolved = RESOLVED_REACT_IMPORTS[args.path];
-            if (!resolved) return null;
-            return { path: resolved };
+            if (!RESOLVED_REACT_IMPORTS[args.path]) return null;
+            return { path: args.path, namespace: 'react-package-shim' };
           },
         );
+        build.onLoad({ filter: /.*/, namespace: 'react-package-shim' }, (args: { path?: unknown }) => {
+          if (typeof args.path !== 'string') return null;
+          const resolved = RESOLVED_REACT_IMPORTS[args.path];
+          if (!resolved) return null;
+          const contents = REACT_PACKAGE_DEFAULT_EXPORTS.has(args.path)
+            ? [
+                `export * from ${JSON.stringify(resolved)};`,
+                `import mod from ${JSON.stringify(resolved)};`,
+                'export default mod;',
+              ].join('\n')
+            : `export * from ${JSON.stringify(resolved)};`;
+          return { contents, loader: 'js', resolveDir: path.dirname(resolved) };
+        });
       },
     });
 
