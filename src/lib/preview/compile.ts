@@ -19,16 +19,6 @@ import crypto from 'crypto';
 import { shouldIgnorePreviewPath } from '@/lib/project/virtual-files';
 
 const TMP_DIR = path.join(os.tmpdir(), 'debuggai-compile');
-const NODE_MODULES_DIR = path.join(process.cwd(), 'node_modules');
-const resolveNodeModuleFile = (...segments: string[]) => path.join(NODE_MODULES_DIR, ...segments);
-const RESOLVED_REACT_IMPORTS: Record<string, string> = {
-  react: resolveNodeModuleFile('react', 'index.js'),
-  'react-dom': resolveNodeModuleFile('react-dom', 'index.js'),
-  'react-dom/client': resolveNodeModuleFile('react-dom', 'client.js'),
-  'react/jsx-runtime': resolveNodeModuleFile('react', 'jsx-runtime.js'),
-  'react/jsx-dev-runtime': resolveNodeModuleFile('react', 'jsx-dev-runtime.js'),
-};
-const REACT_PACKAGE_DEFAULT_EXPORTS = new Set(['react', 'react-dom']);
 const RESPONSIVE_VARIANTS: Record<string, string> = {
   sm: '@media (min-width: 640px)',
   md: '@media (min-width: 768px)',
@@ -1378,22 +1368,15 @@ export async function bundlePreview(
           { filter: /^(react|react-dom|react-dom\/client|react\/jsx-runtime|react\/jsx-dev-runtime)$/ },
           (args: { path?: unknown }) => {
             if (typeof args.path !== 'string') return null;
-            if (!RESOLVED_REACT_IMPORTS[args.path]) return null;
+            if (!Object.prototype.hasOwnProperty.call(REACT_GLOBAL_MODULES, args.path)) return null;
             return { path: args.path, namespace: 'react-package-shim' };
           },
         );
         build.onLoad({ filter: /.*/, namespace: 'react-package-shim' }, (args: { path?: unknown }) => {
           if (typeof args.path !== 'string') return null;
-          const resolved = RESOLVED_REACT_IMPORTS[args.path];
-          if (!resolved) return null;
-          const contents = REACT_PACKAGE_DEFAULT_EXPORTS.has(args.path)
-            ? [
-                `export * from ${JSON.stringify(resolved)};`,
-                `import mod from ${JSON.stringify(resolved)};`,
-                'export default mod;',
-              ].join('\n')
-            : `export * from ${JSON.stringify(resolved)};`;
-          return { contents, loader: 'js', resolveDir: path.dirname(resolved) };
+          const contents = REACT_GLOBAL_MODULES[args.path];
+          if (!contents) return null;
+          return { contents, loader: 'js' };
         });
       },
     });
