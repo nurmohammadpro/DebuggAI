@@ -1580,7 +1580,9 @@ export function buildPreviewHtml(js: string, css: string, routePath: string = '/
           resolved = new URL('/', window.location.origin);
         }
         var pathname = resolved.pathname || '/';
-        if (pathname !== '/') pathname = pathname.replace(/\/+$/, '');
+        while (pathname.length > 1 && pathname.endsWith('/')) {
+          pathname = pathname.slice(0, -1);
+        }
         var search = resolved.search || '';
         var hash = resolved.hash || '';
         return {
@@ -1592,13 +1594,32 @@ export function buildPreviewHtml(js: string, css: string, routePath: string = '/
       }
 
       function normalizePattern(entryPoint) {
-        var normalized = String(entryPoint || '').replace(/\\/g, '/').replace(/^(\.\/)+/, '');
-        normalized = normalized.replace(/^(?:src\/)?app\//, '');
-        normalized = normalized.replace(/^(?:src\/)?pages\//, '');
-        normalized = normalized.replace(/\/page\.[a-zA-Z0-9]+$/, '');
-        normalized = normalized.replace(/\/index\.[a-zA-Z0-9]+$/, '');
-        normalized = normalized.replace(/\.[a-zA-Z0-9]+$/, '');
-        normalized = normalized.replace(/^\/*/, '').replace(/\/*$/, '');
+        var normalized = String(entryPoint || '').split('\\\\').join('/');
+        while (normalized.startsWith('./')) {
+          normalized = normalized.slice(2);
+        }
+        if (normalized.startsWith('src/app/')) {
+          normalized = normalized.slice('src/app/'.length);
+        } else if (normalized.startsWith('app/')) {
+          normalized = normalized.slice('app/'.length);
+        } else if (normalized.startsWith('src/pages/')) {
+          normalized = normalized.slice('src/pages/'.length);
+        } else if (normalized.startsWith('pages/')) {
+          normalized = normalized.slice('pages/'.length);
+        }
+        if (normalized.endsWith('/page.tsx') || normalized.endsWith('/page.ts') || normalized.endsWith('/page.jsx') || normalized.endsWith('/page.js')) {
+          var pageIndex = normalized.lastIndexOf('/page.');
+          if (pageIndex >= 0) normalized = normalized.slice(0, pageIndex);
+        } else if (normalized.endsWith('/index.tsx') || normalized.endsWith('/index.ts') || normalized.endsWith('/index.jsx') || normalized.endsWith('/index.js')) {
+          var indexIndex = normalized.lastIndexOf('/index.');
+          if (indexIndex >= 0) normalized = normalized.slice(0, indexIndex);
+        }
+        var lastDot = normalized.lastIndexOf('.');
+        if (lastDot > -1) {
+          normalized = normalized.slice(0, lastDot);
+        }
+        while (normalized.startsWith('/')) normalized = normalized.slice(1);
+        while (normalized.endsWith('/')) normalized = normalized.slice(0, -1);
         return '/' + normalized;
       }
 
@@ -1915,7 +1936,7 @@ export function buildPreviewHtml(js: string, css: string, routePath: string = '/
         overlay.style.height = rect.height + 'px';
         var info = getElementInfo(el);
         tooltip.style.display = 'block';
-        tooltip.textContent = '<' + info.tag + (info.id ? '#' + info.id : '') + (info.classes ? '.' + info.classes.split(/\\s+/).slice(0, 3).join('.') : '') + '>';
+        tooltip.textContent = '<' + info.tag + (info.id ? '#' + info.id : '') + (info.classes ? '.' + info.classes.split(' ').filter(Boolean).slice(0, 3).join('.') : '') + '>';
         var tx = rect.left;
         var ty = rect.top - 28;
         if (ty < 4) ty = rect.bottom + 6;

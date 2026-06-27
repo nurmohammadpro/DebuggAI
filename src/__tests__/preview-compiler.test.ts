@@ -171,6 +171,31 @@ describe('preview compiler', () => {
     expect(html).not.toContain('</style><div>broken</div>');
   });
 
+  it('generates a syntax-valid srcdoc script for a simple welcome page', async () => {
+    const { js, css, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import * as React from 'react';",
+        '',
+        'export default function App() {',
+        '  return (',
+        '    <div style={{ padding: 24, fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }}>',
+        '      <h1 style={{ margin: 0, fontSize: 24 }}>New 23</h1>',
+        '      <p style={{ marginTop: 8, color: "#6b7280" }}>',
+        '        Start building in the editor, or ask the assistant to generate the app.',
+        '      </p>',
+        '    </div>',
+        '  );',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+
+    const html = buildPreviewHtml(js, css);
+    const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1] || '';
+    expect(() => new Function(script)).not.toThrow();
+  });
+
   it('bundles generated drag handles that import GripVertical from lucide-react', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
