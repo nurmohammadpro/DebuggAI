@@ -222,7 +222,14 @@ export const useGenerationStore = create<GenerationState>()(
       return diffs;
     },
 
-    setProjectId: (id) => set({ currentProjectId: id }),
+    setProjectId: (id) =>
+      set((state) => {
+        if (state.currentProjectId === id) return { currentProjectId: id };
+        return {
+          currentProjectId: id,
+          currentThreadId: null,
+        };
+      }),
     setThreadId: (id) => set({ currentThreadId: id }),
     clearThread: () => set({ currentThreadId: null }),
 

@@ -73,4 +73,17 @@ describe('GenerationStore', () => {
     useGenerationStore.getState().clearError();
     expect(useGenerationStore.getState().lastError).toBeNull();
   });
+
+  it('clears the thread when switching projects', () => {
+    useGenerationStore.setState({
+      currentProjectId: 'project-a',
+      currentThreadId: 'thread-a',
+    });
+
+    useGenerationStore.getState().setProjectId('project-b');
+
+    const state = useGenerationStore.getState();
+    expect(state.currentProjectId).toBe('project-b');
+    expect(state.currentThreadId).toBeNull();
+  });
 });
