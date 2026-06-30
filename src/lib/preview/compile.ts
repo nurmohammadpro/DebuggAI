@@ -381,6 +381,24 @@ const NEXT_MOCKS: Record<string, string> = {
   `,
 };
 
+const COMMON_NEXT_FONT_EXPORTS = [
+  'Inter',
+  'Roboto',
+  'Open_Sans',
+  'Lato',
+  'Poppins',
+  'Montserrat',
+  'Nunito',
+  'Source_Sans_3',
+  'Playfair_Display',
+  'Merriweather',
+  'Raleway',
+  'Oswald',
+  'Ubuntu',
+  'JetBrains_Mono',
+  'Fira_Code',
+];
+
 // Common UI packages shimmed as virtual modules for preview compilation.
 // These resolve to lightweight inline implementations so esbuild never
 // tries to find them in node_modules of the temp compile dir.
@@ -649,7 +667,7 @@ function collectNamedImportsByModule(files: Record<string, string>) {
     let match: RegExpExecArray | null;
     while ((match = importRe.exec(content)) !== null) {
       const moduleName = match[2];
-      if (!moduleName || moduleName.startsWith('.') || moduleName.startsWith('@/')) continue;
+      if (!moduleName) continue;
       const names = imports.get(moduleName) ?? new Set<string>();
       for (const part of (match[1] || '').split(',')) {
         const imported = part.trim().split(/\s+as\s+/i)[0]?.trim();
@@ -665,6 +683,10 @@ function collectNamedImportsByModule(files: Record<string, string>) {
 }
 
 function makeUnknownPackageShim(moduleName: string, namedExports: Set<string> | undefined) {
+  return makeGenericModuleStub(moduleName, namedExports);
+}
+
+function makeGenericModuleStub(moduleName: string, namedExports: Set<string> | undefined) {
   const exports = [...(namedExports ?? new Set<string>())]
     .map((name) => `export const ${name} = stub;`)
     .join('\n');
@@ -694,6 +716,31 @@ function makeUnknownPackageShim(moduleName: string, namedExports: Set<string> | 
     });
     export default stub;
     ${exports}
+  `;
+}
+
+function makeNextFontShim(fontModule: string, namedExports: Set<string> | undefined) {
+  const requested = [...(namedExports ?? new Set<string>())];
+  const names = new Set<string>([...COMMON_NEXT_FONT_EXPORTS, ...requested]);
+  const exportLines = [...names]
+    .map((name) => {
+      return `export const ${name} = makeFont(${JSON.stringify(name)});`;
+    })
+    .join('\n');
+
+  return `
+    // auto-stub: ${fontModule}
+    const makeFont = (name) => function fontFactory(options = {}) {
+      const className = 'font-' + String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const style = { fontFamily: JSON.stringify(name) + ', sans-serif' };
+      return {
+        className,
+        style,
+        variable: typeof options.variable === 'string' ? options.variable : undefined,
+      };
+    };
+    ${exportLines}
+    export default { ${[...names].join(', ')} };
   `;
 }
 
@@ -1313,6 +1360,27 @@ export async function bundlePreview(
       },
     });
 
+    plugins.push({
+      name: 'next-font-mocks',
+      setup(build: any) {
+        for (const module of ['next/font/google', 'next/font/local']) {
+          build.onResolve({ filter: new RegExp(`^${escapeRegex(module)}$`) }, (args: { path?: unknown }) => {
+            if (typeof args.path !== 'string') return null;
+            return { path: args.path, namespace: 'next-font-shim' };
+          });
+        }
+
+        build.onLoad({ filter: /.*/, namespace: 'next-font-shim' }, (args: { path?: unknown }) => {
+          if (typeof args.path !== 'string') return null;
+          const named = namedImportsByModule.get(args.path);
+          return {
+            contents: makeNextFontShim(args.path, named),
+            loader: 'jsx',
+          };
+        });
+      },
+    });
+
     // Resolve @/ path alias to workDir, trying extensions
     plugins.push({
       name: 'path-alias',
@@ -1332,10 +1400,14 @@ export async function bundlePreview(
             const idx = path.join(base, 'index' + ext);
             if (fs.existsSync(idx)) return { path: idx };
           }
-          return { path: base };
+          return { path: args.path, namespace: 'virtual-import-stub' };
         });
         build.onLoad({ filter: /.*/, namespace: 'ui-component-shim' }, (args: { path: string }) => ({
           contents: makeUiComponentShim(args.path),
+          loader: 'jsx',
+        }));
+        build.onLoad({ filter: /.*/, namespace: 'virtual-import-stub' }, (args: { path: string }) => ({
+          contents: makeGenericModuleStub(args.path, namedImportsByModule.get(args.path)),
           loader: 'jsx',
         }));
       },
@@ -1429,22 +1501,12 @@ export async function bundlePreview(
             if (fs.existsSync(path.join(base, 'index' + ext))) return;
           }
           // File doesn't exist — provide a stub
-          return { path: args.path, namespace: 'relative-import-stub' };
+          return { path: args.path, namespace: 'virtual-import-stub' };
         });
-        build.onLoad({ filter: /.*/, namespace: 'relative-import-stub' }, (args: { path: string }) => {
-          const name = args.path.split('/').pop() || 'Component';
-          return {
-            contents: `
-import React from 'react';
-const Stub = React.forwardRef(function Stub(props, ref) {
-  return React.createElement('div', { ref, style: { padding: '1rem', border: '1px dashed #444', borderRadius: '0.375rem', color: '#888', fontSize: '0.75rem', fontFamily: 'monospace', textAlign: 'center' } }, '// ${name}');
-});
-Stub.displayName = 'Stub(${name})';
-export default Stub;
-`.trimStart(),
-            loader: 'jsx',
-          };
-        });
+        build.onLoad({ filter: /.*/, namespace: 'virtual-import-stub' }, (args: { path: string }) => ({
+          contents: makeGenericModuleStub(args.path, namedImportsByModule.get(args.path)),
+          loader: 'jsx',
+        }));
       },
     });
 
@@ -2134,9 +2196,12 @@ async function autoGenerateMissingComponents(
         [
           "import React from 'react';",
           '',
-          `export default function ${componentName}() {`,
+          `function ${componentName}() {`,
           "  return React.createElement('div', null);",
           '}',
+          '',
+          `export { ${componentName} };`,
+          `export default ${componentName};`,
           '',
         ].join('\n'),
         'utf-8',

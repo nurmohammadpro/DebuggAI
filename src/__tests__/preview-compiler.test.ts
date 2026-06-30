@@ -100,6 +100,25 @@ describe('preview compiler', () => {
     expect(js).toContain('React import works');
   });
 
+  it('stubs missing app aliases and next/font/google imports in preview bundles', async () => {
+    const { js, errors } = await bundlePreview({
+      'app/page.tsx': [
+        "import { Inter } from 'next/font/google';",
+        "import { DataTable } from '@/components/DataTable';",
+        '',
+        "const inter = Inter({ subsets: ['latin'] });",
+        '',
+        'export default function Home() {',
+        '  return <main className={inter.className}><DataTable /><h1>Preview works</h1></main>;',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(errors).toEqual([]);
+    expect(js).toContain('Preview works');
+    expect(js).toContain('makeFont("Inter")');
+  });
+
   it('ignores Next build artifacts when bundling preview code', async () => {
     const { js, errors } = await bundlePreview({
       'app/page.tsx': [
