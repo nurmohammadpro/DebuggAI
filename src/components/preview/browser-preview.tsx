@@ -459,7 +459,7 @@ export function BrowserPreview({ className, chromeless = false, sandboxUrl, sand
               onRetry={handleRefresh}
             />
           )}
-          {sandboxStatus === 'running' && sandboxUrl ? (
+          {sandboxStatus === 'running' && sandboxUrl && !(status === 'ready' && html) ? (
             <iframe
               ref={iframeRef}
               src={sandboxUrl}

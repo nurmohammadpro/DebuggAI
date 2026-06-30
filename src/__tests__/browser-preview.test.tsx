@@ -86,4 +86,39 @@ describe('BrowserPreview', () => {
     expect(screen.getByTitle('Preview')).toBeInTheDocument();
     expect(screen.queryByText('Compilation Failed')).not.toBeInTheDocument();
   });
+
+  it('keeps the compiled preview visible when the sandbox is already running', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (String(url).includes('/api/compile')) {
+          return {
+            ok: true,
+            json: async () => ({
+              html: '<!DOCTYPE html><html><body><main>Hello preview</main></body></html>',
+              errors: [],
+            }),
+          } as Response;
+        }
+        throw new Error(`Unexpected fetch: ${String(url)}`);
+      }),
+    );
+
+    await act(async () => {
+      useGenerationStore.getState().loadFromProjectFiles({
+        'app/page.tsx': 'export default function Home() { return <main>Hello preview</main>; }',
+      });
+
+      render(
+        <BrowserPreview
+          sandboxStatus="running"
+          sandboxUrl="/preview/abc123"
+        />,
+      );
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTitle('Preview')).toBeInTheDocument();
+    expect(screen.queryByTitle('Live Preview')).not.toBeInTheDocument();
+  });
 });
